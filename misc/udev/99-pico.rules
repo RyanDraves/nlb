@@ -1,0 +1,17 @@
+
+# /etc/udev/rules.d/99-pico.rules
+
+# RP2040 BOOTSEL mode -> `picotool` can flash it
+SUBSYSTEM=="usb", \
+    ATTRS{idVendor}=="2e8a", \
+    ATTRS{idProduct}=="0003", \
+    MODE="660", \
+    GROUP="plugdev"
+
+# RP2040 serial mode -> `minicom -b 115200 -o -D $(realpath /dev/pico)` to talk
+SUBSYSTEM=="tty", \
+    ATTRS{idVendor}=="2e8a", \
+    ATTRS{idProduct}=="000a", \
+    MODE="660", \
+    GROUP="plugdev", \
+    SYMLINK+="pico"
