@@ -1,3 +1,7 @@
+common --enable_bzlmod
+# --experimental_inprocess_symlink_creation
+build --nolegacy_external_runfiles
+
 build:pico --incompatible_enable_cc_toolchain_resolution
 # build:pico --platforms=@arm_none_eabi//platforms:arm_none_eabi
 build:pico --platforms=@rules_pico//platforms:pico

@@ -1,1 +1,32 @@
+module(
+    name = "nlb",
+    version = "0.0.0",
+)
+
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
+
+bazel_dep(name = "rules_ruby", version = "0.6.0")
+# TODO: Wait for 0.6.0 to be published and remove Git override
+# git_override(
+#     module_name = "rules_ruby",
+#     remote = "https://github.com/bazel-contrib/rules_ruby",
+#     commit = "81bf18ecf7de001a6aa5b46e420f3a9b98866ad5",
+# )
+local_path_override(
+    module_name = "rules_ruby",
+    path = "../rules_ruby",
+)
+
+ruby = use_extension("@rules_ruby//ruby:extensions.bzl", "ruby")
+ruby.toolchain(
+    name = "ruby",
+    version = "3.0.6",
+)
+use_repo(ruby, "ruby")
+ruby.bundle_fetch(
+    name = "bundle",
+    gemfile_lock = "//pages:Gemfile.lock",
+    gemfile = "//pages:Gemfile",
+)
+use_repo(ruby, "bundle", "ruby_toolchains")
+register_toolchains("@ruby_toolchains//:all")

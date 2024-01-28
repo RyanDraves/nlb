@@ -1,8 +1,9 @@
 workspace(name = "nlb")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+# Pico
 
 http_archive(
     name = "rules_pico",
@@ -26,7 +27,7 @@ http_archive(
     sha256 = "a07789d702f8e6034c42e04a3f9dda7ada4ae7c8e8d320c6be6675090c007861",
 )
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+# Arm toolchain
 
 git_repository(
     name = "arm_none_eabi",
