@@ -20,7 +20,7 @@
 
 title: Ryan's Bizarre Blog
 description: >-
-  If a folder called `misc/` was a blog.
+  Random musings.
 baseurl: ""
 url: "https://ryandraves.github.io"
 
@@ -39,18 +39,10 @@ plugins:
 # Excluded items can be processed by explicitly listing the directories or
 # their entries' file path in the `include:` list.
 #
-exclude:
+# exclude:
 #   - Gemfile
 #   - Gemfile.lock
 #   - .sass-cache/
 #   - .jekyll-cache/
 #   - gemfiles/
 #   - node_modules/
-  - bin/external/
-  - rules_ruby~override~ruby~bundle/
-  - vendor/bundle/
-  - bazel-out/
-  - external/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/

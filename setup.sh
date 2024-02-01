@@ -112,8 +112,6 @@ function install_apt_packages() {
 function filesystem_setup() {
     add_to_path $HOME/.local/bin
 
-    add_to_path $REPO_ROOT/tools/bin
-
     mkdir -p $HOME/.local/share/completions
     maybe_add_to_bashrc "source $HOME/.local/share/completions/*"
 

@@ -1,5 +1,3 @@
-common --enable_bzlmod
-# --experimental_inprocess_symlink_creation
 build --nolegacy_external_runfiles
 
 build:pico --incompatible_enable_cc_toolchain_resolution

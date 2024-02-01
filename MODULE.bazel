@@ -12,6 +12,7 @@ bazel_dep(name = "rules_ruby", version = "0.6.0")
 #     remote = "https://github.com/bazel-contrib/rules_ruby",
 #     commit = "81bf18ecf7de001a6aa5b46e420f3a9b98866ad5",
 # )
+# TODO: Go back to release/Git override if they accept bazel-contrib/rules_ruby#73
 local_path_override(
     module_name = "rules_ruby",
     path = "../rules_ruby",

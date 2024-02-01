@@ -1,5 +1,0 @@
-#!/bin/bash
-
-bazel run \
-    # --ui_event_filters=-info,-stdout,-stderr --noshow_progress \
-    @bundle//:bin/bundle -- $@
