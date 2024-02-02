@@ -1,6 +1,4 @@
-load("@rules_pico//pico:defs.bzl", "pico_binary")
-load("@rules_pico//pico:defs.bzl", "pico_build_with_config")
-load("@rules_pico//pico:defs.bzl", "pico_add_uf2_output")
+load("@rules_pico//pico:defs.bzl", "pico_add_uf2_output", "pico_binary", "pico_build_with_config")
 
 pico_binary(
     name = "hello.elf",

@@ -2,4 +2,7 @@
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
+    "bazel.buildifierExecutable": "buildifier",
+    "bazel.buildifierFixOnFormat": true,
+    "editor.formatOnSave": true,
 }

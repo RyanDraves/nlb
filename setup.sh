@@ -116,6 +116,8 @@ function filesystem_setup() {
     maybe_add_to_bashrc "source $HOME/.local/share/completions/*"
 
     maybe_add_to_bashrc "export JAVA_HOME=/usr/lib/jvm/default-java"
+
+    add_to_path $REPO_ROOT/tools/bin
 }
 
 function install_bazelisk() {

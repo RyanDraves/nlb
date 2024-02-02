@@ -1,9 +1,11 @@
+"""Simple Jekyll site builder and server for Bazel."""
+
 def _jekyll_site_impl(ctx):
     config = ctx.attr.config
-    config_path = ctx.expand_location("$(location {target})".format(target=config.label), targets=[config])
+    config_path = ctx.expand_location("$(location {target})".format(target = config.label), targets = [config])
 
     build_files = depset(ctx.files.srcs)
-    build_destination = "{bin_dir}/{package}/{destination}".format(bin_dir=ctx.bin_dir.path, package=ctx.label.package, destination=ctx.attr.destination)
+    build_destination = "{bin_dir}/{package}/{destination}".format(bin_dir = ctx.bin_dir.path, package = ctx.label.package, destination = ctx.attr.destination)
     args = ["build", "--config", config_path, "--source", ctx.label.package, "--destination", build_destination, "--verbose"]
 
     output_directory = ctx.actions.declare_directory(ctx.attr.destination)
@@ -19,7 +21,7 @@ def _jekyll_site_impl(ctx):
             "LC_ALL": "C.UTF-8",
             "LANG": "en_US.UTF-8",
             "LANGUAGE": "en_US.UTF-8",
-        }
+        },
     )
 
     # Compile transitive runfiles + our build files
@@ -44,7 +46,8 @@ def _jekyll_site_impl(ctx):
     ctx.actions.write(
         output = ctx.outputs.executable,
         is_executable = True,
-        content = executable)
+        content = executable,
+    )
 
     # Collect file outputs for any dependents
     serve_files = depset(ctx.attr.config.files.to_list() + [output_directory])
@@ -57,7 +60,6 @@ def _jekyll_site_impl(ctx):
         ),
     ]
 
-
 jekyll_site = rule(
     implementation = _jekyll_site_impl,
     executable = True,
@@ -66,6 +68,6 @@ jekyll_site = rule(
         "deps": attr.label_list(),
         "destination": attr.string(default = "_site"),
         "config": attr.label(allow_single_file = True, mandatory = True),
-        "jekyll": attr.label(executable = True, cfg="exec", mandatory = True),
+        "jekyll": attr.label(executable = True, cfg = "exec", mandatory = True),
     },
 )
