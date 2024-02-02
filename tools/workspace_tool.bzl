@@ -20,6 +20,6 @@ def workspace_tool(name, tool):
     native.sh_binary(
         name = name,
         srcs = [name + ".sh"],
-        data=[tool],
-        args = ["$(location {tool})".format(tool=tool)],
+        data = [tool],
+        args = ["$(location {tool})".format(tool = tool)],
     )
