@@ -5,7 +5,12 @@ module(
 
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
 
+#
+# Rules Ruby
+#
+
 bazel_dep(name = "rules_ruby", version = "0.6.0")
+
 # TODO: Wait for 0.6.0 to be published and remove Git override
 # git_override(
 #     module_name = "rules_ruby",
@@ -26,8 +31,18 @@ ruby.toolchain(
 use_repo(ruby, "ruby")
 ruby.bundle_fetch(
     name = "bundle",
-    gemfile_lock = "//pages:Gemfile.lock",
     gemfile = "//pages:Gemfile",
+    gemfile_lock = "//pages:Gemfile.lock",
 )
 use_repo(ruby, "bundle", "ruby_toolchains")
+
 register_toolchains("@ruby_toolchains//:all")
+
+#
+# Buildifier
+#
+bazel_dep(
+    name = "buildifier_prebuilt",
+    version = "6.4.0",
+    dev_dependency = True,
+)
