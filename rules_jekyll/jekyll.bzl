@@ -36,8 +36,8 @@ def _jekyll_site_impl(ctx):
     runfiles = runfiles.merge_all(transitive_runfiles)
 
     # This relative path works nicer for `bazel run`
-    servce_destination = ctx.label.package + "/_site"
-    args = ["serve", "--destination", servce_destination, "--skip-initial-build", "--config", config_path]
+    service_destination = ctx.label.package + "/_site"
+    args = ["serve", "--destination", service_destination, "--skip-initial-build", "--config", config_path]
 
     # rules_ruby needs RUNFILES_DIR to be set
     executable = "export RUNFILES_DIR=$(readlink -f ../)\n"
