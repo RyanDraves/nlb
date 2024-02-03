@@ -9,7 +9,6 @@ filegroup(
         "_layouts/**/*",
     ]) + [
         "404.html",
-        "_config.yml",
         "about.markdown",
         "index.markdown",
     ],
@@ -18,6 +17,6 @@ filegroup(
 jekyll_site(
     name = "site",
     srcs = [":sources"],
-    config = ":_config.yml",
+    config = "_config.yml",
     jekyll = "@bundle//bin:jekyll",
 )

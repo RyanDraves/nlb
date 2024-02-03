@@ -176,6 +176,7 @@ function setup_ryans_custom_settings() {
     install_apt_packages "${RYANS_APT_PACKAGES[@]}"
     install_vscode_extensions "${RYANS_VSCODE_EXTENSIONS[@]}"
     install_vscode_keybindings misc/dravesr/keybindings.json
+    setup_user_bazelrc
 }
 
 function setup_gh() {
@@ -300,6 +301,14 @@ function install_vscode_keybindings() {
     if copy_if_not_up_to_date $repo_keybindings_file $keybindings_file false; then
         echo "Copied $repo_keybindings_file to $keybindings_file"
     fi
+}
+
+function setup_user_bazelrc() {
+    echo "Setting up .user.bazelrc"
+
+    cat << EOF > $REPO_ROOT/.user.bazelrc
+common --color=yes
+EOF
 }
 
 #
