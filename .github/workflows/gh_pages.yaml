@@ -6,6 +6,11 @@ on:
     branches: ["main"]
 
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy to GitHub Pages"
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -19,6 +24,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,13 +44,14 @@ jobs:
           bazel build //pages:site
           output_path=$(bazel cquery //pages:site_build --output files 2>/dev/null)
           # Set the output path as an output variable
-          echo "::set-output name=page_path::$output_path"
+          echo "page_path=$output_path" >> $GITHUB_OUTPUT
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ steps.build_site.outputs.page_path }}
 
   deploy:
+    if: github.event_name == 'push' || github.event.inputs.deploy
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
