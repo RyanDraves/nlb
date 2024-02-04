@@ -21,7 +21,7 @@
 title: Ryan's Bizarre Blog
 description: >-
   Random musings.
-baseurl: ""
+baseurl: "/nlb"
 url: "https://ryandraves.github.io"
 
 encoding: utf-8
