@@ -40,11 +40,11 @@ plugins:
 # their entries' file path in the `include:` list.
 #
 exclude:
+  # Exclude Bazel Stuff
   - bazel-out/
   - external/
+  # Exclude files not part of the site
   - Gemfile
   - Gemfile.lock
-#   - .sass-cache/
-#   - .jekyll-cache/
-#   - gemfiles/
-#   - node_modules/
+  - README.md
+  - BUILD
