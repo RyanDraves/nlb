@@ -9,8 +9,8 @@ filegroup(
         "_layouts/**/*",
     ]) + [
         "404.html",
-        "about.markdown",
-        "index.markdown",
+        "about.md",
+        "index.md",
     ],
 )
 

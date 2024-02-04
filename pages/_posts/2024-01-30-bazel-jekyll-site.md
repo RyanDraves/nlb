@@ -1,0 +1,108 @@
+---
+layout: posts
+title:  "Using Bazel to Build a Jekyll Site"
+date:   2024-01-29 19:02:51 -0800
+categories: tooling bazel
+---
+I decided to build a blog, and like any engineer with a passion for tooling, I decided to do so in a ludicrously time-consuming way.
+
+Introducing a Jekyll site built and run with Bazel!
+
+Like all projects, I like to learn a few new things as I progress through it, so I claim no expertise in the following:
+- Ruby
+- Jekyll
+- Writing Bazel rules
+
+which is incidentally nearly every part of this project.
+
+# How it works
+
+## `rules_ruby`
+The first step is getting Ruby set up with Bazel. Looking at the [Jekyll quickstart][jeykll_docs], we'll need to install:
+  - Ruby
+  - Bundler (through Ruby)
+  - Jekyll (through Ruby/Bundler)
+
+[rules_ruby][rules_ruby] can do all of this for us. Quite conveniently, some of the features we need were recently implemented, like [exposing runnable targets][rules_ruby_hermetic_commands] of the gem binaries. This lets us run stuff like `jekyll new [...]` (via `bazel build @ruby//... && ./bazel-bin/external/rules_ruby~0.6.0~ruby~bundle/bin/jekyll new [...]`) without a separate local installation of those tools to get the project set up. A similar command to Bundler was needed to get `Gemfile.lock` generated.
+
+At the time of this writing I set up `rules_ruby` version `0.6.0` with an installation as documented nicely in the repo's README.
+
+## Jekyll setup
+
+I kept the initial Jekyll setup very bare-bones compared to what's created from `jekyll new`. There are a few key differences to get Jekyll and Bazel happy about each other.
+
+### `webrick` missing
+For one reason or another with the dependency setup, `webrick` was missing but needed by Jekyll. Adding the gem fixed it:
+```
+gem "webrick", "~> 1.8"
+```
+
+### `_config.yml` excludes
+The Jekyll build process involves running without a sandbox (`execution_requirements = {"no-sandbox": "1"}`; a necessity of how the gems and runfiles are structured), so there are a few Bazel paths we need to exclude files in the same folder that aren't part of the site.
+
+```yaml
+exclude:
+  # Exclude Bazel Stuff
+  - bazel-out/
+  - external/
+  # Exclude files not part of the site
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - BUILD
+```
+
+## `rules_jekyll`
+
+The interesting part of the setup is the glue between having Ruby & gems installed with Bazel and getting the site built with Bazel.
+
+The `jekyll_site` macro I made works by taking in the following:
+- The Jekyll binary target, so we have something to execute in our macro's actions
+- The sources of the site
+- The `_config.yml` file target, so we can pass it along in the arguments
+
+With those inputs, the macro produces a few targets:
+- A target to call the Jekyll binary and build the site
+- A target to create a small script that wraps the Jekyll binary and sorts out runfile locations
+- An exectuable target to call the previous script
+
+With this setup we get a clean interface to either `bazel build` or `bazel run` our site. Targets for this macro are also quite simple:
+```python
+jekyll_site(
+    name = "site",
+    srcs = [":sources"],
+    config = "_config.yml",
+    jekyll = "@bundle//bin:jekyll",
+)
+```
+
+While I haven't tried it, I imagine an auto-reload would be quite simple to achieve. Since the build action is separated, running this under [ibazel](https://github.com/bazelbuild/bazel-watcher) should trigger rebuilds that the running server can pick up.
+
+# The journey there
+
+The final implementation is pretty different from the meanderings that got there. I'll reflect on a few of the more interesting points of that process.
+
+## Jump Scripts
+I wasted a lot of time making scripts to run a hermetically installed tool back in the original workspace, i.e. one that "[jumps][jump_script]" back to user's CWD when running `bazel run` in order to edit local files. This would be really useful for commands like `jekyll new` (instead of fishing results from `bazel-out`), but the development effort wasn't worth it over making a proper rule that can cache the build. I got things working on older versions of `rules_ruby`, but the newer updates (which enabled the proper setup anyways) also enabled similar functionality if you pass in absolute paths.
+
+## `rules_ruby`
+`rules_ruby` was greatly simplified the project scope and was fun to set up. However, since I was pulling in changes from active development to get some features I needed, I ended up churning through a lot of implementation as I played around with what was possible to set up.
+
+After the jump script adventures I spent a good while trying to write a Bazel rule that depended on `@ruby//:jekyll`. I [learned](rules_ruby_issue), with the patient help of the `rule_ruby` maintainer, that I was running things in a non-hermetic / unintended way, that `no-sandbox` would fix the issues I was having using the intended `@bundle//bin:jekyll` target, and that my rule could just be a macro calling `bazel_skylib` or `aspect_bazel_lib` rules. Most of the heavy lifting in the project was learning these 3 lessons (as well as the exorbitant amount of time spent on the learning curve of making Bazel rules)
+
+# Next Steps
+
+I should definitely start actually writing something now or making the site look nicer. That's probably a good next step.
+
+After that, there are a few goodies that would clean up the tooling a bit:
+- Test `ibazel` for auto-reload of the site
+- Make new jump scripts to avoid fishing the tools out of `bazel-bin` to run them back in the workspace
+- Look into Jekyll plugins to extend the features of the site
+
+[ibazel]: https://github.com/bazelbuild/bazel-watcher
+[jeykll_docs]: https://jekyllrb.com/docs/
+[jump_script]: https://stackoverflow.com/a/72816931
+[rules_ruby]: https://github.com/bazel-contrib/rules_ruby
+[rules_ruby_git_issue]: https://github.com/bazel-contrib/rules_ruby/issues/62
+[rules_ruby_hermetic_commands]: https://github.com/bazel-contrib/rules_ruby/issues/41
+[rules_ruby_issue]: https://github.com/bazel-contrib/rules_ruby/issues/72
