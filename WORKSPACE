@@ -12,11 +12,9 @@ http_archive(
     url = "https://github.com/RyanDraves/rules_pico/archive/refs/heads/hermetic-toolchain.zip",
 )
 
-load("@rules_pico//pico:repositories.bzl", "rules_pico_dependencies", "rules_pico_toolchains")
+load("@rules_pico//pico:repositories.bzl", "rules_pico_dependencies")
 
 rules_pico_dependencies()
-
-rules_pico_toolchains()
 
 http_archive(
     name = "pico-examples",
