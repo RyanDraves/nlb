@@ -35,3 +35,8 @@ bazel_dep(
     version = "6.4.0",
     dev_dependency = True,
 )
+
+#
+# Register local toolchains
+#
+register_toolchains("//bzl/toolchains:all")

@@ -1,4 +1,4 @@
-load("//rules_jekyll:jekyll.bzl", "jekyll_site")
+load("//bzl/macros:jekyll.bzl", "jekyll_site")
 
 package(default_visibility = ["//visibility:public"])
 

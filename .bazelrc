@@ -1,10 +1,9 @@
-build --nolegacy_external_runfiles
 build --disk_cache=~/.cache/bazel
 
 build:pico --incompatible_enable_cc_toolchain_resolution
-# build:pico --platforms=@arm_none_eabi//platforms:arm_none_eabi
-build:pico --platforms=@rules_pico//platforms:pico
+build:pico --platforms=//bzl/platforms:pico
 
+build:pages --nolegacy_external_runfiles
 build:pages --action_env=JEKYLL_ENV=production
 
 try-import %workspace%/.user.bazelrc
