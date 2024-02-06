@@ -41,7 +41,7 @@ jobs:
       - name: Build Site
         id: build_site
         run: |
-          bazel build //pages:site
+          bazel build --config pages //pages:site
           output_path=$(bazel cquery //pages:site_build --output files 2>/dev/null)
           # Set the output path as an output variable
           echo "page_path=$output_path" >> $GITHUB_OUTPUT
