@@ -20,7 +20,7 @@ rules_pico_toolchains()
 
 http_archive(
     name = "pico-examples",
-    build_file = "//pico/pico:BUILD.pico-examples",
+    build_file = "@rules_pico//pico:BUILD.pico-examples",
     sha256 = "a07789d702f8e6034c42e04a3f9dda7ada4ae7c8e8d320c6be6675090c007861",
     strip_prefix = "pico-examples-sdk-1.4.0",
     urls = [
@@ -32,10 +32,10 @@ http_archive(
 
 git_repository(
     name = "arm_none_eabi",
-    commit = "4f3f31d629259e65e98b3aa7d8cb8c916cf7e03c",
-    remote = "https://github.com/hexdae/bazel-arm-none-eabi",
+    commit = "6c906b5691aa1b0ddc21094b606b3f6080f6e477",
+    remote = "https://github.com/RyanDraves/bazel-arm-none-eabi",
 )
 
 load("@arm_none_eabi//:deps.bzl", "arm_none_eabi_deps")
 
-arm_none_eabi_deps()
+arm_none_eabi_deps(version = "13.2.1")
