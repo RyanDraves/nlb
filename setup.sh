@@ -167,6 +167,12 @@ function copy_udev_rules() {
     sudo udevadm control --reload-rules
 }
 
+function setup_venv() {
+    echo "Exporting venv..."
+    time bazel run //:venv venv
+    echo "Done exporting venv"
+}
+
 #
 # Ryan's custom settings
 #
@@ -382,6 +388,7 @@ install_apt_packages "${APT_PACKAGES[@]}"
 filesystem_setup
 install_bazelisk
 copy_udev_rules
+setup_venv
 # Check if user is `dravesr` before setting up Ryan's environment
 if [ "$USER" = "dravesr" ]; then
     setup_ryans_custom_settings
