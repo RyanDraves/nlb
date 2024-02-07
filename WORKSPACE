@@ -37,3 +37,11 @@ git_repository(
 load("@arm_none_eabi//:deps.bzl", "arm_none_eabi_deps")
 
 arm_none_eabi_deps(version = "13.2.1")
+
+# py_venv export
+
+git_repository(
+    name = "rules_pyvenv",
+    commit = "0b03b0d1f5562223d1170c511e548dc0961f0c5f",
+    remote = "https://github.com/cedarai/rules_pyvenv",
+)

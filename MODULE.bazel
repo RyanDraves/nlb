@@ -28,6 +28,37 @@ use_repo(ruby, "bundle", "ruby_toolchains")
 register_toolchains("@ruby_toolchains//:all")
 
 #
+# Rules Python
+#
+
+# aspect_rules_py is promising, but broken on 3.11+ and its `py_venv`
+# rule is either underdocumented or broken.
+# bazel_dep(name = "aspect_rules_py", version = "0.5.0")
+
+bazel_dep(name = "rules_python", version = "0.29.0")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+
+python.toolchain(
+    python_version = "3.12",
+    is_default = True,
+)
+
+use_repo(python, "python_versions")
+
+register_toolchains("@python_versions//:all")
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+
+pip.parse(
+    hub_name = "pip",
+    python_version = "3.12",
+    requirements_lock = "//:requirements_lock.txt",
+)
+
+use_repo(pip, "pip")
+
+#
 # Buildifier
 #
 bazel_dep(

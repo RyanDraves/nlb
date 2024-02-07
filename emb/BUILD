@@ -1,4 +1,6 @@
+load("@pip//:requirements.bzl", "requirement")
 load("@rules_pico//pico:defs.bzl", "pico_add_uf2_output", "pico_binary", "pico_build_with_config")
+load("@rules_python//python:py_binary.bzl", "py_binary")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
 cc_library(
@@ -31,4 +33,12 @@ pico_build_with_config(
 pico_add_uf2_output(
     name = "hello.uf2",
     input = "hello_usb.elf",
+)
+
+py_binary(
+    name = "client",
+    srcs = ["client.py"],
+    deps = [
+        requirement("pyserial"),
+    ],
 )
