@@ -1,8 +1,7 @@
-# load("@aspect_rules_py//py:defs.bzl", "py_venv")
-load("@rules_pyvenv//:venv.bzl", "py_venv")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 load("@pip//:requirements.bzl", "all_requirements")
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+load("@rules_pyvenv//:venv.bzl", "py_venv")
 
 package(default_visibility = ["//visibility:public"])
 
