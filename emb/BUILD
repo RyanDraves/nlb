@@ -1,12 +1,9 @@
+load("@com_github_nanopb_nanopb//extra/bazel:nanopb_cc_proto_library.bzl", "cc_nanopb_proto_library")
 load("@pip//:requirements.bzl", "requirement")
 load("@rules_pico//pico:defs.bzl", "pico_add_uf2_output", "pico_binary", "pico_build_with_config")
+load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_python//python:py_binary.bzl", "py_binary")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
-
-cc_library(
-    name = "compile_test",
-    srcs = ["compile_test.cpp"],
-)
 
 # Build the pico SDK with gcc; it seems to have incompatibilities with g++
 platform_transition(
@@ -20,7 +17,11 @@ pico_binary(
     srcs = [
         "hello.cpp",
     ],
-    deps = [":pico_stdlib_c"],
+    deps = [
+        ":hello_nanopb_proto",
+        ":pico_stdlib_c",
+        "@com_github_nanopb_nanopb//:nanopb",
+    ],
 )
 
 pico_build_with_config(
@@ -41,4 +42,20 @@ py_binary(
     deps = [
         requirement("pyserial"),
     ],
+)
+
+proto_library(
+    name = "hello_proto",
+    srcs = ["hello.proto"],
+)
+
+# platform_transition(
+#     name = "hello_proto_host",
+#     dep = ":hello_proto",
+#     platform = "@local_config_platform//:host",
+# )
+
+cc_nanopb_proto_library(
+    name = "hello_nanopb_proto",
+    protos = [":hello_proto"],
 )

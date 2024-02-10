@@ -5,4 +5,5 @@
     "bazel.buildifierExecutable": "buildifier",
     "bazel.buildifierFixOnFormat": true,
     "editor.formatOnSave": true,
+    "python.defaultInterpreterPath": "venv/bin/python",
 }
