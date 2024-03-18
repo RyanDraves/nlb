@@ -61,6 +61,7 @@ fi
 
 RYANS_VSCODE_EXTENSIONS=(
     bazelbuild.vscode-bazel
+    betwixt.bebop-lang
     bpruitt-goddard.mermaid-markdown-syntax-highlighting
     github.copilot
     github.copilot-chat
@@ -143,6 +144,18 @@ function install_bazelisk() {
 
     # Verify bazel is installed
     bazel version
+}
+
+function install_bebop() {
+    # Check if bebop is already installed
+    if check_command bebopc; then
+        echo "bebop is already installed"
+        return 0
+    fi
+
+    # Install bebop from latest release
+    # Devil's package manager...
+    bash -c "$(curl https://bebop.sh)"
 }
 
 function copy_udev_rules() {
@@ -387,6 +400,7 @@ function copy_if_not_up_to_date() {
 install_apt_packages "${APT_PACKAGES[@]}"
 filesystem_setup
 install_bazelisk
+install_bebop
 copy_udev_rules
 setup_venv
 # Check if user is `dravesr` before setting up Ryan's environment

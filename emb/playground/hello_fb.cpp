@@ -1,28 +1,45 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <algorithm>
-#include <vector>
 
 #include "pico/stdlib.h"
-#include "third_party/bebop/bebop.hpp"
+#include "flatbuffers/flatbuffers.h"
 
 #if __cplusplus < 202100L
 #error This code requires C++23 or later
 #endif
 
-#include "emb/system.hpp"
+#include "emb/playground/system_generated.h"
 #include "emb/util/cobs.hpp"
 
+template <size_t BufferSize>
+class StaticAllocator : public flatbuffers::Allocator {
+ public:
+    StaticAllocator() {}
+
+    uint8_t* allocate(size_t size) override {
+        // Ignore the size, we always return the same buffer
+        return buffer_;
+    }
+
+    void deallocate(uint8_t* p, size_t size) override {
+        // Do nothing
+        return;
+    }
+
+ private:
+    uint8_t buffer_[BufferSize];
+};
 
 class Hello {
 private:
     constexpr static size_t kBufSize = 254;
 public:
-    Hello() {
-        // Reserve capacity for the outgoing buffer
-        tx_buffer_.reserve(kBufSize + 1);
-        // Statically allocate the incoming buffer
-        rx_buffer_.resize(kBufSize);
+    Hello() : tx_builder_(kBufSize + 1, &tx_buffer_allocator_),
+              tx_buffer_raw_(tx_buffer_),
+              tx_buffer_(tx_buffer_raw_ + 1),
+              rx_builder_(kBufSize + 1, &rx_buffer_allocator_),
+              rx_buffer_(rx_builder_.GetBufferPointer()) {
     }
 
     void say() {
@@ -38,10 +55,10 @@ public:
         while (!read_frame()) {}
 
         // COBS decode the message
-        size_t decodedLength = cobsDecode(rx_buffer_.data(), rx_size_ - 1, rx_buffer_.data());
+        size_t decodedLength = cobsDecode(rx_buffer_, rx_size_ - 1, rx_buffer_);
 
         // Decode the incoming message
-        config_ = Config::decode(rx_buffer_);
+        config_ = emb::GetMutableConfig(rx_buffer_);
         has_message_ = true;
     }
 
@@ -50,7 +67,7 @@ public:
             return;
         }
 
-        config_.ping++;
+        config_->mutate_ping(config_->ping() + 1);
     }
 
     void encode() {
@@ -58,23 +75,23 @@ public:
             return;
         }
 
-        tx_buffer_.clear();
-
-        // Encode the outgoing message
-        tx_buffer_.push_back(0);  // Padding for in-place COBS encoding
-        size_t bebop_size = config_.encodeInto(tx_buffer_);
+        // Copy the message into the tx buffer
+        tx_builder_.Clear();
+        auto config_mem = emb::CreateConfig(tx_builder_, config_->ping());
+        tx_builder_.Finish(config_mem);
 
         // COBS encode the message
-        size_t encoded_length = cobsEncode(tx_buffer_.data() + 1, bebop_size, tx_buffer_.data());
+        // size_t encoded_length = cobsEncode(tx_buffer_, stream.bytes_written, tx_buffer_raw_);
+        size_t encoded_length = cobsEncode(tx_buffer_, tx_builder_.GetSize(), tx_buffer_raw_);
         // Our COBS encode does not output the delimiter byte, so we need to
         // manually add it
-        tx_buffer_.push_back(0);
+        tx_buffer_raw_[encoded_length] = 0x00;
 
         // Send the message over the wire
         //
         // `stdout` is buffered on newlines, so we need to use `stderr` to
         // write the message immediately
-        fwrite(tx_buffer_.data(), 1, encoded_length + 1, stderr);
+        fwrite(tx_buffer_raw_, 1, encoded_length + 1, stderr);
     }
 
 private:
@@ -96,15 +113,22 @@ private:
         return false;
     }
 
-    Config config_;
+    emb::Config* config_;
 
+    StaticAllocator<kBufSize + 1> tx_buffer_allocator_;
+    flatbuffers::FlatBufferBuilder tx_builder_;
     // A neat trick with COBS encoding is that we can write the encoded message
-    // in-place, provided that our data is <overhead_bytes> bytes into the buffer;
-    // we'll manipulate the buffer to make this true
-    std::vector<uint8_t> tx_buffer_;
+    // in-place, provided that our data <overhead_bytes> bytes into the buffer
+    //
+    // Store the encoded message in the "raw" buffer
+    uint8_t* tx_buffer_raw_;
+    // And store our record message in the "normal" buffer
+    uint8_t* tx_buffer_;
 
+    StaticAllocator<kBufSize + 1> rx_buffer_allocator_;
+    flatbuffers::FlatBufferBuilder rx_builder_;
     // We can write the decoded message in-place as well
-    std::vector<uint8_t> rx_buffer_;
+    uint8_t* rx_buffer_;
 
     bool has_message_ = false;
     uint8_t rx_size_ = 0;

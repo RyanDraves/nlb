@@ -5,4 +5,6 @@ build:pico --platforms=//bzl/platforms:pico
 build:pages --nolegacy_external_runfiles
 build:pages --action_env=JEKYLL_ENV=production
 
+test --test_output=errors
+
 try-import %workspace%/.user.bazelrc

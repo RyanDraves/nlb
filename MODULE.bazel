@@ -29,9 +29,9 @@ register_toolchains("@ruby_toolchains//:all")
 #
 # Rules Python
 #
-# aspect_rules_py is promising, but broken on 3.11+ and its `py_venv`
+# aspect_rules_py is promising, but its `py_venv` is 3.11+ and
 # rule is either underdocumented or broken.
-# bazel_dep(name = "aspect_rules_py", version = "0.5.0")
+bazel_dep(name = "aspect_rules_py", version = "0.5.0")
 
 bazel_dep(name = "rules_python", version = "0.29.0")
 
@@ -43,9 +43,7 @@ python.toolchain(
 )
 
 use_repo(python, "python_versions")
-# use_repo(python, "python_3_12")
-
-register_toolchains("@python_versions//:all")
+use_repo(python, "python_3_12")
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 
@@ -56,20 +54,6 @@ pip.parse(
 )
 
 use_repo(pip, "pip")
-
-#
-# Protobuf
-#
-# bazel_dep(name = "com_google_protobuf", version = "0.0.0")
-
-# # Not published in the Bazel registry yet
-# git_override(
-#     module_name = "com_google_protobuf",
-#     remote = "https://github.com/protocolbuffers/protobuf.git",
-#     commit = "a9b006bddd52e289029f16aa77b77e8e0033d9ee",
-# )
-
-# bazel_dep(name = "rules_proto", version = "6.0.0-rc2")
 
 #
 # Buildifier
@@ -84,7 +68,6 @@ bazel_dep(
 # Register local toolchains
 #
 register_toolchains("//bzl/toolchains:all")
-
 
 # Hedron's Compile Commands Extractor for Bazel
 # https://github.com/hedronvision/bazel-compile-commands-extractor

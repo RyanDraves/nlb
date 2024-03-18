@@ -1,0 +1,13 @@
+# This file is only added to deal with Flatbuffer's Bazel workspace
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+devDependencies:
+  '@types/node':
+    specifier: ^20.10.4
+    version: 20.10.4
+
+packages:

@@ -5,7 +5,3 @@ package emb;
 message Config {
     uint32 ping = 1;
 }
-
-message Telem {
-    uint32 pong = 1;
-}

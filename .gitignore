@@ -3,3 +3,5 @@ MODULE.bazel.lock
 .user.bazelrc
 venv
 external
+compile_commands.json
+__pycache__/

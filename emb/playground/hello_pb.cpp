@@ -1,30 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <algorithm>
-#include <vector>
 
+#include "pb_encode.h"
+#include "pb_decode.h"
 #include "pico/stdlib.h"
-#include "third_party/bebop/bebop.hpp"
 
 #if __cplusplus < 202100L
 #error This code requires C++23 or later
 #endif
 
-#include "emb/system.hpp"
+#include "emb/playground/system.pb.h"
 #include "emb/util/cobs.hpp"
-
 
 class Hello {
 private:
     constexpr static size_t kBufSize = 254;
 public:
-    Hello() {
-        // Reserve capacity for the outgoing buffer
-        tx_buffer_.reserve(kBufSize + 1);
-        // Statically allocate the incoming buffer
-        rx_buffer_.resize(kBufSize);
-    }
-
     void say() {
         char buffer[] = "Hello, world!\n";
         // printf("Hello, world! %ld\n", config_.ping);
@@ -38,11 +30,11 @@ public:
         while (!read_frame()) {}
 
         // COBS decode the message
-        size_t decodedLength = cobsDecode(rx_buffer_.data(), rx_size_ - 1, rx_buffer_.data());
+        size_t decodedLength = cobsDecode(rx_buffer_, rx_size_ - 1, rx_buffer_);
 
         // Decode the incoming message
-        config_ = Config::decode(rx_buffer_);
-        has_message_ = true;
+        pb_istream_t stream = pb_istream_from_buffer(rx_buffer_, decodedLength);
+        has_message_ = pb_decode(&stream, emb_Config_fields, &config_);
     }
 
     void process() {
@@ -58,23 +50,21 @@ public:
             return;
         }
 
-        tx_buffer_.clear();
-
         // Encode the outgoing message
-        tx_buffer_.push_back(0);  // Padding for in-place COBS encoding
-        size_t bebop_size = config_.encodeInto(tx_buffer_);
+        pb_ostream_t stream = pb_ostream_from_buffer(tx_buffer_, kBufSize);
+        bool success = pb_encode(&stream, emb_Config_fields, &config_);
 
         // COBS encode the message
-        size_t encoded_length = cobsEncode(tx_buffer_.data() + 1, bebop_size, tx_buffer_.data());
+        size_t encoded_length = cobsEncode(tx_buffer_, stream.bytes_written, tx_buffer_raw_);
         // Our COBS encode does not output the delimiter byte, so we need to
         // manually add it
-        tx_buffer_.push_back(0);
+        tx_buffer_raw_[encoded_length] = 0x00;
 
         // Send the message over the wire
         //
         // `stdout` is buffered on newlines, so we need to use `stderr` to
         // write the message immediately
-        fwrite(tx_buffer_.data(), 1, encoded_length + 1, stderr);
+        fwrite(tx_buffer_raw_, 1, encoded_length + 1, stderr);
     }
 
 private:
@@ -96,15 +86,18 @@ private:
         return false;
     }
 
-    Config config_;
+    emb_Config config_ = emb_Config_init_default;
 
     // A neat trick with COBS encoding is that we can write the encoded message
-    // in-place, provided that our data is <overhead_bytes> bytes into the buffer;
-    // we'll manipulate the buffer to make this true
-    std::vector<uint8_t> tx_buffer_;
+    // in-place, provided that our data <overhead_bytes> bytes into the buffer
+    //
+    // Store the encoded message in the "raw" buffer
+    uint8_t tx_buffer_raw_[kBufSize + 1];
+    // And store our record message in the "normal" buffer
+    uint8_t* tx_buffer_ = tx_buffer_raw_ + 1;
 
     // We can write the decoded message in-place as well
-    std::vector<uint8_t> rx_buffer_;
+    uint8_t rx_buffer_[kBufSize];
 
     bool has_message_ = false;
     uint8_t rx_size_ = 0;

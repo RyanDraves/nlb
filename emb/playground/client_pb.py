@@ -2,7 +2,7 @@ import serial
 from serial.tools import list_ports
 from serial.tools import list_ports_common
 
-from emb import system
+from emb import hello_pb2
 from emb.bindings import util
 
 PICO_VENDOR_PRODUCT_ID = '2e8a:000a'
@@ -32,20 +32,22 @@ class SerialNode:
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._serial.close()
 
-    def send(self, msg: system.Config) -> None:
-        encoded_msg = util.cobsEncode(bytes(msg.encode())) + b'\x00'
+    def send(self, msg: hello_pb2.Config) -> None:
+        encoded_msg = util.cobsEncode(msg.SerializeToString()) + b'\x00'
+        decoded_buffer = util.cobsDecode(encoded_msg[:-1])
         # Print the encoded message in hex
         # print('Tx: ' + ' '.join(f'{b:02x}' for b in encoded_msg))
         self._serial.write(encoded_msg)
 
-    def recv(self) -> system.Config:
+    def recv(self) -> hello_pb2.Config:
         buffer = bytes()
         while True:
             buffer += self._serial.read_until(b'\x00', size=255)
             if buffer.endswith(b'\x00'):
                 # print('Rx: ' + ' '.join(f'{b:02x}' for b in buffer))
                 decoded_buffer = util.cobsDecode(buffer[:-1])
-                msg = system.Config.decode(decoded_buffer)
+                msg = hello_pb2.Config()
+                msg.ParseFromString(decoded_buffer)
                 return msg
 
 
@@ -54,14 +56,14 @@ def main() -> None:
     print(f'Pico found at {port}')
     serial_node = SerialNode(port)
     with serial_node as node:
-        msg = system.Config(ping=0)
+        msg = hello_pb2.Config()
         while True:
             node.send(msg)
             return_msg = node.recv()
             assert msg.ping + 1 == return_msg.ping
             print(msg.ping, return_msg.ping)
-            # print('')d
-            msg = system.Config(ping=msg.ping + 1)
+            # print('')
+            msg.ping += 1
             # time.sleep(0.5)
 
 

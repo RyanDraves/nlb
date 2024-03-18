@@ -1,0 +1,7 @@
+namespace emb;
+
+table Config {
+    ping:int = 0 (id: 0);
+}
+
+root_type Config;

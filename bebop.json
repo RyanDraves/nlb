@@ -1,0 +1,16 @@
+{
+  "include": [
+    "**/*.bop"
+  ],
+  "exclude": [
+    "bazel-*"
+  ],
+  "generators": {
+    "cpp": {
+      "outFile": "emb/system.hpp"
+    },
+    "py": {
+      "outFile": "emb/system.py"
+    }
+  }
+}
