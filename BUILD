@@ -44,6 +44,6 @@ refresh_compile_commands(
     # Specify the targets of interest.
     # For example, specify a dict of targets and any flags required to build.
     targets = {
-        "//emb/...": "--config pico",
+        "//emb/...": "",
     },
 )

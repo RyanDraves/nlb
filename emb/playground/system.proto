@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package emb;
-
-message Config {
-    uint32 ping = 1;
-}

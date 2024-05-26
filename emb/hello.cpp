@@ -3,15 +3,25 @@
 #include <algorithm>
 #include <vector>
 
+#include "nlohmann/json.hpp"
 #include "pico/stdlib.h"
-#include "third_party/bebop/bebop.hpp"
 
 #if __cplusplus < 202100L
 #error This code requires C++23 or later
 #endif
 
-#include "emb/system.hpp"
 #include "emb/util/cobs.hpp"
+
+
+namespace emb {
+
+using json = nlohmann::json;
+
+struct Config {
+    uint32_t ping = 0;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Config, ping);
+};
 
 
 class Hello {
@@ -41,7 +51,7 @@ public:
         size_t decodedLength = cobsDecode(rx_buffer_.data(), rx_size_ - 1, rx_buffer_.data());
 
         // Decode the incoming message
-        config_ = Config::decode(rx_buffer_);
+        config_ = json::from_cbor(rx_buffer_.data(), decodedLength);
         has_message_ = true;
     }
 
@@ -62,10 +72,10 @@ public:
 
         // Encode the outgoing message
         tx_buffer_.push_back(0);  // Padding for in-place COBS encoding
-        size_t bebop_size = config_.encodeInto(tx_buffer_);
+        json::to_cbor(config_, tx_buffer_);
 
         // COBS encode the message
-        size_t encoded_length = cobsEncode(tx_buffer_.data() + 1, bebop_size, tx_buffer_.data());
+        size_t encoded_length = cobsEncode(tx_buffer_.data() + 1, tx_buffer_.size() - 1, tx_buffer_.data());
         // Our COBS encode does not output the delimiter byte, so we need to
         // manually add it
         tx_buffer_.push_back(0);
@@ -110,16 +120,17 @@ private:
     uint8_t rx_size_ = 0;
 };
 
+}  // namespace emb
+
 int main() {
     stdio_init_all();
     stdio_set_translate_crlf(&stdio_usb, false);
 
-    Hello hello;
+    emb::Hello hello;
     while (true) {
         hello.decode();
         hello.process();
         hello.encode();
-        // hello.say();
         // sleep_ms(1000);
     }
 }
