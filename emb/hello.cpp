@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <vector>
+#include <functional>
+#include <map>
 
 #include "nlohmann/json.hpp"
 #include "pico/stdlib.h"
+#include "hardware/flash.h"
 
 #if __cplusplus < 202100L
 #error This code requires C++23 or later
@@ -17,16 +20,31 @@ namespace emb {
 
 using json = nlohmann::json;
 
-struct Config {
-    uint32_t ping = 0;
+struct LogMessage {
+    std::string message;
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Config, ping);
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(LogMessage, message);
 };
 
 
+struct FlashPage {
+    uint32_t address;
+    uint16_t read_size;
+    std::vector<uint8_t> data;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(FlashPage, address, read_size, data);
+};
+
+
+struct Ping {
+    uint32_t ping;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Ping, ping);
+};
+
 class Hello {
 private:
-    constexpr static size_t kBufSize = 254;
+    constexpr static size_t kBufSize = 1024;
 public:
     Hello() {
         // Reserve capacity for the outgoing buffer
@@ -47,32 +65,88 @@ public:
         // This is setup to idle until a message is received
         while (!read_frame()) {}
 
-        // COBS decode the message
-        size_t decodedLength = cobsDecode(rx_buffer_.data(), rx_size_ - 1, rx_buffer_.data());
+        // COBS decode the message; subtract 1 to account for the message ID
+        rx_msg_size_ = cobsDecode(rx_buffer_.data(), rx_size_ - 1, rx_buffer_.data()) - 1;
 
-        // Decode the incoming message
-        config_ = json::from_cbor(rx_buffer_.data(), decodedLength);
-        has_message_ = true;
-    }
-
-    void process() {
-        if (!has_message_) {
+        // Check if the first byte is a valid message ID
+        if (rx_msg_size_ == 0 || message_handlers_.find(rx_buffer_[0]) == message_handlers_.end()) {
             return;
         }
 
-        config_.ping++;
+        // Call the appropriate message handler
+        message_handlers_.at(rx_buffer_[0])();
+    }
+
+    void ping() {
+        // Receive a Ping message from the incoming buffer
+        Ping ping = json::from_cbor(rx_buffer_.data() + 1, rx_buffer_.data() + 1 + rx_msg_size_);
+
+        // Create a response message
+        LogMessage log_message;
+        log_message.message = "Pong " + std::to_string(ping.ping) + "!";
+        // Encode the outgoing message
+        tx_buffer_.clear();
+        tx_buffer_.push_back(0x00);  // Padding for in-place COBS encoding
+        // Add the message ID
+        tx_buffer_.push_back(0x02);
+        json::to_cbor(log_message, tx_buffer_);
+        has_tx_message_ = true;
+    }
+
+    void flash_page() {
+        // Receive a FlashPage emssage from the incoming buffer
+        FlashPage flash_page = json::from_cbor(rx_buffer_.data() + 1,  rx_buffer_.data() + 1 + rx_msg_size_);
+
+        if (!flash_page.data.size()) {
+            // This is a write request
+
+            // Create a response message
+            LogMessage log_message;
+            // log_message.message = "Received FlashPage at address " + std::to_string(flash_page.address) + "!";
+
+            const uint8_t* flash_ptr = (const uint8_t*)(XIP_BASE + flash_page.address);
+            for (int i = 0; i < flash_page.read_size; i++) {
+                log_message.message += std::to_string(flash_ptr[i]) + " ";
+            }
+
+            // Encode the outgoing message
+            tx_buffer_.clear();
+            tx_buffer_.push_back(0x00);  // Padding for in-place COBS encoding
+            // Add the message ID
+            tx_buffer_.push_back(0x02);
+            json::to_cbor(log_message, tx_buffer_);
+            has_tx_message_ = true;
+        }
+        else {
+            // This is a read request
+
+            // Create a response message
+            FlashPage response;
+            response.address = flash_page.address;
+            response.read_size = flash_page.read_size;
+            response.data.reserve(flash_page.read_size);
+
+            // Read from the flash memory
+            // The flash is memory-mapped at XIP_BASE
+            const uint8_t* flash_ptr = (const uint8_t*)(XIP_BASE + flash_page.address);
+            for (int i = 0; i < flash_page.read_size; i++) {
+                response.data.push_back(flash_ptr[i]);
+            }
+
+            // Encode the outgoing message
+            tx_buffer_.clear();
+            tx_buffer_.push_back(0x00);  // Padding for in-place COBS encoding
+            // Add the message ID
+            tx_buffer_.push_back(0x01);
+            json::to_cbor(response, tx_buffer_);
+            has_tx_message_ = true;
+        }
     }
 
     void encode() {
-        if (!has_message_) {
+        if (!has_tx_message_) {
             return;
         }
-
-        tx_buffer_.clear();
-
-        // Encode the outgoing message
-        tx_buffer_.push_back(0);  // Padding for in-place COBS encoding
-        json::to_cbor(config_, tx_buffer_);
 
         // COBS encode the message
         size_t encoded_length = cobsEncode(tx_buffer_.data() + 1, tx_buffer_.size() - 1, tx_buffer_.data());
@@ -92,7 +166,6 @@ private:
         // Read the incoming message from the wire
         int16_t rc = getchar_timeout_us(1000);
         rx_size_ = 0;
-        has_message_ = false;
         while (rc != PICO_ERROR_TIMEOUT) {
             rx_buffer_[rx_size_++] = rc;
             if (rc == 0x00) {
@@ -106,7 +179,11 @@ private:
         return false;
     }
 
-    Config config_;
+    // Map message IDs to function pointers
+    const std::unordered_map<uint8_t, std::function<void()>> message_handlers_ = {
+        {0x00, std::bind(&Hello::ping, this)},
+        {0x01, std::bind(&Hello::flash_page, this)},
+    };
 
     // A neat trick with COBS encoding is that we can write the encoded message
     // in-place, provided that our data is <overhead_bytes> bytes into the buffer;
@@ -116,8 +193,10 @@ private:
     // We can write the decoded message in-place as well
     std::vector<uint8_t> rx_buffer_;
 
-    bool has_message_ = false;
+    size_t rx_msg_size_;
+
     uint8_t rx_size_ = 0;
+    bool has_tx_message_ = false;
 };
 
 }  // namespace emb
@@ -129,7 +208,6 @@ int main() {
     emb::Hello hello;
     while (true) {
         hello.decode();
-        hello.process();
         hello.encode();
         // sleep_ms(1000);
     }

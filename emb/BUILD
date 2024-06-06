@@ -21,6 +21,25 @@ pico_build_with_config(
     stdio_usb = True,
 )
 
+# TODO: File ticket for pico_add_bin_output & pico_add_map_output back at
+# bazel-arm-none-eabi; the toolchain executable paths are wrong and I
+# couldn't figure it out after a couple hours.
+genrule(
+    name = "hello.bin",
+    srcs = [":hello_usb.elf"],
+    outs = ["hello.bin"],
+    cmd = "$(execpath @arm_none_eabi//:objcopy) -O binary $< $@",
+    tools = ["@arm_none_eabi//:objcopy"],
+)
+
+genrule(
+    name = "hello.map",
+    srcs = [":hello_usb.elf"],
+    outs = ["hello.map"],
+    cmd = "$(execpath @arm_none_eabi//:objdump) -C --all-headers $< > $@",
+    tools = ["@arm_none_eabi//:objdump"],
+)
+
 pico_add_uf2_output(
     name = "hello.uf2",
     input = "hello_usb.elf",
