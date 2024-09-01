@@ -1,6 +1,7 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
 load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:pico.bzl", "pico_project")
+load("//bzl/macros:python.bzl", "py_test")
 
 py_library(
     name = "client",
@@ -23,6 +24,21 @@ py_binary(
         "//emb/network/transport:usb",
         "//nlb/util:click_utils",
         requirement("rich-click"),
+    ],
+)
+
+py_test(
+    name = "host_test",
+    srcs = ["host_test.py"],
+    data = [
+        ":base_host",
+    ],
+    env = {
+        "HOST_BIN": "$(rootpath :base_host)",
+    },
+    deps = [
+        ":client",
+        "//emb/network/transport:tcp",
     ],
 )
 
