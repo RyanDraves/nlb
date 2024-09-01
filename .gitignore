@@ -1,7 +1,13 @@
+# Generated things
 bazel-*
 MODULE.bazel.lock
-.user.bazelrc
 venv
 external
 compile_commands.json
 __pycache__/
+
+# Per-user things
+.user.bazelrc
+
+# Future development things
+vscode/

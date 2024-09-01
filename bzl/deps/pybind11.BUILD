@@ -22,4 +22,7 @@ cc_library(
         "-Wno-pragma-once-outside-header",
     ],
     includes = ["include"],
+    deps = [
+        "@python_3_12//:python_headers",
+    ],
 )

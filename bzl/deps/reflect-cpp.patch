@@ -1,0 +1,12 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3d4a688..bb6965c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,5 +1,7 @@
+ cmake_minimum_required(VERSION 3.23)
+ 
++set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
++
+ option(REFLECTCPP_BUILD_SHARED "Build shared library" ${BUILD_SHARED_LIBS})
+ 
+ option(REFLECTCPP_BSON "Enable BSON support" OFF)

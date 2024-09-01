@@ -28,7 +28,7 @@ compile_pip_requirements(
 )
 
 # Usage:
-# - bazel run //:venv venv
+#  - bazel run //:venv venv
 py_venv(
     name = "venv",
     deps = all_requirements,

@@ -5,6 +5,7 @@ module(
 
 bazel_dep(name = "aspect_bazel_lib", version = "2.3.0")
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
+bazel_dep(name = "rules_platform", version = "0.1.0")
 
 #
 # Rules Ruby
