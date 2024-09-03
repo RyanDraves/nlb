@@ -50,21 +50,11 @@ git_repository(
 )
 
 # Google Test
+
 git_repository(
     name = "com_google_googletest",
     commit = "f8d7d77c06936315286eb55f8de22cd23c188571",
     remote = "https://github.com/google/googletest.git",
-)
-
-# Pybind11
-http_archive(
-    name = "pybind11",
-    build_file = "//bzl/deps:pybind11.BUILD",
-    integrity = "sha256-1HWXjaDNwtQ7c/MJEHhnWdWTqdjuBbG2hG0esWxtLgw=",
-    strip_prefix = "pybind11-2.11.1",
-    urls = [
-        "https://github.com/pybind/pybind11/archive/v2.11.1.tar.gz",
-    ],
 )
 
 # Reflect C++ (JSON)

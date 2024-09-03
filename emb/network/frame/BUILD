@@ -1,4 +1,5 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("//bzl/macros:python.bzl", "py_test")
 load("//bzl/macros:unittest.bzl", "cc_unittest")
 
@@ -18,37 +19,24 @@ cc_unittest(
     ],
 )
 
-###
-# Copied from https://github.com/psigen/bazel-python-cpp-example/blob/281d520ce456f6f41bd1f042401594693a98a5d7/binding/BUILD.bazel
-# (including the comment that this was adapted from a Github issue)
-###
-
-# Adapted from: https://github.com/bazelbuild/bazel/issues/1475
-cc_binary(
-    name = "cobs.so",
+pybind_extension(
+    name = "cobs",
     srcs = ["bindings.cc"],
-    linkshared = 1,
-    visibility = ["//visibility:public"],
     deps = [
         ":cobs_cc",
-        "@pybind11",
     ],
 )
 
 py_library(
-    name = "cobs",
+    name = "cobs_lib",
     data = [":cobs.so"],
-    visibility = ["//visibility:public"],
+    imports = ["."],
 )
-
-###
-# End copy pasta
-###
 
 py_test(
     name = "cobs_test",
     srcs = ["cobs_test.py"],
     deps = [
-        ":cobs",
+        ":cobs_lib",
     ],
 )
