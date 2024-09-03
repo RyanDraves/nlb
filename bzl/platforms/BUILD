@@ -14,6 +14,15 @@ constraint_value(
     constraint_setting = ":c_family",
 )
 
+constraint_setting(
+    name = "host_type",
+)
+
+constraint_value(
+    name = "unittest",
+    constraint_setting = ":host_type",
+)
+
 platform(
     name = "pico",
     constraint_values = [
@@ -30,4 +39,12 @@ platform(
         "@platforms//cpu:armv6-m",
         ":c",
     ],
+)
+
+platform(
+    name = "host_unittest",
+    constraint_values = [
+        ":unittest",
+    ],
+    parents = ["@platforms//host"],
 )

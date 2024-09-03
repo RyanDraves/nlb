@@ -1,0 +1,77 @@
+diff --git a/Makefile b/Makefile
+index 948e3fa..b239ffe 100644
+--- a/Makefile
++++ b/Makefile
+@@ -42,7 +42,7 @@ ifneq ($(BUILD_SHARED),1)
+ endif
+ endif
+ 
+-INSTALL_TARGETS += $(bindir)/cbordump
++# INSTALL_TARGETS += $(bindir)/cbordump
+ ifeq ($(BUILD_SHARED),1)
+ BINLIBRARY=lib/libtinycbor.so
+ INSTALL_TARGETS += $(libdir)/libtinycbor.so.$(VERSION)
+@@ -125,7 +125,7 @@ endif
+ all: .config \
+ 	$(if $(subst 0,,$(BUILD_STATIC)),lib/libtinycbor.a) \
+ 	$(if $(subst 0,,$(BUILD_SHARED)),lib/libtinycbor.so) \
+-	$(if $(freestanding-pass),,bin/cbordump) \
++	# $(if $(freestanding-pass),,bin/cbordump) \
+ 	tinycbor.pc
+ all: $(if $(JSON2CBOR_SOURCES),bin/json2cbor)
+ check: tests/Makefile | $(BINLIBRARY)
+@@ -149,13 +149,13 @@ lib/libtinycbor.so: $(TINYCBOR_SOURCES:.c=.pic.o)
+ 	$(CC) -shared -Wl,-soname,libtinycbor.so.$(SOVERSION) -o lib/libtinycbor.so.$(VERSION) $(LDFLAGS) $^ $(LDLIBS)
+ 	cd lib ; ln -sf libtinycbor.so.$(VERSION) libtinycbor.so ; ln -sf libtinycbor.so.$(VERSION) libtinycbor.so.$(SOVERSION)
+ 
+-bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) $(BINLIBRARY)
+-	@$(MKDIR) -p bin
+-	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
++# bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) $(BINLIBRARY)
++# 	@$(MKDIR) -p bin
++# 	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
+ 
+-bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) $(BINLIBRARY)
+-	@$(MKDIR) -p bin
+-	$(CC) -o $@ $(LDFLAGS) $^ $(LDFLAGS_CJSON) $(LDLIBS)
++# bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) $(BINLIBRARY)
++# 	@$(MKDIR) -p bin
++# 	$(CC) -o $@ $(LDFLAGS) $^ $(LDFLAGS_CJSON) $(LDLIBS)
+ 
+ tinycbor.pc: tinycbor.pc.in
+ 	$(SED) > $@ < $< \
+@@ -206,8 +206,6 @@ mostlyclean:
+ 	$(RM) $(CBORDUMP_SOURCES:.c=.o)
+ 
+ clean: mostlyclean
+-	$(RM) bin/cbordump
+-	$(RM) bin/json2cbor
+ 	$(RM) lib/libtinycbor.a
+ 	$(RM) lib/libtinycbor-freestanding.a
+ 	$(RM) tinycbor.pc
+diff --git a/src/cbortojson.c b/src/cbortojson.c
+index 856d926..fb1e7cb 100644
+--- a/src/cbortojson.c
++++ b/src/cbortojson.c
+@@ -296,7 +296,7 @@ static CborError add_value_metadata(FILE *out, CborType type, const ConversionSt
+     int flags = status->flags;
+     if (flags & TypeWasTagged) {
+         /* extract the tagged type, which may be JSON native */
+-        type = flags & FinalTypeMask;
++        type = (CborType)(flags & FinalTypeMask);
+         flags &= ~(FinalTypeMask | TypeWasTagged);
+ 
+         if (fprintf(out, "\"tag\":\"%" PRIu64 "\"%s", status->lastTag,
+diff --git a/tools/cbordump/cbordump.c b/tools/cbordump/cbordump.c
+index 2626813..0a42d42 100644
+--- a/tools/cbordump/cbordump.c
++++ b/tools/cbordump/cbordump.c
+@@ -56,7 +56,7 @@ void dumpFile(FILE *in, const char *fname, bool printJosn, int flags)
+     size_t buflen = 0;
+     do {
+         if (bufsize == buflen)
+-            buffer = xrealloc(buffer, bufsize += chunklen, fname);
++            buffer = (uint8_t*)(xrealloc(buffer, bufsize += chunklen, fname));
+ 
+         size_t n = fread(buffer + buflen, 1, bufsize - buflen, in);
+         buflen += n;

@@ -1,0 +1,19 @@
+# Inspirational syntax for my inevitable descent into writing
+# a serialization library for my projects.
+class Ping {
+    int ping;
+}
+
+class FlashPage {
+    int address;
+    int read_size;
+    list[int] data;
+}
+
+class LogMessage {
+    str message;
+}
+
+
+transaction ping[Ping, LogMessage];
+transaction flash_page[FlashPage, FlashPage];

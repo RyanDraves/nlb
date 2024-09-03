@@ -1,9 +1,13 @@
 build --disk_cache=~/.cache/bazel
 
-build:pico --incompatible_enable_cc_toolchain_resolution
+# build --cxxopt='-std=c++23' is broken?
+build --action_env=BAZEL_CXXOPTS="-std=c++23"
+
 build:pico --platforms=//bzl/platforms:pico
 
 build:pages --nolegacy_external_runfiles
 build:pages --action_env=JEKYLL_ENV=production
+
+test --test_output=errors
 
 try-import %workspace%/.user.bazelrc

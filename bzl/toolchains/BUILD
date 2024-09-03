@@ -10,6 +10,8 @@ arm_none_eabi_toolchain(
         "-std=c++23",
     ],
     gcc_tool = "g++",
+    # Pico SDK includes its own C++ standard library implementation
+    include_std = True,
     target_compatible_with = [
         "@platforms//os:none",
         "@platforms//cpu:armv6-m",

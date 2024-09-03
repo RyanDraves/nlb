@@ -1,4 +1,14 @@
+# Generated things
 bazel-*
 MODULE.bazel.lock
-.user.bazelrc
 venv
+external
+compile_commands.json
+__pycache__/
+
+# Per-user things
+.user.bazelrc
+
+# Future development things
+vscode/
+pages/_posts/2024-03-17-pico-programmatic-flash_pt1.md

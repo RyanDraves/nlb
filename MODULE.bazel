@@ -5,11 +5,11 @@ module(
 
 bazel_dep(name = "aspect_bazel_lib", version = "2.3.0")
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
+bazel_dep(name = "rules_platform", version = "0.1.0")
 
 #
 # Rules Ruby
 #
-
 bazel_dep(name = "rules_ruby", version = "0.6.0")
 
 ruby = use_extension("@rules_ruby//ruby:extensions.bzl", "ruby")
@@ -30,10 +30,9 @@ register_toolchains("@ruby_toolchains//:all")
 #
 # Rules Python
 #
-
-# aspect_rules_py is promising, but broken on 3.11+ and its `py_venv`
+# aspect_rules_py is promising, but its `py_venv` is 3.11+ and
 # rule is either underdocumented or broken.
-# bazel_dep(name = "aspect_rules_py", version = "0.5.0")
+bazel_dep(name = "aspect_rules_py", version = "0.5.0")
 
 bazel_dep(name = "rules_python", version = "0.29.0")
 
@@ -45,8 +44,7 @@ python.toolchain(
 )
 
 use_repo(python, "python_versions")
-
-register_toolchains("@python_versions//:all")
+use_repo(python, "python_3_12")
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 
@@ -71,3 +69,24 @@ bazel_dep(
 # Register local toolchains
 #
 register_toolchains("//bzl/toolchains:all")
+
+# Hedron's Compile Commands Extractor for Bazel
+# https://github.com/hedronvision/bazel-compile-commands-extractor
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+    commit = "0e990032f3c5a866e72615cf67e5ce22186dcb97",
+    # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
+    # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
+)
+
+#
+# rules_foreign_cc
+#
+bazel_dep(name = "rules_foreign_cc", version = "0.10.1")
+
+#
+# Pybind11
+#
+bazel_dep(name = "pybind11_bazel", version = "2.12.0")
