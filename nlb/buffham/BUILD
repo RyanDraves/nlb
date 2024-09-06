@@ -1,5 +1,18 @@
-load("@aspect_rules_py//py:defs.bzl", "py_library")
+load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:python.bzl", "py_test")
+
+py_binary(
+    name = "buffham",
+    srcs = ["buffham.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":parser",
+        ":py_generator",
+        "//nlb/util:click_utils",
+        requirement("rich-click"),
+    ],
+)
 
 py_library(
     name = "engine",
@@ -49,8 +62,7 @@ py_test(
     name = "py_generator_test",
     srcs = ["py_generator_test.py"],
     data = glob([
-        "testdata/*.bh",
-        "testdata/*.py.golden",
+        "testdata/*",
     ]),
     deps = [
         ":engine",

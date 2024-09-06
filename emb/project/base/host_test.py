@@ -1,10 +1,10 @@
 import os
 import pathlib
 import subprocess
-import tempfile
 import unittest
 
 from emb.network.transport import tcp
+from emb.project.base import base_bh
 from emb.project.base import client
 
 
@@ -22,7 +22,7 @@ class HostTest(unittest.TestCase):
 
         self.addCleanup(self.host.terminate)
 
-        self.node = client.BaseNode(transporter=tcp.Zmq(tcp.Zmq.DEFAULT_ADDRESS))
+        self.node = base_bh.BaseNode(transporter=tcp.Zmq(tcp.Zmq.DEFAULT_ADDRESS))
         self.client = client.BaseClient(self.node)
 
     def test_ping(self):

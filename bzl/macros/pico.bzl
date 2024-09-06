@@ -17,6 +17,7 @@ def pico_project(name, srcs, deps):
         srcs: The source files
         deps: The dependencies
     """
+    name = name.replace("_pico", "")
 
     # Host compilation of the binary
     cc_binary(

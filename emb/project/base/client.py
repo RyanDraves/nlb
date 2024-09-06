@@ -1,61 +1,12 @@
-import dataclasses
 import logging
 import pathlib
 from typing import Self
 
-from emb.network.node import dataclass_node
-from emb.network.serialize import cbor2_cobs
-from emb.network.transport import transporter
-
-
-# TODO: Generate everything below up until the client methods
-@dataclasses.dataclass
-class Ping:
-    ping: int
-
-
-@dataclasses.dataclass
-class FlashPage:
-    address: int
-    read_size: int
-    data: list[int]
-
-
-@dataclasses.dataclass
-class LogMessage:
-    message: str
-
-
-class BaseSerializer(cbor2_cobs.Cbor2Cobs):
-    def __init__(self, registry: cbor2_cobs.Registry | None = None):
-        registry = registry or {}
-        registry.update(
-            {
-                0: LogMessage,
-                1: FlashPage,
-                2: FlashPage,
-            }
-        )
-        super().__init__(registry)
-
-
-class BaseNode[Transporter: transporter.TransporterLike](
-    dataclass_node.DataclassNode[BaseSerializer, Transporter]
-):
-    def __init__(
-        self,
-        serializer: BaseSerializer | None = None,
-        transporter: Transporter | None = None,
-    ):
-        super().__init__(serializer or BaseSerializer(), transporter)
+from emb.project.base import base_bh
 
 
 class BaseClient:
-    PING = dataclass_node.Transaction[Ping, LogMessage](0)
-    FLASH_PAGE = dataclass_node.Transaction[FlashPage, FlashPage](1)
-    READ_FLASH_PAGE = dataclass_node.Transaction[FlashPage, FlashPage](2)
-
-    def __init__(self, node: BaseNode) -> None:
+    def __init__(self, node: base_bh.BaseNode) -> None:
         self._node = node
 
     def __enter__(self) -> Self:
@@ -66,18 +17,18 @@ class BaseClient:
         self._node.stop()
 
     def ping(self) -> None:
-        msg = Ping(ping=0)
-        resp = self.PING.transact(self._node, msg)
+        msg = base_bh.Ping(ping=0)
+        resp = base_bh.PING.transact(self._node, msg)
         logging.info(resp.message)
 
     def _write_flash_page(self, address: int, data: list[int]) -> None:
-        msg = FlashPage(address=address, read_size=0, data=data)
-        resp = self.FLASH_PAGE.transact(self._node, msg)
+        msg = base_bh.FlashPage(address=address, read_size=0, data=data)
+        resp = base_bh.FLASH_PAGE.transact(self._node, msg)
         logging.info(resp.address)
 
-    def _read_flash_page(self, address: int, size: int) -> FlashPage:
-        msg = FlashPage(address=address, read_size=size, data=[])
-        resp = self.READ_FLASH_PAGE.transact(self._node, msg)
+    def _read_flash_page(self, address: int, size: int) -> base_bh.FlashPage:
+        msg = base_bh.FlashPage(address=address, read_size=size, data=[])
+        resp = base_bh.READ_FLASH_PAGE.transact(self._node, msg)
         return resp
 
     def read_flash(self, outpath: pathlib.Path) -> None:

@@ -15,13 +15,14 @@ class TestPyGenerator(unittest.TestCase):
 
         self.sample_file = testdata_dir / 'sample.bh'
         self.golden_file = testdata_dir / 'sample_bh.py.golden'
+        self.golden_stub_file = testdata_dir / 'sample_bh.pyi.golden'
 
     def test_generate_python(self):
         bh = parser.Parser().parse_file(self.sample_file)
 
         with tempfile.TemporaryDirectory() as tempdir:
             outfile = pathlib.Path(tempdir) / 'sample_bh.py'
-            py_generator.generate_python(bh, outfile)
+            py_generator.generate_python(bh, outfile, stub=False)
 
             spec = util.spec_from_file_location('sample_bh', outfile)
             assert spec is not None
@@ -91,5 +92,17 @@ class TestPyGenerator(unittest.TestCase):
 
             # Check the our file matches the golden file
             golden = self.golden_file.read_text()
+            generated = outfile.read_text()
+            self.assertEqual(generated, golden)
+
+    def test_generate_python_stub(self):
+        bh = parser.Parser().parse_file(self.sample_file)
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            outfile = pathlib.Path(tempdir) / 'sample_bh.pyi'
+            py_generator.generate_python(bh, outfile, stub=True)
+
+            # Check that the generated file matches the golden file
+            golden = self.golden_stub_file.read_text()
             generated = outfile.read_text()
             self.assertEqual(generated, golden)

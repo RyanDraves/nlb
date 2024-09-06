@@ -157,5 +157,6 @@ class TestParserSample(unittest.TestCase):
             [
                 parser.Transaction('ping', 0, ping, log_message),
                 parser.Transaction('flash_page', 1, flash_page, flash_page),
+                parser.Transaction('read_flash_page', 2, flash_page, flash_page),
             ],
         )
