@@ -3,21 +3,24 @@ import dataclasses
 import cbor2
 
 from emb.network.frame import cobs
-from nlb.datastructure import bidirectional_dict
 from nlb.util import dataclass
 
-type Registry = bidirectional_dict.BidirectionalMap[type[dataclass.DataclassLike], int]
+type Registry = dict[int, type[dataclass.DataclassLike]]
 
 
 class Cbor2Cobs:
     def __init__(self, registry: Registry):
         self._registry = registry
 
-    def serialize(self, msg: dataclass.DataclassLike) -> bytes:
+    def serialize(self, msg: dataclass.DataclassLike, request_id: int) -> bytes:
         buffer = cbor2.dumps(dataclasses.asdict(msg))
-        # Add the message ID to the beginning of the buffer
-        message_id = self._registry[type(msg)]
-        return cobs.cobs_encode(message_id.to_bytes() + buffer) + b'\x00'
+        # Add the request ID to the beginning of the buffer
+        return (
+            cobs.cobs_encode(
+                request_id.to_bytes(length=1, byteorder='big', signed=False) + buffer
+            )
+            + b'\x00'
+        )
 
     def deserialize(self, data: bytes) -> dataclass.DataclassLike:
         # Drop the null byte

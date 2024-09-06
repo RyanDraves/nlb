@@ -36,10 +36,9 @@ class Base {
               network::transport::TransporterLike T, class... Projects>
     void register_handlers(network::node::Node<S, T, Projects...> &node) {
         node.template register_handler<Ping, LogMessage>(
-            0x00, 0x02, std::bind(&Base::ping, this, std::placeholders::_1));
+            0x00, std::bind(&Base::ping, this, std::placeholders::_1));
         node.template register_handler<FlashPage, FlashPage>(
-            0x01, 0x01,
-            std::bind(&Base::flash_page, this, std::placeholders::_1));
+            0x01, std::bind(&Base::flash_page, this, std::placeholders::_1));
     }
 
     LogMessage ping(const Ping &ping) {

@@ -34,10 +34,10 @@ class Node {
     }
 
     template <typename Recv, typename Send>
-    void register_handler(uint8_t r_message_id, uint8_t s_message_id,
+    void register_handler(uint8_t request_id,
                           std::function<Send(const Recv &)> handler) {
-        message_handlers_[r_message_id] = [this, s_message_id,
-                                           handler](std::span<uint8_t> buffer) {
+        message_handlers_[request_id] = [this, request_id,
+                                         handler](std::span<uint8_t> buffer) {
             Recv msg = serializer_.template deserialize<Recv>(buffer);
 
             Send resp = handler(msg);
@@ -48,7 +48,7 @@ class Node {
                 resp, std::span(tx_buffer_.data() + 1, tx_buffer_.size() - 1));
 
             // Add the message ID
-            tx_buffer_[frame_padding] = s_message_id;
+            tx_buffer_[frame_padding] = request_id;
 
             // Add back our +1 offset
             auto framed = serializer_.frame(

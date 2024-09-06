@@ -1,0 +1,95 @@
+import dataclasses
+import struct
+from typing import Self
+
+from emb.network.node import dataclass_node
+from emb.network.serialize import cbor2_cobs
+from emb.network.transport import transporter
+
+@dataclasses.dataclass
+class Ping:
+    ping: int
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += struct.pack(f'>B', self.ping)
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> Self:
+        offset = 0
+        ping = struct.unpack_from(f'>B', buffer, offset)[0]
+        offset += 1
+        return cls(
+            ping=ping,
+        )
+
+@dataclasses.dataclass
+class FlashPage:
+    address: int
+    read_size: int
+    data: list[int]
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += struct.pack(f'>I', self.address)
+        buffer += struct.pack(f'>I', self.read_size)
+        buffer += struct.pack('>H', len(self.data))
+        buffer += struct.pack(f'>{len(self.data)}B', *self.data)
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> Self:
+        offset = 0
+        address = struct.unpack_from(f'>I', buffer, offset)[0]
+        offset += 4
+        read_size = struct.unpack_from(f'>I', buffer, offset)[0]
+        offset += 4
+        size = struct.unpack_from('>H', buffer, offset)[0]
+        offset += 2
+        data = list(struct.unpack_from(f'>{size}B', buffer, offset))
+        offset += size * 1
+        return cls(
+            address=address,
+            read_size=read_size,
+            data=data,
+        )
+
+@dataclasses.dataclass
+class LogMessage:
+    message: str
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += struct.pack('>H', len(self.message))
+        buffer += self.message.encode()
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> Self:
+        offset = 0
+        size = struct.unpack_from('>H', buffer, offset)[0]
+        offset += 2
+        message = buffer[offset:offset + size].decode()
+        offset += size
+        return cls(
+            message=message,
+        )
+
+class SampleSerializer(cbor2_cobs.Cbor2Cobs):
+    def __init__(self, registry: cbor2_cobs.Registry | None = None):
+        registry = registry or {}
+        registry.update({
+            0: LogMessage,
+            1: FlashPage,
+            2: FlashPage,
+        })
+        super().__init__(registry)
+
+class SampleNode[Transporter: transporter.TransporterLike](dataclass_node.DataclassNode[SampleSerializer, Transporter]):
+    def __init__(self, serializer: SampleSerializer | None = None, transporter: Transporter | None = None):
+        super().__init__(serializer or SampleSerializer(), transporter)
+
+PING = dataclass_node.Transaction[Ping,LogMessage](0)
+FLASH_PAGE = dataclass_node.Transaction[FlashPage,FlashPage](1)
+READ_FLASH_PAGE = dataclass_node.Transaction[FlashPage,FlashPage](2)

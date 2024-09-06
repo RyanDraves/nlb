@@ -46,6 +46,6 @@ class NlbNode[
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.stop()
 
-    def _transact(self, message: Any) -> Any:
-        self._transporter.send(self._serializer.serialize(message))
+    def _transact(self, message: Any, request_id: int) -> Any:
+        self._transporter.send(self._serializer.serialize(message, request_id))
         return self._serializer.deserialize(self._transporter.receive())

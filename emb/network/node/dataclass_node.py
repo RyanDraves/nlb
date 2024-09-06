@@ -1,3 +1,4 @@
+import dataclasses
 from typing import cast
 
 from emb.network.node import node
@@ -12,14 +13,17 @@ class DataclassNode[
 ](node.NlbNode[DataclassSerializer, Transporter]):
     """Generic node that uses dataclasses for message types."""
 
-    def _transact(self, message: dataclass.DataclassLike) -> dataclass.DataclassLike:
-        return super()._transact(message)
+    def _transact(
+        self, message: dataclass.DataclassLike, request_id: int
+    ) -> dataclass.DataclassLike:
+        return super()._transact(message, request_id)
 
 
+@dataclasses.dataclass
 class Transaction[S: dataclass.DataclassLike, R: dataclass.DataclassLike]:
     """A typed transaction in a dataclass node"""
 
-    @classmethod
-    def transact(cls, node: DataclassNode, msg: S) -> R:
-        return cast(R, node._transact(msg))
-        return cast(R, node._transact(msg))
+    request_id: int
+
+    def transact(self, node: DataclassNode, msg: S) -> R:
+        return cast(R, node._transact(msg, self.request_id))

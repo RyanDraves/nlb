@@ -6,7 +6,6 @@ from typing import Self
 from emb.network.node import dataclass_node
 from emb.network.serialize import cbor2_cobs
 from emb.network.transport import transporter
-from nlb.datastructure import bidirectional_dict
 
 
 # TODO: Generate everything below up until the client methods
@@ -29,12 +28,12 @@ class LogMessage:
 
 class BaseSerializer(cbor2_cobs.Cbor2Cobs):
     def __init__(self, registry: cbor2_cobs.Registry | None = None):
-        registry = registry or bidirectional_dict.BidirectionalMap()
+        registry = registry or {}
         registry.update(
             {
-                Ping: 0,
-                FlashPage: 1,
-                LogMessage: 2,
+                0: LogMessage,
+                1: FlashPage,
+                2: FlashPage,
             }
         )
         super().__init__(registry)
@@ -52,9 +51,9 @@ class BaseNode[Transporter: transporter.TransporterLike](
 
 
 class BaseClient:
-    PING = dataclass_node.Transaction[Ping, LogMessage]
-    FLASH_PAGE = dataclass_node.Transaction[FlashPage, FlashPage]
-    READ_FLASH_PAGE = dataclass_node.Transaction[FlashPage, FlashPage]
+    PING = dataclass_node.Transaction[Ping, LogMessage](0)
+    FLASH_PAGE = dataclass_node.Transaction[FlashPage, FlashPage](1)
+    READ_FLASH_PAGE = dataclass_node.Transaction[FlashPage, FlashPage](2)
 
     def __init__(self, node: BaseNode) -> None:
         self._node = node

@@ -9,8 +9,7 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         requirement("cbor2"),
-        "//emb/network/frame:cobs",
-        "//nlb/datastructure:bidirectional_dict",
+        "//emb/network/frame:cobs_lib",
         "//nlb/util:dataclass",
     ],
 )

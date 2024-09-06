@@ -1,13 +1,13 @@
-# Inspirational syntax for my inevitable descent into writing
-# a serialization library for my projects.
+# A comment for fun
 message Ping {
+    # Add some comments here
     uint8_t ping;
 }
 
 message FlashPage {
     uint32_t address;
     uint32_t read_size;
-    list[uint8_t] data;
+    list[uint8_t] data;  # What about some in-line comments?
 }
 
 message LogMessage {

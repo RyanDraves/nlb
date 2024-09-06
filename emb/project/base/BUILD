@@ -11,7 +11,6 @@ py_library(
         "//emb/network/node:dataclass_node",
         "//emb/network/serialize:cbor2_cobs",
         "//emb/network/transport:transporter",
-        "//nlb/datastructure:bidirectional_dict",
     ],
 )
 
