@@ -1,0 +1,5 @@
+message Foo {
+    uint32_t bar;
+    string baz;
+    list[uint16_t] qux;
+}

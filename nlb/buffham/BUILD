@@ -2,6 +2,17 @@ load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
 load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:python.bzl", "py_test")
 
+py_library(
+    name = "bh",
+    srcs = ["bh.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//emb/network/node",
+        "//emb/network/transport:transporter",
+        "//nlb/util:dataclass",
+    ],
+)
+
 py_binary(
     name = "buffham",
     srcs = ["buffham.py"],
@@ -68,8 +79,8 @@ py_test(
         ":engine",
         ":parser",
         ":py_generator",
-        "//emb/network/node:dataclass_node",
+        ":bh",
         # Transitive dependency of our generated code
-        "//emb/network/serialize:cbor2_cobs",
+        "//emb/network/serialize:bh_cobs",
     ],
 )

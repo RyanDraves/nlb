@@ -77,8 +77,8 @@ def generate_serializer(
     """Generate a serializer with a defined registry for transactions."""
 
     definition = (
-        f'class {name}Serializer(cbor2_cobs.Cbor2Cobs):\n'
-        f'{T}def __init__(self, registry: cbor2_cobs.Registry | None = None):'
+        f'class {name}Serializer(bh_cobs.BhCobs):\n'
+        f'{T}def __init__(self, registry: bh_cobs.Registry | None = None):'
     )
 
     if stub:
@@ -102,7 +102,7 @@ def generate_node(name: str, stub: bool) -> str:
     definition = (
         f'class {name}Node['
         f'Transporter: transporter.TransporterLike]('
-        f'dataclass_node.DataclassNode[{name}Serializer, Transporter]'
+        f'bh.BhNode[{name}Serializer, Transporter]'
         f'):\n'
         f'{T}def __init__('
         f'self, '
@@ -126,15 +126,15 @@ def generate_transaction(transaction: parser.Transaction, stub: bool) -> str:
 
     if stub:
         definition = (
-            f'{transaction.name.upper()}: dataclass_node.Transaction['
-            f'{transaction.receive.name},'
+            f'{transaction.name.upper()}: bh.Transaction['
+            f'{transaction.receive.name}, '
             f'{transaction.send.name}'
             f'] = ...\n'
         )
     else:
         definition = (
-            f'{transaction.name.upper()} = dataclass_node.Transaction['
-            f'{transaction.receive.name},'
+            f'{transaction.name.upper()} = bh.Transaction['
+            f'{transaction.receive.name}, '
             f'{transaction.send.name}'
             f']({transaction.request_id})\n'
         )
@@ -154,9 +154,9 @@ def generate_python(bh: parser.Buffham, outfile: pathlib.Path, stub: bool) -> No
         if len(bh.transactions):
             # Add imports
             fp.write(
-                'from emb.network.node import dataclass_node\n'
-                'from emb.network.serialize import cbor2_cobs\n'
-                'from emb.network.transport import transporter\n\n'
+                'from emb.network.serialize import bh_cobs\n'
+                'from emb.network.transport import transporter\n'
+                'from nlb.buffham import bh\n\n'
             )
 
         # Generate message definitions

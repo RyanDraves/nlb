@@ -29,9 +29,9 @@ def buffham_py_library(name, bh, deps = []):
         name = name,
         srcs = [basename + "_bh.py"],
         deps = deps + [
-            "//emb/network/node:dataclass_node",
-            "//emb/network/serialize:cbor2_cobs",
+            "//emb/network/serialize:bh_cobs",
             "//emb/network/transport:transporter",
+            "//nlb/buffham:bh",
         ],
     )
 

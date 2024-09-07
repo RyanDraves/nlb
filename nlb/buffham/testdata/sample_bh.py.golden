@@ -2,9 +2,9 @@ import dataclasses
 import struct
 from typing import Self
 
-from emb.network.node import dataclass_node
-from emb.network.serialize import cbor2_cobs
+from emb.network.serialize import bh_cobs
 from emb.network.transport import transporter
+from nlb.buffham import bh
 
 @dataclasses.dataclass
 class Ping:
@@ -76,8 +76,8 @@ class LogMessage:
             message=message,
         )
 
-class SampleSerializer(cbor2_cobs.Cbor2Cobs):
-    def __init__(self, registry: cbor2_cobs.Registry | None = None):
+class SampleSerializer(bh_cobs.BhCobs):
+    def __init__(self, registry: bh_cobs.Registry | None = None):
         registry = registry or {}
         registry.update({
             0: LogMessage,
@@ -86,10 +86,10 @@ class SampleSerializer(cbor2_cobs.Cbor2Cobs):
         })
         super().__init__(registry)
 
-class SampleNode[Transporter: transporter.TransporterLike](dataclass_node.DataclassNode[SampleSerializer, Transporter]):
+class SampleNode[Transporter: transporter.TransporterLike](bh.BhNode[SampleSerializer, Transporter]):
     def __init__(self, serializer: SampleSerializer | None = None, transporter: Transporter | None = None):
         super().__init__(serializer or SampleSerializer(), transporter)
 
-PING = dataclass_node.Transaction[Ping,LogMessage](0)
-FLASH_PAGE = dataclass_node.Transaction[FlashPage,FlashPage](1)
-READ_FLASH_PAGE = dataclass_node.Transaction[FlashPage,FlashPage](2)
+PING = bh.Transaction[Ping, LogMessage](0)
+FLASH_PAGE = bh.Transaction[FlashPage, FlashPage](1)
+READ_FLASH_PAGE = bh.Transaction[FlashPage, FlashPage](2)

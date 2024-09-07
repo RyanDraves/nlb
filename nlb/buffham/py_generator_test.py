@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from importlib import util
 
-from emb.network.node import dataclass_node
+from nlb.buffham import bh
 from nlb.buffham import engine
 from nlb.buffham import parser
 from nlb.buffham import py_generator
@@ -18,11 +18,11 @@ class TestPyGenerator(unittest.TestCase):
         self.golden_stub_file = testdata_dir / 'sample_bh.pyi.golden'
 
     def test_generate_python(self):
-        bh = parser.Parser().parse_file(self.sample_file)
+        buffham = parser.Parser().parse_file(self.sample_file)
 
         with tempfile.TemporaryDirectory() as tempdir:
             outfile = pathlib.Path(tempdir) / 'sample_bh.py'
-            py_generator.generate_python(bh, outfile, stub=False)
+            py_generator.generate_python(buffham, outfile, stub=False)
 
             spec = util.spec_from_file_location('sample_bh', outfile)
             assert spec is not None
@@ -35,7 +35,7 @@ class TestPyGenerator(unittest.TestCase):
             self.assertEqual(ping.ping, 42)
 
             # Test serialization & deserialization of `Ping`
-            ping_message = next(filter(lambda m: m.name == 'Ping', bh.messages))
+            ping_message = next(filter(lambda m: m.name == 'Ping', buffham.messages))
             serializer = engine.generate_serializer(ping_message)
             self.assertEqual(
                 ping.serialize(),
@@ -49,7 +49,7 @@ class TestPyGenerator(unittest.TestCase):
             # Test serialization & deserialization of `FlashPage`
             flash_page = sample_bh.FlashPage(0x1234, 0x5678, [0x9A, 0xBC])
             flash_page_message = next(
-                filter(lambda m: m.name == 'FlashPage', bh.messages)
+                filter(lambda m: m.name == 'FlashPage', buffham.messages)
             )
             serializer = engine.generate_serializer(flash_page_message)
             self.assertEqual(
@@ -64,7 +64,7 @@ class TestPyGenerator(unittest.TestCase):
             # Test serialization & deserialization of `LogMessage`
             log_message = sample_bh.LogMessage('Hello, world!')
             log_message_message = next(
-                filter(lambda m: m.name == 'LogMessage', bh.messages)
+                filter(lambda m: m.name == 'LogMessage', buffham.messages)
             )
             serializer = engine.generate_serializer(log_message_message)
             self.assertEqual(
@@ -79,15 +79,15 @@ class TestPyGenerator(unittest.TestCase):
             # Test that our transactions are generated
             self.assertEqual(
                 sample_bh.PING,
-                dataclass_node.Transaction[sample_bh.Ping, sample_bh.LogMessage](0),
+                bh.Transaction[sample_bh.Ping, sample_bh.LogMessage](0),
             )
             self.assertEqual(
                 sample_bh.FLASH_PAGE,
-                dataclass_node.Transaction[sample_bh.FlashPage, sample_bh.FlashPage](1),
+                bh.Transaction[sample_bh.FlashPage, sample_bh.FlashPage](1),
             )
             self.assertEqual(
                 sample_bh.READ_FLASH_PAGE,
-                dataclass_node.Transaction[sample_bh.FlashPage, sample_bh.FlashPage](2),
+                bh.Transaction[sample_bh.FlashPage, sample_bh.FlashPage](2),
             )
 
             # Check the our file matches the golden file

@@ -1,5 +1,3 @@
-# Inspirational syntax for my inevitable descent into writing
-# a serialization library for my projects.
 message Ping {
     uint8_t ping;
 }
