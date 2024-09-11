@@ -1,2 +1,4 @@
 # Buffham files
 *_bh.pyi linguist-generated=true
+# Python tooling files
+requirements_lock.txt linguist-generated=true
