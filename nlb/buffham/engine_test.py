@@ -50,7 +50,7 @@ class TestEngine(unittest.TestCase):
         instance = Ping(42)
         self.assertEqual(
             serializer(instance),
-            int(42).to_bytes(length=1, byteorder='big', signed=False),
+            int(42).to_bytes(length=1, byteorder='little', signed=False),
         )
 
         message = self.FLASH_PAGE
@@ -58,7 +58,7 @@ class TestEngine(unittest.TestCase):
         instance = FlashPage(0x1234, 0x5678, [0x9ABC, 0xDEF0])
         self.assertEqual(
             serializer(instance),
-            b'\x00\x00\x12\x34\x00\x00\x56\x78\x00\x02\x00\x00\x9A\xBC\x00\x00\xDE\xF0',
+            b'\x34\x12\x00\x00\x78\x56\x00\x00\x02\x00\xBC\x9A\x00\x00\xF0\xDE\x00\x00',
         )
 
         message = self.LOG_MESSAGE
@@ -68,19 +68,19 @@ class TestEngine(unittest.TestCase):
             serializer(instance),
             # We're ok with not having a null byte since
             # the length is encoded
-            b'\x00\x0dHello, World!',
+            b'\x0d\x00Hello, World!',
         )
 
     def test_generate_deserializer(self):
         message = self.PING
         deserializer = engine.generate_deserializer(message, Ping)
-        buffer = int(42).to_bytes(length=1, byteorder='big', signed=False)
+        buffer = int(42).to_bytes(length=1, byteorder='little', signed=False)
         self.assertEqual(deserializer(buffer), Ping(42))
 
         message = self.FLASH_PAGE
         deserializer = engine.generate_deserializer(message, FlashPage)
         buffer = (
-            b'\x00\x00\x12\x34\x00\x00\x56\x78\x00\x02\x00\x00\x9A\xBC\x00\x00\xDE\xF0'
+            b'\x34\x12\x00\x00\x78\x56\x00\x00\x02\x00\xBC\x9A\x00\x00\xF0\xDE\x00\x00'
         )
         self.assertEqual(
             deserializer(buffer), FlashPage(0x1234, 0x5678, [0x9ABC, 0xDEF0])

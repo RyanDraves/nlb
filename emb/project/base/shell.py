@@ -6,6 +6,7 @@ import rich_click as click
 
 from emb.network.transport import tcp
 from emb.network.transport import usb
+from emb.project.base import base_bh
 from emb.project.base import client
 from nlb.util import click_utils
 
@@ -33,7 +34,7 @@ def main(connection: ConnectionType, port: str | None, address: str) -> None:
     else:
         transporter = tcp.Zmq(address)
 
-    c = client.BaseClient(client.BaseNode(transporter=transporter))
+    c = client.BaseClient(base_bh.BaseNode(transporter=transporter))
 
     with c:
         c.ping()

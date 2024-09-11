@@ -1,6 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
 load("@pip//:requirements.bzl", "requirement")
-load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_library")
+load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
 load("//bzl/macros:pico.bzl", "pico_project")
 load("//bzl/macros:python.bzl", "py_test")
 
@@ -23,10 +23,16 @@ buffham_py_library(
     bh = ":base",
 )
 
+buffham_cc_library(
+    name = "base_bh_cc",
+    bh = ":base",
+)
+
 py_binary(
     name = "shell",
     srcs = ["shell.py"],
     deps = [
+        ":base_bh_py",
         ":client",
         "//emb/network/transport:tcp",
         "//emb/network/transport:usb",
@@ -53,9 +59,10 @@ py_test(
 
 cc_library(
     name = "base_cc",
-    hdrs = ["base.hpp"],
+    srcs = ["base.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        ":base_bh_cc",
         "//emb/network/node:node_cc",
         "//emb/network/serialize:cbor2_cobs_cc",
         "//emb/network/transport:serial_cc",
@@ -69,7 +76,7 @@ pico_project(
     deps = [
         ":base_cc",
         "//emb/network/node:node_cc",
-        "//emb/network/serialize:cbor2_cobs_cc",
+        "//emb/network/serialize:bh_cobs_cc",
         "//emb/network/transport:serial_cc",
     ],
 )

@@ -133,8 +133,8 @@ class TestParserSample(unittest.TestCase):
             'FlashPage',
             [
                 parser.Field('address', parser.FieldType.UINT32_T, None),
-                parser.Field('read_size', parser.FieldType.UINT32_T, None),
                 parser.Field('data', parser.FieldType.LIST, parser.FieldType.UINT8_T),
+                parser.Field('read_size', parser.FieldType.UINT32_T, None),
             ],
         )
         log_message = parser.Message(

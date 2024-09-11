@@ -18,10 +18,20 @@ py_binary(
     srcs = ["buffham.py"],
     visibility = ["//visibility:public"],
     deps = [
+        ":cpp_generator",
         ":parser",
         ":py_generator",
         "//nlb/util:click_utils",
         requirement("rich-click"),
+    ],
+)
+
+py_library(
+    name = "cpp_generator",
+    srcs = ["cpp_generator.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":parser",
     ],
 )
 

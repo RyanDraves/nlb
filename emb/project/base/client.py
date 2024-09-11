@@ -36,8 +36,6 @@ class BaseClient:
         flash_size = 2 * 1024 * 1024
         with outpath.open('wb') as f:
             while address < flash_size:
-                # TODO: rm
-                print(address)
                 page = self._read_flash_page(address, 256)
                 if not page.data:
                     break

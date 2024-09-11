@@ -12,14 +12,12 @@ class Ping:
 
     def serialize(self) -> bytes:
         buffer = bytes()
-        buffer += struct.pack(f'>B', self.ping)
+        buffer += struct.pack('<B', self.ping)
         return buffer
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> Self:
-        offset = 0
-        ping = struct.unpack_from(f'>B', buffer, offset)[0]
-        offset += 1
+        ping = struct.unpack_from('<B', buffer, 0)[0]
         return cls(
             ping=ping,
         )
@@ -27,32 +25,27 @@ class Ping:
 @dataclasses.dataclass
 class FlashPage:
     address: int
-    read_size: int
     data: list[int]
+    read_size: int
 
     def serialize(self) -> bytes:
         buffer = bytes()
-        buffer += struct.pack(f'>I', self.address)
-        buffer += struct.pack(f'>I', self.read_size)
-        buffer += struct.pack('>H', len(self.data))
-        buffer += struct.pack(f'>{len(self.data)}B', *self.data)
+        buffer += struct.pack('<I', self.address)
+        buffer += struct.pack('<H', len(self.data))
+        buffer += struct.pack(f'<{len(self.data)}B', *self.data)
+        buffer += struct.pack('<I', self.read_size)
         return buffer
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> Self:
-        offset = 0
-        address = struct.unpack_from(f'>I', buffer, offset)[0]
-        offset += 4
-        read_size = struct.unpack_from(f'>I', buffer, offset)[0]
-        offset += 4
-        size = struct.unpack_from('>H', buffer, offset)[0]
-        offset += 2
-        data = list(struct.unpack_from(f'>{size}B', buffer, offset))
-        offset += size * 1
+        address = struct.unpack_from('<I', buffer, 0)[0]
+        data_size = struct.unpack_from('<H', buffer, 4)[0]
+        data = list(struct.unpack_from(f'<{data_size}B', buffer, 6))
+        read_size = struct.unpack_from('<I', buffer, 6 + data_size * 1)[0]
         return cls(
             address=address,
-            read_size=read_size,
             data=data,
+            read_size=read_size,
         )
 
 @dataclasses.dataclass
@@ -61,17 +54,14 @@ class LogMessage:
 
     def serialize(self) -> bytes:
         buffer = bytes()
-        buffer += struct.pack('>H', len(self.message))
+        buffer += struct.pack('<H', len(self.message))
         buffer += self.message.encode()
         return buffer
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> Self:
-        offset = 0
-        size = struct.unpack_from('>H', buffer, offset)[0]
-        offset += 2
-        message = buffer[offset:offset + size].decode()
-        offset += size
+        message_size = struct.unpack_from('<H', buffer, 0)[0]
+        message = buffer[2:2 + message_size].decode()
         return cls(
             message=message,
         )

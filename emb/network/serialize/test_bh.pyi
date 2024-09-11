@@ -4,8 +4,8 @@ from typing import Self
 @dataclasses.dataclass
 class Foo:
     bar: int
-    baz: str
     qux: list[int]
+    baz: str
 
     def serialize(self) -> bytes: ...
 

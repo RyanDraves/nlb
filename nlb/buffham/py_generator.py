@@ -22,16 +22,16 @@ def generate_message(message: parser.Message, stub: bool) -> str:
         for field in message.fields:
             if field.iterable:
                 definition += (
-                    f"\n{T}{T}buffer += struct.pack('>H', len(self.{field.name}))"
+                    f"\n{T}{T}buffer += struct.pack('<H', len(self.{field.name}))"
                 )
                 if field.pri_type is parser.FieldType.LIST:
-                    definition += f"\n{T}{T}buffer += struct.pack(f'>{{len(self.{field.name})}}{field.format}', *self.{field.name})"
+                    definition += f"\n{T}{T}buffer += struct.pack(f'<{{len(self.{field.name})}}{field.format}', *self.{field.name})"
                 else:
                     definition += f'\n{T}{T}buffer += self.{field.name}'
                     if field.pri_type is parser.FieldType.STRING:
                         definition += f".encode()"
             else:
-                definition += f"\n{T}{T}buffer += struct.pack(f'>{field.format}', self.{field.name})"
+                definition += f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name})"
         definition += f'\n{T}{T}return buffer\n'
 
     # Add deserializer method
@@ -40,27 +40,24 @@ def generate_message(message: parser.Message, stub: bool) -> str:
     if stub:
         definition += ' ...\n'
     else:
-        definition += f'\n{T}{T}offset = 0'
+        offset = 0
+        offset_str = ''
         for field in message.fields:
             if field.pri_type is parser.FieldType.LIST:
-                definition += (
-                    f"\n{T}{T}size = struct.unpack_from('>H', buffer, offset)[0]"
-                )
-                definition += f"\n{T}{T}offset += 2"
-                definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'>{{size}}{field.format}', buffer, offset))"
-                definition += f"\n{T}{T}offset += size * {field.size}"
+                definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
+                offset += 2
+                definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'<{{{field.name}_size}}{field.format}', buffer, {offset}{offset_str}))"
+                offset_str += f' + {field.name}_size * {field.size}'
             elif field.pri_type in (parser.FieldType.STRING, parser.FieldType.BYTES):
-                definition += (
-                    f"\n{T}{T}size = struct.unpack_from('>H', buffer, offset)[0]"
-                )
-                definition += f"\n{T}{T}offset += 2"
-                definition += f"\n{T}{T}{field.name} = buffer[offset:offset + size]"
+                definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
+                offset += 2
+                definition += f"\n{T}{T}{field.name} = buffer[{offset}{offset_str}:{offset}{offset_str} + {field.name}_size]"
                 if field.pri_type is parser.FieldType.STRING:
                     definition += f".decode()"
-                definition += f"\n{T}{T}offset += size"
+                offset_str += f' + {field.name}_size * {field.size}'
             else:
-                definition += f"\n{T}{T}{field.name} = struct.unpack_from(f'>{field.format}', buffer, offset)[0]"
-                definition += f"\n{T}{T}offset += {field.size}"
+                definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0]"
+                offset += field.size
         definition += f'\n{T}{T}return cls('
         for field in message.fields:
             definition += f'\n{T}{T}{T}{field.name}={field.name},'

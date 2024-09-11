@@ -10,13 +10,16 @@ class BhCobs:
 
     def serialize(self, msg: bh.BuffhamLike, request_id: int) -> bytes:
         buffer = msg.serialize()
+
         # Add the request ID to the beginning of the buffer
-        return (
+        val = (
             cobs.cobs_encode(
-                request_id.to_bytes(length=1, byteorder='big', signed=False) + buffer
+                request_id.to_bytes(length=1, byteorder='little', signed=False) + buffer
             )
             + b'\x00'
         )
+
+        return val
 
     def deserialize(self, data: bytes) -> bh.BuffhamLike:
         # Drop the null byte

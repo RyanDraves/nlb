@@ -6,8 +6,8 @@ message Ping {
 
 message FlashPage {
     uint32_t address;
-    uint32_t read_size;
     list[uint8_t] data;  # What about some in-line comments?
+    uint32_t read_size;
 }
 
 message LogMessage {

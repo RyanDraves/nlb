@@ -17,7 +17,7 @@ class Cbor2Cobs:
         # Add the request ID to the beginning of the buffer
         return (
             cobs.cobs_encode(
-                request_id.to_bytes(length=1, byteorder='big', signed=False) + buffer
+                request_id.to_bytes(length=1, byteorder='little', signed=False) + buffer
             )
             + b'\x00'
         )

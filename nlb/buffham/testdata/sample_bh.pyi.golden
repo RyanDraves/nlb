@@ -17,8 +17,8 @@ class Ping:
 @dataclasses.dataclass
 class FlashPage:
     address: int
-    read_size: int
     data: list[int]
+    read_size: int
 
     def serialize(self) -> bytes: ...
 

@@ -58,7 +58,7 @@ class Cbor2Cobs {
         return buffer.subspan(0, cobs_size + 1);
     }
 
-    template <typename M>
+    template <class M>
     std::pair<std::span<uint8_t>, size_t> serialize(const M &message,
                                                     std::span<uint8_t> buffer) {
         size_t msg_size =
@@ -76,7 +76,7 @@ class Cbor2Cobs {
         return buffer.subspan(0, msg_size);
     }
 
-    template <typename M> M deserialize(std::span<uint8_t> buffer) {
+    template <class M> M deserialize(std::span<uint8_t> buffer) {
         return rfl::cbor::read<M>(reinterpret_cast<char *>(buffer.data()),
                                   buffer.size())
             .value();

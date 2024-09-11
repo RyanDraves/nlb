@@ -54,7 +54,6 @@ class Node {
             auto framed = serializer_.frame(
                 std::span(tx_buffer_.data(), serialized.size() + 1));
             transporter_.send(framed);
-            transporter_.send(buffer);
         };
     }
 

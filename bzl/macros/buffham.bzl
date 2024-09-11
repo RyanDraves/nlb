@@ -1,5 +1,6 @@
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_file")
 load("@aspect_rules_py//py:defs.bzl", "py_library")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 def buffham(name, srcs):
     native.filegroup(
@@ -47,4 +48,32 @@ def buffham_py_library(name, bh, deps = []):
         name = name + "_write",
         in_file = name + "_pyi_gen",
         out_file = basename + "_bh.pyi",
+    )
+
+def buffham_cc_library(name, bh, deps = []):
+    """Generate a C++ library from a Buffham file.
+
+    Args:
+        name: The name of the target.
+        bh: The Buffham file to generate from.
+        deps: Additional dependencies for the generated library.
+    """
+    basename = name.replace("_bh", "").replace("_cc", "")
+
+    native.genrule(
+        name = name + "_gen",
+        srcs = [bh],
+        outs = [basename + "_bh.hpp"],
+        cmd = "$(execpath //nlb/buffham) -l cpp -i $(location " + bh + ") -o $@",
+        tools = ["//nlb/buffham"],
+    )
+
+    cc_library(
+        name = name,
+        hdrs = [basename + "_bh.hpp"],
+        deps = deps + [
+            "//emb/network/node:node_cc",
+            "//emb/network/serialize:serializer_cc",
+            "//emb/network/transport:transporter_cc",
+        ],
     )

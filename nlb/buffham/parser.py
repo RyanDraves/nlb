@@ -101,6 +101,30 @@ class Field:
 
         return type_map[self.pri_type]
 
+    @property
+    def cpp_type(self) -> str:
+        """Get the C++ type for the field."""
+        type_map = {
+            FieldType.UINT8_T: 'uint8_t',
+            FieldType.UINT16_T: 'uint16_t',
+            FieldType.UINT32_T: 'uint32_t',
+            FieldType.UINT64_T: 'uint64_t',
+            FieldType.INT8_T: 'int8_t',
+            FieldType.INT16_T: 'int16_t',
+            FieldType.INT32_T: 'int32_t',
+            FieldType.INT64_T: 'int64_t',
+            FieldType.FLOAT32: 'float',
+            FieldType.FLOAT64: 'double',
+            FieldType.STRING: 'std::string',
+            FieldType.BYTES: 'std::vector<uint8_t>',
+        }
+
+        if self.pri_type is FieldType.LIST:
+            assert self.sub_type is not None
+            return f'std::vector<{type_map[self.sub_type]}>'
+
+        return type_map[self.pri_type]
+
 
 @dataclasses.dataclass
 class Message:
@@ -131,6 +155,7 @@ class Transaction:
 @dataclasses.dataclass
 class Buffham:
     name: str
+    namespace: list[str]
     messages: list[Message]
     transactions: list[Transaction]
 
@@ -266,6 +291,8 @@ class Parser:
     def parse_file(self, file: pathlib.Path) -> Buffham:
         self._request_id = 0
 
+        namespace = file.parent.parts
+
         lines = file.read_text().split('\n')
         # Remove comment lines; in-line comments are valid per the regex
         # patterns, but block comments are not.
@@ -274,4 +301,4 @@ class Parser:
         messages = self.parse_message_lines(lines)
         transactions = self.parse_transaction_lines(lines, messages)
 
-        return Buffham(file.stem.title(), messages, transactions)
+        return Buffham(file.stem.title(), list(namespace), messages, transactions)

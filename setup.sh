@@ -66,6 +66,7 @@ RYANS_VSCODE_EXTENSIONS=(
     github.copilot-chat
     github.vscode-github-actions
     jeff-hykin.better-cpp-syntax
+    ms-python.isort
     ms-python.python
     ms-python.vscode-pylance
     ms-vscode.cpptools

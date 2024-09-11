@@ -47,7 +47,7 @@ class TestPyGenerator(unittest.TestCase):
             )
 
             # Test serialization & deserialization of `FlashPage`
-            flash_page = sample_bh.FlashPage(0x1234, 0x5678, [0x9A, 0xBC])
+            flash_page = sample_bh.FlashPage(0x1234, [0x9A, 0xBC], 0x5678)
             flash_page_message = next(
                 filter(lambda m: m.name == 'FlashPage', buffham.messages)
             )

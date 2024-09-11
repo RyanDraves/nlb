@@ -17,16 +17,16 @@ def generate_serializer(
 
             if field.iterable:
                 # Write the size of the value as a uint16_t
-                buffer += struct.pack('>H', len(value))
+                buffer += struct.pack('<H', len(value))
 
                 if field.pri_type is parser.FieldType.LIST:
-                    buffer += struct.pack(f'>{len(value)}{field.format}', *value)
+                    buffer += struct.pack(f'<{len(value)}{field.format}', *value)
                 else:
                     if field.pri_type is parser.FieldType.STRING:
                         value = value.encode()
                     buffer += value
             else:
-                buffer += struct.pack(f'>{field.format}', value)
+                buffer += struct.pack(f'<{field.format}', value)
 
         return buffer
 
@@ -44,12 +44,12 @@ def generate_deserializer[
         offset = 0
         for field in message.fields:
             if field.iterable:
-                size = struct.unpack_from('>H', buffer, offset)[0]
+                size = struct.unpack_from('<H', buffer, offset)[0]
                 offset += 2
 
                 if field.pri_type is parser.FieldType.LIST:
                     values[field.name] = list(
-                        struct.unpack_from(f'>{size}{field.format}', buffer, offset)
+                        struct.unpack_from(f'<{size}{field.format}', buffer, offset)
                     )
                     offset += size * struct.calcsize(field.format)
                 else:
@@ -60,7 +60,7 @@ def generate_deserializer[
                     offset += size
             else:
                 values[field.name] = struct.unpack_from(
-                    f'>{field.format}', buffer, offset
+                    f'<{field.format}', buffer, offset
                 )[0]
                 offset += struct.calcsize(field.format)
 
