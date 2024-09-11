@@ -18,14 +18,14 @@ class TestCbor2Cobs(unittest.TestCase):
         # Painfully curated manual test cases
         self.assertEqual(
             self.serializer.serialize(msg, 8),
-            b'\x03\x08\x01\x01\x01\x02\x03\x02\x01\x02\x02\x02\x03\x02\x05\x06hello\x00',
+            b'\x03\x08\x01\x01\x01\x02\x05\x07hello\x03\x02\x01\x02\x02\x02\x03\x01\x00',
         )
 
     def test_deserialize(self) -> None:
         # Painfully curated manual test cases
         self.assertEqual(
             self.serializer.deserialize(
-                b'\x03\x08\x01\x01\x01\x02\x03\x02\x01\x02\x02\x02\x03\x02\x05\x06hello\x00'
+                b'\x03\x08\x01\x01\x01\x02\x05\x07hello\x03\x02\x01\x02\x02\x02\x03\x01\x00'
             ),
             test_bh.Foo(bar=1, baz='hello', qux=[1, 2, 3]),
         )
