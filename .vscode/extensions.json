@@ -13,6 +13,7 @@
         "ms-vscode.cpptools",
         "ms-vscode.cpptools-extension-pack",
         "ms-vscode.cpptools-themes",
+        "ms-vscode.hexeditor",
         "ms-vscode-remote.remote-ssh",
     ]
 }

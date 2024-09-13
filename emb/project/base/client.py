@@ -2,6 +2,8 @@ import logging
 import pathlib
 from typing import Self
 
+from rich import progress
+
 from emb.project.base import base_bh
 
 
@@ -32,13 +34,18 @@ class BaseClient:
         return resp
 
     def read_flash(self, outpath: pathlib.Path) -> None:
-        address = 0
-        flash_size = 2 * 1024 * 1024
-        with outpath.open('wb') as f:
-            while address < flash_size:
-                page = self._read_flash_page(address, 256)
-                if not page.data:
-                    break
-                f.write(bytes(page.data))
-                address += len(page.data)
+        with progress.Progress() as progress_bar:
+            address = 0
+            flash_size = 2 * 1024 * 1024
+
+            task = progress_bar.add_task('Reading flash', total=flash_size)
+
+            with outpath.open('wb') as f:
+                while address < flash_size:
+                    page = self._read_flash_page(address, 1024)
+                    if not page.data:
+                        break
+                    f.write(bytes(page.data))
+                    address += len(page.data)
+                    progress_bar.update(task, advance=len(page.data))
         logging.info(f'Flash read to {outpath}')

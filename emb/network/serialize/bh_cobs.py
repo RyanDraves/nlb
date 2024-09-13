@@ -12,18 +12,17 @@ class BhCobs:
         buffer = msg.serialize()
 
         # Add the request ID to the beginning of the buffer
-        val = (
+        return (
             cobs.cobs_encode(
                 request_id.to_bytes(length=1, byteorder='little', signed=False) + buffer
             )
             + b'\x00'
         )
 
-        return val
-
     def deserialize(self, data: bytes) -> bh.BuffhamLike:
         # Drop the null byte
         decoded_buffer = cobs.cobs_decode(data[:-1])
+
         # Get the message type from the first byte
         message_cls = self._registry[decoded_buffer[0]]
         return message_cls.deserialize(decoded_buffer[1:])

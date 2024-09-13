@@ -10,6 +10,7 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         ":base_bh_py",
+        requirement("rich"),
     ],
 )
 
@@ -63,9 +64,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":base_bh_cc",
-        "//emb/network/node:node_cc",
-        "//emb/network/serialize:cbor2_cobs_cc",
-        "//emb/network/transport:serial_cc",
         "//emb/yaal:flash",
     ],
 )

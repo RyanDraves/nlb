@@ -3,9 +3,6 @@
 #include <string>
 #include <vector>
 
-#include "emb/network/node/node.hpp"
-#include "emb/network/serialize/serializer.hpp"
-#include "emb/network/transport/transporter.hpp"
 #include "emb/project/base/base_bh.hpp"
 #include "emb/yaal/flash.hpp"
 
@@ -19,8 +16,6 @@ LogMessage Base::ping(const Ping &ping) {
     // Create a response message
     LogMessage log_message;
     log_message.message = "Pong " + std::to_string(ping.ping) + "!";
-
-    std::cout << log_message.message << std::endl;
 
     return log_message;
 }

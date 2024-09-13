@@ -26,8 +26,9 @@ class ConnectionType(enum.Enum):
 )
 @click.option('--port', '-p', default=None, help='Serial port')
 @click.option('--address', '-a', default=tcp.Zmq.DEFAULT_ADDRESS, help='ZMQ address')
-def main(connection: ConnectionType, port: str | None, address: str) -> None:
-    logging.basicConfig(level=logging.DEBUG)
+@click.option('--log', '-l', default='INFO', help='Log level')
+def main(connection: ConnectionType, port: str | None, address: str, log: str) -> None:
+    logging.basicConfig(level=log)
 
     if connection is ConnectionType.SERIAL:
         transporter = usb.PicoSerial(port)
