@@ -38,6 +38,10 @@ APT_PACKAGES=(
     libusb-1.0-0-dev
     tree
     htop
+    python-is-python3
+    python3-pip
+    python3-ipython
+    python3-numpy
     # For local Pico tooling
     pkg-config
     cmake
@@ -56,24 +60,6 @@ RYANS_APT_PACKAGES=()
 if ! check_if_on_wsl; then
     RYANS_APT_PACKAGES+=(
         code
-    )
-fi
-
-RYANS_VSCODE_EXTENSIONS=(
-    bazelbuild.vscode-bazel
-    bpruitt-goddard.mermaid-markdown-syntax-highlighting
-    github.copilot
-    github.copilot-chat
-    github.vscode-github-actions
-    jeff-hykin.better-cpp-syntax
-    ms-python.python
-    ms-python.vscode-pylance
-    ms-vscode.cpptools
-    ms-vscode.cpptools-themes
-)
-if ! check_if_on_wsl; then
-    RYANS_VSCODE_EXTENSIONS+=(
-        ms-vscode-remote.remote-ssh
     )
 fi
 
@@ -180,7 +166,6 @@ function setup_venv() {
 function setup_ryans_custom_settings() {
     setup_gh
     install_apt_packages "${RYANS_APT_PACKAGES[@]}"
-    install_vscode_extensions "${RYANS_VSCODE_EXTENSIONS[@]}"
     install_vscode_keybindings misc/dravesr/keybindings.json
     setup_user_bazelrc
 }
@@ -249,48 +234,6 @@ function make_gh_alias() {
     else
         echo "Creating gh alias $alias"
         gh alias set $alias "$command"
-    fi
-}
-
-function install_vscode_extensions() {
-    local extensions=("$@")
-
-    # Check if code is available
-    if ! check_command code; then
-        echo "code is not available"
-        return 1
-    fi
-
-    # Check if vscode extensions are already installed
-    all_installed=true
-    missing_extensions=()
-    for extension in "${extensions[@]}"; do
-        if code --list-extensions | grep -iq "$extension"; then
-            continue
-        fi
-        all_installed=false
-        missing_extensions+=("$extension")
-    done
-
-    if $all_installed; then
-        echo "All vscode extensions are already installed"
-    else
-        echo "Installing missing vscode extensions: ${missing_extensions[@]}"
-
-        # Install vscode extensions
-        for extension in "${missing_extensions[@]}"; do
-            code --install-extension $extension
-        done
-    fi
-
-    if check_if_on_wsl; then
-        # Install ms-vscode-remote.remote-wsl on the Windows side if not already installed
-        if ! powershell.exe 'code --list-extensions' | grep -iq 'ms-vscode-remote.remote-wsl'; then
-            echo "Installing ms-vscode-remote.remote-wsl on Windows"
-            powershell.exe 'code --install-extension ms-vscode-remote.remote-wsl'
-        else
-            echo "ms-vscode-remote.remote-wsl is already installed on Windows"
-        fi
     fi
 }
 

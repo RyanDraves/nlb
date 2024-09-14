@@ -2,8 +2,10 @@
 # - bazel run //:venv venv
 black>=24.4.2,<25
 cbor2>=5.6.3,<6
+ipython>=8.27.0,<9
 isort>=5.13.2,<6
 pyserial>=3.5,<4
 pytest>=8.3.2,<9
 pyzmq>=26.2.0,<27
+rich>=13.8.1,<14
 rich-click>=1.8.3,<2

@@ -1,11 +1,13 @@
+# A comment for fun
 message Ping {
+    # Add some comments here
     uint8_t ping;
 }
 
 message FlashPage {
     uint32_t address;
+    list[uint8_t] data;  # What about some in-line comments?
     uint32_t read_size;
-    list[uint8_t] data;
 }
 
 message LogMessage {

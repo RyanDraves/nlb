@@ -1,0 +1,17 @@
+message Foo {
+    uint32_t bar;
+    string baz;
+    list[uint16_t] qux;
+}
+
+message Unaligned {
+    uint8_t a;
+    uint16_t b;
+    int32_t c;
+    uint64_t d;
+    string e;
+    list[int64_t] f;
+    list[uint8_t] g;
+    list[uint16_t] h;
+    list[uint32_t] i;
+}

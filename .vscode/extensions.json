@@ -1,0 +1,19 @@
+{
+    "recommendations": [
+        "bazelbuild.vscode-bazel",
+        "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
+        "eamodio.gitlens",
+        "github.copilot",
+        "github.copilot-chat",
+        "github.vscode-github-actions",
+        "jeff-hykin.better-cpp-syntax",
+        "ms-python.isort",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes",
+        "ms-vscode.hexeditor",
+        "ms-vscode-remote.remote-ssh",
+    ]
+}

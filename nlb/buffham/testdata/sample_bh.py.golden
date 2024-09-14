@@ -1,0 +1,85 @@
+import dataclasses
+import struct
+from typing import Self
+
+from emb.network.serialize import bh_cobs
+from emb.network.transport import transporter
+from nlb.buffham import bh
+
+@dataclasses.dataclass
+class Ping:
+    ping: int
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += struct.pack('<B', self.ping)
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> Self:
+        ping = struct.unpack_from('<B', buffer, 0)[0]
+        return cls(
+            ping=ping,
+        )
+
+@dataclasses.dataclass
+class FlashPage:
+    address: int
+    data: list[int]
+    read_size: int
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += struct.pack('<I', self.address)
+        buffer += struct.pack('<H', len(self.data))
+        buffer += struct.pack(f'<{len(self.data)}B', *self.data)
+        buffer += struct.pack('<I', self.read_size)
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> Self:
+        address = struct.unpack_from('<I', buffer, 0)[0]
+        data_size = struct.unpack_from('<H', buffer, 4)[0]
+        data = list(struct.unpack_from(f'<{data_size}B', buffer, 6))
+        read_size = struct.unpack_from('<I', buffer, 6 + data_size * 1)[0]
+        return cls(
+            address=address,
+            data=data,
+            read_size=read_size,
+        )
+
+@dataclasses.dataclass
+class LogMessage:
+    message: str
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += struct.pack('<H', len(self.message))
+        buffer += self.message.encode()
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> Self:
+        message_size = struct.unpack_from('<H', buffer, 0)[0]
+        message = buffer[2:2 + message_size].decode()
+        return cls(
+            message=message,
+        )
+
+class SampleSerializer(bh_cobs.BhCobs):
+    def __init__(self, registry: bh_cobs.Registry | None = None):
+        registry = registry or {}
+        registry.update({
+            0: LogMessage,
+            1: FlashPage,
+            2: FlashPage,
+        })
+        super().__init__(registry)
+
+class SampleNode[Transporter: transporter.TransporterLike](bh.BhNode[SampleSerializer, Transporter]):
+    def __init__(self, serializer: SampleSerializer | None = None, transporter: Transporter | None = None):
+        super().__init__(serializer or SampleSerializer(), transporter)
+
+PING = bh.Transaction[Ping, LogMessage](0)
+FLASH_PAGE = bh.Transaction[FlashPage, FlashPage](1)
+READ_FLASH_PAGE = bh.Transaction[FlashPage, FlashPage](2)

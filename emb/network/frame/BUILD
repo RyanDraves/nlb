@@ -31,6 +31,7 @@ py_library(
     name = "cobs_lib",
     data = [":cobs.so"],
     imports = ["."],
+    visibility = ["//visibility:public"],
 )
 
 py_test(

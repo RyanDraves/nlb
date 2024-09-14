@@ -1,19 +1,16 @@
-import dataclasses
-
-import cbor2
-
 from emb.network.frame import cobs
-from nlb.util import dataclass
+from nlb.buffham import bh
 
-type Registry = dict[int, type[dataclass.DataclassLike]]
+type Registry = dict[int, type[bh.BuffhamLike]]
 
 
-class Cbor2Cobs:
+class BhCobs:
     def __init__(self, registry: Registry):
         self._registry = registry
 
-    def serialize(self, msg: dataclass.DataclassLike, request_id: int) -> bytes:
-        buffer = cbor2.dumps(dataclasses.asdict(msg))
+    def serialize(self, msg: bh.BuffhamLike, request_id: int) -> bytes:
+        buffer = msg.serialize()
+
         # Add the request ID to the beginning of the buffer
         return (
             cobs.cobs_encode(
@@ -22,9 +19,10 @@ class Cbor2Cobs:
             + b'\x00'
         )
 
-    def deserialize(self, data: bytes) -> dataclass.DataclassLike:
+    def deserialize(self, data: bytes) -> bh.BuffhamLike:
         # Drop the null byte
         decoded_buffer = cobs.cobs_decode(data[:-1])
+
         # Get the message type from the first byte
         message_cls = self._registry[decoded_buffer[0]]
-        return message_cls(**cbor2.loads(decoded_buffer[1:]))
+        return message_cls.deserialize(decoded_buffer[1:])
