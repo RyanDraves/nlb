@@ -20,6 +20,8 @@ struct Base::BaseImpl {
 
 Base::Base() : impl_(new BaseImpl()) {
     // Read the system flash page
+    // TODO: This probably fails on a fresh Pico;
+    // need to gracefully handle bad deserialization
     auto buffer = yaal::flash_sector_read(0);
     impl_->system = bootloader::SystemFlashPage::deserialize(buffer);
 }
