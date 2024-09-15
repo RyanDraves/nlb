@@ -1,0 +1,4 @@
+message SystemFlashPage {
+    uint8_t boot_side;
+    uint32_t boot_count;
+}

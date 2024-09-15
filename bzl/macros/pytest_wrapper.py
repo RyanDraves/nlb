@@ -1,6 +1,7 @@
 # Copied from
 # https://github.com/jessecureton/python_bazel_template/blob/main/tools/rules/python/test_runner.py
 # with some minor modifications
+import logging
 import os
 import sys
 
@@ -25,6 +26,8 @@ def main():
 
     # Prepare all our collected arguments, searching the current directory
     pytest_args = pytest_args + sys.argv[1:]
+
+    logging.basicConfig(level=logging.DEBUG)
 
     # Invoke pytest
     sys.exit(pytest.main(pytest_args))

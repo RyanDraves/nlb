@@ -8,11 +8,18 @@ message FlashPage {
     list[uint8_t] data;
 }
 
+message FlashSector {
+    uint32_t sector;
+    list[uint8_t] data;
+}
+
 message LogMessage {
     string message;
 }
 
 
 transaction ping[Ping, LogMessage];
-transaction flash_page[FlashPage, FlashPage];
-transaction read_flash_page[FlashPage, FlashPage];
+transaction write_flash_image[FlashPage, FlashPage];
+transaction read_flash[FlashPage, FlashPage];
+transaction write_flash_sector[FlashSector, FlashSector];
+transaction read_flash_sector[FlashSector, FlashSector];

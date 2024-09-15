@@ -68,6 +68,25 @@ TEST(CobsTest, TestCobsDecode) {
     ASSERT_THAT(decodedLength3, Eq(sizeof(expected_output3)));
     auto input3_span = std::span{input3, sizeof(expected_output3)};
     ASSERT_THAT(input3_span, ElementsAreArray(expected_output3));
+
+    // Test a large buffer
+    uint8_t input4[0xFF * 2 + 3 + offset];
+    for (size_t i = 0; i < sizeof(input4); i++) {
+        input4[i] = 1;
+    }
+    input4[offset + 0] = 0xFF;
+    input4[offset + 0xFF] = 0xFF;
+    input4[offset + 0xFF * 2] = 0x3;
+    uint8_t expected_output4[0xFF * 2]{};
+    for (size_t i = 0; i < sizeof(expected_output4); i++) {
+        expected_output4[i] = 1;
+    }
+    size_t decodedLength4 =
+        cobsDecode(input4 + offset, sizeof(input4) - offset, input4);
+    // Check the encoded length and match it against the expected output
+    ASSERT_THAT(decodedLength4, Eq(sizeof(expected_output4)));
+    auto input4_span = std::span{input4, sizeof(expected_output4)};
+    ASSERT_THAT(input4_span, ElementsAreArray(expected_output4));
 }
 
 }  // namespace frame

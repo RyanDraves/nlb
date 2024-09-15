@@ -6,15 +6,15 @@ namespace network {
 namespace transport {
 
 struct Serial::SerialImpl {
-    // Nothing to implement; no private variables
+    uint16_t rx_size = 0;
 };
 
-Serial::Serial() {
+Serial::Serial() : impl_(new SerialImpl) {
     stdio_init_all();
     stdio_set_translate_crlf(&stdio_usb, false);
 }
 
-Serial::~Serial() {}
+Serial::~Serial() { delete impl_; }
 
 void Serial::send(const std::span<uint8_t> &data) {
     // Send the message over the wire
@@ -25,19 +25,25 @@ void Serial::send(const std::span<uint8_t> &data) {
 }
 
 std::span<uint8_t> Serial::receive(std::span<uint8_t> buffer) {
-    int16_t rc = getchar_timeout_us(1000);
-    uint16_t rx_size = 0;
-    while (rc != PICO_ERROR_TIMEOUT) {
-        buffer[rx_size++] = rc;
+    int16_t rc = getchar_timeout_us(10'000);
+    while (rc != PICO_ERROR_TIMEOUT && impl_->rx_size < buffer.size()) {
+        buffer[impl_->rx_size++] = rc;
         // TODO: Configure frame boundary
         if (rc == 0x00) {
             // Subtract the frame separator
-            rx_size--;
+            impl_->rx_size--;
             // Frame complete
+            uint16_t rx_size = impl_->rx_size;
+            impl_->rx_size = 0;
             return buffer.subspan(0, rx_size);
         }
 
         rc = getchar_timeout_us(1000);
+    }
+
+    if (impl_->rx_size == buffer.size()) {
+        // Buffer full, reset
+        impl_->rx_size = 0;
     }
 
     // Return an empty span upon timeout

@@ -1,7 +1,7 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("@rules_pico//pico:defs.bzl", "pico_add_uf2_output", "pico_binary", "pico_build_with_config")
 
-def pico_project(name, srcs, deps):
+def pico_project(name, srcs, deps, include_host = True):
     """Compile a Pico project
 
     Produces a host binary, an ELF file, a UF2 file, a binary file, and a map.
@@ -16,15 +16,17 @@ def pico_project(name, srcs, deps):
         name: The name of the project
         srcs: The source files
         deps: The dependencies
+        include_host: Whether to include the host binary (default: True)
     """
     name = name.replace("_pico", "")
 
-    # Host compilation of the binary
-    cc_binary(
-        name = name + "_host",
-        srcs = srcs,
-        deps = deps,
-    )
+    if include_host:
+        # Host compilation of the binary
+        cc_binary(
+            name = name + "_host",
+            srcs = srcs,
+            deps = deps,
+        )
 
     # Pico compilation of the binary;
     # compiled with `--config pico`

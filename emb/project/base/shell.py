@@ -1,8 +1,9 @@
 import enum
 import logging
-import pathlib
 
 import rich_click as click
+from IPython.terminal import embed
+from IPython.terminal import ipapp
 
 from emb.network.transport import tcp
 from emb.network.transport import usb
@@ -28,7 +29,7 @@ class ConnectionType(enum.Enum):
 @click.option('--address', '-a', default=tcp.Zmq.DEFAULT_ADDRESS, help='ZMQ address')
 @click.option('--log', '-l', default='INFO', help='Log level')
 def main(connection: ConnectionType, port: str | None, address: str, log: str) -> None:
-    logging.basicConfig(level=log)
+    logging.basicConfig(level=log.upper())
 
     if connection is ConnectionType.SERIAL:
         transporter = usb.PicoSerial(port)
@@ -38,8 +39,10 @@ def main(connection: ConnectionType, port: str | None, address: str, log: str) -
     c = client.BaseClient(base_bh.BaseNode(transporter=transporter))
 
     with c:
-        c.ping()
-        c.read_flash(pathlib.Path('/tmp/flash.bin'))
+        config = ipapp.load_default_config()
+        config.InteractiveShellEmbed.colors = 'Linux'
+
+        embed.embed(header='Base Shell', config=config)
 
 
 if __name__ == '__main__':

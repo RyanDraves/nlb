@@ -11,7 +11,7 @@ namespace serialize {
 
 class BhCobs {
   public:
-    constexpr static size_t kBufSize = 1024;
+    constexpr static size_t kBufSize = 1536;
     constexpr static size_t kMaxOverhead = 1 + (kBufSize / 0xFE);
 
     BhCobs();

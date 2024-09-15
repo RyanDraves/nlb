@@ -33,7 +33,7 @@ class Serial(abc.ABC):
         self._started = False
 
     def send(self, data: bytes) -> None:
-        logging.debug(' '.join(f'{byte:02x}' for byte in data))
+        logging.debug('Tx: ' + ' '.join(f'{byte:02x}' for byte in data))
         self._serial.write(data)
 
     def receive(self) -> bytes:
@@ -41,7 +41,7 @@ class Serial(abc.ABC):
         while True:
             buffer += self._serial.read_until(self._stop_byte, size=255)
             if buffer.endswith(self._stop_byte):
-                logging.debug(' '.join(f'{byte:02x}' for byte in buffer))
+                logging.debug('Rx: ' + ' '.join(f'{byte:02x}' for byte in buffer))
                 return buffer
 
 

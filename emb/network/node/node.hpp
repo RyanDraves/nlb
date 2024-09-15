@@ -5,6 +5,7 @@
 #include <functional>
 #include <inttypes.h>
 #include <span>
+#include <string.h>
 
 #include "emb/network/serialize/serializer.hpp"
 #include "emb/network/transport/transporter.hpp"
@@ -50,15 +51,24 @@ class Node {
             // Add the message ID
             tx_buffer_[frame_padding] = request_id;
 
-            // Add back our +1 offset
+            // Add back our + 1 offset
             auto framed = serializer_.frame(
                 std::span(tx_buffer_.data(), serialized.size() + 1));
             transporter_.send(framed);
+
+            // // Debug logic to echo the deframed message back
+            // // Write `request_id` and `buffer` back into `tx_buffer_`
+            // memcpy(tx_buffer_.data() + S::kMaxOverhead + 1, buffer.data(),
+            //        buffer.size());
+            // tx_buffer_[S::kMaxOverhead] = request_id;
+            // auto framed = serializer_.frame(std::span(
+            //     tx_buffer_.data(), buffer.size() + S::kMaxOverhead + 1));
+            // transporter_.send(framed);
         };
     }
 
     void receive() {
-        auto data = transporter_.receive(rx_buffer_);
+        auto data = transporter_.receive({rx_buffer_.data(), S::kBufSize});
 
         if (data.empty()) {
             return;
@@ -78,6 +88,10 @@ class Node {
         // Call the appropriate message handler
         message_handlers_.at(deframed_data[0])(
             deframed_data.subspan(kFrameHeader, msg_size));
+
+        // // Debug logic to echo the framed message back
+        // rx_buffer_[data.size()] = 0;
+        // transporter_.send({rx_buffer_.data(), data.size() + 1});
     }
 
   private:

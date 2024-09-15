@@ -8,13 +8,14 @@ def buffham(name, srcs):
         srcs = srcs,
     )
 
-def buffham_py_library(name, bh, deps = []):
+def buffham_py_library(name, bh, deps = [], visibility = ["//visibility:public"]):
     """Generate a Python library from a Buffham file.
 
     Args:
         name: The name of the target.
         bh: The Buffham file to generate from.
         deps: Additional dependencies for the generated library.
+        visibility: The visibility of the generated library.
     """
     basename = name.replace("_bh", "").replace("_py", "")
 
@@ -34,6 +35,7 @@ def buffham_py_library(name, bh, deps = []):
             "//emb/network/transport:transporter",
             "//nlb/buffham:bh",
         ],
+        visibility = visibility,
     )
 
     native.genrule(
@@ -48,15 +50,18 @@ def buffham_py_library(name, bh, deps = []):
         name = name + "_write",
         in_file = name + "_pyi_gen",
         out_file = basename + "_bh.pyi",
+        suggested_update_target = "//:generate_bh",
+        visibility = visibility,
     )
 
-def buffham_cc_library(name, bh, deps = []):
+def buffham_cc_library(name, bh, deps = [], visibility = ["//visibility:public"]):
     """Generate a C++ library from a Buffham file.
 
     Args:
         name: The name of the target.
         bh: The Buffham file to generate from.
         deps: Additional dependencies for the generated library.
+        visibility: The visibility of the generated library.
     """
     basename = name.replace("_bh", "").replace("_cc", "")
 
@@ -76,4 +81,5 @@ def buffham_cc_library(name, bh, deps = []):
             "//emb/network/serialize:serializer_cc",
             "//emb/network/transport:transporter_cc",
         ],
+        visibility = visibility,
     )

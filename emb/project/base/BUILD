@@ -10,6 +10,7 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         ":base_bh_py",
+        "//emb/project/bootloader:bootloader_bh_py",
         requirement("rich"),
     ],
 )
@@ -39,6 +40,7 @@ py_binary(
         "//emb/network/transport:usb",
         "//nlb/util:click_utils",
         requirement("rich-click"),
+        requirement("IPython"),
     ],
 )
 
@@ -55,6 +57,7 @@ py_test(
         ":base_bh_py",
         ":client",
         "//emb/network/transport:tcp",
+        "//emb/project/bootloader:bootloader_bh_py",
     ],
 )
 
@@ -64,6 +67,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":base_bh_cc",
+        "//emb/project/bootloader:bootloader_bh_cc",
         "//emb/yaal:flash",
     ],
 )
