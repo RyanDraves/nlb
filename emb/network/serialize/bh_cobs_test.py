@@ -9,6 +9,7 @@ class TestCbor2Cobs(unittest.TestCase):
         self.serializer = bh_cobs.BhCobs(
             {
                 8: test_bh.Foo,
+                9: test_bh.NestedMessage,
             }
         )
 
@@ -78,4 +79,12 @@ class TestCbor2Cobs(unittest.TestCase):
         msg = test_bh.Foo(bar=2**32 - 1, baz='a' * 1000, qux=[4] * 1000)
         self.assertEqual(
             self.serializer.deserialize(self.serializer.serialize(msg, 8)), msg
+        )
+
+    def test_nested_messages(self) -> None:
+        msg = test_bh.NestedMessage(
+            foo=test_bh.Foo(bar=1, baz='hello', qux=[1, 2, 3, 4]), flag=1
+        )
+        self.assertEqual(
+            self.serializer.deserialize(self.serializer.serialize(msg, 9)), msg
         )

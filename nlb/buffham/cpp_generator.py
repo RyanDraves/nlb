@@ -35,6 +35,9 @@ def generate_message(message: parser.Message) -> str:
             offset += 2
             definition += f"\n{T}{T}memcpy(buffer.data() + {offset}{offset_str}, {field.name}.data(), {field.name}_size * {field.size});"
             offset_str += f' + {field.name}_size * {field.size}'
+        elif field.pri_type is parser.FieldType.MESSAGE:
+            definition += f'\n{T}{T}auto {field.name}_buffer = {field.name}.serialize(buffer.subspan({offset}{offset_str}));'
+            offset_str += f' + {field.name}_buffer.size()'
         else:
             definition += f"\n{T}{T}memcpy(buffer.data() + {offset}{offset_str}, &{field.name}, {field.size});"
             offset += field.size
@@ -44,9 +47,7 @@ def generate_message(message: parser.Message) -> str:
     # Add deserializer method
     offset = 0
     offset_str = ''
-    definition += (
-        f'\n{T}static {message.name} deserialize(std::span<const uint8_t> buffer) {{'
-    )
+    definition += f'\n{T}static std::pair<{message.name}, std::span<const uint8_t> > deserialize(std::span<const uint8_t> buffer) {{'
     message_name = _to_snake_case(message.name)
     definition += f'\n{T}{T}{message.name} {message_name};'
     for field in message.fields:
@@ -61,11 +62,17 @@ def generate_message(message: parser.Message) -> str:
             )
             definition += f"\n{T}{T}memcpy({message_name}.{field.name}.data(), buffer.data() + {offset}{offset_str}, {field.name}_size * {field.size});"
             offset_str += f' + {field.name}_size * {field.size}'
+        elif field.pri_type is parser.FieldType.MESSAGE:
+            definition += f'\n{T}{T}auto {field.name}_buffer = buffer.subspan({offset}{offset_str});'
+            definition += f'\n{T}{T}std::tie({message_name}.{field.name}, {field.name}_buffer) = {field.cpp_type}::deserialize({field.name}_buffer);'
+            offset_str += f' + {field.name}_buffer.size()'
         else:
             definition += f"\n{T}{T}memcpy(&{message_name}.{field.name}, buffer.data() + {offset}{offset_str}, {field.size});"
             offset += field.size
 
-    definition += f'\n{T}{T}return {message_name};\n'
+    definition += (
+        f'\n{T}{T}return {{{message_name}, buffer.subspan(0, {offset}{offset_str})}};\n'
+    )
     definition += f'{T}}}\n'
 
     definition += '};\n\n'

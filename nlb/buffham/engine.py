@@ -25,6 +25,10 @@ def generate_serializer(
                     if field.pri_type is parser.FieldType.STRING:
                         value = value.encode()
                     buffer += value
+            elif field.pri_type is parser.FieldType.MESSAGE:
+                assert field.message is not None
+                # Turtles all the way down
+                buffer += generate_serializer(field.message)(value)
             else:
                 buffer += struct.pack(f'<{field.format}', value)
 
@@ -35,10 +39,10 @@ def generate_serializer(
 
 def generate_deserializer[
     T: dataclass.DataclassLike
-](message: parser.Message, clz: Type[T]) -> Callable[[bytes], T]:
+](message: parser.Message, clz: Type[T]) -> Callable[[bytes], tuple[T, int]]:
     """Generic deserializer generator for a message schema."""
 
-    def deserializer(buffer: bytes) -> T:
+    def deserializer(buffer: bytes) -> tuple[T, int]:
         values = {}
 
         offset = 0
@@ -58,12 +62,18 @@ def generate_deserializer[
                         value = value.decode()
                     values[field.name] = value
                     offset += size
+            elif field.pri_type is parser.FieldType.MESSAGE:
+                assert field.message is not None
+                values[field.name], size = generate_deserializer(
+                    field.message, clz.__dataclass_fields__[field.name].type
+                )(buffer[offset:])
+                offset += size
             else:
                 values[field.name] = struct.unpack_from(
                     f'<{field.format}', buffer, offset
                 )[0]
                 offset += struct.calcsize(field.format)
 
-        return clz(**values)
+        return clz(**values), offset
 
     return deserializer

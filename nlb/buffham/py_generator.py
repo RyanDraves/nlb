@@ -1,3 +1,4 @@
+import logging
 import pathlib
 
 from nlb.buffham import parser
@@ -30,13 +31,15 @@ def generate_message(message: parser.Message, stub: bool) -> str:
                     definition += f'\n{T}{T}buffer += self.{field.name}'
                     if field.pri_type is parser.FieldType.STRING:
                         definition += f".encode()"
+            elif field.pri_type is parser.FieldType.MESSAGE:
+                definition += f'\n{T}{T}buffer += self.{field.name}.serialize()'
             else:
                 definition += f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name})"
         definition += f'\n{T}{T}return buffer\n'
 
     # Add deserializer method
     definition += f'\n{T}@classmethod'
-    definition += f'\n{T}def deserialize(cls, buffer: bytes) -> Self:'
+    definition += f'\n{T}def deserialize(cls, buffer: bytes) -> tuple[Self, int]:'
     if stub:
         definition += ' ...\n'
     else:
@@ -55,13 +58,17 @@ def generate_message(message: parser.Message, stub: bool) -> str:
                 if field.pri_type is parser.FieldType.STRING:
                     definition += f".decode()"
                 offset_str += f' + {field.name}_size * {field.size}'
+            elif field.pri_type is parser.FieldType.MESSAGE:
+                assert field.message is not None
+                definition += f'\n{T}{T}{field.name}, {field.name}_size = {field.message.name}.deserialize(buffer[{offset}{offset_str}:])'
+                offset_str += f' + {field.name}_size'
             else:
                 definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0]"
                 offset += field.size
         definition += f'\n{T}{T}return cls('
         for field in message.fields:
             definition += f'\n{T}{T}{T}{field.name}={field.name},'
-        definition += f'\n{T}{T})\n'
+        definition += f'\n{T}{T}), {offset}{offset_str}\n'
 
     definition += '\n'
 
@@ -169,3 +176,6 @@ def generate_python(bh: parser.Buffham, outfile: pathlib.Path, stub: bool) -> No
             fp.write(generate_node(bh.name, stub))
         for transaction in bh.transactions:
             fp.write(generate_transaction(transaction, stub))
+
+    logging.debug(f'{stub=}')
+    logging.debug(outfile.read_text())

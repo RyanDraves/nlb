@@ -20,6 +20,7 @@ class FieldType(enum.Enum):
     # Some Haskell nerd is going to come along and present a beatiful argument
     # on how terrible my design is, but alas, I do not care.
     LIST = enum.auto()
+    MESSAGE = enum.auto()
 
 
 @dataclasses.dataclass
@@ -28,6 +29,8 @@ class Field:
     pri_type: FieldType
     # For lists
     sub_type: FieldType | None = None
+    # For messages
+    message: 'Message | None' = None
 
     @property
     def iterable(self) -> bool:
@@ -80,6 +83,9 @@ class Field:
     @property
     def py_type(self) -> str:
         """Get the Python type hint for the field."""
+        if self.message:
+            return self.message.name
+
         type_map = {
             FieldType.UINT8_T: 'int',
             FieldType.UINT16_T: 'int',
@@ -104,6 +110,9 @@ class Field:
     @property
     def cpp_type(self) -> str:
         """Get the C++ type for the field."""
+        if self.message:
+            return self.message.name
+
         type_map = {
             FieldType.UINT8_T: 'uint8_t',
             FieldType.UINT16_T: 'uint16_t',
@@ -165,7 +174,7 @@ class Parser:
         self._request_id = 0
 
     @staticmethod
-    def parse_field(line: str) -> Field:
+    def parse_field(line: str, messages: list[Message]) -> Field:
         """Parse a field from a line.
 
         Fields are arranged as `[type] [name];`. Examples:
@@ -181,25 +190,33 @@ class Parser:
         pri_type = parts[0]
         name = parts[1]
 
-        try:
-            pri_type.startswith('list[')
-            if pri_type.startswith('list['):
+        if (pri_type_str := pri_type.upper()) in FieldType._member_names_:
+            sub_type = None
+            pri_type = FieldType[pri_type_str]
+            message = None
+        elif pri_type.startswith('list['):
+            try:
                 sub_type = FieldType[pri_type[5:-1].upper()]
-                pri_type = FieldType.LIST
-            else:
-                sub_type = None
-                pri_type = FieldType[pri_type.upper()]
-        except KeyError:
-            raise ValueError(f'Invalid field type: {pri_type}')
+            except KeyError:
+                raise ValueError(f'Invalid list type {pri_type}')
+            pri_type = FieldType.LIST
+            message = None
+        else:
+            if not (
+                message := next(filter(lambda m: m.name == pri_type, messages), None)
+            ):
+                raise ValueError(f'Invalid message name {pri_type}')
+            sub_type = None
+            pri_type = FieldType.MESSAGE
 
         # Ensure the sub_type is not iterable
         if sub_type in (FieldType.LIST, FieldType.STRING, FieldType.BYTES):
             raise ValueError('Nested iterables are not supported')
 
-        return Field(name, pri_type, sub_type)
+        return Field(name, pri_type, sub_type, message)
 
     @staticmethod
-    def parse_message(lines: list[str]) -> Message:
+    def parse_message(lines: list[str], messages: list[Message]) -> Message:
         """Parse a message from a list of lines.
 
         Messages are arranged as:
@@ -214,7 +231,7 @@ class Parser:
             raise ValueError(f'Invalid message line: {lines[0]}')
 
         name = match.groups()[0]
-        fields = [Parser.parse_field(line) for line in lines[1:-1]]
+        fields = [Parser.parse_field(line, messages) for line in lines[1:-1]]
         return Message(name, fields)
 
     def parse_transaction(self, line: str, messages: list[Message]) -> Transaction:
@@ -269,7 +286,7 @@ class Parser:
             if start < prev_end:
                 raise ValueError('Nested messages are not supported')
 
-            messages.append(Parser.parse_message(lines[start : end + 1]))
+            messages.append(Parser.parse_message(lines[start : end + 1], messages))
 
             prev_end = end
 

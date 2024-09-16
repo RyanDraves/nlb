@@ -22,6 +22,14 @@ class LogMessage:
     message: str
 
 
+@dataclasses.dataclass
+class NestedMessage:
+    flag: int
+    inner: LogMessage
+    data: list[int]
+    nested: Ping
+
+
 class TestEngine(unittest.TestCase):
     PING = parser.Message(
         'Ping',
@@ -41,6 +49,15 @@ class TestEngine(unittest.TestCase):
         'LogMessage',
         [
             parser.Field('message', parser.FieldType.STRING, None),
+        ],
+    )
+    NESTED_MESSAGE = parser.Message(
+        'NestedMessage',
+        [
+            parser.Field('flag', parser.FieldType.UINT8_T, None),
+            parser.Field('inner', parser.FieldType.MESSAGE, None, LOG_MESSAGE),
+            parser.Field('data', parser.FieldType.LIST, parser.FieldType.INT32_T),
+            parser.Field('nested', parser.FieldType.MESSAGE, None, PING),
         ],
     )
 
@@ -71,22 +88,48 @@ class TestEngine(unittest.TestCase):
             b'\x0d\x00Hello, World!',
         )
 
+    def test_generate_nested_serializer(self):
+        message = self.NESTED_MESSAGE
+        serializer = engine.generate_serializer(message)
+        instance = NestedMessage(
+            0x42, LogMessage('Hello, World!'), [-1, -2, -3], Ping(42)
+        )
+        self.assertEqual(
+            serializer(instance),
+            b'B\r\x00Hello, World!\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*',
+        )
+
     def test_generate_deserializer(self):
         message = self.PING
         deserializer = engine.generate_deserializer(message, Ping)
         buffer = int(42).to_bytes(length=1, byteorder='little', signed=False)
-        self.assertEqual(deserializer(buffer), Ping(42))
+        msg, size = deserializer(buffer)
+        self.assertEqual(msg, Ping(42))
+        self.assertEqual(size, len(buffer))
 
         message = self.FLASH_PAGE
         deserializer = engine.generate_deserializer(message, FlashPage)
         buffer = (
             b'\x34\x12\x00\x00\x78\x56\x00\x00\x02\x00\xBC\x9A\x00\x00\xF0\xDE\x00\x00'
         )
-        self.assertEqual(
-            deserializer(buffer), FlashPage(0x1234, 0x5678, [0x9ABC, 0xDEF0])
-        )
+        msg, size = deserializer(buffer)
+        self.assertEqual(msg, FlashPage(0x1234, 0x5678, [0x9ABC, 0xDEF0]))
+        self.assertEqual(size, len(buffer))
 
         message = self.LOG_MESSAGE
         deserializer = engine.generate_deserializer(message, LogMessage)
-        buffer = b'\x00\x0dHello, World!'
-        self.assertEqual(deserializer(buffer), LogMessage('Hello, World!'))
+        buffer = b'\x0d\x00Hello, World!'
+        msg, size = deserializer(buffer)
+        self.assertEqual(msg, LogMessage('Hello, World!'))
+        self.assertEqual(size, len(buffer))
+
+    def test_generate_nested_deserializer(self):
+        message = self.NESTED_MESSAGE
+        deserializer = engine.generate_deserializer(message, NestedMessage)
+        buffer = b'B\r\x00Hello, World!\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*'
+        msg, size = deserializer(buffer)
+        self.assertEqual(
+            msg,
+            NestedMessage(0x42, LogMessage('Hello, World!'), [-1, -2, -3], Ping(42)),
+        )
+        self.assertEqual(size, len(buffer))

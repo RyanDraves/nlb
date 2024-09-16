@@ -7,7 +7,6 @@ Buffham is a serialization library. It currently has the following design goals:
 These goals are flexible.
 
 # Roadmap
-- Nested message support
 - Constants support
 - Support for "published" messages (versus transactions, i.e. log messages)
 - Write the parser schemas in Buffham (cool)
@@ -15,6 +14,7 @@ These goals are flexible.
 - Import support
 - Enum support
 - Dictionary support
+- List of messages support
 
 # Limitations
 - Transaction code expects Python clients and C++ servers

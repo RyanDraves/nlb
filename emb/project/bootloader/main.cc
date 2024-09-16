@@ -18,7 +18,7 @@ int main() {
     // Read the system flash page
     auto buffer = emb::yaal::flash_sector_read(0);
     emb::project::bootloader::SystemFlashPage system_flash_page =
-        emb::project::bootloader::SystemFlashPage::deserialize(buffer);
+        emb::project::bootloader::SystemFlashPage::deserialize(buffer).first;
 
     // Increment the boot count
     system_flash_page.boot_count++;

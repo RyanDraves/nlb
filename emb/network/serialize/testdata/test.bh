@@ -15,3 +15,8 @@ message Unaligned {
     list[uint16_t] h;
     list[uint32_t] i;
 }
+
+message NestedMessage {
+    Foo foo;
+    uint8_t flag;
+}

@@ -14,6 +14,13 @@ message LogMessage {
     string message;
 }
 
+message NestedMessage {
+    uint8_t flag;
+    LogMessage message;
+    list[int32_t] numbers;
+    Ping pong;
+}
+
 
 transaction ping[Ping, LogMessage];
 transaction flash_page[FlashPage, FlashPage];

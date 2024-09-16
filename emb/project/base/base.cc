@@ -23,7 +23,7 @@ Base::Base() : impl_(new BaseImpl()) {
     // TODO: This probably fails on a fresh Pico;
     // need to gracefully handle bad deserialization
     auto buffer = yaal::flash_sector_read(0);
-    impl_->system = bootloader::SystemFlashPage::deserialize(buffer);
+    impl_->system = bootloader::SystemFlashPage::deserialize(buffer).first;
 }
 
 Base::~Base() { delete impl_; }
@@ -76,7 +76,7 @@ FlashSector Base::write_flash_sector(const FlashSector &flash_sector) {
     if (flash_sector.sector == 0) {
         // Update the read system flash page
         impl_->system =
-            bootloader::SystemFlashPage::deserialize(flash_sector.data);
+            bootloader::SystemFlashPage::deserialize(flash_sector.data).first;
     }
 
     return response;
