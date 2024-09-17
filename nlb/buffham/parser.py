@@ -4,6 +4,7 @@ import pathlib
 import re
 
 COMMENT_REGEX = re.compile(r'^\s*#(.*)$')
+CONSTANT_REGEX = re.compile(r'^constant (\w+) (\w+) = (.+);')
 
 
 class FieldType(enum.Enum):
@@ -84,60 +85,6 @@ class Field:
             FieldType.FLOAT64: 'd',
         }[self.sub_type or self.pri_type]
 
-    @property
-    def py_type(self) -> str:
-        """Get the Python type hint for the field."""
-        if self.message:
-            return self.message.name
-
-        type_map = {
-            FieldType.UINT8_T: 'int',
-            FieldType.UINT16_T: 'int',
-            FieldType.UINT32_T: 'int',
-            FieldType.UINT64_T: 'int',
-            FieldType.INT8_T: 'int',
-            FieldType.INT16_T: 'int',
-            FieldType.INT32_T: 'int',
-            FieldType.INT64_T: 'int',
-            FieldType.FLOAT32: 'float',
-            FieldType.FLOAT64: 'float',
-            FieldType.STRING: 'str',
-            FieldType.BYTES: 'bytes',
-        }
-
-        if self.pri_type is FieldType.LIST:
-            assert self.sub_type is not None
-            return f'list[{type_map[self.sub_type]}]'
-
-        return type_map[self.pri_type]
-
-    @property
-    def cpp_type(self) -> str:
-        """Get the C++ type for the field."""
-        if self.message:
-            return self.message.name
-
-        type_map = {
-            FieldType.UINT8_T: 'uint8_t',
-            FieldType.UINT16_T: 'uint16_t',
-            FieldType.UINT32_T: 'uint32_t',
-            FieldType.UINT64_T: 'uint64_t',
-            FieldType.INT8_T: 'int8_t',
-            FieldType.INT16_T: 'int16_t',
-            FieldType.INT32_T: 'int32_t',
-            FieldType.INT64_T: 'int64_t',
-            FieldType.FLOAT32: 'float',
-            FieldType.FLOAT64: 'double',
-            FieldType.STRING: 'std::string',
-            FieldType.BYTES: 'std::vector<uint8_t>',
-        }
-
-        if self.pri_type is FieldType.LIST:
-            assert self.sub_type is not None
-            return f'std::vector<{type_map[self.sub_type]}>'
-
-        return type_map[self.pri_type]
-
 
 @dataclasses.dataclass
 class Message:
@@ -168,11 +115,22 @@ class Transaction:
 
 
 @dataclasses.dataclass
+class Constant:
+    name: str
+    type: FieldType
+    value: str
+    comments: list[str] = dataclasses.field(default_factory=list)
+    inline_comment: str | None = None
+    references: list[str] = dataclasses.field(default_factory=list)
+
+
+@dataclasses.dataclass
 class Buffham:
     name: str
     namespace: list[str]
     messages: list[Message]
     transactions: list[Transaction]
+    constants: list[Constant]
 
 
 class Parser:
@@ -352,6 +310,68 @@ class Parser:
 
         return transactions
 
+    @staticmethod
+    def parse_constant(
+        line: str, constants: list[Constant], comments: list[str]
+    ) -> Constant:
+        """Parse a constant from a line.
+
+        Constants are arranged as:
+        - `constant [type] [name] = [value];`
+        where `value` may reference other constants
+
+        Examples:
+        - `constant uint8_t foo = 0x01;`
+        - `constant string bar = "baz";`
+        - `constant uint16_t baz = 0x01 + {foo};`
+        """
+        match = CONSTANT_REGEX.match(line)
+        if not match:
+            raise ValueError(f'Invalid constant line: {line}')
+        type_str, name, value = match.groups()
+
+        try:
+            type_ = FieldType[type_str.upper()]
+        except KeyError:
+            raise ValueError(f'Invalid constant type {type_str}')
+
+        if type_ in (FieldType.LIST, FieldType.MESSAGE, FieldType.BYTES):
+            raise ValueError(
+                'Constants cannot be messages or have language syntax ambiguity'
+            )
+
+        inline_comment_match = re.compile(r'.*#(.*)').match(line)
+        inline_comment = (
+            inline_comment_match.groups()[0] if inline_comment_match else None
+        )
+
+        # Find references to other constants
+        references = []
+        for constant in constants:
+            if '{' + constant.name + '}' in value:
+                references.append(constant.name)
+
+        return Constant(name, type_, value, comments, inline_comment, references)
+
+    def parse_constant_lines(self, lines: list[str]) -> list[Constant]:
+
+        indices = [i for i, line in enumerate(lines) if CONSTANT_REGEX.match(line)]
+
+        constants = []
+        comments = []
+        comment_index = 0
+        for i in indices:
+            while comment_index < i:
+                if match := COMMENT_REGEX.match(lines[comment_index]):
+                    comments.append(match.groups()[0])
+                else:
+                    comments = []
+                comment_index += 1
+
+            constants.append(self.parse_constant(lines[i], constants, comments))
+
+        return constants
+
     def parse_file(self, file: pathlib.Path) -> Buffham:
         self._request_id = 0
 
@@ -361,5 +381,8 @@ class Parser:
 
         messages = self.parse_message_lines(lines)
         transactions = self.parse_transaction_lines(lines, messages)
+        constants = self.parse_constant_lines(lines)
 
-        return Buffham(file.stem.title(), list(namespace), messages, transactions)
+        return Buffham(
+            file.stem.title(), list(namespace), messages, transactions, constants
+        )

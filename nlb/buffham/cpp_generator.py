@@ -4,12 +4,32 @@ from nlb.buffham import parser
 
 T = ' ' * 4  # Indentation
 
+TYPE_MAP = {
+    parser.FieldType.UINT8_T: 'uint8_t',
+    parser.FieldType.UINT16_T: 'uint16_t',
+    parser.FieldType.UINT32_T: 'uint32_t',
+    parser.FieldType.UINT64_T: 'uint64_t',
+    parser.FieldType.INT8_T: 'int8_t',
+    parser.FieldType.INT16_T: 'int16_t',
+    parser.FieldType.INT32_T: 'int32_t',
+    parser.FieldType.INT64_T: 'int64_t',
+    parser.FieldType.FLOAT32: 'float',
+    parser.FieldType.FLOAT64: 'double',
+    parser.FieldType.STRING: 'std::string',
+    parser.FieldType.BYTES: 'std::vector<uint8_t>',
+}
+
 
 def _to_snake_case(name: str) -> str:
     """Convert a title case name to snake case."""
     return name[0].lower() + ''.join(
         f'_{c.lower()}' if c.isupper() else c for c in name[1:]
     )
+
+
+def _to_konstant_case(name: str) -> str:
+    """Convert to kTitleCase."""
+    return 'k' + name.title().replace('_', '')
 
 
 def _generate_comment(comments: list[str], tabs: str) -> str:
@@ -31,6 +51,18 @@ def _generate_comment(comments: list[str], tabs: str) -> str:
     return definition
 
 
+def _cpp_type(field: parser.Field) -> str:
+    """Get the C++ type for the field."""
+    if field.message:
+        return field.message.name
+
+    if field.pri_type is parser.FieldType.LIST:
+        assert field.sub_type is not None
+        return f'std::vector<{TYPE_MAP[field.sub_type]}>'
+
+    return TYPE_MAP[field.pri_type]
+
+
 def generate_message(message: parser.Message) -> str:
     """Generate a struct definition from a Message."""
     definition = ''
@@ -43,7 +75,7 @@ def generate_message(message: parser.Message) -> str:
     for field in message.fields:
         if field.comments:
             definition += '\n' + _generate_comment(field.comments, T)
-        definition += f'\n{T}{field.cpp_type} {field.name};'
+        definition += f'\n{T}{_cpp_type(field)} {field.name};'
         if field.inline_comment:
             definition += f'  // {field.inline_comment}'
 
@@ -91,7 +123,7 @@ def generate_message(message: parser.Message) -> str:
             offset_str += f' + {field.name}_size * {field.size}'
         elif field.pri_type is parser.FieldType.MESSAGE:
             definition += f'\n{T}{T}auto {field.name}_buffer = buffer.subspan({offset}{offset_str});'
-            definition += f'\n{T}{T}std::tie({message_name}.{field.name}, {field.name}_buffer) = {field.cpp_type}::deserialize({field.name}_buffer);'
+            definition += f'\n{T}{T}std::tie({message_name}.{field.name}, {field.name}_buffer) = {_cpp_type(field)}::deserialize({field.name}_buffer);'
             offset_str += f' + {field.name}_buffer.size()'
         else:
             definition += f"\n{T}{T}memcpy(&{message_name}.{field.name}, buffer.data() + {offset}{offset_str}, {field.size});"
@@ -165,6 +197,24 @@ def generate_end_namespace(namespace: list[str]) -> str:
     return definition
 
 
+def generate_constant(constant: parser.Constant) -> str:
+    """Generate a constant definition."""
+
+    definition = ''
+
+    if constant.comments:
+        definition += _generate_comment(constant.comments, '') + '\n'
+    references = {ref: _to_konstant_case(ref) for ref in constant.references}
+    definition += f'constexpr {TYPE_MAP[constant.type]} {_to_konstant_case(constant.name)} = {constant.value.format(**references)};'
+
+    if constant.inline_comment:
+        definition += f'  //{constant.inline_comment}'
+
+    definition += '\n'
+
+    return definition
+
+
 def generate_cpp(bh: parser.Buffham, outfile: pathlib.Path) -> None:
     with outfile.open('w') as fp:
         fp.write('#pragma once\n\n')
@@ -189,6 +239,12 @@ def generate_cpp(bh: parser.Buffham, outfile: pathlib.Path) -> None:
             )
 
         fp.write(generate_namespace(bh.namespace))
+
+        # Generate constant definitions
+        for constant in bh.constants:
+            fp.write(generate_constant(constant))
+        if bh.constants:
+            fp.write('\n\n')
 
         # Generate message definitions
         for message in bh.messages:

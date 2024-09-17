@@ -13,9 +13,6 @@ class BaseClient:
     def __init__(self, node: base_bh.BaseNode) -> None:
         self._node = node
 
-        self._app_addr_a = 160 * 1024
-        self._app_addr_b = self._app_addr_a + 880 * 1024
-
     def __enter__(self) -> Self:
         self._node.start()
         return self
@@ -60,11 +57,11 @@ class BaseClient:
         self,
         outpath: pathlib.Path | str,
         boot_side: int | None = None,
-        read_size: int = 880 * 1024,
+        read_size: int = base_bh.PICO_APP_SIZE,
     ) -> None:
         if boot_side is None:
             boot_side = self.read_system_page().boot_side
-        address = self._app_addr_b if boot_side == 0 else self._app_addr_a
+        address = base_bh.PICO_APP_ADDR_B if boot_side == 0 else base_bh.PICO_APP_ADDR_A
 
         self.read_flash(outpath, address, read_size)
 
@@ -72,7 +69,7 @@ class BaseClient:
         self,
         outpath: pathlib.Path | str,
         address: int = 0,
-        read_size: int = 2 * 1024 * 1024,
+        read_size: int = base_bh.PICO_FLASH_SIZE,
     ) -> None:
         end_address = address + read_size
         with progress.Progress() as progress_bar:

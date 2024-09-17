@@ -6,6 +6,13 @@ from emb.network.serialize import bh_cobs
 from emb.network.transport import transporter
 from nlb.buffham import bh
 
+PICO_FLASH_SIZE = 2 * 1024 * 1024
+PICO_APP_SIZE = 880 * 1024
+PICO_APP_ADDR_A = 160 * 1024
+PICO_APP_ADDR_B = PICO_APP_ADDR_A + 880 * 1024
+NUM_SECTORS = 32
+
+
 @dataclasses.dataclass
 class Ping:
     # Pong!

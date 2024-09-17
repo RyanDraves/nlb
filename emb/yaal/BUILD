@@ -17,5 +17,5 @@ cc_library(
             ],
             "//conditions:default": [],
         },
-    ),
+    ) + ["//emb/project/base:base_bh_cc"],
 )

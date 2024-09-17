@@ -6,6 +6,53 @@ from nlb.buffham import parser
 T = ' ' * 4  # Indentation
 
 
+TYPE_MAP = {
+    parser.FieldType.UINT8_T: 'int',
+    parser.FieldType.UINT16_T: 'int',
+    parser.FieldType.UINT32_T: 'int',
+    parser.FieldType.UINT64_T: 'int',
+    parser.FieldType.INT8_T: 'int',
+    parser.FieldType.INT16_T: 'int',
+    parser.FieldType.INT32_T: 'int',
+    parser.FieldType.INT64_T: 'int',
+    parser.FieldType.FLOAT32: 'float',
+    parser.FieldType.FLOAT64: 'float',
+    parser.FieldType.STRING: 'str',
+    parser.FieldType.BYTES: 'bytes',
+}
+
+
+def _py_type(field: parser.Field) -> str:
+    """Get the Python type hint for the field."""
+    if field.message:
+        return field.message.name
+
+    if field.pri_type is parser.FieldType.LIST:
+        assert field.sub_type is not None
+        return f'list[{TYPE_MAP[field.sub_type]}]'
+
+    return TYPE_MAP[field.pri_type]
+
+
+def generate_constant(constant: parser.Constant) -> str:
+    """Generate a Python constant definition from a Constant."""
+    definition = ''
+
+    if constant.comments:
+        for comment in constant.comments:
+            definition += f'#{comment}\n'
+    # Convert to UPPER_SNAKE_CASE
+    references = {ref: ref.upper() for ref in constant.references}
+    definition += f'{constant.name.upper()} = {constant.value.format(**references)}'
+
+    if constant.inline_comment:
+        definition += f'  #{constant.inline_comment}'
+
+    definition += '\n'
+
+    return definition
+
+
 def generate_message(message: parser.Message, stub: bool) -> str:
     """Generate a Python dataclass definition from a Message."""
 
@@ -25,7 +72,7 @@ def generate_message(message: parser.Message, stub: bool) -> str:
         if field.comments:
             for comment in field.comments:
                 definition += f'\n{T}#{comment}'
-        definition += f'\n{T}{field.name}: {field.py_type}'
+        definition += f'\n{T}{field.name}: {_py_type(field)}'
         if field.inline_comment:
             definition += f'  #{field.inline_comment}'
 
@@ -183,6 +230,12 @@ def generate_python(bh: parser.Buffham, outfile: pathlib.Path, stub: bool) -> No
                 'from emb.network.transport import transporter\n'
                 'from nlb.buffham import bh\n\n'
             )
+
+        # Generate constant definitions
+        for constant in bh.constants:
+            fp.write(generate_constant(constant))
+        if bh.constants:
+            fp.write('\n\n')
 
         # Generate message definitions
         for message in bh.messages:
