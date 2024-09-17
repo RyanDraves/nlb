@@ -3,6 +3,8 @@ import enum
 import pathlib
 import re
 
+COMMENT_REGEX = re.compile(r'^\s*#(.*)$')
+
 
 class FieldType(enum.Enum):
     UINT8_T = enum.auto()
@@ -31,6 +33,8 @@ class Field:
     sub_type: FieldType | None = None
     # For messages
     message: 'Message | None' = None
+    comments: list[str] = dataclasses.field(default_factory=list)
+    inline_comment: str | None = None
 
     @property
     def iterable(self) -> bool:
@@ -139,6 +143,7 @@ class Field:
 class Message:
     name: str
     fields: list[Field]
+    comments: list[str] = dataclasses.field(default_factory=list)
 
     @property
     def size(self) -> int | None:
@@ -159,6 +164,7 @@ class Transaction:
     request_id: int
     receive: Message
     send: Message
+    comments: list[str] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass
@@ -174,7 +180,7 @@ class Parser:
         self._request_id = 0
 
     @staticmethod
-    def parse_field(line: str, messages: list[Message]) -> Field:
+    def parse_field(line: str, messages: list[Message], comments: list[str]) -> Field:
         """Parse a field from a line.
 
         Fields are arranged as `[type] [name];`. Examples:
@@ -213,10 +219,17 @@ class Parser:
         if sub_type in (FieldType.LIST, FieldType.STRING, FieldType.BYTES):
             raise ValueError('Nested iterables are not supported')
 
-        return Field(name, pri_type, sub_type, message)
+        inline_comment_match = re.compile(r'.*#(.*)').match(line)
+        inline_comment = (
+            inline_comment_match.groups()[0] if inline_comment_match else None
+        )
+
+        return Field(name, pri_type, sub_type, message, comments, inline_comment)
 
     @staticmethod
-    def parse_message(lines: list[str], messages: list[Message]) -> Message:
+    def parse_message(
+        lines: list[str], messages: list[Message], comments: list[str]
+    ) -> Message:
         """Parse a message from a list of lines.
 
         Messages are arranged as:
@@ -231,10 +244,19 @@ class Parser:
             raise ValueError(f'Invalid message line: {lines[0]}')
 
         name = match.groups()[0]
-        fields = [Parser.parse_field(line, messages) for line in lines[1:-1]]
-        return Message(name, fields)
+        fields = []
+        field_comments = []
+        for line in lines[1:-1]:
+            if comment_match := COMMENT_REGEX.match(line):
+                field_comments.append(comment_match.groups()[0])
+            else:
+                fields.append(Parser.parse_field(line, messages, field_comments))
+                field_comments = []
+        return Message(name, fields, comments)
 
-    def parse_transaction(self, line: str, messages: list[Message]) -> Transaction:
+    def parse_transaction(
+        self, line: str, messages: list[Message], comments: list[str]
+    ) -> Transaction:
         """Parse a transaction from a line.
 
         Transactions are arranged as:
@@ -259,7 +281,7 @@ class Parser:
         request_id = self._request_id
         self._request_id += 1
 
-        return Transaction(name, request_id, receive, send)
+        return Transaction(name, request_id, receive, send, comments)
 
     @staticmethod
     def parse_message_lines(lines: list[str]) -> list[Message]:
@@ -282,11 +304,23 @@ class Parser:
         # Pair the start and end indices and parse the message
         prev_end = -1
         messages = []
+        comments = []
+        comment_index = 0
         for start, end in zip(start_indices, end_indices):
             if start < prev_end:
-                raise ValueError('Nested messages are not supported')
+                raise ValueError('Nested message definitions are not supported')
 
-            messages.append(Parser.parse_message(lines[start : end + 1], messages))
+            while comment_index < start:
+                if match := COMMENT_REGEX.match(lines[comment_index]):
+                    comments.append(match.groups()[0])
+                else:
+                    # Clear out comments; no longer matches with the next message
+                    comments = []
+                comment_index += 1
+
+            messages.append(
+                Parser.parse_message(lines[start : end + 1], messages, comments)
+            )
 
             prev_end = end
 
@@ -303,7 +337,20 @@ class Parser:
             if re.compile(r'^transaction \w+\[\w+, \w+\]').match(line)
         ]
 
-        return [self.parse_transaction(lines[i], messages) for i in indices]
+        transactions = []
+        comments = []
+        comment_index = 0
+        for i in indices:
+            while comment_index < i:
+                if match := COMMENT_REGEX.match(lines[comment_index]):
+                    comments.append(match.groups()[0])
+                else:
+                    comments = []
+                comment_index += 1
+
+            transactions.append(self.parse_transaction(lines[i], messages, comments))
+
+        return transactions
 
     def parse_file(self, file: pathlib.Path) -> Buffham:
         self._request_id = 0
@@ -311,9 +358,6 @@ class Parser:
         namespace = file.parent.parts
 
         lines = file.read_text().split('\n')
-        # Remove comment lines; in-line comments are valid per the regex
-        # patterns, but block comments are not.
-        lines = [line for line in lines if not re.compile(r'^\s*#').match(line)]
 
         messages = self.parse_message_lines(lines)
         transactions = self.parse_transaction_lines(lines, messages)

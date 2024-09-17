@@ -1,4 +1,7 @@
 message SystemFlashPage {
+    # Side the microcontroller has booted from;
+    # 0 for side A, 1 for side B
     uint8_t boot_side;
+    # Number of times the microcontroller had booted
     uint32_t boot_count;
 }

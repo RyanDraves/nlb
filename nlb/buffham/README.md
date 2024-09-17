@@ -10,7 +10,6 @@ These goals are flexible.
 - Constants support
 - Support for "published" messages (versus transactions, i.e. log messages)
 - Write the parser schemas in Buffham (cool)
-- Comment preservation support (gen code contains `.bh` comments)
 - Import support
 - Enum support
 - Dictionary support

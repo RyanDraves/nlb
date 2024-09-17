@@ -8,6 +8,7 @@ from nlb.buffham import bh
 
 @dataclasses.dataclass
 class Ping:
+    # Pong!
     ping: int
 
     def serialize(self) -> bytes: ...
@@ -17,7 +18,16 @@ class Ping:
 
 @dataclasses.dataclass
 class FlashPage:
+    """A page from the app flash image
+    """
+
+    # Address to work with
+    #
+    # On writes, it's relative to the start of the opposite side's firmware address
+    # On reads, it's relative to the start of flash
     address: int
+    # Number of bytes to read. Be mindful of `kBufSize = 1536` in `bh_cobs.hpp`
+    # and the stack size of the microcontroller (2kB for the Pico)
     read_size: int
     data: list[int]
 
@@ -28,6 +38,10 @@ class FlashPage:
 
 @dataclasses.dataclass
 class FlashSector:
+    """A scratchpad sector of flash memory
+    """
+
+    # Sector [0, 31] to work with
     sector: int
     data: list[int]
 
@@ -51,8 +65,13 @@ class BaseSerializer(bh_cobs.BhCobs):
 class BaseNode[Transporter: transporter.TransporterLike](bh.BhNode[BaseSerializer, Transporter]):
     def __init__(self, serializer: BaseSerializer | None = None, transporter: Transporter | None = None): ...
 
+# Pong!
 PING: bh.Transaction[Ping, LogMessage] = ...
+# Write data to the opposite flash app image
 WRITE_FLASH_IMAGE: bh.Transaction[FlashPage, FlashPage] = ...
+# Read from anywhere in flash
 READ_FLASH: bh.Transaction[FlashPage, FlashPage] = ...
+# Write flash sector contents
 WRITE_FLASH_SECTOR: bh.Transaction[FlashSector, FlashSector] = ...
+# Read flash flash sector contents
 READ_FLASH_SECTOR: bh.Transaction[FlashSector, FlashSector] = ...

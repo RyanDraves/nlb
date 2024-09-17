@@ -12,13 +12,40 @@ def _to_snake_case(name: str) -> str:
     )
 
 
+def _generate_comment(comments: list[str], tabs: str) -> str:
+    """Generate a comment block.
+
+    Does not inlude a trailing newline.
+    """
+    definition = ''
+    if len(comments) > 1:
+        definition += f'{tabs}/*'
+        for comment in comments:
+            if comment:
+                definition += f'\n{tabs}{comment.lstrip()}'
+            else:
+                definition += f'\n'
+        definition += f'\n{tabs} */'
+    elif comments:
+        definition += f'{tabs}//{comments[0]}'
+    return definition
+
+
 def generate_message(message: parser.Message) -> str:
     """Generate a struct definition from a Message."""
+    definition = ''
 
-    definition = f'struct {message.name} {{'
+    if message.comments:
+        definition += _generate_comment(message.comments, '') + '\n'
+
+    definition += f'struct {message.name} {{'
 
     for field in message.fields:
+        if field.comments:
+            definition += '\n' + _generate_comment(field.comments, T)
         definition += f'\n{T}{field.cpp_type} {field.name};'
+        if field.inline_comment:
+            definition += f'  // {field.inline_comment}'
 
     # Add serializer method
     definition += (
@@ -102,6 +129,8 @@ def generate_project_class(name: str, transactions: list[parser.Transaction]) ->
 
     # Add each transaction method
     for transaction in transactions:
+        if transaction.comments:
+            definition += _generate_comment(transaction.comments, T) + '\n'
         definition += f'{T}{transaction.send.name} {transaction.name}(const {transaction.receive.name} &{_to_snake_case(transaction.receive.name)});\n'
 
     # Add a pIMPL struct
