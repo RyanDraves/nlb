@@ -1,7 +1,8 @@
 build --disk_cache=~/.cache/bazel
 
-# build --cxxopt='-std=c++23' is broken?
-build --action_env=BAZEL_CXXOPTS="-std=c++23"
+build --@rules_cc//cc/toolchains:experimental_enable_rule_based_toolchains
+
+build --cxxopt='-std=c++23'
 
 build:pico --platforms=//bzl/platforms:pico
 

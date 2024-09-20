@@ -16,18 +16,18 @@ py_library(
 )
 
 buffham(
-    name = "base",
+    name = "base_bh",
     srcs = ["base.bh"],
 )
 
 buffham_py_library(
     name = "base_bh_py",
-    bh = ":base",
+    bh = ":base_bh",
 )
 
 buffham_cc_library(
     name = "base_bh_cc",
-    bh = ":base",
+    bh = ":base_bh",
 )
 
 py_binary(
@@ -48,10 +48,10 @@ py_test(
     name = "host_test",
     srcs = ["host_test.py"],
     data = [
-        ":base_host",
+        ":base",
     ],
     env = {
-        "HOST_BIN": "$(rootpath :base_host)",
+        "HOST_BIN": "$(rootpath :base)",
     },
     deps = [
         ":base_bh_py",

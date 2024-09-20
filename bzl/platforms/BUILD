@@ -26,10 +26,11 @@ constraint_value(
 platform(
     name = "pico",
     constraint_values = [
-        "@platforms//os:none",
-        "@platforms//cpu:armv6-m",
+        # "@platforms//os:none",
+        # "@platforms//cpu:armv6-m",
         ":23",
     ],
+    parents = ["@pico-sdk//bazel/platform:rp2040"],
 )
 
 platform(

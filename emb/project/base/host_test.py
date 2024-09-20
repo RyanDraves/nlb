@@ -48,7 +48,7 @@ class HostTest(unittest.TestCase):
                 page=bootloader_bh.SystemFlashPage(boot_side=0, boot_count=1)
             )
 
-            self.client.write_flash_image(self.image)
+            self.client.write_flash_image(self.image, swap_boot_side=False)
 
             outpath = pathlib.Path(tempfile.mktemp())
             self.client.read_flash_image(outpath, read_size=self.image.stat().st_size)

@@ -33,7 +33,9 @@ class BaseClient:
         resp = base_bh.WRITE_FLASH_IMAGE.transact(self._node, msg)
         assert resp.address == address
 
-    def write_flash_image(self, image: pathlib.Path | str) -> None:
+    def write_flash_image(
+        self, image: pathlib.Path | str, swap_boot_side: bool = True
+    ) -> None:
         image = pathlib.Path(image)
         with progress.Progress() as progress_bar:
             address = 0
@@ -50,6 +52,16 @@ class BaseClient:
                     progress_bar.update(task, advance=len(data))
                     data = list(f.read(1024))
         logging.info(f'Flash image written from {image}')
+
+        if swap_boot_side:
+            self.swap_boot_side()
+
+    def swap_boot_side(self) -> None:
+        system_page = self.read_system_page()
+        system_page.boot_side = 1 - system_page.boot_side
+        self.write_system_page(system_page)
+
+        logging.info(f'Boot side swapped to {system_page.boot_side}')
 
     def _read_flash(self, address: int, size: int) -> base_bh.FlashPage:
         msg = base_bh.FlashPage(address=address, read_size=size, data=[])

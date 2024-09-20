@@ -46,7 +46,7 @@ cc_library(
     deps = select(
         {
             "@platforms//cpu:armv6-m": [
-                "//bzl/deps:pico_stdlib_c",
+                "@pico-sdk//src/rp2_common/pico_stdlib",
             ],
             "//bzl/platforms:unittest": [":transporter_cc"],
             "//conditions:default": ["@cppzmq"],

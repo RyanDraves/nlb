@@ -3,30 +3,30 @@ load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_li
 load("//bzl/macros:pico.bzl", "pico_project")
 
 buffham(
-    name = "bootloader",
+    name = "bootloader_bh",
     srcs = ["bootloader.bh"],
 )
 
 buffham_py_library(
     name = "bootloader_bh_py",
-    bh = ":bootloader",
+    bh = ":bootloader_bh",
 )
 
 buffham_cc_library(
     name = "bootloader_bh_cc",
-    bh = ":bootloader",
+    bh = ":bootloader_bh",
 )
 
 pico_project(
     name = "bootloader_pico",
     srcs = ["main.cc"],
-    include_host = False,
     deps = [
         ":bootloader_bh_cc",
         "//emb/network/serialize:bh_cobs_cc",
         "//emb/network/transport:serial_cc",
         "//emb/project/base:base_bh_cc",
         "//emb/yaal:flash",
+        "@pico-sdk//src/rp2_common/pico_stdlib",
     ],
 )
 

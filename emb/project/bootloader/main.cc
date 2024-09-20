@@ -26,10 +26,27 @@ int main() {
     // Write the system flash page back to flash
     emb::yaal::flash_sector_write(0, system_flash_page.serialize(tx_buffer));
 
+    // Jump to the application
+    uint32_t app_addr = reinterpret_cast<uint32_t>(emb::yaal::get_flash_ptr(
+        system_flash_page.boot_side == 0 ? emb::yaal::kAppAddrA
+                                         : emb::yaal::kAppAddrB));
+    uint32_t app_stack_pointer = *(uint32_t *)app_addr;
+    typedef void (*app_entry_t)(void);
+    app_entry_t app_entry = (app_entry_t) * (uint32_t *)(app_addr + 4);
+
+    // Set the main stack pointer
+    // Equivalent to __set_MSP(app_stack_pointer);
+    // https://github.com/raspberrypi/pico-sdk/blob/efe2103f9b28458a1615ff096054479743ade236/src/rp2_common/cmsis/stub/CMSIS/Core/Include/m-profile/cmsis_gcc_m.h#L309
+    __asm volatile("msr msp, %0" ::"r"(app_stack_pointer) :);
+    // Jump to the application
+    app_entry();
+
+    // We should never get here
     emb::project::base::LogMessage log_message;
 
     log_message.message =
-        "Bootloader side: " + std::to_string(system_flash_page.boot_side) +
+        "Bootloader failed. Boot side: " +
+        std::to_string(system_flash_page.boot_side) +
         "\nBoot count: " + std::to_string(system_flash_page.boot_count);
 
     // Encode the outgoing message;

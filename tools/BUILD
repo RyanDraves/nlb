@@ -7,5 +7,5 @@ workspace_tool(
 
 workspace_tool(
     name = "picotool",
-    tool = "//tools/rpi_picotool:picotool_bin",
+    tool = "@picotool",
 )
