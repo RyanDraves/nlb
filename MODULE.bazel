@@ -23,9 +23,7 @@ register_toolchains(
     "@pico-sdk//bazel/toolchain:mac-aarch64-rp2350",
 )
 
-# # rules_cc v0.0.10 is not yet cut, so manually pull in the desired version.
-# # This does not apply to dependent projects, so it needs to be copied to your
-# # project's MODULE.bazel too.
+# Check https://github.com/raspberrypi/pico-sdk/tree/master/bazel for when this can be removed
 archive_override(
     module_name = "rules_cc",
     urls = "https://github.com/bazelbuild/rules_cc/archive/1acf5213b6170f1f0133e273cb85ede0e732048f.zip",
