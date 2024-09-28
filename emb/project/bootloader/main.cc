@@ -43,9 +43,10 @@ static void jump_to_vtor(uint32_t vtor) {
 /* End borrowed code
  */
 
-// 2KB of stack, so keep our buffer small
-// TODO: Only using 1 core; can probably take Core 1's 2KB of stack
-static const uint32_t kBufferSize = 512;
+// 2KB of stack, so keep our buffer small. We can borrow some stack from
+// core 1's 2KB, but our flash logic is simple and requires sector alignment
+// (can't write to multiple sectors at once), so 1kB each will suffice.
+static const uint32_t kBufferSize = 1024;
 
 void read_buffer(uint8_t buffer[kBufferSize], uint32_t addr, uint32_t size) {
     memcpy(buffer, emb::yaal::get_flash_ptr(addr), size);
@@ -63,12 +64,23 @@ int main() {
     // Blink the LED to indicate the bootloader is running
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-    for (uint8_t i = 0; i < 20; ++i) {
-        gpio_put(PICO_DEFAULT_LED_PIN, 0);
-        sleep_ms(100);
-        gpio_put(PICO_DEFAULT_LED_PIN, 1);
-        sleep_ms(100);
-    }
+
+    // Lighting sequence
+    gpio_put(PICO_DEFAULT_LED_PIN, 1);
+    sleep_ms(50);
+    gpio_put(PICO_DEFAULT_LED_PIN, 0);
+    sleep_ms(50);
+    gpio_put(PICO_DEFAULT_LED_PIN, 1);
+    sleep_ms(50);
+    gpio_put(PICO_DEFAULT_LED_PIN, 0);
+    sleep_ms(25);
+    gpio_put(PICO_DEFAULT_LED_PIN, 1);
+    sleep_ms(13);
+    gpio_put(PICO_DEFAULT_LED_PIN, 0);
+    sleep_ms(12);
+    gpio_put(PICO_DEFAULT_LED_PIN, 1);
+    sleep_ms(50);
+    gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
     uint8_t buffer_a[kBufferSize];
     uint8_t buffer_b[kBufferSize];
@@ -77,6 +89,11 @@ int main() {
         // and the old image from A to B
         uint32_t addr_a = emb::yaal::kAppAddrA;
         uint32_t addr_b = emb::yaal::kAppAddrB;
+
+        // Start with the LED on
+        gpio_put(PICO_DEFAULT_LED_PIN, 1);
+
+        bool led_on = false;
         while (addr_b < emb::yaal::kAppAddrB + system_flash_page.image_size_b) {
             read_buffer(buffer_a, addr_a, kBufferSize);
             read_buffer(buffer_b, addr_b, kBufferSize);
@@ -85,11 +102,11 @@ int main() {
             addr_a += kBufferSize;
             addr_b += kBufferSize;
 
-            // Rapidly blink the LED to indicate a new image was flashed
-            gpio_put(PICO_DEFAULT_LED_PIN, 0);
-            sleep_ms(10);
-            gpio_put(PICO_DEFAULT_LED_PIN, 1);
-            sleep_ms(10);
+            // Toggle the LED every 10KB
+            if ((addr_b - emb::yaal::kAppAddrB) % 10240 == 0) {
+                gpio_put(PICO_DEFAULT_LED_PIN, led_on);
+                led_on = !led_on;
+            }
         }
 
         // Make sure we copied all of image A to B
@@ -99,6 +116,9 @@ int main() {
             addr_a += kBufferSize;
             addr_b += kBufferSize;
         }
+
+        // Ensure the LED is off
+        gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
         // Update the system flash page
         system_flash_page.new_image_flashed = 0;

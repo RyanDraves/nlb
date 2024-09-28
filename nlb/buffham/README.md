@@ -16,6 +16,7 @@ These goals are flexible.
 - Import support
 - Enum support
 - Dictionary support
+- File support (read/write to/from text/binary)
 
 # Limitations
 - Transaction code expects Python clients and C++ servers

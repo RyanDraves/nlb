@@ -117,3 +117,18 @@ class BaseClient:
 
     def read_system_page(self) -> bootloader_bh.SystemFlashPage:
         return self._read_flash_sector(0, bootloader_bh.SystemFlashPage)
+
+    def reset(self) -> None:
+        # Manually transmit the reset message to avoid waiting for a response
+        self._node._transporter.send(
+            self._node._serializer.serialize(base_bh.Ping(0), base_bh.RESET.request_id)
+        )
+
+    def revert_flash(self) -> None:
+        # The previous image is stored in the other bank, so we can just tell
+        # the bootloader to switch to the other bank
+        system_page = self.read_system_page()
+        system_page.new_image_flashed = 1
+        self.write_system_page(system_page)
+
+        self.reset()

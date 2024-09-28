@@ -9,6 +9,7 @@ from serial.tools import list_ports_common
 
 class Serial(abc.ABC):
     def __init__(self, baudrate: int, stop_byte: bytes):
+        # TODO: Make this automatically handle disconnects/reconnects
         self._serial = serial.Serial(None, baudrate, timeout=1)
         self._stop_byte = stop_byte
         self._started = False

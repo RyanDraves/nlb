@@ -1,5 +1,6 @@
 load("@pico-sdk//bazel/toolchain:objcopy.bzl", "objcopy_to_bin")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("//bzl/macros:emb.bzl", "flash")
 load("//bzl/rules:pico.bzl", "rp2040_binary", "rp2040_elf")
 
 def _pico_elf_and_bin(name, binary, linker_script, **kwargs):
@@ -76,3 +77,6 @@ def pico_project(name, srcs, deps, linker_script = "//emb/project/bootloader:app
         cmd = "$(execpath @picotool//:picotool) uf2 convert --quiet -t elf $(location {}.elf) $(location {}.uf2)".format(name, name),
         tools = ["@picotool//:picotool"],
     )
+
+    # Add a target to flash the binary
+    flash(name + "_flash", name + ".bin")

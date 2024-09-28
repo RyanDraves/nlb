@@ -5,6 +5,7 @@
 #include "emb/project/base/base_bh.hpp"
 #include "emb/project/bootloader/bootloader_bh.hpp"
 #include "emb/yaal/flash.hpp"
+#include "emb/yaal/watchdog.hpp"
 
 namespace emb {
 namespace project {
@@ -88,6 +89,11 @@ FlashSector Base::read_flash_sector(const FlashSector &flash_sector) {
     memcpy(response.data.data(), sector.data(), sector.size());
 
     return response;
+}
+
+Ping Base::reset(const Ping &ping) {
+    // Reset the device
+    emb::yaal::force_watchdog_reset();
 }
 
 }  // namespace base
