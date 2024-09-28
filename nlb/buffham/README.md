@@ -9,6 +9,7 @@ These goals are flexible.
 # Roadmap
 - Nested message support
 - Constants support
+- Bazel macro to insert constants into files via a genrule
 - Support for "published" messages (versus transactions, i.e. log messages)
 - Write the parser schemas in Buffham (cool)
 - Comment preservation support (gen code contains `.bh` comments)
