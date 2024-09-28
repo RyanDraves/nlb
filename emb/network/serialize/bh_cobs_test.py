@@ -4,7 +4,7 @@ from emb.network.serialize import bh_cobs
 from emb.network.serialize import test_bh
 
 
-class TestCbor2Cobs(unittest.TestCase):
+class TestBhCobs(unittest.TestCase):
     def setUp(self) -> None:
         self.serializer = bh_cobs.BhCobs(
             {
