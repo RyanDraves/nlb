@@ -1,0 +1,6 @@
+message SystemFlashPage {
+    uint32_t boot_count;
+    uint32_t image_size_a;
+    uint32_t image_size_b;
+    uint8_t new_image_flashed;
+}

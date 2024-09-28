@@ -1,3 +1,4 @@
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 load("@pip//:requirements.bzl", "all_requirements")
@@ -46,4 +47,13 @@ refresh_compile_commands(
     targets = {
         "//emb/...": "",
     },
+)
+
+write_source_files(
+    name = "generate_bh",
+    additional_update_targets = [
+        "//emb/network/serialize:test_bh_py_write",
+        "//emb/project/base:base_bh_py_write",
+        "//emb/project/bootloader:bootloader_bh_py_write",
+    ],
 )

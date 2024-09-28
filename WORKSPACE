@@ -3,44 +3,6 @@ workspace(name = "nlb")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# Pico
-
-http_archive(
-    name = "rules_pico",
-    integrity = "sha256-eYlQxBLVx4ZKuAU0ptpjc7X13BnYGHIWA76bymUVVLA=",
-    strip_prefix = "rules_pico-hermetic-toolchain",
-    url = "https://github.com/RyanDraves/rules_pico/archive/refs/heads/hermetic-toolchain.zip",
-)
-
-load("@rules_pico//pico:repositories.bzl", "rules_pico_dependencies")
-
-rules_pico_dependencies()
-
-http_archive(
-    name = "pico-examples",
-    build_file = "@rules_pico//pico:BUILD.pico-examples",
-    sha256 = "a07789d702f8e6034c42e04a3f9dda7ada4ae7c8e8d320c6be6675090c007861",
-    strip_prefix = "pico-examples-sdk-1.4.0",
-    urls = [
-        "https://github.com/raspberrypi/pico-examples/archive/refs/tags/sdk-1.4.0.tar.gz",
-    ],
-)
-
-# Arm toolchain
-
-git_repository(
-    name = "arm_none_eabi",
-    # commit = "98a38734b7b8f0781a1297cd9173dadd2e215fc8",
-    # remote = "https://github.com/hexdae/bazel-arm-none-eabi",
-    # https://github.com/hexdae/bazel-arm-none-eabi/pull/31
-    commit = "47c74efa1130af28654c281fd4984ced1850022b",
-    remote = "https://github.com/RyanDraves/bazel-arm-none-eabi",
-)
-
-load("@arm_none_eabi//:deps.bzl", "arm_none_eabi_deps")
-
-arm_none_eabi_deps(version = "13.2.1")
-
 # py_venv export
 
 git_repository(
@@ -100,9 +62,3 @@ http_archive(
     strip_prefix = "libzmq-4.3.5",
     url = "https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.5.zip",
 )
-
-# Picotool
-
-load("//tools/rpi_picotool:picotool.bzl", "picotool_repository")
-
-picotool_repository(name = "picotool")

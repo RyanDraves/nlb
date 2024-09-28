@@ -45,7 +45,7 @@ def generate_message(message: parser.Message) -> str:
     offset = 0
     offset_str = ''
     definition += (
-        f'\n{T}static {message.name} deserialize(std::span<uint8_t> buffer) {{'
+        f'\n{T}static {message.name} deserialize(std::span<const uint8_t> buffer) {{'
     )
     message_name = _to_snake_case(message.name)
     definition += f'\n{T}{T}{message.name} {message_name};'
@@ -76,12 +76,10 @@ def generate_message(message: parser.Message) -> str:
 def generate_project_class(name: str, transactions: list[parser.Transaction]) -> str:
     """Generate a project class definition."""
     definition = (
-        f'class {name} {{\n'
-        f'{T[::2]}public:\n'
-        f'{T}{name}() {{}}\n'
-        f'{T}~{name}() {{}}\n\n'
+        f'class {name} {{\n' f'{T[::2]}public:\n' f'{T}{name}();\n' f'{T}~{name}();\n\n'
     )
 
+    # Add register_handlers method
     definition += (
         f'{T}template <network::serialize::SerializerLike S,\n'
         f'{T}{T}{T}{T}network::transport::TransporterLike T, class... Projects>\n'
@@ -95,8 +93,14 @@ def generate_project_class(name: str, transactions: list[parser.Transaction]) ->
         )
     definition += f'{T}}}\n\n'
 
+    # Add each transaction method
     for transaction in transactions:
         definition += f'{T}{transaction.send.name} {transaction.name}(const {transaction.receive.name} &{_to_snake_case(transaction.receive.name)});\n'
+
+    # Add a pIMPL struct
+    definition += f'{T[::2]}private:\n'
+    definition += f'{T}struct {name}Impl;\n'
+    definition += f'{T}{name}Impl *impl_;\n'
 
     definition += '};\n\n'
 

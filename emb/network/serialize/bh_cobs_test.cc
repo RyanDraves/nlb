@@ -56,6 +56,38 @@ TEST(BhCobsTest, TestBasic) {
     ASSERT_THAT(out_data_unaligned.g, Eq(in_data_unaligned.g));
     ASSERT_THAT(out_data_unaligned.h, Eq(in_data_unaligned.h));
     ASSERT_THAT(out_data_unaligned.i, Eq(in_data_unaligned.i));
+
+    testdata::Foo in_large_data{
+        1,
+        "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
+        "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
+        "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
+        "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+        {
+            1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2,
+            3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+            1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2,
+            3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+            1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2,
+            3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+            1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2,
+            3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+            1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2,
+            3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+            1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2,
+            3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+        }};
+
+    auto [serialized_large, frame_padding_large] =
+        serializer.serialize(in_large_data, buffer);
+    auto framed_large = serializer.frame(serialized_large);
+    auto deframed_large = serializer.deframe(framed_large);
+    testdata::Foo out_large_data =
+        serializer.deserialize<testdata::Foo>(deframed_large);
+
+    ASSERT_THAT(out_large_data.bar, Eq(in_large_data.bar));
+    ASSERT_THAT(out_large_data.baz, Eq(in_large_data.baz));
+    ASSERT_THAT(out_large_data.qux, Eq(in_large_data.qux));
 }
 
 }  // namespace serialize
