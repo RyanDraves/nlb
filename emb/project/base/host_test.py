@@ -45,24 +45,39 @@ class HostTest(unittest.TestCase):
         with self.client:
             # Tell the firmware we're on side 0
             self.client.write_system_page(
-                page=bootloader_bh.SystemFlashPage(boot_side=0, boot_count=1)
+                page=bootloader_bh.SystemFlashPage(
+                    boot_count=1,
+                    image_size_a=self.image.stat().st_size,
+                    image_size_b=0,
+                    new_image_flashed=0,
+                )
             )
 
-            self.client.write_flash_image(self.image, swap_boot_side=False)
+            self.client.write_flash_image(self.image)
 
             outpath = pathlib.Path(tempfile.mktemp())
-            self.client.read_flash_image(outpath, read_size=self.image.stat().st_size)
+            self.client.read_flash_image(
+                outpath, boot_side=1, read_size=self.image.stat().st_size
+            )
 
             self.assertEqual(outpath.stat().st_size, self.image.stat().st_size)
             self.assertEqual(outpath.read_bytes(), self.image.read_bytes())
 
+            system_page = self.client.read_system_page()
+            self.assertEqual(system_page.image_size_b, self.image.stat().st_size)
+            self.assertEqual(system_page.new_image_flashed, 1)
+
     def test_flash_sector(self):
         with self.client:
             self.client.write_system_page(
-                bootloader_bh.SystemFlashPage(boot_side=1, boot_count=123)
+                bootloader_bh.SystemFlashPage(
+                    boot_count=123, image_size_a=0, image_size_b=0, new_image_flashed=0
+                )
             )
 
             resp = self.client.read_system_page()
 
-        self.assertEqual(resp.boot_side, 1)
         self.assertEqual(resp.boot_count, 123)
+        self.assertEqual(resp.image_size_a, 0)
+        self.assertEqual(resp.image_size_b, 0)
+        self.assertEqual(resp.new_image_flashed, 0)

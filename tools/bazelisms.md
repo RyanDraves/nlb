@@ -23,7 +23,3 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 ```
-
-# Platform transitions
-
-Some target-specific rules include platform transitions now, but previously I had a generic platform transition rule for non-executables. See [#14](https://github.com/RyanDraves/nlb/pull/14).

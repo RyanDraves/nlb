@@ -1,4 +1,5 @@
 #include "emb/network/transport/serial.hpp"
+#include "hardware/gpio.h"
 #include "pico/stdlib.h"
 
 namespace emb {
@@ -12,6 +13,18 @@ struct Serial::SerialImpl {
 Serial::Serial() : impl_(new SerialImpl) {
     stdio_init_all();
     stdio_set_translate_crlf(&stdio_usb, false);
+
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+
+    // Blink the LED to indicate a successful boot
+    uint8_t i = 10;
+    while (i--) {
+        gpio_put(PICO_DEFAULT_LED_PIN, 1);
+        sleep_ms(10);
+        gpio_put(PICO_DEFAULT_LED_PIN, 0);
+        sleep_ms(40);
+    }
 }
 
 Serial::~Serial() { delete impl_; }

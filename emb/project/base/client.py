@@ -33,9 +33,7 @@ class BaseClient:
         resp = base_bh.WRITE_FLASH_IMAGE.transact(self._node, msg)
         assert resp.address == address
 
-    def write_flash_image(
-        self, image: pathlib.Path | str, swap_boot_side: bool = True
-    ) -> None:
+    def write_flash_image(self, image: pathlib.Path | str) -> None:
         image = pathlib.Path(image)
         with progress.Progress() as progress_bar:
             address = 0
@@ -51,17 +49,13 @@ class BaseClient:
                     address += len(data)
                     progress_bar.update(task, advance=len(data))
                     data = list(f.read(1024))
-        logging.info(f'Flash image written from {image}')
 
-        if swap_boot_side:
-            self.swap_boot_side()
-
-    def swap_boot_side(self) -> None:
         system_page = self.read_system_page()
-        system_page.boot_side = 1 - system_page.boot_side
+        system_page.image_size_b = image.stat().st_size
+        system_page.new_image_flashed = 1
         self.write_system_page(system_page)
 
-        logging.info(f'Boot side swapped to {system_page.boot_side}')
+        logging.info(f'Flash image written from {image}')
 
     def _read_flash(self, address: int, size: int) -> base_bh.FlashPage:
         msg = base_bh.FlashPage(address=address, read_size=size, data=[])
@@ -72,11 +66,15 @@ class BaseClient:
         self,
         outpath: pathlib.Path | str,
         boot_side: int | None = None,
-        read_size: int = 880 * 1024,
+        read_size: int | None = None,
     ) -> None:
-        if boot_side is None:
-            boot_side = self.read_system_page().boot_side
-        address = self._app_addr_b if boot_side == 0 else self._app_addr_a
+        address = self._app_addr_a if not boot_side else self._app_addr_b
+
+        if read_size is None:
+            system_page = self.read_system_page()
+            read_size = (
+                system_page.image_size_a if not boot_side else system_page.image_size_b
+            )
 
         self.read_flash(outpath, address, read_size)
 

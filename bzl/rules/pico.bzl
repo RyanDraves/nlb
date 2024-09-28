@@ -6,6 +6,7 @@ RP2040_FLAGS = {
     "@pico-sdk//bazel/config:PICO_STDIO_UART": False,
     "@pico-sdk//bazel/config:PICO_STDIO_USB": True,
     "@pico-sdk//bazel/config:PICO_STDIO_SEMIHOSTING": False,
+    "@pico-sdk//bazel/config:PICO_DEFAULT_LINKER_SCRIPT": "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
     "//command_line_option:platforms": "@pico-sdk//bazel/platform:rp2040",
 }
 
@@ -20,6 +21,8 @@ def _rp2040_transition():
             overrides["@pico-sdk//bazel/config:PICO_STDIO_USB"] = attr.stdio_usb
         if hasattr(attr, "stdio_semihosting"):
             overrides["@pico-sdk//bazel/config:PICO_STDIO_SEMIHOSTING"] = attr.stdio_semihosting
+        if hasattr(attr, "linker_script"):
+            overrides["@pico-sdk//bazel/config:PICO_DEFAULT_LINKER_SCRIPT"] = attr.linker_script
         return RP2040_FLAGS | overrides
 
     return transition(
@@ -61,6 +64,10 @@ rp2040_elf = rule(
         "stdio_semihosting": attr.bool(
             doc = "Set to true to enable stdio output via debugger",
             default = False,
+        ),
+        "linker_script": attr.label(
+            doc = "Linker script to use for the rp2040",
+            default = "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
         ),
         "_allowlist_function_transition": attr.label(
             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",

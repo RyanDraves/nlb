@@ -4,8 +4,10 @@ from typing import Self
 
 @dataclasses.dataclass
 class SystemFlashPage:
-    boot_side: int
     boot_count: int
+    image_size_a: int
+    image_size_b: int
+    new_image_flashed: int
 
     def serialize(self) -> bytes: ...
 
