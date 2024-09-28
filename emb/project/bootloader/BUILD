@@ -1,7 +1,20 @@
-load("@aspect_rules_py//py:defs.bzl", "py_binary")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
 load("//bzl/macros:pico.bzl", "pico_project")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
+
+platform_transition(
+    name = "application_linker_script",
+    dep = ":memmap_application",
+    platform = "@pico-sdk//bazel/platform:rp2040",
+    visibility = ["//visibility:public"],
+)
+
+platform_transition(
+    name = "bootloader_linker_script",
+    dep = ":memmap_bootloader",
+    platform = "@pico-sdk//bazel/platform:rp2040",
+    visibility = ["//visibility:public"],
+)
 
 buffham(
     name = "bootloader_bh",
@@ -32,15 +45,6 @@ pico_project(
         "@pico-sdk//src/rp2_common/hardware_flash",
         "@pico-sdk//src/rp2_common/hardware_gpio",
         "@pico-sdk//src/rp2_common/pico_stdlib",
-    ],
-)
-
-py_binary(
-    name = "shell",
-    srcs = ["shell.py"],
-    deps = [
-        "//emb/network/transport:usb",
-        "//emb/project/base:base_bh_py",
     ],
 )
 
@@ -76,18 +80,4 @@ cc_library(
         "//conditions:default": [],
     }),
     visibility = [":__subpackages__"],
-)
-
-platform_transition(
-    name = "application_linker_script",
-    dep = ":memmap_application",
-    platform = "@pico-sdk//bazel/platform:rp2040",
-    visibility = ["//visibility:public"],
-)
-
-platform_transition(
-    name = "bootloader_linker_script",
-    dep = ":memmap_bootloader",
-    platform = "@pico-sdk//bazel/platform:rp2040",
-    visibility = ["//visibility:public"],
 )

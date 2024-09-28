@@ -4,6 +4,9 @@ load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_li
 load("//bzl/macros:pico.bzl", "pico_project")
 load("//bzl/macros:python.bzl", "py_test")
 
+# Necessary consequency to make `bzl/macros/emb.bzl` work (simply)
+exports_files(["flash.py"])
+
 py_library(
     name = "client",
     srcs = ["client.py"],
@@ -56,6 +59,7 @@ pico_project(
 py_binary(
     name = "flash",
     srcs = ["flash.py"],
+    visibility = ["//visibility:public"],
     deps = [
         ":base_bh_py",
         ":client",
