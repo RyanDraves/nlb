@@ -23,3 +23,4 @@ transaction write_flash_image[FlashPage, FlashPage];
 transaction read_flash[FlashPage, FlashPage];
 transaction write_flash_sector[FlashSector, FlashSector];
 transaction read_flash_sector[FlashSector, FlashSector];
+transaction reset[Ping, Ping];

@@ -49,6 +49,12 @@ class BaseClient:
                     address += len(data)
                     progress_bar.update(task, advance=len(data))
                     data = list(f.read(1024))
+
+        system_page = self.read_system_page()
+        system_page.image_size_b = image.stat().st_size
+        system_page.new_image_flashed = 1
+        self.write_system_page(system_page)
+
         logging.info(f'Flash image written from {image}')
 
     def _read_flash(self, address: int, size: int) -> base_bh.FlashPage:
@@ -60,11 +66,15 @@ class BaseClient:
         self,
         outpath: pathlib.Path | str,
         boot_side: int | None = None,
-        read_size: int = 880 * 1024,
+        read_size: int | None = None,
     ) -> None:
-        if boot_side is None:
-            boot_side = self.read_system_page().boot_side
-        address = self._app_addr_b if boot_side == 0 else self._app_addr_a
+        address = self._app_addr_a if not boot_side else self._app_addr_b
+
+        if read_size is None:
+            system_page = self.read_system_page()
+            read_size = (
+                system_page.image_size_a if not boot_side else system_page.image_size_b
+            )
 
         self.read_flash(outpath, address, read_size)
 
@@ -107,3 +117,18 @@ class BaseClient:
 
     def read_system_page(self) -> bootloader_bh.SystemFlashPage:
         return self._read_flash_sector(0, bootloader_bh.SystemFlashPage)
+
+    def reset(self) -> None:
+        # Manually transmit the reset message to avoid waiting for a response
+        self._node._transporter.send(
+            self._node._serializer.serialize(base_bh.Ping(0), base_bh.RESET.request_id)
+        )
+
+    def revert_flash(self) -> None:
+        # The previous image is stored in the other bank, so we can just tell
+        # the bootloader to switch to the other bank
+        system_page = self.read_system_page()
+        system_page.new_image_flashed = 1
+        self.write_system_page(system_page)
+
+        self.reset()
