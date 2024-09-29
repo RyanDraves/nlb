@@ -23,7 +23,7 @@ def buffham_py_library(name, bh, deps = [], visibility = ["//visibility:public"]
         name = name + "_gen",
         srcs = [bh],
         outs = [basename + "_bh.py"],
-        cmd = "$(execpath //nlb/buffham) -l python -i $(location " + bh + ") -o $@",
+        cmd = "$(execpath //nlb/buffham) -l python -i $(location {0}) -o $@".format(bh),
         tools = ["//nlb/buffham"],
     )
 
@@ -42,7 +42,7 @@ def buffham_py_library(name, bh, deps = [], visibility = ["//visibility:public"]
         name = name + "_pyi_gen",
         srcs = [bh],
         outs = [basename + "_bh.pyi.intermediate"],
-        cmd = "$(execpath //nlb/buffham) -l python_stub -i $(location " + bh + ") -o $@",
+        cmd = "$(execpath //nlb/buffham) -l python_stub -i $(location {0}) -o $@".format(bh),
         tools = ["//nlb/buffham"],
     )
 
@@ -69,7 +69,7 @@ def buffham_cc_library(name, bh, deps = [], visibility = ["//visibility:public"]
         name = name + "_gen",
         srcs = [bh],
         outs = [basename + "_bh.hpp"],
-        cmd = "$(execpath //nlb/buffham) -l cpp -i $(location " + bh + ") -o $@",
+        cmd = "$(execpath //nlb/buffham) -l cpp -i $(location {0}) -o $@".format(bh),
         tools = ["//nlb/buffham"],
     )
 
@@ -82,4 +82,22 @@ def buffham_cc_library(name, bh, deps = [], visibility = ["//visibility:public"]
             "//emb/network/transport:transporter_cc",
         ],
         visibility = visibility,
+    )
+
+def buffham_template(name, bh, template, out_file, visibility = ["//visibility:public"]):
+    """Generate a template from a Buffham file.
+
+    Args:
+        name: The name of the target.
+        bh: The Buffham file to generate from.
+        template: The source file to generate the template from.
+        out_file: The output file to write the template to.
+        visibility: The visibility of the generated template.
+    """
+    native.genrule(
+        name = name,
+        srcs = [bh, template],
+        outs = [out_file],
+        cmd = "$(execpath //nlb/buffham) -l template -i $(location {0}) -t $(location {1}) -o $@".format(bh, template),
+        tools = ["//nlb/buffham"],
     )

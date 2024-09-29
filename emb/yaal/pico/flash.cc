@@ -2,7 +2,7 @@
 #include "hardware/sync.h"
 #include <string.h>
 
-#include "emb/project/base/base_bh.hpp"
+#include "emb/project/bootloader/bootloader_bh.hpp"
 #include "emb/yaal/flash.hpp"
 
 /*
@@ -39,8 +39,8 @@ namespace yaal {
 namespace {
 // The start address of the scratchpad
 constexpr uint32_t g_sector_start_addr =
-    project::base::kPicoFlashSize -
-    (project::base::kNumSectors * FLASH_SECTOR_SIZE);
+    project::bootloader::kPicoFlashSize -
+    (project::bootloader::kNumSectors * FLASH_SECTOR_SIZE);
 
 // We'll use this to store a copy of the sector we're working with;
 // an un-fun use of RAM
@@ -49,8 +49,8 @@ constexpr uint32_t g_sector_start_addr =
 uint8_t g_sector_buffer[FLASH_SECTOR_SIZE];
 }  // namespace
 
-const uint32_t kAppAddrA = project::base::kPicoAppAddrA;
-const uint32_t kAppAddrB = project::base::kPicoAppAddrB;
+const uint32_t kAppAddrA = project::bootloader::kPicoAppAddrA;
+const uint32_t kAppAddrB = project::bootloader::kPicoAppAddrB;
 
 const uint8_t *get_flash_ptr(uint32_t addr) {
     // The flash is memory-mapped at XIP_BASE

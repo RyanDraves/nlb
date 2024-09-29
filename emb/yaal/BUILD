@@ -18,7 +18,7 @@ cc_library(
             "//conditions:default": [
             ],
         },
-    ) + ["//emb/project/base:base_bh_cc"],
+    ) + ["//emb/project/bootloader:bootloader_bh_cc"],
 )
 
 cc_library(

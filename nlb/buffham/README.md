@@ -7,7 +7,6 @@ Buffham is a serialization library. It currently has the following design goals:
 These goals are flexible.
 
 # Roadmap
-- Bazel macro to insert constants into files via a genrule
 - Support for "published" messages (versus transactions, i.e. log messages)
 - Write the parser schemas in Buffham (cool)
 - Import support

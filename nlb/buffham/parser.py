@@ -377,7 +377,7 @@ class Parser:
 
         namespace = file.parent.parts
 
-        lines = file.read_text().split('\n')
+        lines = file.read_text().splitlines()
 
         messages = self.parse_message_lines(lines)
         transactions = self.parse_transaction_lines(lines, messages)
