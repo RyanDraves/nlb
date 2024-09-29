@@ -1,4 +1,5 @@
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library", "buffham_template")
+load("//bzl/macros:patch.bzl", "patch")
 load("//bzl/macros:pico.bzl", "pico_project")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
@@ -48,6 +49,13 @@ pico_project(
     ],
 )
 
+patch(
+    name = "memmap_application_patch",
+    src = "@pico-sdk//src/rp2_common/pico_crt0/rp2040:memmap_default.ld",
+    out_file = "memmap_application.ld",
+    patch = "memmap_application.patch",
+)
+
 buffham_template(
     name = "memmap_application_template",
     bh = ":bootloader_bh",
@@ -65,6 +73,13 @@ cc_library(
         ":no_warn_rwx_flag",
         "@pico-sdk//src/rp2_common/pico_standard_link:default_flash_region",
     ],
+)
+
+patch(
+    name = "memmap_bootloader_patch",
+    src = "@pico-sdk//src/rp2_common/pico_crt0/rp2040:memmap_default.ld",
+    out_file = "memmap_bootloader.ld",
+    patch = "memmap_bootloader.patch",
 )
 
 buffham_template(
