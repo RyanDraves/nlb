@@ -19,30 +19,6 @@ git_repository(
     remote = "https://github.com/google/googletest.git",
 )
 
-# Reflect C++ (JSON)
-
-http_archive(
-    name = "reflect-cpp",
-    build_file = "//bzl/deps:reflect-cpp.BUILD",
-    integrity = "sha256-SVlEa9+NKr8o7zyWFLEimv1TLHr0OeVxeVmCExbq784=",
-    patch_args = ["-p1"],
-    patches = ["//bzl/deps:reflect-cpp.patch"],
-    strip_prefix = "reflect-cpp-0.14.0",
-    url = "https://github.com/getml/reflect-cpp/archive/refs/tags/v0.14.0.zip",
-)
-
-# tinycbor (CBOR)
-
-http_archive(
-    name = "tinycbor",
-    build_file = "//bzl/deps:tinycbor.BUILD",
-    integrity = "sha256-285tjYw/RyiCfnMBEVZa9H7iFMeEt0B3ILl9u6HvHZQ=",
-    patch_args = ["-p1"],
-    patches = ["//bzl/deps:tinycbor.patch"],
-    strip_prefix = "tinycbor-0.6.0",
-    url = "https://github.com/intel/tinycbor/archive/refs/tags/v0.6.0.zip",
-)
-
 # Zmq
 
 http_archive(
