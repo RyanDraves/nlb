@@ -8,12 +8,14 @@ These goals are flexible.
 
 # Roadmap
 - Constants support
+- Bazel macro to insert constants into files via a genrule
 - Support for "published" messages (versus transactions, i.e. log messages)
 - Write the parser schemas in Buffham (cool)
 - Import support
 - Enum support
 - Dictionary support
 - List of messages support
+- File support (read/write to/from text/binary)
 
 # Limitations
 - Transaction code expects Python clients and C++ servers

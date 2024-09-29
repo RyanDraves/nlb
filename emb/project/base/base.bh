@@ -38,3 +38,5 @@ transaction read_flash[FlashPage, FlashPage];
 transaction write_flash_sector[FlashSector, FlashSector];
 # Read flash flash sector contents
 transaction read_flash_sector[FlashSector, FlashSector];
+# Reset the device (needs a type to send/receive; both unused)
+transaction reset[Ping, Ping];

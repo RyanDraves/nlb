@@ -1,11 +1,11 @@
 
 #include <inttypes.h>
-#include <string>
 #include <vector>
 
 #include "emb/project/base/base_bh.hpp"
 #include "emb/project/bootloader/bootloader_bh.hpp"
 #include "emb/yaal/flash.hpp"
+#include "emb/yaal/watchdog.hpp"
 
 namespace emb {
 namespace project {
@@ -31,7 +31,7 @@ Base::~Base() { delete impl_; }
 LogMessage Base::ping(const Ping &ping) {
     // Create a response message
     LogMessage log_message;
-    log_message.message = "Pong " + std::to_string(ping.ping) + "!";
+    log_message.message = "Pong!";
 
     return log_message;
 }
@@ -42,8 +42,7 @@ FlashPage Base::write_flash_image(const FlashPage &flash_page) {
     response.read_size = flash_page.read_size;
 
     // Write to the flash memory opposite of our current app side
-    uint32_t app_addr =
-        impl_->system.boot_side == 0 ? yaal::kAppAddrB : yaal::kAppAddrA;
+    uint32_t app_addr = yaal::kAppAddrB;
 
     yaal::flash_write(app_addr + flash_page.address, flash_page.data);
 
@@ -90,6 +89,11 @@ FlashSector Base::read_flash_sector(const FlashSector &flash_sector) {
     memcpy(response.data.data(), sector.data(), sector.size());
 
     return response;
+}
+
+Ping Base::reset(const Ping &ping) {
+    // Reset the device
+    emb::yaal::force_watchdog_reset();
 }
 
 }  // namespace base

@@ -1,9 +1,11 @@
 build --disk_cache=~/.cache/bazel
 
-# build --cxxopt='-std=c++23' is broken?
-build --action_env=BAZEL_CXXOPTS="-std=c++23"
+build --@rules_cc//cc/toolchains:experimental_enable_rule_based_toolchains
 
-build:pico --platforms=//bzl/platforms:pico
+build --cxxopt='-std=c++23'
+
+# Not needed to build targets (due to platform transitions) but occasionally handy
+build:pico --platforms=@pico-sdk//bazel/platform:rp2040
 
 build:pages --nolegacy_external_runfiles
 build:pages --action_env=JEKYLL_ENV=production

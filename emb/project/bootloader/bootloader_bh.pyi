@@ -4,11 +4,10 @@ from typing import Self
 
 @dataclasses.dataclass
 class SystemFlashPage:
-    # Side the microcontroller has booted from;
-    # 0 for side A, 1 for side B
-    boot_side: int
-    # Number of times the microcontroller had booted
     boot_count: int
+    image_size_a: int
+    image_size_b: int
+    new_image_flashed: int
 
     def serialize(self) -> bytes: ...
 

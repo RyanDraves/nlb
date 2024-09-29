@@ -32,7 +32,6 @@ message NestedMessage {
     Ping pong;
 }
 
-
 transaction ping[Ping, LogMessage];
 # Transaction comment
 transaction flash_page[FlashPage, FlashPage];

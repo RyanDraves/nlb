@@ -8,6 +8,32 @@ bazel_dep(name = "bazel_skylib", version = "1.5.0")
 bazel_dep(name = "rules_platform", version = "0.1.0")
 
 #
+# Pico SDK & Picotool
+#
+bazel_dep(name = "pico-sdk", version = "2.0.0")
+bazel_dep(name = "rules_cc", version = "0.0.9")
+register_toolchains(
+    "@pico-sdk//bazel/toolchain:linux-x86_64-rp2040",
+    "@pico-sdk//bazel/toolchain:linux-x86_64-rp2350",
+    "@pico-sdk//bazel/toolchain:win-x86_64-rp2040",
+    "@pico-sdk//bazel/toolchain:win-x86_64-rp2350",
+    "@pico-sdk//bazel/toolchain:mac-x86_64-rp2040",
+    "@pico-sdk//bazel/toolchain:mac-x86_64-rp2350",
+    "@pico-sdk//bazel/toolchain:mac-aarch64-rp2040",
+    "@pico-sdk//bazel/toolchain:mac-aarch64-rp2350",
+)
+
+# Check https://github.com/raspberrypi/pico-sdk/tree/master/bazel for when this can be removed
+archive_override(
+    module_name = "rules_cc",
+    urls = "https://github.com/bazelbuild/rules_cc/archive/1acf5213b6170f1f0133e273cb85ede0e732048f.zip",
+    strip_prefix = "rules_cc-1acf5213b6170f1f0133e273cb85ede0e732048f",
+    integrity = "sha256-NddP6xi6LzsIHT8bMSVJ2NtoURbN+l3xpjvmIgB6aSg=",
+)
+
+bazel_dep(name = "picotool", version = "2.0.0")
+
+#
 # Rules Ruby
 #
 bazel_dep(name = "rules_ruby", version = "0.6.0")
@@ -64,11 +90,6 @@ bazel_dep(
     version = "6.4.0",
     dev_dependency = True,
 )
-
-#
-# Register local toolchains
-#
-register_toolchains("//bzl/toolchains:all")
 
 # Hedron's Compile Commands Extractor for Bazel
 # https://github.com/hedronvision/bazel-compile-commands-extractor
