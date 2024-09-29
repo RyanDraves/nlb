@@ -1,4 +1,4 @@
-load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
+load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library", "buffham_template")
 load("//bzl/macros:pico.bzl", "pico_project")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
@@ -48,25 +48,41 @@ pico_project(
     ],
 )
 
+buffham_template(
+    name = "memmap_application_template",
+    bh = ":bootloader_bh",
+    out_file = "memmap_application_bh.ld",
+    template = "memmap_application.ld",
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "memmap_application",
-    linkopts = ["-T$(location memmap_application.ld)"],
+    linkopts = ["-T$(location memmap_application_bh.ld)"],
     target_compatible_with = ["@pico-sdk//bazel/constraint:rp2040"],
     deps = [
-        "memmap_application.ld",
+        "memmap_application_bh.ld",
         ":no_warn_rwx_flag",
         "@pico-sdk//src/rp2_common/pico_standard_link:default_flash_region",
     ],
 )
 
+buffham_template(
+    name = "memmap_bootloader_template",
+    bh = ":bootloader_bh",
+    out_file = "memmap_bootloader_bh.ld",
+    template = "memmap_bootloader.ld",
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "memmap_bootloader",
     linkopts = [
-        "-T$(location memmap_bootloader.ld)",
+        "-T$(location memmap_bootloader_bh.ld)",
     ],
     target_compatible_with = ["@pico-sdk//bazel/constraint:rp2040"],
     deps = [
-        "memmap_bootloader.ld",
+        "memmap_bootloader_bh.ld",
         ":no_warn_rwx_flag",
         "@pico-sdk//src/rp2_common/pico_standard_link:default_flash_region",
     ],

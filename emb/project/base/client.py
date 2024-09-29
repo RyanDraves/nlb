@@ -65,7 +65,11 @@ class BaseClient:
         boot_side: int | None = None,
         read_size: int | None = None,
     ) -> None:
-        address = base_bh.PICO_APP_ADDR_A if not boot_side else base_bh.PICO_APP_ADDR_B
+        address = (
+            bootloader_bh.PICO_APP_ADDR_A
+            if not boot_side
+            else bootloader_bh.PICO_APP_ADDR_B
+        )
 
         if read_size is None:
             system_page = self.read_system_page()
@@ -79,7 +83,7 @@ class BaseClient:
         self,
         outpath: pathlib.Path | str,
         address: int = 0,
-        read_size: int = base_bh.PICO_FLASH_SIZE,
+        read_size: int = bootloader_bh.PICO_FLASH_SIZE,
     ) -> None:
         end_address = address + read_size
         with progress.Progress() as progress_bar:

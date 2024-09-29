@@ -1,6 +1,17 @@
+constant uint32_t pico_flash_size = 2 * 1024 * 1024;
+constant uint32_t pico_bootloader_size = 160 * 1024;
+constant uint32_t pico_app_size = 880 * 1024;
+constant uint32_t pico_app_addr_a = 160 * 1024;
+constant uint32_t pico_app_addr_b = {pico_app_addr_a} + 880 * 1024;
+constant uint8_t num_sectors = 32;
+
 message SystemFlashPage {
+    # Number of times the device has booted
     uint32_t boot_count;
+    # Size of the image in bank A
     uint32_t image_size_a;
+    # Size of the image in bank B
     uint32_t image_size_b;
+    # Whether a new image has been flashed into bank B
     uint8_t new_image_flashed;
 }

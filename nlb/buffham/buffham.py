@@ -6,6 +6,7 @@ import rich_click as click
 from nlb.buffham import cpp_generator
 from nlb.buffham import parser
 from nlb.buffham import py_generator
+from nlb.buffham import template_generator
 from nlb.util import click_utils
 
 
@@ -13,6 +14,7 @@ class Languages(enum.Enum):
     PYTHON = enum.auto()
     PYTHON_STUB = enum.auto()
     CPP = enum.auto()
+    TEMPLATE = enum.auto()
 
 
 @click.command()
@@ -31,13 +33,24 @@ class Languages(enum.Enum):
     help="Output file",
 )
 @click.option(
+    '--template-file',
+    '-t',
+    type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path),
+    help="Template file",
+)
+@click.option(
     "--language",
     "-l",
     type=click_utils.EnumChoice(Languages),
     required=True,
     help="Output language",
 )
-def main(input: pathlib.Path, output: pathlib.Path, language: Languages):
+def main(
+    input: pathlib.Path,
+    output: pathlib.Path,
+    template_file: pathlib.Path | None,
+    language: Languages,
+):
     p = parser.Parser()
     buffham = p.parse_file(input)
 
@@ -48,6 +61,9 @@ def main(input: pathlib.Path, output: pathlib.Path, language: Languages):
             py_generator.generate_python(buffham, output, stub=True)
         case Languages.CPP:
             cpp_generator.generate_cpp(buffham, output)
+        case Languages.TEMPLATE:
+            assert template_file is not None
+            template_generator.generate_template(buffham, output, template_file)
         case _:
             raise ValueError(f"Unsupported language: {language}")
 

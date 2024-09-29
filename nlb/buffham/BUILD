@@ -21,6 +21,7 @@ py_binary(
         ":cpp_generator",
         ":parser",
         ":py_generator",
+        ":template_generator",
         "//nlb/util:click_utils",
         requirement("rich-click"),
     ],
@@ -92,5 +93,14 @@ py_test(
         ":bh",
         # Transitive dependency of our generated code
         "//emb/network/serialize:bh_cobs",
+    ],
+)
+
+py_library(
+    name = "template_generator",
+    srcs = ["template_generator.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":parser",
     ],
 )
