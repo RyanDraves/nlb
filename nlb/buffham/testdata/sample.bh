@@ -1,18 +1,29 @@
-# A comment for fun
+# A message comment
 message Ping {
     # Add some comments here
     uint8_t ping;
 }
 
+# This comment isn't associated with anything,
+# and will be ignored by the parser
+
+#
+# A bunch of message comments,
+# in a block-like pattern.
+#
+# All of these belong to `FlashPage`
+#
 message FlashPage {
     uint32_t address;
-    list[uint8_t] data;  # What about some in-line comments?
+    # Another field comment
+    list[uint8_t] data;  # What about some in-line comments for fields?
+    # This comment belongs to `read_size`
     uint32_t read_size;
 }
 
-message LogMessage {
+message LogMessage {  # In-line message comments are ignored
     string message;
-}
+}  # This in-line comment is also ignored
 
 message NestedMessage {
     uint8_t flag;
@@ -21,7 +32,7 @@ message NestedMessage {
     Ping pong;
 }
 
-
 transaction ping[Ping, LogMessage];
+# Transaction comment
 transaction flash_page[FlashPage, FlashPage];
-transaction read_flash_page[FlashPage, FlashPage];
+transaction read_flash_page[FlashPage, FlashPage];  # In-line transaction comments are ignored

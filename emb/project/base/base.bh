@@ -1,14 +1,24 @@
 message Ping {
+    # Pong!
     uint8_t ping;
 }
 
+# A page from the app flash image
 message FlashPage {
+    # Address to work with
+    #
+    # On writes, it's relative to the start of the opposite side's firmware address
+    # On reads, it's relative to the start of flash
     uint32_t address;
+    # Number of bytes to read. Be mindful of `kBufSize = 1536` in `bh_cobs.hpp`
+    # and the stack size of the microcontroller (2kB for the Pico)
     uint32_t read_size;
     list[uint8_t] data;
 }
 
+# A scratchpad sector of flash memory
 message FlashSector {
+    # Sector [0, 31] to work with
     uint32_t sector;
     list[uint8_t] data;
 }
@@ -18,9 +28,15 @@ message LogMessage {
 }
 
 
+# Pong!
 transaction ping[Ping, LogMessage];
+# Write data to the opposite flash app image
 transaction write_flash_image[FlashPage, FlashPage];
+# Read from anywhere in flash
 transaction read_flash[FlashPage, FlashPage];
+# Write flash sector contents
 transaction write_flash_sector[FlashSector, FlashSector];
+# Read flash flash sector contents
 transaction read_flash_sector[FlashSector, FlashSector];
+# Reset the device (needs a type to send/receive; both unused)
 transaction reset[Ping, Ping];

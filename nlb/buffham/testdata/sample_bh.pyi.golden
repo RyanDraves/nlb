@@ -8,6 +8,10 @@ from nlb.buffham import bh
 
 @dataclasses.dataclass
 class Ping:
+    """A message comment
+    """
+
+    # Add some comments here
     ping: int
 
     def serialize(self) -> bytes: ...
@@ -17,8 +21,18 @@ class Ping:
 
 @dataclasses.dataclass
 class FlashPage:
+    """
+    A bunch of message comments,
+    in a block-like pattern.
+
+    All of these belong to `FlashPage`
+
+    """
+
     address: int
-    data: list[int]
+    # Another field comment
+    data: list[int]  # What about some in-line comments for fields?
+    # This comment belongs to `read_size`
     read_size: int
 
     def serialize(self) -> bytes: ...
@@ -54,5 +68,6 @@ class SampleNode[Transporter: transporter.TransporterLike](bh.BhNode[SampleSeria
     def __init__(self, serializer: SampleSerializer | None = None, transporter: Transporter | None = None): ...
 
 PING: bh.Transaction[Ping, LogMessage] = ...
+# Transaction comment
 FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...
 READ_FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...
