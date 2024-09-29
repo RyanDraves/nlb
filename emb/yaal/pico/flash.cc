@@ -18,12 +18,19 @@ We want to keep three things in flash:
 - Two copies of the firmware (A and B "side")
 - Allocated space for sectors to read/write from, like a scratchpad
 
-The bootloader is stored at the beginning of flash memory and takes ~150kB, for
-which we'll allocate 160kB.
+The bootloader is stored at the beginning of flash memory and takes ~24kB, for
+which we'll allocate 160kB (it's closer to 150kB if fancier features are added).
 The scratchpad is stored at the end of flash memory and takes 32 * 4kB = 128kB.
 
 The firmware is stored in the middle of flash memory, with the two copies
 each getting 880 kB of space.
+
+Firmware is compiled to start at image A, so the bootloader will always jump to
+image A. When a new image is flashed, it will be written to image B, and then
+the bootloader will swap the images and jump to the new image.
+
+These functions will let you write to image A, but don't be surprised if the
+system crashes while writing to instructions that are currently being executed.
 */
 
 namespace emb {
