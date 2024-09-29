@@ -95,6 +95,11 @@ class TestPyGenerator(unittest.TestCase):
                 bh.Transaction[sample_bh.FlashPage, sample_bh.FlashPage](2),
             )
 
+            # Test that our constants are generated
+            self.assertEqual(sample_bh.MY_CONSTANT, 4)
+            self.assertEqual(sample_bh.CONSTANT_STRING, 'Hello, world!')
+            self.assertEqual(sample_bh.COMPOSED_CONSTANT, 2 + sample_bh.MY_CONSTANT)
+
             # Check the our file matches the golden file
             golden = self.golden_file.read_text()
             generated = outfile.read_text()

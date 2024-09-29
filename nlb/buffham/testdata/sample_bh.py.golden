@@ -7,6 +7,13 @@ from emb.network.serialize import bh_cobs
 from emb.network.transport import transporter
 from nlb.buffham import bh
 
+# This is a constant in the global scope
+MY_CONSTANT = 4
+CONSTANT_STRING = "Hello, world!"  # constants can have inline comments
+# Constants may reference other constants with {brackets}
+COMPOSED_CONSTANT = 2 + MY_CONSTANT
+
+
 @dataclasses.dataclass
 class Ping:
     """A message comment

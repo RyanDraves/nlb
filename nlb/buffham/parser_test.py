@@ -177,6 +177,44 @@ class TestParserSimple(unittest.TestCase):
         with self.assertRaises(ValueError):
             p.parse_transaction(transaction, messages, [])
 
+    def test_parse_constant(self):
+        p = parser.Parser()
+
+        constant = 'constant uint8_t foo = 0x01;'
+        parsed = p.parse_constant(constant, [], [])
+        self.assertEqual(
+            parsed,
+            parser.Constant('foo', parser.FieldType.UINT8_T, '0x01'),
+        )
+
+        constant = 'constant uint32_t bar = 0x12345678;  # inline comment'
+        parsed = p.parse_constant(constant, [], [])
+        bar = parser.Constant(
+            'bar', parser.FieldType.UINT32_T, '0x12345678', [], ' inline comment'
+        )
+        self.assertEqual(
+            parsed,
+            bar,
+        )
+
+        constant = 'constant uint32_t baz = 0x1 + {bar};'
+        parsed = p.parse_constant(constant, [bar], ['some other comment'])
+        self.assertEqual(
+            parsed,
+            parser.Constant(
+                'baz',
+                parser.FieldType.UINT32_T,
+                '0x1 + {bar}',
+                ['some other comment'],
+                None,
+                ['bar'],
+            ),
+        )
+
+        constant = 'constant uint32_t baz = 0x12345678  # missing semicolon'
+        with self.assertRaises(ValueError):
+            p.parse_constant(constant, [], [])
+
 
 class TestParserSample(unittest.TestCase):
     def setUp(self) -> None:
@@ -245,6 +283,7 @@ class TestParserSample(unittest.TestCase):
         )
 
         parsed = p.parse_file(self.sample_file)
+
         self.assertListEqual(
             parsed.messages,
             [
@@ -263,5 +302,32 @@ class TestParserSample(unittest.TestCase):
                     'flash_page', 1, flash_page, flash_page, [' Transaction comment']
                 ),
                 parser.Transaction('read_flash_page', 2, flash_page, flash_page),
+            ],
+        )
+
+        self.assertListEqual(
+            parsed.constants,
+            [
+                parser.Constant(
+                    'my_constant',
+                    parser.FieldType.UINT8_T,
+                    '4',
+                    [' This is a constant in the global scope'],
+                ),
+                parser.Constant(
+                    'constant_string',
+                    parser.FieldType.STRING,
+                    '"Hello, world!"',
+                    [],
+                    ' constants can have inline comments',
+                ),
+                parser.Constant(
+                    'composed_constant',
+                    parser.FieldType.UINT16_T,
+                    '2 + {my_constant}',
+                    [' Constants may reference other constants with {brackets}'],
+                    None,
+                    ['my_constant'],
+                ),
             ],
         )

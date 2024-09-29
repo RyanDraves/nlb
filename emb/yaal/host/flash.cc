@@ -1,5 +1,6 @@
 #include "emb/yaal/flash.hpp"
 
+#include "emb/project/base/base_bh.hpp"
 #include <string.h>
 
 /*
@@ -10,14 +11,15 @@ namespace emb {
 namespace yaal {
 
 namespace {
-uint8_t *g_arena = new uint8_t[1024 * 1024 * 2];
+uint8_t *g_arena = new uint8_t[project::base::kPicoFlashSize];
 
 // The start address of the scratchpad
-constexpr uint32_t g_sector_start_addr = (2 * 1024 * 1024) - (32 * 4096);
+constexpr uint32_t g_sector_start_addr =
+    (project::base::kPicoFlashSize) - (project::base::kNumSectors * 4096);
 }  // namespace
 
-const uint32_t kAppAddrA = 160 * 1024;
-const uint32_t kAppAddrB = kAppAddrA + 880 * 1024;
+const uint32_t kAppAddrA = project::base::kPicoAppAddrA;
+const uint32_t kAppAddrB = project::base::kPicoAppAddrB;
 
 const uint8_t *get_flash_ptr(uint32_t addr) { return g_arena + addr; }
 

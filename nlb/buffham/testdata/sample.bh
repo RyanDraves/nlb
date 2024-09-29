@@ -1,3 +1,11 @@
+# This is a constant in the global scope
+constant uint8_t my_constant = 4;
+
+constant string constant_string = "Hello, world!";  # constants can have inline comments
+
+# Constants may reference other constants with {brackets}
+constant uint16_t composed_constant = 2 + {my_constant};
+
 # A message comment
 message Ping {
     # Add some comments here

@@ -15,9 +15,10 @@ cc_library(
             "@platforms//cpu:armv6-m": [
                 "@pico-sdk//src/rp2_common/hardware_flash",
             ],
-            "//conditions:default": [],
+            "//conditions:default": [
+            ],
         },
-    ),
+    ) + ["//emb/project/base:base_bh_cc"],
 )
 
 cc_library(
