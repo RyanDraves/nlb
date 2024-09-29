@@ -67,6 +67,7 @@ py_binary(
         "//emb/network/transport:usb",
         "//nlb/util:click_utils",
         requirement("rich-click"),
+        requirement("IPython"),
     ],
 )
 

@@ -110,7 +110,7 @@ class BaseClient:
         resp = base_bh.READ_FLASH_SECTOR.transact(
             self._node, base_bh.FlashSector(sector=sector, data=[])
         )
-        return msg_class.deserialize(bytes(resp.data))
+        return msg_class.deserialize(bytes(resp.data))[0]
 
     def write_system_page(self, page: bootloader_bh.SystemFlashPage) -> None:
         self._write_flash_sector(0, page)

@@ -44,8 +44,9 @@ class BhCobs {
         return buffer.subspan(0, msg_size);
     }
 
+    // TODO: Make BuffhamLike concept
     template <class M> M deserialize(std::span<uint8_t> buffer) {
-        return M::deserialize(buffer);
+        return M::deserialize(buffer).first;
     }
 };
 

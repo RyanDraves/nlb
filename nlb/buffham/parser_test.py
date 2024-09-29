@@ -7,15 +7,15 @@ from nlb.buffham import parser
 class TestParserSimple(unittest.TestCase):
     def test_parse_field(self):
         field = '    uint8_t foo;'
-        parsed = parser.Parser.parse_field(field)
+        parsed = parser.Parser.parse_field(field, [])
         self.assertEqual(parsed, parser.Field('foo', parser.FieldType.UINT8_T, None))
 
         field = 'float64 bar;  # inline comment'
-        parsed = parser.Parser.parse_field(field)
+        parsed = parser.Parser.parse_field(field, [])
         self.assertEqual(parsed, parser.Field('bar', parser.FieldType.FLOAT64, None))
 
         field = 'list[uint32_t] baz_2;'
-        parsed = parser.Parser.parse_field(field)
+        parsed = parser.Parser.parse_field(field, [])
         self.assertEqual(
             parsed,
             parser.Field('baz_2', parser.FieldType.LIST, parser.FieldType.UINT32_T),
@@ -23,11 +23,23 @@ class TestParserSimple(unittest.TestCase):
 
         field = 'list[list[uint32_t]] baz_3;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_field(field)
+            parser.Parser.parse_field(field, [])
 
         field = 'list[uint32_t baz_4;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_field(field)
+            parser.Parser.parse_field(field, [])
+
+        field = 'MyMessage baz_5;'
+        my_message = parser.Message('MyMessage', [])
+        parsed = parser.Parser.parse_field(field, [my_message])
+        self.assertEqual(
+            parsed,
+            parser.Field('baz_5', parser.FieldType.MESSAGE, None, my_message),
+        )
+
+        field = 'NonexistantMessage baz_6;'
+        with self.assertRaises(ValueError):
+            parser.Parser.parse_field(field, [my_message])
 
     def test_parse_message(self):
         message = [
@@ -35,7 +47,7 @@ class TestParserSimple(unittest.TestCase):
             '    uint8_t ping;',
             '}',
         ]
-        parsed = parser.Parser.parse_message(message)
+        parsed = parser.Parser.parse_message(message, [])
         self.assertEqual(
             parsed,
             parser.Message(
@@ -50,7 +62,7 @@ class TestParserSimple(unittest.TestCase):
             '    list[uint32_t] data;',
             '}  # inline comment',
         ]
-        parsed = parser.Parser.parse_message(message)
+        parsed = parser.Parser.parse_message(message, [])
         self.assertEqual(
             parsed,
             parser.Message(
@@ -71,7 +83,30 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError):
-            parser.Parser.parse_message(message)
+            parser.Parser.parse_message(message, [])
+
+        # Nested message
+        message = [
+            'message Outer {',
+            '    Inner inner;',
+            '}',
+        ]
+        inner = parser.Message('Inner', [])
+        parsed = parser.Parser.parse_message(message, [inner])
+        self.assertEqual(
+            parsed,
+            parser.Message(
+                'Outer', [parser.Field('inner', parser.FieldType.MESSAGE, None, inner)]
+            ),
+        )
+
+        message = [
+            'message Outer {',
+            '    DoesNotExist inner;',
+            '}',
+        ]
+        with self.assertRaises(ValueError):
+            parser.Parser.parse_message(message, [inner])
 
     def test_parse_transaction(self):
         p = parser.Parser()
@@ -140,6 +175,17 @@ class TestParserSample(unittest.TestCase):
         log_message = parser.Message(
             'LogMessage', [parser.Field('message', parser.FieldType.STRING, None)]
         )
+        nested_message = parser.Message(
+            'NestedMessage',
+            [
+                parser.Field('flag', parser.FieldType.UINT8_T, None),
+                parser.Field('message', parser.FieldType.MESSAGE, None, log_message),
+                parser.Field(
+                    'numbers', parser.FieldType.LIST, parser.FieldType.INT32_T
+                ),
+                parser.Field('pong', parser.FieldType.MESSAGE, None, ping),
+            ],
+        )
 
         # No comment lines in the middle of the message, so this is valid
         parsed = p.parse_file(self.sample_file)
@@ -149,6 +195,7 @@ class TestParserSample(unittest.TestCase):
                 ping,
                 flash_page,
                 log_message,
+                nested_message,
             ],
         )
 

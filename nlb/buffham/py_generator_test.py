@@ -37,14 +37,11 @@ class TestPyGenerator(unittest.TestCase):
             # Test serialization & deserialization of `Ping`
             ping_message = next(filter(lambda m: m.name == 'Ping', buffham.messages))
             serializer = engine.generate_serializer(ping_message)
-            self.assertEqual(
-                ping.serialize(),
-                serializer(ping),
-            )
-            self.assertEqual(
-                ping,
-                sample_bh.Ping.deserialize(ping.serialize()),
-            )
+            buffer = ping.serialize()
+            msg, size = sample_bh.Ping.deserialize(buffer)
+            self.assertEqual(buffer, serializer(ping))
+            self.assertEqual(msg, ping)
+            self.assertEqual(size, len(buffer))
 
             # Test serialization & deserialization of `FlashPage`
             flash_page = sample_bh.FlashPage(0x1234, [0x9A, 0xBC], 0x5678)
@@ -52,14 +49,11 @@ class TestPyGenerator(unittest.TestCase):
                 filter(lambda m: m.name == 'FlashPage', buffham.messages)
             )
             serializer = engine.generate_serializer(flash_page_message)
-            self.assertEqual(
-                flash_page.serialize(),
-                serializer(flash_page),
-            )
-            self.assertEqual(
-                flash_page,
-                sample_bh.FlashPage.deserialize(flash_page.serialize()),
-            )
+            buffer = flash_page.serialize()
+            msg, size = sample_bh.FlashPage.deserialize(buffer)
+            self.assertEqual(buffer, serializer(flash_page))
+            self.assertEqual(msg, flash_page)
+            self.assertEqual(size, len(buffer))
 
             # Test serialization & deserialization of `LogMessage`
             log_message = sample_bh.LogMessage('Hello, world!')
@@ -67,14 +61,25 @@ class TestPyGenerator(unittest.TestCase):
                 filter(lambda m: m.name == 'LogMessage', buffham.messages)
             )
             serializer = engine.generate_serializer(log_message_message)
-            self.assertEqual(
-                log_message.serialize(),
-                serializer(log_message),
+            buffer = log_message.serialize()
+            msg, size = sample_bh.LogMessage.deserialize(buffer)
+            self.assertEqual(buffer, serializer(log_message))
+            self.assertEqual(msg, log_message)
+            self.assertEqual(size, len(buffer))
+
+            # Test serialization & deserialization of `NestedMessage`
+            nested_message = sample_bh.NestedMessage(
+                0x42, log_message, [-0x1, -0x2], ping
             )
-            self.assertEqual(
-                log_message,
-                sample_bh.LogMessage.deserialize(log_message.serialize()),
+            nested_message_message = next(
+                filter(lambda m: m.name == 'NestedMessage', buffham.messages)
             )
+            serializer = engine.generate_serializer(nested_message_message)
+            buffer = nested_message.serialize()
+            msg, size = sample_bh.NestedMessage.deserialize(buffer)
+            self.assertEqual(buffer, serializer(nested_message))
+            self.assertEqual(msg, nested_message)
+            self.assertEqual(size, len(buffer))
 
             # Test that our transactions are generated
             self.assertEqual(

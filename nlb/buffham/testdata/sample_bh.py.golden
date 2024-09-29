@@ -16,11 +16,11 @@ class Ping:
         return buffer
 
     @classmethod
-    def deserialize(cls, buffer: bytes) -> Self:
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
         ping = struct.unpack_from('<B', buffer, 0)[0]
         return cls(
             ping=ping,
-        )
+        ), 1
 
 @dataclasses.dataclass
 class FlashPage:
@@ -37,7 +37,7 @@ class FlashPage:
         return buffer
 
     @classmethod
-    def deserialize(cls, buffer: bytes) -> Self:
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
         address = struct.unpack_from('<I', buffer, 0)[0]
         data_size = struct.unpack_from('<H', buffer, 4)[0]
         data = list(struct.unpack_from(f'<{data_size}B', buffer, 6))
@@ -46,7 +46,7 @@ class FlashPage:
             address=address,
             data=data,
             read_size=read_size,
-        )
+        ), 10 + data_size * 1
 
 @dataclasses.dataclass
 class LogMessage:
@@ -59,12 +59,42 @@ class LogMessage:
         return buffer
 
     @classmethod
-    def deserialize(cls, buffer: bytes) -> Self:
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
         message_size = struct.unpack_from('<H', buffer, 0)[0]
         message = buffer[2:2 + message_size].decode()
         return cls(
             message=message,
-        )
+        ), 2 + message_size * 1
+
+@dataclasses.dataclass
+class NestedMessage:
+    flag: int
+    message: LogMessage
+    numbers: list[int]
+    pong: Ping
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += struct.pack('<B', self.flag)
+        buffer += self.message.serialize()
+        buffer += struct.pack('<H', len(self.numbers))
+        buffer += struct.pack(f'<{len(self.numbers)}i', *self.numbers)
+        buffer += self.pong.serialize()
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        flag = struct.unpack_from('<B', buffer, 0)[0]
+        message, message_size = LogMessage.deserialize(buffer[1:])
+        numbers_size = struct.unpack_from('<H', buffer, 1 + message_size)[0]
+        numbers = list(struct.unpack_from(f'<{numbers_size}i', buffer, 3 + message_size))
+        pong, pong_size = Ping.deserialize(buffer[3 + message_size + numbers_size * 4:])
+        return cls(
+            flag=flag,
+            message=message,
+            numbers=numbers,
+            pong=pong,
+        ), 3 + message_size + numbers_size * 4 + pong_size
 
 class SampleSerializer(bh_cobs.BhCobs):
     def __init__(self, registry: bh_cobs.Registry | None = None):

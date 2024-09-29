@@ -25,4 +25,4 @@ class BhCobs:
 
         # Get the message type from the first byte
         message_cls = self._registry[decoded_buffer[0]]
-        return message_cls.deserialize(decoded_buffer[1:])
+        return message_cls.deserialize(decoded_buffer[1:])[0]
