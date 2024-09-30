@@ -8,21 +8,36 @@ from nlb.buffham import engine
 from nlb.buffham import parser
 from nlb.buffham import py_generator
 
+# Test generate by Bazel rules by importing this module
+from nlb.buffham.testdata import other_bh
+
 
 class TestPyGenerator(unittest.TestCase):
     def setUp(self) -> None:
         testdata_dir = pathlib.Path(__file__).parent / 'testdata'
 
+        self.other_file = testdata_dir / 'other.bh'
         self.sample_file = testdata_dir / 'sample.bh'
         self.golden_file = testdata_dir / 'sample_bh.py.golden'
         self.golden_stub_file = testdata_dir / 'sample_bh.pyi.golden'
 
-    def test_generate_python(self):
-        buffham = parser.Parser().parse_file(self.sample_file)
+        self.other_bh = parser.Parser().parse_file(
+            self.other_file,
+            parser.ParseContext({}),
+            parent_namespace='nlb.buffham.testdata',
+        )
+        self.ctx = parser.ParseContext({'nlb.buffham.testdata.other': self.other_bh})
 
+    def test_generate_python(self):
         with tempfile.TemporaryDirectory() as tempdir:
+            buffham = parser.Parser().parse_file(
+                self.sample_file, self.ctx, parent_namespace=''
+            )
+
             outfile = pathlib.Path(tempdir) / 'sample_bh.py'
-            py_generator.generate_python(buffham, outfile, stub=False)
+            py_generator.generate_python(
+                self.ctx, buffham.namespace, outfile, stub=False
+            )
 
             spec = util.spec_from_file_location('sample_bh', outfile)
             assert spec is not None
@@ -69,7 +84,7 @@ class TestPyGenerator(unittest.TestCase):
 
             # Test serialization & deserialization of `NestedMessage`
             nested_message = sample_bh.NestedMessage(
-                0x42, log_message, [-0x1, -0x2], ping
+                0x42, log_message, [-0x1, -0x2], ping, other_bh.Ping(0x43)
             )
             nested_message_message = next(
                 filter(lambda m: m.name == 'NestedMessage', buffham.messages)
@@ -98,7 +113,10 @@ class TestPyGenerator(unittest.TestCase):
             # Test that our constants are generated
             self.assertEqual(sample_bh.MY_CONSTANT, 4)
             self.assertEqual(sample_bh.CONSTANT_STRING, 'Hello, world!')
-            self.assertEqual(sample_bh.COMPOSED_CONSTANT, 2 + sample_bh.MY_CONSTANT)
+            self.assertEqual(
+                sample_bh.COMPOSED_CONSTANT,
+                2 + sample_bh.MY_CONSTANT + other_bh.OTHER_CONSTANT,
+            )
 
             # Check the our file matches the golden file
             golden = self.golden_file.read_text()
@@ -106,11 +124,13 @@ class TestPyGenerator(unittest.TestCase):
             self.assertEqual(generated, golden)
 
     def test_generate_python_stub(self):
-        bh = parser.Parser().parse_file(self.sample_file)
+        buffham = parser.Parser().parse_file(self.sample_file, self.ctx)
 
         with tempfile.TemporaryDirectory() as tempdir:
             outfile = pathlib.Path(tempdir) / 'sample_bh.pyi'
-            py_generator.generate_python(bh, outfile, stub=True)
+            py_generator.generate_python(
+                self.ctx, buffham.namespace, outfile, stub=True
+            )
 
             # Check that the generated file matches the golden file
             golden = self.golden_stub_file.read_text()

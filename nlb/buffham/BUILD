@@ -1,5 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
 load("@pip//:requirements.bzl", "requirement")
+load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_library")
 load("//bzl/macros:python.bzl", "py_test")
 
 py_library(
@@ -90,6 +91,7 @@ py_test(
         ":engine",
         ":parser",
         ":py_generator",
+        ":testdata/other_bh_py",
         ":bh",
         # Transitive dependency of our generated code
         "//emb/network/serialize:bh_cobs",
@@ -103,4 +105,14 @@ py_library(
     deps = [
         ":parser",
     ],
+)
+
+buffham(
+    name = "testdata/other_bh",
+    srcs = ["testdata/other.bh"],
+)
+
+buffham_py_library(
+    name = "testdata/other_bh_py",
+    bh = ":testdata/other_bh",
 )

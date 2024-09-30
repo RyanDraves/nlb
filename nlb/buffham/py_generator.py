@@ -22,16 +22,47 @@ TYPE_MAP = {
 }
 
 
-def _py_type(field: parser.Field) -> str:
+def _get_imported_name(relative_name: str) -> str:
+    """Get the imported name from a relative name.
+
+    Examples:
+    - 'nlb.buffham.constants.foo' -> 'constants_bh.foo'
+    - 'foo' -> 'foo'
+    """
+    if '.' in relative_name:
+        namespace, name = relative_name.rsplit('.', 1)
+        module = namespace.rsplit('.', 1)[-1] + '_bh'
+        return f'{module}.{name}'
+    return relative_name
+
+
+def _py_type(field: parser.Field, primary_namespace: str) -> str:
     """Get the Python type hint for the field."""
     if field.message:
-        return field.message.name
+        return _get_imported_name(field.message.get_relative_name(primary_namespace))
 
     if field.pri_type is parser.FieldType.LIST:
         assert field.sub_type is not None
         return f'list[{TYPE_MAP[field.sub_type]}]'
 
     return TYPE_MAP[field.pri_type]
+
+
+def _get_constant_name(reference: str) -> str:
+    """Get the constant name from a full name.
+
+    Assumes local constants are already trimmed of their namespace.
+
+    Examples:
+    - 'nlb.buffham.constants.foo' -> 'constants_bh.FOO'
+    - 'foo' -> 'FOO'
+    """
+    if '.' in reference:
+        split = reference.rsplit('.', 2)
+        split[-2] = split[-2] + '_bh'
+        split[-1] = split[-1].upper()
+        return '.'.join(split[-2:])
+    return reference.upper()
 
 
 def generate_constant(constant: parser.Constant) -> str:
@@ -41,9 +72,11 @@ def generate_constant(constant: parser.Constant) -> str:
     if constant.comments:
         for comment in constant.comments:
             definition += f'#{comment}\n'
-    # Convert to UPPER_SNAKE_CASE
-    references = {ref: ref.upper() for ref in constant.references}
-    definition += f'{constant.name.upper()} = {constant.value.format(**references)}'
+    references = {ref: _get_constant_name(ref) for ref in constant.references}
+    value = constant.value
+    for ref, name in references.items():
+        value = value.replace(f'{{{ref}}}', name)
+    definition += f'{constant.name.upper()} = {value}'
 
     if constant.inline_comment:
         definition += f'  #{constant.inline_comment}'
@@ -53,7 +86,9 @@ def generate_constant(constant: parser.Constant) -> str:
     return definition
 
 
-def generate_message(message: parser.Message, stub: bool) -> str:
+def generate_message(
+    message: parser.Message, stub: bool, primary_namespace: str
+) -> str:
     """Generate a Python dataclass definition from a Message."""
 
     definition = ('@dataclasses.dataclass\n' 'class {name}:').format(name=message.name)
@@ -72,7 +107,7 @@ def generate_message(message: parser.Message, stub: bool) -> str:
         if field.comments:
             for comment in field.comments:
                 definition += f'\n{T}#{comment}'
-        definition += f'\n{T}{field.name}: {_py_type(field)}'
+        definition += f'\n{T}{field.name}: {_py_type(field, primary_namespace)}'
         if field.inline_comment:
             definition += f'  #{field.inline_comment}'
 
@@ -122,7 +157,7 @@ def generate_message(message: parser.Message, stub: bool) -> str:
                 offset_str += f' + {field.name}_size * {field.size}'
             elif field.pri_type is parser.FieldType.MESSAGE:
                 assert field.message is not None
-                definition += f'\n{T}{T}{field.name}, {field.name}_size = {field.message.name}.deserialize(buffer[{offset}{offset_str}:])'
+                definition += f'\n{T}{T}{field.name}, {field.name}_size = {_get_imported_name(field.message.get_relative_name(primary_namespace))}.deserialize(buffer[{offset}{offset_str}:])'
                 offset_str += f' + {field.name}_size'
             else:
                 definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0]"
@@ -187,7 +222,9 @@ def generate_node(name: str, stub: bool) -> str:
     return definition
 
 
-def generate_transaction(transaction: parser.Transaction, stub: bool) -> str:
+def generate_transaction(
+    transaction: parser.Transaction, stub: bool, primary_namespace: str
+) -> str:
     """Generate a transaction definition."""
 
     definition = ''
@@ -197,22 +234,26 @@ def generate_transaction(transaction: parser.Transaction, stub: bool) -> str:
     if stub:
         definition += (
             f'{transaction.name.upper()}: bh.Transaction['
-            f'{transaction.receive.name}, '
-            f'{transaction.send.name}'
+            f'{_get_imported_name(transaction.receive.get_relative_name(primary_namespace))}, '
+            f'{_get_imported_name(transaction.send.get_relative_name(primary_namespace))}'
             f'] = ...\n'
         )
     else:
         definition += (
             f'{transaction.name.upper()} = bh.Transaction['
-            f'{transaction.receive.name}, '
-            f'{transaction.send.name}'
+            f'{_get_imported_name(transaction.receive.get_relative_name(primary_namespace))}, '
+            f'{_get_imported_name(transaction.send.get_relative_name(primary_namespace))}'
             f']({transaction.request_id})\n'
         )
 
     return definition
 
 
-def generate_python(bh: parser.Buffham, outfile: pathlib.Path, stub: bool) -> None:
+def generate_python(
+    ctx: parser.ParseContext, primary_namespace: str, outfile: pathlib.Path, stub: bool
+) -> None:
+    bh = ctx.buffhams[primary_namespace]
+
     with outfile.open('w') as fp:
         fp.write('# @generated by Buffham\n')
 
@@ -231,6 +272,15 @@ def generate_python(bh: parser.Buffham, outfile: pathlib.Path, stub: bool) -> No
                 'from nlb.buffham import bh\n\n'
             )
 
+        if len(ctx.buffhams) > 1:
+            # Add imports
+            for namespace in ctx.buffhams:
+                if namespace == primary_namespace:
+                    continue
+                package, module = namespace.rsplit('.', 1)
+                fp.write(f'from {package} import {module}_bh\n')
+            fp.write('\n')
+
         # Generate constant definitions
         for constant in bh.constants:
             fp.write(generate_constant(constant))
@@ -239,14 +289,14 @@ def generate_python(bh: parser.Buffham, outfile: pathlib.Path, stub: bool) -> No
 
         # Generate message definitions
         for message in bh.messages:
-            fp.write(generate_message(message, stub))
+            fp.write(generate_message(message, stub, primary_namespace))
 
         # Generate transaction definitions
         if len(bh.transactions):
-            fp.write(generate_serializer(bh.name, bh.transactions, stub))
-            fp.write(generate_node(bh.name, stub))
+            fp.write(generate_serializer(bh.name.title(), bh.transactions, stub))
+            fp.write(generate_node(bh.name.title(), stub))
         for transaction in bh.transactions:
-            fp.write(generate_transaction(transaction, stub))
+            fp.write(generate_transaction(transaction, stub, primary_namespace))
 
     logging.debug(f'{stub=}')
     logging.debug(outfile.read_text())

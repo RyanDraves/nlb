@@ -1,0 +1,10 @@
+# Small file to test imports in `sample.bh`
+
+constant uint8_t other_constant = 2;
+
+# This file shares a message name with `sample.bh`
+message Ping {
+    uint8_t pong;
+}
+
+transaction pong[Ping, Ping];

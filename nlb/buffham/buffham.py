@@ -52,13 +52,14 @@ def main(
     language: Languages,
 ):
     p = parser.Parser()
-    buffham = p.parse_file(input)
+    ctx = parser.ParseContext({})
+    buffham = p.parse_file(input, ctx)
 
     match language:
         case Languages.PYTHON:
-            py_generator.generate_python(buffham, output, stub=False)
+            py_generator.generate_python(ctx, buffham.namespace, output, stub=False)
         case Languages.PYTHON_STUB:
-            py_generator.generate_python(buffham, output, stub=True)
+            py_generator.generate_python(ctx, buffham.namespace, output, stub=True)
         case Languages.CPP:
             cpp_generator.generate_cpp(buffham, output)
         case Languages.TEMPLATE:
