@@ -8,7 +8,7 @@ from emb.project.base import client
 @click.command()
 @shell.common_shell_options
 def main(connection: shell.ConnectionType, port: str | None, address: str, log: str):
-    ctx = shell.ShellContext(client.BaseClient, base_bh.BaseNode, 'Robo24 Shell')
+    ctx = shell.ShellContext(client.BaseClient, base_bh.BaseNode, 'Base Shell')
 
     shell.shell_entry(connection, port, address, log, ctx)
 

@@ -13,6 +13,7 @@ These goals are flexible.
 - Dictionary support
 - List of messages support
 - File support (read/write to/from text/binary)
+- Editor integrations for language syntax support
 
 # Limitations
 - Transaction code expects Python clients and C++ servers

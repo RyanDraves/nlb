@@ -9,8 +9,8 @@ from emb.project.bootloader import bootloader_bh
 
 
 class HostTest(host_test_base.HostTestBase[client.BaseClient, base_bh.BaseNode]):
-    NODE_CLS = base_bh.BaseNode
     CLIENT_CLS = client.BaseClient
+    NODE_CLS = base_bh.BaseNode
 
     def setUp(self) -> None:
         super().setUp()

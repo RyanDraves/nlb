@@ -24,6 +24,7 @@ buffham(
 buffham_py_library(
     name = "robo24_bh_py",
     bh = ":robo24_bh",
+    # Current limitation of Buffham that this needs to be spelled out
     bh_deps = [
         "//emb/project/base:base_bh",
     ],

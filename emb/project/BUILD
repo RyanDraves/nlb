@@ -18,6 +18,7 @@ py_library(
         ":client",
         "//emb/network/transport:tcp",
         "//nlb/buffham:bh",
+        requirement("portpicker"),
     ],
 )
 

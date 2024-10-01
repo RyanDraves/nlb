@@ -2,7 +2,8 @@ import zmq
 
 
 class Zmq:
-    DEFAULT_ADDRESS = 'tcp://localhost:1337'
+    DEFAULT_HOST = 'tcp://localhost'
+    DEFAULT_ADDRESS = DEFAULT_HOST + ':1337'
 
     def __init__(self, address: str):
         self._context = zmq.Context(1)

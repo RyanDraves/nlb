@@ -4,8 +4,8 @@ from emb.project.robo24 import robo24_bh
 
 
 class HostTest(host_test_base.HostTestBase[client.Robo24Client, robo24_bh.Robo24Node]):
-    NODE_CLS = robo24_bh.Robo24Node
     CLIENT_CLS = client.Robo24Client
+    NODE_CLS = robo24_bh.Robo24Node
 
     def test_ping(self):
         with self.client:
