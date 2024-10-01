@@ -1,4 +1,5 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary")
+load("//bzl/macros:python.bzl", "py_test")
 
 def flash(name, binary, **kwargs):
     """Flash a binary to a device
@@ -18,5 +19,26 @@ def flash(name, binary, **kwargs):
         args = [
             "$(location {0})".format(binary),
         ],
+        **kwargs
+    )
+
+def host_test(name, srcs, binary, deps, **kwargs):
+    """Run a host test
+
+    Args:
+        name: The name of the binary
+        srcs: The source files for the test
+        binary: The binary to run
+        deps: The dependencies for the test
+        **kwargs: Additional arguments to pass to `py_binary`
+    """
+    py_test(
+        name = name,
+        srcs = srcs,
+        deps = deps,
+        data = [binary],
+        env = {
+            "HOST_BIN": "$(rootpath {0})".format(binary),
+        },
         **kwargs
     )

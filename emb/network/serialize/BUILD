@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
 load("//bzl/macros:python.bzl", "py_test")
 load("//bzl/macros:unittest.bzl", "cc_unittest")
@@ -19,7 +18,7 @@ py_test(
     srcs = ["bh_cobs_test.py"],
     deps = [
         ":bh_cobs",
-        ":test_bh_py",
+        ":testdata/test_bh_py",
     ],
 )
 
@@ -40,7 +39,7 @@ cc_unittest(
     visibility = ["//visibility:public"],
     deps = [
         ":bh_cobs_cc",
-        ":test_bh_cc",
+        ":testdata/test_bh_cc",
     ],
 )
 
@@ -60,16 +59,16 @@ cc_library(
 )
 
 buffham(
-    name = "test",
+    name = "testdata/test_bh",
     srcs = ["testdata/test.bh"],
 )
 
 buffham_py_library(
-    name = "test_bh_py",
-    bh = ":test",
+    name = "testdata/test_bh_py",
+    bh = ":testdata/test_bh",
 )
 
 buffham_cc_library(
-    name = "test_bh_cc",
-    bh = ":test",
+    name = "testdata/test_bh_cc",
+    bh = ":testdata/test_bh",
 )

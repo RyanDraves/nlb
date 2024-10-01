@@ -52,8 +52,10 @@ refresh_compile_commands(
 write_source_files(
     name = "generate_bh",
     additional_update_targets = [
-        "//emb/network/serialize:test_bh_py_write",
+        "//emb/network/serialize:testdata/test_bh_py_write",
         "//emb/project/base:base_bh_py_write",
         "//emb/project/bootloader:bootloader_bh_py_write",
+        "//emb/project/robo24:robo24_bh_py_write",
+        "//nlb/buffham:testdata/other_bh_py_write",
     ],
 )

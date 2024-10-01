@@ -1,0 +1,100 @@
+#pragma once
+
+#include <inttypes.h>
+#include <span>
+#include <string>
+#include <string.h>
+#include <vector>
+
+#include "emb/network/node/node.hpp"
+#include "emb/network/serialize/serializer.hpp"
+#include "emb/network/transport/transporter.hpp"
+
+#include "nlb/buffham/testdata/other_bh.hpp"
+
+namespace nlb {
+namespace buffham {
+namespace testdata {
+
+// This is a constant in the global scope
+constexpr uint8_t kMyConstant = 4;
+constexpr std::string kConstantString = "Hello, world!";  // constants can have inline comments
+// Constants may reference other constants with {brackets}
+constexpr uint16_t kComposedConstant = 2 + kMyConstant + nlb::buffham::testdata::kOtherConstant;
+
+
+// A message comment
+struct Ping {
+    // Add some comments here
+    uint8_t ping;
+
+    std::span<uint8_t> serialize(std::span<uint8_t> buffer) const;
+
+    static std::pair<Ping, std::span<const uint8_t> > deserialize(std::span<const uint8_t> buffer);
+};
+
+/*
+
+A bunch of message comments,
+in a block-like pattern.
+
+All of these belong to `FlashPage`
+
+ */
+struct FlashPage {
+    uint32_t address;
+    // Another field comment
+    std::vector<uint8_t> data;  //  What about some in-line comments for fields?
+    // This comment belongs to `read_size`
+    uint32_t read_size;
+
+    std::span<uint8_t> serialize(std::span<uint8_t> buffer) const;
+
+    static std::pair<FlashPage, std::span<const uint8_t> > deserialize(std::span<const uint8_t> buffer);
+};
+
+struct LogMessage {
+    std::string message;
+
+    std::span<uint8_t> serialize(std::span<uint8_t> buffer) const;
+
+    static std::pair<LogMessage, std::span<const uint8_t> > deserialize(std::span<const uint8_t> buffer);
+};
+
+struct NestedMessage {
+    uint8_t flag;
+    LogMessage message;
+    std::vector<int32_t> numbers;
+    Ping pong;
+    nlb::buffham::testdata::Pong other_pong;
+
+    std::span<uint8_t> serialize(std::span<uint8_t> buffer) const;
+
+    static std::pair<NestedMessage, std::span<const uint8_t> > deserialize(std::span<const uint8_t> buffer);
+};
+
+class Sample {
+  public:
+    Sample();
+    ~Sample();
+
+    template <emb::network::serialize::SerializerLike S,
+                emb::network::transport::TransporterLike T, class... Projects>
+    void register_handlers(emb::network::node::Node<S, T, Projects...> &node) {
+        node.template register_handler<nlb::buffham::testdata::Pong, LogMessage>(1, std::bind(&Sample::ping, this, std::placeholders::_1));
+        node.template register_handler<FlashPage, FlashPage>(2, std::bind(&Sample::flash_page, this, std::placeholders::_1));
+        node.template register_handler<FlashPage, FlashPage>(3, std::bind(&Sample::read_flash_page, this, std::placeholders::_1));
+    }
+
+    LogMessage ping(const nlb::buffham::testdata::Pong &pong);
+    // Transaction comment
+    FlashPage flash_page(const FlashPage &flash_page);
+    FlashPage read_flash_page(const FlashPage &flash_page);
+  private:
+    struct SampleImpl;
+    SampleImpl *impl_;
+};
+
+}  // namespace nlb
+}  // namespace buffham
+}  // namespace testdata

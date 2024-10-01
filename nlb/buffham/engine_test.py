@@ -33,12 +33,14 @@ class NestedMessage:
 class TestEngine(unittest.TestCase):
     PING = parser.Message(
         'Ping',
+        '',
         [
             parser.Field('ping', parser.FieldType.UINT8_T, None),
         ],
     )
     FLASH_PAGE = parser.Message(
         'FlashPage',
+        '',
         [
             parser.Field('address', parser.FieldType.UINT32_T, None),
             parser.Field('read_size', parser.FieldType.UINT32_T, None),
@@ -47,12 +49,14 @@ class TestEngine(unittest.TestCase):
     )
     LOG_MESSAGE = parser.Message(
         'LogMessage',
+        '',
         [
             parser.Field('message', parser.FieldType.STRING, None),
         ],
     )
     NESTED_MESSAGE = parser.Message(
         'NestedMessage',
+        '',
         [
             parser.Field('flag', parser.FieldType.UINT8_T, None),
             parser.Field('inner', parser.FieldType.MESSAGE, None, LOG_MESSAGE),

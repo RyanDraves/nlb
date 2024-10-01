@@ -5,7 +5,7 @@
 #include "gtest/gtest.h"
 
 #include "emb/network/serialize/bh_cobs.hpp"
-#include "emb/network/serialize/test_bh.hpp"
+#include "emb/network/serialize/testdata/test_bh.hpp"
 
 using namespace testing;
 

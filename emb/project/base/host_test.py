@@ -1,32 +1,19 @@
-import os
 import pathlib
 import random
-import subprocess
 import tempfile
-import unittest
 
-from emb.network.transport import tcp
+from emb.project import host_test_base
 from emb.project.base import base_bh
 from emb.project.base import client
 from emb.project.bootloader import bootloader_bh
 
 
-class HostTest(unittest.TestCase):
+class HostTest(host_test_base.HostTestBase[client.BaseClient, base_bh.BaseNode]):
+    CLIENT_CLS = client.BaseClient
+    NODE_CLS = base_bh.BaseNode
 
     def setUp(self) -> None:
-        host_bin = pathlib.Path(os.environ['HOST_BIN'])
-
-        self.host = subprocess.Popen(
-            [str(host_bin)],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        self.addCleanup(self.host.terminate)
-
-        self.node = base_bh.BaseNode(transporter=tcp.Zmq(tcp.Zmq.DEFAULT_ADDRESS))
-        self.client = client.BaseClient(self.node)
+        super().setUp()
 
         # Generate a random file a little over 16kB
         self.image = pathlib.Path(tempfile.mktemp())

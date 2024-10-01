@@ -1,25 +1,16 @@
 import logging
 import pathlib
-from typing import Self, Type
+from typing import Type
 
 from rich import progress
 
+from emb.project import client
 from emb.project.base import base_bh
 from emb.project.bootloader import bootloader_bh
 from nlb.buffham import bh
 
 
-class BaseClient:
-    def __init__(self, node: base_bh.BaseNode) -> None:
-        self._node = node
-
-    def __enter__(self) -> Self:
-        self._node.start()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self._node.stop()
-
+class BaseClient(client.Client):
     def ping(self) -> None:
         msg = base_bh.Ping(ping=0)
         resp = base_bh.PING.transact(self._node, msg)

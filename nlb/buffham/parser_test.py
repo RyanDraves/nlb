@@ -6,12 +6,14 @@ from nlb.buffham import parser
 
 class TestParserSimple(unittest.TestCase):
     def test_parse_field(self):
+        ctx = parser.ParseContext({})
+
         field = '    uint8_t foo;'
-        parsed = parser.Parser.parse_field(field, [], [])
+        parsed = parser.Parser.parse_field(field, [], [], ctx)
         self.assertEqual(parsed, parser.Field('foo', parser.FieldType.UINT8_T, None))
 
         field = 'float64 bar;  # inline comment'
-        parsed = parser.Parser.parse_field(field, [], [])
+        parsed = parser.Parser.parse_field(field, [], [], ctx)
         self.assertEqual(
             parsed,
             parser.Field(
@@ -21,7 +23,7 @@ class TestParserSimple(unittest.TestCase):
 
         field = 'list[uint32_t] baz_2;'
         parsed = parser.Parser.parse_field(
-            field, [], ['some other', 'read-in comments']
+            field, [], ['some other', 'read-in comments'], ctx
         )
         self.assertEqual(
             parsed,
@@ -36,15 +38,15 @@ class TestParserSimple(unittest.TestCase):
 
         field = 'list[list[uint32_t]] baz_3;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_field(field, [], [])
+            parser.Parser.parse_field(field, [], [], ctx)
 
         field = 'list[uint32_t baz_4;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_field(field, [], [])
+            parser.Parser.parse_field(field, [], [], ctx)
 
         field = 'MyMessage baz_5;'
-        my_message = parser.Message('MyMessage', [])
-        parsed = parser.Parser.parse_field(field, [my_message], [])
+        my_message = parser.Message('MyMessage', '', [])
+        parsed = parser.Parser.parse_field(field, [my_message], [], ctx)
         self.assertEqual(
             parsed,
             parser.Field('baz_5', parser.FieldType.MESSAGE, None, my_message),
@@ -52,19 +54,21 @@ class TestParserSimple(unittest.TestCase):
 
         field = 'NonexistantMessage baz_6;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_field(field, [my_message], [])
+            parser.Parser.parse_field(field, [my_message], [], ctx)
 
     def test_parse_message(self):
+        ctx = parser.ParseContext({})
+
         message = [
             'message Ping {',
             '    uint8_t ping;',
             '}',
         ]
-        parsed = parser.Parser.parse_message(message, [], [])
+        parsed = parser.Parser.parse_message(message, [], [], ctx)
         self.assertEqual(
             parsed,
             parser.Message(
-                'Ping', [parser.Field('ping', parser.FieldType.UINT8_T, None)]
+                'Ping', '', [parser.Field('ping', parser.FieldType.UINT8_T, None)]
             ),
         )
 
@@ -76,11 +80,12 @@ class TestParserSimple(unittest.TestCase):
             '    list[uint32_t] data;',
             '}  # inline comment',
         ]
-        parsed = parser.Parser.parse_message(message, [], [])
+        parsed = parser.Parser.parse_message(message, [], [], ctx)
         self.assertEqual(
             parsed,
             parser.Message(
                 'FlashPage',
+                '',
                 [
                     parser.Field('address', parser.FieldType.UINT32_T, None),
                     parser.Field(
@@ -108,7 +113,7 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError):
-            parser.Parser.parse_message(message, [], [])
+            parser.Parser.parse_message(message, [], [], ctx)
 
         # Nested message
         message = [
@@ -116,12 +121,14 @@ class TestParserSimple(unittest.TestCase):
             '    Inner inner;',
             '}',
         ]
-        inner = parser.Message('Inner', [])
-        parsed = parser.Parser.parse_message(message, [inner], [])
+        inner = parser.Message('Inner', '', [])
+        parsed = parser.Parser.parse_message(message, [inner], [], ctx)
         self.assertEqual(
             parsed,
             parser.Message(
-                'Outer', [parser.Field('inner', parser.FieldType.MESSAGE, None, inner)]
+                'Outer',
+                '',
+                [parser.Field('inner', parser.FieldType.MESSAGE, None, inner)],
             ),
         )
 
@@ -131,24 +138,26 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError):
-            parser.Parser.parse_message(message, [inner], [])
+            parser.Parser.parse_message(message, [inner], [], ctx)
 
     def test_parse_transaction(self):
         p = parser.Parser()
+        ctx = parser.ParseContext({})
 
         transaction = 'transaction ping[Ping, LogMessage];'
         receive = parser.Message(
-            'Ping', [parser.Field('ping', parser.FieldType.UINT8_T, None)]
+            'Ping', '', [parser.Field('ping', parser.FieldType.UINT8_T, None)]
         )
         send = parser.Message(
-            'LogMessage', [parser.Field('message', parser.FieldType.STRING, None)]
+            'LogMessage', '', [parser.Field('message', parser.FieldType.STRING, None)]
         )
         messages = [receive, send]
-        parsed = p.parse_transaction(transaction, messages, ['some other comment'])
+        parsed = p.parse_transaction(transaction, messages, ['some other comment'], ctx)
         self.assertEqual(
             parsed,
             parser.Transaction(
                 'ping',
+                '',
                 0,
                 receive,
                 send,
@@ -158,11 +167,12 @@ class TestParserSimple(unittest.TestCase):
 
         transaction = 'transaction flash_page[Ping, Ping];  # inline comment'
         messages = [receive, receive]
-        parsed = p.parse_transaction(transaction, messages, [])
+        parsed = p.parse_transaction(transaction, messages, [], ctx)
         self.assertEqual(
             parsed,
             parser.Transaction(
                 'flash_page',
+                '',
                 1,
                 receive,
                 receive,
@@ -171,26 +181,27 @@ class TestParserSimple(unittest.TestCase):
 
         transaction = 'transaction flash_page[Ping, InvalidMessage];'
         with self.assertRaises(ValueError):
-            p.parse_transaction(transaction, messages, [])
+            p.parse_transaction(transaction, messages, [], ctx)
 
         transaction = 'transaction flash_page[Ping, Ping'
         with self.assertRaises(ValueError):
-            p.parse_transaction(transaction, messages, [])
+            p.parse_transaction(transaction, messages, [], ctx)
 
     def test_parse_constant(self):
         p = parser.Parser()
+        ctx = parser.ParseContext({})
 
         constant = 'constant uint8_t foo = 0x01;'
-        parsed = p.parse_constant(constant, [], [])
+        parsed = p.parse_constant(constant, [], [], ctx)
         self.assertEqual(
             parsed,
-            parser.Constant('foo', parser.FieldType.UINT8_T, '0x01'),
+            parser.Constant('foo', '', parser.FieldType.UINT8_T, '0x01'),
         )
 
         constant = 'constant uint32_t bar = 0x12345678;  # inline comment'
-        parsed = p.parse_constant(constant, [], [])
+        parsed = p.parse_constant(constant, [], [], ctx)
         bar = parser.Constant(
-            'bar', parser.FieldType.UINT32_T, '0x12345678', [], ' inline comment'
+            'bar', '', parser.FieldType.UINT32_T, '0x12345678', [], ' inline comment'
         )
         self.assertEqual(
             parsed,
@@ -198,11 +209,12 @@ class TestParserSimple(unittest.TestCase):
         )
 
         constant = 'constant uint32_t baz = 0x1 + {bar};'
-        parsed = p.parse_constant(constant, [bar], ['some other comment'])
+        parsed = p.parse_constant(constant, [bar], ['some other comment'], ctx)
         self.assertEqual(
             parsed,
             parser.Constant(
                 'baz',
+                '',
                 parser.FieldType.UINT32_T,
                 '0x1 + {bar}',
                 ['some other comment'],
@@ -213,7 +225,7 @@ class TestParserSimple(unittest.TestCase):
 
         constant = 'constant uint32_t baz = 0x12345678  # missing semicolon'
         with self.assertRaises(ValueError):
-            p.parse_constant(constant, [], [])
+            p.parse_constant(constant, [], [], ctx)
 
 
 class TestParserSample(unittest.TestCase):
@@ -221,12 +233,26 @@ class TestParserSample(unittest.TestCase):
         testdata_dir = pathlib.Path(__file__).parent / 'testdata'
 
         self.sample_file = testdata_dir / 'sample.bh'
+        self.other_file = testdata_dir / 'other.bh'
 
     def test_parse_file(self):
         p = parser.Parser()
 
+        other = p.parse_file(
+            self.other_file,
+            parser.ParseContext({}),
+            parent_namespace='nlb.buffham.testdata',
+        )
+        # Quickly inspect the parsed `other` object
+        self.assertEqual(len(other.constants), 1)
+        self.assertEqual(len(other.messages), 1)
+        self.assertEqual(len(other.transactions), 1)
+
+        ctx = parser.ParseContext({'nlb.buffham.testdata.other': other})
+
         ping = parser.Message(
             'Ping',
+            'sample',
             [
                 parser.Field(
                     'ping',
@@ -240,6 +266,7 @@ class TestParserSample(unittest.TestCase):
         )
         flash_page = parser.Message(
             'FlashPage',
+            'sample',
             [
                 parser.Field('address', parser.FieldType.UINT32_T, None),
                 parser.Field(
@@ -268,10 +295,13 @@ class TestParserSample(unittest.TestCase):
             ],
         )
         log_message = parser.Message(
-            'LogMessage', [parser.Field('message', parser.FieldType.STRING, None)]
+            'LogMessage',
+            'sample',
+            [parser.Field('message', parser.FieldType.STRING, None)],
         )
         nested_message = parser.Message(
             'NestedMessage',
+            'sample',
             [
                 parser.Field('flag', parser.FieldType.UINT8_T, None),
                 parser.Field('message', parser.FieldType.MESSAGE, None, log_message),
@@ -279,10 +309,13 @@ class TestParserSample(unittest.TestCase):
                     'numbers', parser.FieldType.LIST, parser.FieldType.INT32_T
                 ),
                 parser.Field('pong', parser.FieldType.MESSAGE, None, ping),
+                parser.Field(
+                    'other_pong', parser.FieldType.MESSAGE, None, other.messages[0]
+                ),
             ],
         )
 
-        parsed = p.parse_file(self.sample_file)
+        parsed = p.parse_file(self.sample_file, ctx, parent_namespace='')
 
         self.assertListEqual(
             parsed.messages,
@@ -297,11 +330,19 @@ class TestParserSample(unittest.TestCase):
         self.assertListEqual(
             parsed.transactions,
             [
-                parser.Transaction('ping', 0, ping, log_message),
+                # Request IDs offset by 1 from `other`'s transactions
+                parser.Transaction('ping', 'sample', 1, other.messages[0], log_message),
                 parser.Transaction(
-                    'flash_page', 1, flash_page, flash_page, [' Transaction comment']
+                    'flash_page',
+                    'sample',
+                    2,
+                    flash_page,
+                    flash_page,
+                    [' Transaction comment'],
                 ),
-                parser.Transaction('read_flash_page', 2, flash_page, flash_page),
+                parser.Transaction(
+                    'read_flash_page', 'sample', 3, flash_page, flash_page
+                ),
             ],
         )
 
@@ -310,12 +351,14 @@ class TestParserSample(unittest.TestCase):
             [
                 parser.Constant(
                     'my_constant',
+                    'sample',
                     parser.FieldType.UINT8_T,
                     '4',
                     [' This is a constant in the global scope'],
                 ),
                 parser.Constant(
                     'constant_string',
+                    'sample',
                     parser.FieldType.STRING,
                     '"Hello, world!"',
                     [],
@@ -323,11 +366,12 @@ class TestParserSample(unittest.TestCase):
                 ),
                 parser.Constant(
                     'composed_constant',
+                    'sample',
                     parser.FieldType.UINT16_T,
-                    '2 + {my_constant}',
+                    '2 + {my_constant} + {nlb.buffham.testdata.other.other_constant}',
                     [' Constants may reference other constants with {brackets}'],
                     None,
-                    ['my_constant'],
+                    ['my_constant', 'nlb.buffham.testdata.other.other_constant'],
                 ),
             ],
         )
