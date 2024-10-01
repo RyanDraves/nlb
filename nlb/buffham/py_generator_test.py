@@ -8,7 +8,7 @@ from nlb.buffham import engine
 from nlb.buffham import parser
 from nlb.buffham import py_generator
 
-# Test generate by Bazel rules by importing this module
+# Test generation by Bazel rules by importing this module
 from nlb.buffham.testdata import other_bh
 
 
@@ -84,7 +84,7 @@ class TestPyGenerator(unittest.TestCase):
 
             # Test serialization & deserialization of `NestedMessage`
             nested_message = sample_bh.NestedMessage(
-                0x42, log_message, [-0x1, -0x2], ping, other_bh.Ping(0x43)
+                0x42, log_message, [-0x1, -0x2], ping, other_bh.Pong(0x43)
             )
             nested_message_message = next(
                 filter(lambda m: m.name == 'NestedMessage', buffham.messages)

@@ -40,10 +40,10 @@ message NestedMessage {
     LogMessage message;
     list[int32_t] numbers;
     Ping pong;
-    nlb.buffham.testdata.other.Ping other_pong;
+    nlb.buffham.testdata.other.Pong other_pong;
 }
 
-transaction ping[nlb.buffham.testdata.other.Ping, LogMessage];
+transaction ping[nlb.buffham.testdata.other.Pong, LogMessage];
 # Transaction comment
 transaction flash_page[FlashPage, FlashPage];
 transaction read_flash_page[FlashPage, FlashPage];  # In-line transaction comments are ignored

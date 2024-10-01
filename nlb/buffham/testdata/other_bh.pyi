@@ -10,10 +10,7 @@ OTHER_CONSTANT = 2
 
 
 @dataclasses.dataclass
-class Ping:
-    """This file shares a message name with `sample.bh`
-    """
-
+class Pong:
     pong: int
 
     def serialize(self) -> bytes: ...
@@ -27,4 +24,4 @@ class OtherSerializer(bh_cobs.BhCobs):
 class OtherNode[Transporter: transporter.TransporterLike](bh.BhNode[OtherSerializer, Transporter]):
     def __init__(self, serializer: OtherSerializer | None = None, transporter: Transporter | None = None): ...
 
-PONG: bh.Transaction[Ping, Ping] = ...
+PONG: bh.Transaction[Pong, Pong] = ...

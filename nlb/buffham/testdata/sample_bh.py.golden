@@ -96,7 +96,7 @@ class NestedMessage:
     message: LogMessage
     numbers: list[int]
     pong: Ping
-    other_pong: other_bh.Ping
+    other_pong: other_bh.Pong
 
     def serialize(self) -> bytes:
         buffer = bytes()
@@ -115,7 +115,7 @@ class NestedMessage:
         numbers_size = struct.unpack_from('<H', buffer, 1 + message_size)[0]
         numbers = list(struct.unpack_from(f'<{numbers_size}i', buffer, 3 + message_size))
         pong, pong_size = Ping.deserialize(buffer[3 + message_size + numbers_size * 4:])
-        other_pong, other_pong_size = other_bh.Ping.deserialize(buffer[3 + message_size + numbers_size * 4 + pong_size:])
+        other_pong, other_pong_size = other_bh.Pong.deserialize(buffer[3 + message_size + numbers_size * 4 + pong_size:])
         return cls(
             flag=flag,
             message=message,
@@ -138,7 +138,7 @@ class SampleNode[Transporter: transporter.TransporterLike](bh.BhNode[SampleSeria
     def __init__(self, serializer: SampleSerializer | None = None, transporter: Transporter | None = None):
         super().__init__(serializer or SampleSerializer(), transporter)
 
-PING = bh.Transaction[other_bh.Ping, LogMessage](0)
+PING = bh.Transaction[other_bh.Pong, LogMessage](0)
 # Transaction comment
 FLASH_PAGE = bh.Transaction[FlashPage, FlashPage](1)
 READ_FLASH_PAGE = bh.Transaction[FlashPage, FlashPage](2)

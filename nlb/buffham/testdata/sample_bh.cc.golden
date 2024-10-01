@@ -1,0 +1,91 @@
+#include "nlb/buffham/testdata/sample_bh.hpp"
+
+#include <inttypes.h>
+#include <span>
+#include <string>
+#include <string.h>
+#include <vector>
+
+#include "nlb/buffham/testdata/other_bh.hpp"
+
+namespace nlb {
+namespace buffham {
+namespace testdata {
+
+std::span<uint8_t> Ping::serialize(std::span<uint8_t> buffer) const {
+    memcpy(buffer.data() + 0, &ping, 1);
+    return buffer.subspan(0, 1);
+}
+
+std::pair<Ping, std::span<const uint8_t> > Ping::deserialize(std::span<const uint8_t> buffer) {
+    Ping ping;
+    memcpy(&ping.ping, buffer.data() + 0, 1);
+    return {ping, buffer.subspan(0, 1)};
+}
+
+std::span<uint8_t> FlashPage::serialize(std::span<uint8_t> buffer) const {
+    memcpy(buffer.data() + 0, &address, 4);
+    uint16_t data_size = data.size();
+    memcpy(buffer.data() + 4, &data_size, 2);
+    memcpy(buffer.data() + 6, data.data(), data_size * 1);
+    memcpy(buffer.data() + 6 + data_size * 1, &read_size, 4);
+    return buffer.subspan(0, 10 + data_size * 1);
+}
+
+std::pair<FlashPage, std::span<const uint8_t> > FlashPage::deserialize(std::span<const uint8_t> buffer) {
+    FlashPage flash_page;
+    memcpy(&flash_page.address, buffer.data() + 0, 4);
+    uint16_t data_size;
+    memcpy(&data_size, buffer.data() + 4, 2);
+    flash_page.data.resize(data_size);
+    memcpy(flash_page.data.data(), buffer.data() + 6, data_size * 1);
+    memcpy(&flash_page.read_size, buffer.data() + 6 + data_size * 1, 4);
+    return {flash_page, buffer.subspan(0, 10 + data_size * 1)};
+}
+
+std::span<uint8_t> LogMessage::serialize(std::span<uint8_t> buffer) const {
+    uint16_t message_size = message.size();
+    memcpy(buffer.data() + 0, &message_size, 2);
+    memcpy(buffer.data() + 2, message.data(), message_size * 1);
+    return buffer.subspan(0, 2 + message_size * 1);
+}
+
+std::pair<LogMessage, std::span<const uint8_t> > LogMessage::deserialize(std::span<const uint8_t> buffer) {
+    LogMessage log_message;
+    uint16_t message_size;
+    memcpy(&message_size, buffer.data() + 0, 2);
+    log_message.message.resize(message_size);
+    memcpy(log_message.message.data(), buffer.data() + 2, message_size * 1);
+    return {log_message, buffer.subspan(0, 2 + message_size * 1)};
+}
+
+std::span<uint8_t> NestedMessage::serialize(std::span<uint8_t> buffer) const {
+    memcpy(buffer.data() + 0, &flag, 1);
+    auto message_buffer = message.serialize(buffer.subspan(1));
+    uint16_t numbers_size = numbers.size();
+    memcpy(buffer.data() + 1 + message_buffer.size(), &numbers_size, 2);
+    memcpy(buffer.data() + 3 + message_buffer.size(), numbers.data(), numbers_size * 4);
+    auto pong_buffer = pong.serialize(buffer.subspan(3 + message_buffer.size() + numbers_size * 4));
+    auto other_pong_buffer = other_pong.serialize(buffer.subspan(3 + message_buffer.size() + numbers_size * 4 + pong_buffer.size()));
+    return buffer.subspan(0, 3 + message_buffer.size() + numbers_size * 4 + pong_buffer.size() + other_pong_buffer.size());
+}
+
+std::pair<NestedMessage, std::span<const uint8_t> > NestedMessage::deserialize(std::span<const uint8_t> buffer) {
+    NestedMessage nested_message;
+    memcpy(&nested_message.flag, buffer.data() + 0, 1);
+    auto message_buffer = buffer.subspan(1);
+    std::tie(nested_message.message, message_buffer) = LogMessage::deserialize(message_buffer);
+    uint16_t numbers_size;
+    memcpy(&numbers_size, buffer.data() + 1 + message_buffer.size(), 2);
+    nested_message.numbers.resize(numbers_size);
+    memcpy(nested_message.numbers.data(), buffer.data() + 3 + message_buffer.size(), numbers_size * 4);
+    auto pong_buffer = buffer.subspan(3 + message_buffer.size() + numbers_size * 4);
+    std::tie(nested_message.pong, pong_buffer) = Ping::deserialize(pong_buffer);
+    auto other_pong_buffer = buffer.subspan(3 + message_buffer.size() + numbers_size * 4 + pong_buffer.size());
+    std::tie(nested_message.other_pong, other_pong_buffer) = nlb::buffham::testdata::Pong::deserialize(other_pong_buffer);
+    return {nested_message, buffer.subspan(0, 3 + message_buffer.size() + numbers_size * 4 + pong_buffer.size() + other_pong_buffer.size())};
+}
+
+}  // namespace nlb
+}  // namespace buffham
+}  // namespace testdata

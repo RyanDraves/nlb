@@ -2,9 +2,8 @@
 
 constant uint8_t other_constant = 2;
 
-# This file shares a message name with `sample.bh`
-message Ping {
+message Pong {
     uint8_t pong;
 }
 
-transaction pong[Ping, Ping];
+transaction pong[Pong, Pong];

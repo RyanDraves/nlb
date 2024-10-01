@@ -3,10 +3,12 @@ import re
 
 from nlb.buffham import parser
 
-TEMPLATE_PATTERN = re.compile(r'\{\{ (\w+) \}\}')
+TEMPLATE_PATTERN = re.compile(r'\{\{ ([\w|\.]+) \}\}')
 
 
-def _expanded_constant(buffham: parser.Buffham, constant: parser.Constant) -> str:
+def _expanded_constant(
+    ctx: parser.ParseContext, bh: parser.Buffham, constant: parser.Constant
+) -> str:
     """Expand a constant to its value.
 
     If the constant references other constants, expand those as well.
@@ -14,20 +16,31 @@ def _expanded_constant(buffham: parser.Buffham, constant: parser.Constant) -> st
     reference_constants = {}
     for reference in constant.references:
         reference_constant = next(
-            filter(lambda x: x.name == reference, buffham.constants), None
+            filter(
+                lambda x: x.get_relative_name(bh.namespace) == reference,
+                ctx.iter_constants(bh.constants),
+            ),
+            None,
         )
-        assert reference_constant is not None
-        reference_constants[reference] = _expanded_constant(buffham, reference_constant)
+        assert reference_constant is not None, f'Constant {reference} not found'
+        reference_constants[reference] = _expanded_constant(ctx, bh, reference_constant)
 
-    value = constant.value.format(**reference_constants)
+    value = constant.value
+    for ref, val in reference_constants.items():
+        value = value.replace(f'{{{ref}}}', val)
 
     return value
 
 
 def generate_template(
-    buffham: parser.Buffham, outfile: pathlib.Path, template_file: pathlib.Path
+    ctx: parser.ParseContext,
+    primary_namespace: str,
+    outfile: pathlib.Path,
+    template_file: pathlib.Path,
 ) -> None:
     """Generate a template file."""
+    bh = ctx.buffhams[primary_namespace]
+
     lines = template_file.read_text().splitlines()
 
     # Search through the lines of the template file for template patterns
@@ -40,13 +53,16 @@ def generate_template(
 
             for m in match:
                 # Find the value in the Buffham constants
-                constant = next(filter(lambda x: x.name == m, buffham.constants), None)
+                constant = next(
+                    filter(lambda x: x.name == m, ctx.iter_constants(bh.constants)),
+                    None,
+                )
 
                 if constant is None:
-                    raise ValueError(f'Constant {m} not found in {buffham.name} file')
+                    raise ValueError(f'Constant {m} not found')
 
                 line = line.replace(
-                    f'{{{{ {m} }}}}', _expanded_constant(buffham, constant)
+                    f'{{{{ {m} }}}}', _expanded_constant(ctx, bh, constant)
                 )
 
             fp.write(line + '\n')

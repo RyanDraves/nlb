@@ -1,7 +1,7 @@
 import unittest
 
 from emb.network.serialize import bh_cobs
-from emb.network.serialize import test_bh
+from emb.network.serialize.testdata import test_bh
 
 
 class TestBhCobs(unittest.TestCase):

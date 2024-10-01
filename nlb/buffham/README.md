@@ -17,5 +17,4 @@ These goals are flexible.
 # Limitations
 - Transaction code expects Python clients and C++ servers
 - Transaction codegen cannot be turned off
-- C++ generation is not unit tested (just `bh_cobs_test.cc`)
 - The items on the roadmap are not done
