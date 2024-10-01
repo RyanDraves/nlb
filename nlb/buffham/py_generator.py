@@ -172,8 +172,24 @@ def generate_message(
     return definition
 
 
+def generate_registry(transactions: list[parser.Transaction], stub: bool) -> str:
+    """Generate a registry for transactions."""
+
+    definition = 'REGISTRY: dict[int, Type[bh.BuffhamLike]]'
+
+    if stub:
+        definition += ' = ...\n\n'
+    else:
+        definition += ' = {\n'
+        for transaction in transactions:
+            definition += f'{T}{transaction.request_id}: {transaction.send.name},\n'
+        definition += '}\n\n'
+
+    return definition
+
+
 def generate_serializer(
-    name: str, transactions: list[parser.Transaction], stub: bool
+    name: str, ctx: parser.ParseContext, primary_namespace: str, stub: bool
 ) -> str:
     """Generate a serializer with a defined registry for transactions."""
 
@@ -185,12 +201,16 @@ def generate_serializer(
     if stub:
         definition += ' ...\n\n'
     else:
-        definition += f'\n' f'{T}{T}registry = registry or {{}}\n'
+        definition += f'\n' f'{T}{T}registry = (registry or {{}}) | REGISTRY'
 
-        definition += f'{T}{T}registry.update({{\n'
-        for i, transaction in enumerate(transactions):
-            definition += f'{T}{T}{T}{i}: {transaction.send.name},\n'
-        definition += f'{T}{T}}})\n'
+        if len(ctx.buffhams) == 1:
+            definition += '\n'
+        else:
+            for bh in ctx.buffhams.values():
+                if bh.namespace == primary_namespace:
+                    continue
+                definition += f' | {bh.name}_bh.REGISTRY'
+            definition += '\n'
 
         definition += f'{T}{T}super().__init__(registry)\n\n'
 
@@ -262,7 +282,7 @@ def generate_python(
             fp.write('import dataclasses\n')
             if not stub:
                 fp.write('import struct\n')
-            fp.write('from typing import Self\n\n')
+            fp.write('from typing import Self, Type\n\n')
 
         if len(bh.transactions):
             # Add imports
@@ -293,7 +313,8 @@ def generate_python(
 
         # Generate transaction definitions
         if len(bh.transactions):
-            fp.write(generate_serializer(bh.name.title(), bh.transactions, stub))
+            fp.write(generate_registry(bh.transactions, stub))
+            fp.write(generate_serializer(bh.name.title(), ctx, primary_namespace, stub))
             fp.write(generate_node(bh.name.title(), stub))
         for transaction in bh.transactions:
             fp.write(generate_transaction(transaction, stub, primary_namespace))

@@ -1,8 +1,7 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
+load("//bzl/macros:emb.bzl", "host_test")
 load("//bzl/macros:pico.bzl", "pico_project")
-load("//bzl/macros:python.bzl", "py_test")
 
 py_library(
     name = "client",
@@ -10,7 +9,10 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         ":robo24_bh_py",
-        requirement("rich"),
+        "//emb/project:client",
+        "//emb/project/base:base_bh_py",
+        "//emb/project/base:client",
+        "//nlb/buffham:bh",
     ],
 )
 
@@ -63,20 +65,14 @@ pico_project(
     ],
 )
 
-py_test(
+host_test(
     name = "host_test",
     srcs = ["host_test.py"],
-    data = [
-        ":robo24",
-    ],
-    env = {
-        "HOST_BIN": "$(rootpath :robo24)",
-    },
+    binary = ":robo24",
     deps = [
         ":client",
         ":robo24_bh_py",
-        "//emb/network/transport:tcp",
-        "//emb/project/bootloader:bootloader_bh_py",
+        "//emb/project:host_test_base",
     ],
 )
 
@@ -86,10 +82,6 @@ py_binary(
     deps = [
         ":client",
         ":robo24_bh_py",
-        "//emb/network/transport:tcp",
-        "//emb/network/transport:usb",
-        "//nlb/util:click_utils",
-        requirement("rich-click"),
-        requirement("IPython"),
+        "//emb/project:shell",
     ],
 )

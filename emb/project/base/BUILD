@@ -1,8 +1,8 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
 load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
+load("//bzl/macros:emb.bzl", "host_test")
 load("//bzl/macros:pico.bzl", "pico_project")
-load("//bzl/macros:python.bzl", "py_test")
 
 # Necessary consequency to make `bzl/macros/emb.bzl` work (simply)
 exports_files(["flash.py"])
@@ -13,7 +13,9 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         ":base_bh_py",
+        "//emb/project:client",
         "//emb/project/bootloader:bootloader_bh_py",
+        "//nlb/buffham:bh",
         requirement("rich"),
     ],
 )
@@ -71,19 +73,14 @@ py_binary(
     ],
 )
 
-py_test(
+host_test(
     name = "host_test",
     srcs = ["host_test.py"],
-    data = [
-        ":base",
-    ],
-    env = {
-        "HOST_BIN": "$(rootpath :base)",
-    },
+    binary = ":base",
     deps = [
         ":base_bh_py",
         ":client",
-        "//emb/network/transport:tcp",
+        "//emb/project:host_test_base",
         "//emb/project/bootloader:bootloader_bh_py",
     ],
 )
@@ -94,10 +91,6 @@ py_binary(
     deps = [
         ":base_bh_py",
         ":client",
-        "//emb/network/transport:tcp",
-        "//emb/network/transport:usb",
-        "//nlb/util:click_utils",
-        requirement("rich-click"),
-        requirement("IPython"),
+        "//emb/project:shell",
     ],
 )

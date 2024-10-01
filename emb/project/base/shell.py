@@ -1,48 +1,16 @@
-import enum
-import logging
-
 import rich_click as click
-from IPython.terminal import embed
-from IPython.terminal import ipapp
 
-from emb.network.transport import tcp
-from emb.network.transport import usb
+from emb.project import shell
 from emb.project.base import base_bh
 from emb.project.base import client
-from nlb.util import click_utils
-
-
-class ConnectionType(enum.Enum):
-    SERIAL = 'serial'
-    ZMQ = 'zmq'
 
 
 @click.command()
-@click.option(
-    '--connection',
-    '-c',
-    type=click_utils.EnumChoice(ConnectionType),
-    default=ConnectionType.SERIAL,
-    help='Connection type',
-)
-@click.option('--port', '-p', default=None, help='Serial port')
-@click.option('--address', '-a', default=tcp.Zmq.DEFAULT_ADDRESS, help='ZMQ address')
-@click.option('--log', '-l', default='INFO', help='Log level')
-def main(connection: ConnectionType, port: str | None, address: str, log: str) -> None:
-    logging.basicConfig(level=log.upper())
+@shell.common_shell_options
+def main(connection: shell.ConnectionType, port: str | None, address: str, log: str):
+    ctx = shell.ShellContext(client.BaseClient, base_bh.BaseNode, 'Robo24 Shell')
 
-    if connection is ConnectionType.SERIAL:
-        transporter = usb.PicoSerial(port)
-    else:
-        transporter = tcp.Zmq(address)
-
-    c = client.BaseClient(base_bh.BaseNode(transporter=transporter))
-
-    with c:
-        config = ipapp.load_default_config()
-        config.InteractiveShellEmbed.colors = 'Linux'
-
-        embed.embed(header='Base Shell', config=config)
+    shell.shell_entry(connection, port, address, log, ctx)
 
 
 if __name__ == '__main__':

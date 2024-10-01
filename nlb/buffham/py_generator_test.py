@@ -99,15 +99,16 @@ class TestPyGenerator(unittest.TestCase):
             # Test that our transactions are generated
             self.assertEqual(
                 sample_bh.PING,
-                bh.Transaction[sample_bh.Ping, sample_bh.LogMessage](0),
+                # Request IDs offset by 1 from `other_bh`
+                bh.Transaction[sample_bh.Ping, sample_bh.LogMessage](1),
             )
             self.assertEqual(
                 sample_bh.FLASH_PAGE,
-                bh.Transaction[sample_bh.FlashPage, sample_bh.FlashPage](1),
+                bh.Transaction[sample_bh.FlashPage, sample_bh.FlashPage](2),
             )
             self.assertEqual(
                 sample_bh.READ_FLASH_PAGE,
-                bh.Transaction[sample_bh.FlashPage, sample_bh.FlashPage](2),
+                bh.Transaction[sample_bh.FlashPage, sample_bh.FlashPage](3),
             )
 
             # Test that our constants are generated

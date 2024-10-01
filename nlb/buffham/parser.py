@@ -472,7 +472,18 @@ class Parser:
     def parse_file(
         self, file: pathlib.Path, ctx: ParseContext, parent_namespace: str | None = None
     ) -> Buffham:
-        self._request_id = 0
+        # Set the request ID to the max request ID in the context + 1
+        self._request_id = (
+            max(
+                (
+                    t.request_id
+                    for buffham in ctx.buffhams.values()
+                    for t in buffham.transactions
+                ),
+                default=-1,
+            )
+            + 1
+        )
 
         if parent_namespace is None:
             parent_namespace = '.'.join(file.parent.parts)

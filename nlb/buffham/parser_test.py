@@ -330,17 +330,18 @@ class TestParserSample(unittest.TestCase):
         self.assertListEqual(
             parsed.transactions,
             [
-                parser.Transaction('ping', 'sample', 0, other.messages[0], log_message),
+                # Request IDs offset by 1 from `other`'s transactions
+                parser.Transaction('ping', 'sample', 1, other.messages[0], log_message),
                 parser.Transaction(
                     'flash_page',
                     'sample',
-                    1,
+                    2,
                     flash_page,
                     flash_page,
                     [' Transaction comment'],
                 ),
                 parser.Transaction(
-                    'read_flash_page', 'sample', 2, flash_page, flash_page
+                    'read_flash_page', 'sample', 3, flash_page, flash_page
                 ),
             ],
         )

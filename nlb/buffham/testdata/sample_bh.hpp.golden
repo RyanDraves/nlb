@@ -81,9 +81,9 @@ class Sample {
     template <emb::network::serialize::SerializerLike S,
                 emb::network::transport::TransporterLike T, class... Projects>
     void register_handlers(emb::network::node::Node<S, T, Projects...> &node) {
-        node.template register_handler<nlb::buffham::testdata::Pong, LogMessage>(0, std::bind(&Sample::ping, this, std::placeholders::_1));
-        node.template register_handler<FlashPage, FlashPage>(1, std::bind(&Sample::flash_page, this, std::placeholders::_1));
-        node.template register_handler<FlashPage, FlashPage>(2, std::bind(&Sample::read_flash_page, this, std::placeholders::_1));
+        node.template register_handler<nlb::buffham::testdata::Pong, LogMessage>(1, std::bind(&Sample::ping, this, std::placeholders::_1));
+        node.template register_handler<FlashPage, FlashPage>(2, std::bind(&Sample::flash_page, this, std::placeholders::_1));
+        node.template register_handler<FlashPage, FlashPage>(3, std::bind(&Sample::read_flash_page, this, std::placeholders::_1));
     }
 
     LogMessage ping(const nlb::buffham::testdata::Pong &pong);
