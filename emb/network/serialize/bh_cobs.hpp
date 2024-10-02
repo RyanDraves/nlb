@@ -1,6 +1,6 @@
 #pragma once
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <span>
 
 #include "emb/network/frame/cobs.hpp"

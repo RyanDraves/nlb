@@ -1,6 +1,6 @@
 #include "nlb/buffham/testdata/sample_bh.hpp"
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <span>
 #include <string>
 #include <string.h>

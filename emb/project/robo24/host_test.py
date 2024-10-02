@@ -14,5 +14,7 @@ class HostTest(host_test_base.HostTestBase[client.Robo24Client, robo24_bh.Robo24
     def test_get_measurement(self):
         with self.client:
             measure = self.client.get_measurement()
+            # It's not mocked or connected to anything, so we expect the driver
+            # to return a default value.
             self.assertEqual(measure.distance_mm, 0)
-            self.assertEqual(measure.timestamp_ms, 0)
+            self.assertGreater(measure.timestamp_ms, 0)

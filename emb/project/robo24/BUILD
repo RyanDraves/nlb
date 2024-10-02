@@ -51,6 +51,9 @@ cc_library(
     deps = [
         ":robo24_bh_cc",
         "//emb/project/base:base_bh_cc",
+        "//emb/slic:hc_sr04",
+        "//emb/yaal:gpio",
+        "//emb/yaal:timer",
     ],
 )
 

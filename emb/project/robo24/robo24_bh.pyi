@@ -10,7 +10,8 @@ from emb.project.base import base_bh
 
 @dataclasses.dataclass
 class DistanceMeasurement:
-    # Timestamp relative to device boot, in milliseconds
+    # Timestamp relative to device boot, in milliseconds.
+    # The timestamp is collected immediately following the measurement
     timestamp_ms: int
     # Measured distance, in millimeters
     distance_mm: int

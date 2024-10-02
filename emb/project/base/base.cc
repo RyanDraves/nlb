@@ -1,5 +1,5 @@
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <vector>
 
 #include "emb/project/base/base_bh.hpp"
