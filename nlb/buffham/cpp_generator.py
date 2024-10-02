@@ -267,7 +267,7 @@ def generate_cpp(
             # TODO: Trim down includes based on message types / move some
             # includes to the cc file
             fp.write(
-                '#include <inttypes.h>\n'
+                '#include <cinttypes>\n'
                 '#include <span>\n'
                 '#include <string>\n'
                 '#include <string.h>\n'

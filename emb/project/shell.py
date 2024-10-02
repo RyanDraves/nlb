@@ -62,4 +62,4 @@ def shell_entry(
         config = ipapp.load_default_config()
         config.InteractiveShellEmbed.colors = 'Linux'
 
-        embed.embed(header='Base Shell', config=config)
+        embed.embed(header=ctx.description, config=config)

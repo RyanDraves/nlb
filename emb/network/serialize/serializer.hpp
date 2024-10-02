@@ -1,7 +1,7 @@
 #pragma once
 
+#include <cinttypes>
 #include <concepts>
-#include <inttypes.h>
 #include <span>
 
 namespace emb {

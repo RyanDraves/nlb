@@ -1,7 +1,8 @@
 import emb.project.base.base;
 
 message DistanceMeasurement {
-    # Timestamp relative to device boot, in milliseconds
+    # Timestamp relative to device boot, in milliseconds.
+    # The timestamp is collected immediately following the measurement
     uint32_t timestamp_ms;
     # Measured distance, in millimeters
     uint32_t distance_mm;
