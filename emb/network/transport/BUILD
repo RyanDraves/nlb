@@ -1,6 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pip//:requirements.bzl", "requirement")
-load("//bzl/macros:unittest.bzl", "cc_host_test", "cc_unittest")
+load("//bzl/macros:cc.bzl", "cc_host_test", "cc_library", "cc_unittest")
 
 py_library(
     name = "usb",

@@ -29,23 +29,34 @@ REPO_ROOT=$(dirname $(readlink -f $0))
 APT_PACKAGES=(
     build-essential
     curl
-    git
-    unzip
-    wget
     default-jdk
-    zip
-    zlib1g-dev
-    libusb-1.0-0-dev
-    tree
+    git
     htop
+    libusb-1.0-0-dev
     python-is-python3
-    python3-pip
     python3-ipython
     python3-numpy
+    python3-pip
+    tree
+    unzip
+    wget
+    zip
+    zlib1g-dev
     # For local Pico tooling
     pkg-config
     cmake
-    # For local Pico testing
+    # For esp-idf tooling
+    # https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/get-started/linux-macos-setup.html
+    bison
+    ccache
+    dfu-util
+    flex
+    gperf
+    libffi-dev
+    libssl-dev
+    ninja-build
+    python3-venv
+    # Swiss army knife
     minicom
 )
 

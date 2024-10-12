@@ -38,3 +38,13 @@ http_archive(
     strip_prefix = "libzmq-4.3.5",
     url = "https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.5.zip",
 )
+
+# esp-idf
+
+# TODO: Make this useful
+git_repository(
+    name = "esp-idf",
+    # v5.3.1 tag
+    commit = "c8fc5f643b7a7b0d3b182d3df610844e3dc9bd74",
+    remote = "https://github.com/espressif/esp-idf.git",
+)

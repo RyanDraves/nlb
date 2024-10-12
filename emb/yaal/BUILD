@@ -1,3 +1,5 @@
+load("//bzl/macros:cc.bzl", "cc_library")
+
 cc_library(
     name = "flash",
     srcs = select(

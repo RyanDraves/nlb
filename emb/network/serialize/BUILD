@@ -1,7 +1,7 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
+load("//bzl/macros:cc.bzl", "cc_library", "cc_unittest")
 load("//bzl/macros:python.bzl", "py_test")
-load("//bzl/macros:unittest.bzl", "cc_unittest")
 
 py_library(
     name = "bh_cobs",

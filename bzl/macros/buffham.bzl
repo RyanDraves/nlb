@@ -1,6 +1,6 @@
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_file")
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bzl/macros:cc.bzl", "cc_library")
 
 def buffham(name, srcs, visibility = ["//visibility:public"]):
     native.filegroup(

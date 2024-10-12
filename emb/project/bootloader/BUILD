@@ -1,4 +1,5 @@
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library", "buffham_template")
+load("//bzl/macros:cc.bzl", "cc_library")
 load("//bzl/macros:patch.bzl", "patch")
 load("//bzl/macros:pico.bzl", "pico_project")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")

@@ -1,7 +1,7 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+load("//bzl/macros:cc.bzl", "cc_library", "cc_unittest")
 load("//bzl/macros:python.bzl", "py_test")
-load("//bzl/macros:unittest.bzl", "cc_unittest")
 
 cc_library(
     name = "cobs_cc",
