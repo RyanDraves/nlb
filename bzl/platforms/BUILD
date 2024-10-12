@@ -16,3 +16,16 @@ platform(
     ],
     parents = ["@platforms//host"],
 )
+
+constraint_value(
+    name = "xtensa",
+    constraint_setting = "@platforms//cpu",
+)
+
+platform(
+    name = "esp32",
+    constraint_values = [
+        "@platforms//os:none",
+        ":xtensa",
+    ],
+)

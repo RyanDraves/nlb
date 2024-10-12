@@ -1,5 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
+load("//bzl/macros:cc.bzl", "cc_library")
 load("//bzl/macros:emb.bzl", "host_test")
 load("//bzl/macros:pico.bzl", "pico_project")
 

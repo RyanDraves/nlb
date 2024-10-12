@@ -90,7 +90,8 @@
         "coroutine": "cpp",
         "csignal": "cpp",
         "future": "cpp",
-        "source_location": "cpp"
+        "source_location": "cpp",
+        "cassert": "cpp"
     },
     "files.exclude": {
         "**/__pycache__": true,

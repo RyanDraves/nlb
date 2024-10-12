@@ -1,0 +1,3 @@
+# Espressif USB JTAG/serial debug units
+ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1001", MODE="660", GROUP="plugdev", TAG+="uaccess", \
+    SYMLINK+="esp32"

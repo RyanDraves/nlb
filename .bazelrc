@@ -6,6 +6,9 @@ build --cxxopt='-std=c++23'
 
 # Not needed to build targets (due to platform transitions) but occasionally handy
 build:pico --platforms=@pico-sdk//bazel/platform:rp2040
+build:esp32 --platforms=//bzl/platforms:esp32
+# Clang version too old for proper 23 support
+build:esp32 --cxxopt='-std=c++2b'
 
 build:pages --nolegacy_external_runfiles
 build:pages --action_env=JEKYLL_ENV=production
