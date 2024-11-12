@@ -22,6 +22,68 @@ cc_library(
 )
 
 cc_library(
+    name = "gpio",
+    srcs = select(
+        {
+            "@platforms//cpu:armv6-m": ["pico/gpio.cc"],
+            # Same as host, for now
+            "//bzl/platforms:unittest": ["host/gpio.cc"],
+            "//conditions:default": ["host/gpio.cc"],
+        },
+    ),
+    hdrs = ["gpio.hpp"],
+    visibility = ["//visibility:public"],
+    deps = select(
+        {
+            "@platforms//cpu:armv6-m": [
+                "@pico-sdk//src/rp2_common/hardware_gpio",
+                "@pico-sdk//src/rp2_common/pico_stdlib",
+            ],
+            "//conditions:default": [
+            ],
+        },
+    ),
+)
+
+cc_library(
+    name = "host_gpio",
+    hdrs = ["host/gpio.hpp"],
+    visibility = ["//visibility:public"],
+    deps = [":gpio"],
+)
+
+cc_library(
+    name = "timer",
+    srcs = select(
+        {
+            "@platforms//cpu:armv6-m": ["pico/timer.cc"],
+            # Same as host, for now
+            "//bzl/platforms:unittest": ["host/timer.cc"],
+            "//conditions:default": ["host/timer.cc"],
+        },
+    ),
+    hdrs = ["timer.hpp"] + select(
+        {
+            "@platforms//cpu:armv6-m": [],
+            # Same as host, for now
+            "//bzl/platforms:unittest": ["host/timer.hpp"],
+            "//conditions:default": ["host/timer.hpp"],
+        },
+    ),
+    visibility = ["//visibility:public"],
+    deps = select(
+        {
+            "@platforms//cpu:armv6-m": [
+                "@pico-sdk//src/rp2_common/hardware_timer",
+                "@pico-sdk//src/rp2_common/pico_stdlib",
+            ],
+            "//conditions:default": [
+            ],
+        },
+    ),
+)
+
+cc_library(
     name = "watchdog",
     srcs = select(
         {

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <array>
+#include <cinttypes>
 #include <concepts>
 #include <functional>
-#include <inttypes.h>
 #include <span>
 #include <string.h>
 

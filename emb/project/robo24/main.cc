@@ -1,5 +1,5 @@
+#include <cinttypes>
 #include <functional>
-#include <inttypes.h>
 #include <map>
 
 #include "emb/network/node/node.hpp"
