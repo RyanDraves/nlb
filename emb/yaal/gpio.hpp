@@ -20,7 +20,7 @@ class Gpio {
     void pulse(uint16_t duration_us);
 
     void set(bool high);
-    bool read() const;
+    virtual bool read() const;
 
   private:
     uint8_t pin_;

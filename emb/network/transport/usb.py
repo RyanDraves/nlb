@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import cast
+from typing import ClassVar, cast
 
 import serial
 from serial.tools import list_ports
@@ -8,15 +8,39 @@ from serial.tools import list_ports_common
 
 
 class Serial(abc.ABC):
-    def __init__(self, baudrate: int, stop_byte: bytes):
+    VENDOR_PRODUCT_ID: ClassVar[str]
+    BAUD_RATE: ClassVar[int]
+    STOP_BYTES: ClassVar[bytes]
+    DEVICE_NAME: ClassVar[str]
+
+    def __init__(self, port: str | None = None):
         # TODO: Make this automatically handle disconnects/reconnects
-        self._serial = serial.Serial(None, baudrate, timeout=1)
-        self._stop_byte = stop_byte
+        self._serial = serial.Serial(None, self.BAUD_RATE, timeout=1)
+        self._stop_byte = self.STOP_BYTES
+        self._port = port
         self._started = False
 
+    def _find_device(self) -> str:
+        devices: list[list_ports_common.ListPortInfo] = cast(
+            list[list_ports_common.ListPortInfo],
+            list(list_ports.grep(self.VENDOR_PRODUCT_ID)),
+        )
+        if not devices:
+            raise RuntimeError(f'{self.DEVICE_NAME} not found')
+        elif len(devices) > 1:
+            device = devices[0]
+            # TODO: Handle multiple devices found / stop using WSL
+            # raise RuntimeError(f'Multiple {self.DEVICE_NAME}s found')
+        device = devices[0]
+
+        logging.debug(f'{self.DEVICE_NAME} found at {device.device}')
+        return device.device
+
     @property
-    @abc.abstractmethod
-    def port(self) -> str: ...
+    def port(self) -> str:
+        if self._port is None:
+            self._port = self._find_device()
+        return self._port
 
     def start(self) -> None:
         if self._started:
@@ -47,31 +71,14 @@ class Serial(abc.ABC):
 
 
 class PicoSerial(Serial):
-    PICO_VENDOR_PRODUCT_ID = '2e8a:000a'
+    VENDOR_PRODUCT_ID = '2e8a:000a'
+    BAUD_RATE = 115200
+    STOP_BYTES = b'\x00'
+    DEVICE_NAME = 'Pico'
 
-    def __init__(self, port: str | None = None):
-        super().__init__(baudrate=115200, stop_byte=b'\x00')
 
-        self._port = port
-
-    def _find_pico(self) -> str:
-        devices: list[list_ports_common.ListPortInfo] = cast(
-            list[list_ports_common.ListPortInfo],
-            list(list_ports.grep(self.PICO_VENDOR_PRODUCT_ID)),
-        )
-        if not devices:
-            raise RuntimeError('Pico not found')
-        elif len(devices) > 1:
-            device = devices[0]
-            # TODO: Handle multiple Picos found / stop using WSL
-            # raise RuntimeError('Multiple Picos found')
-        device = devices[0]
-
-        logging.debug(f'Pico found at {device.device}')
-        return device.device
-
-    @property
-    def port(self) -> str:
-        if self._port is None:
-            self._port = self._find_pico()
-        return self._port
+class Esp32Serial(Serial):
+    ESP32S3_VENDOR_PRODUCT_ID = '303a:1001'
+    BAUD_RATE = 460800
+    STOP_BYTES = b'\r\n'
+    DEVICE_NAME = 'ESP32'

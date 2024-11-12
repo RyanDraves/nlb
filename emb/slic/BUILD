@@ -19,5 +19,6 @@ cc_unittest(
     visibility = ["//visibility:public"],
     deps = [
         ":hc_sr04",
+        "//emb/yaal:host_gpio",
     ],
 )

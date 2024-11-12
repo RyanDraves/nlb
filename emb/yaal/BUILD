@@ -46,6 +46,13 @@ cc_library(
 )
 
 cc_library(
+    name = "host_gpio",
+    hdrs = ["host/gpio.hpp"],
+    visibility = ["//visibility:public"],
+    deps = [":gpio"],
+)
+
+cc_library(
     name = "timer",
     srcs = select(
         {
@@ -55,7 +62,14 @@ cc_library(
             "//conditions:default": ["host/timer.cc"],
         },
     ),
-    hdrs = ["timer.hpp"],
+    hdrs = ["timer.hpp"] + select(
+        {
+            "@platforms//cpu:armv6-m": [],
+            # Same as host, for now
+            "//bzl/platforms:unittest": ["host/timer.hpp"],
+            "//conditions:default": ["host/timer.hpp"],
+        },
+    ),
     visibility = ["//visibility:public"],
     deps = select(
         {
