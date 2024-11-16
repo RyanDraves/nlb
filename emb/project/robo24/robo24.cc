@@ -24,7 +24,7 @@ struct Robo24::Robo24Impl {
     slic::HcSr04 hc_sr04;
 };
 
-Robo24::Robo24() : impl_(new Robo24Impl(1, 0)) {}
+Robo24::Robo24() : impl_(new Robo24Impl(1 /* trigger */, 0 /* echo */)) {}
 
 Robo24::~Robo24() { delete impl_; }
 

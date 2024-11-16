@@ -1,5 +1,5 @@
 load("@pico-sdk//bazel/toolchain:objcopy.bzl", "objcopy_to_bin")
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bzl/macros:emb.bzl", "flash")
 load("//bzl/rules:pico.bzl", "rp2040_binary", "rp2040_elf")
 
@@ -80,3 +80,31 @@ def pico_project(name, srcs, deps, linker_script = "//emb/project/bootloader:app
 
     # Add a target to flash the binary
     flash(name + "_flash", name + ".bin")
+
+def pio_cc_library(name, pio, hdrs = [], deps = [], **kwargs):
+    """Compile a PIO C++ library
+
+    Args:
+        name: The name of the library
+        pio: The PIO assembly file
+        hdrs: Additional headers to include
+        deps: Additional dependencies
+        **kwargs: Additional arguments to pass to `cc_library`
+    """
+    native.genrule(
+        name = name + "_gen",
+        srcs = [pio],
+        outs = [pio + ".h"],
+        # -v 0 corresponds to the version 0 of the PIO, which is the RP2040
+        cmd = "$(execpath @pioasm//:pioasm) -o c-sdk -v 0 $(location {}) $(location {})".format(pio, pio + ".h"),
+        tools = ["@pioasm//:pioasm"],
+    )
+
+    cc_library(
+        name = name,
+        hdrs = [pio + ".h"] + hdrs,
+        deps = [
+            "@pico-sdk//src/rp2_common/hardware_pio",
+        ] + deps,
+        **kwargs
+    )
