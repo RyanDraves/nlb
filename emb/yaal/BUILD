@@ -56,33 +56,14 @@ cc_library(
 
 cc_library(
     name = "pio",
-    srcs = select(
-        {
-            "@platforms//cpu:armv6-m": ["pico/pio.cc"],
-            # Same as host, for now
-            "//bzl/platforms:unittest": ["host/pio.cc"],
-            "//conditions:default": ["host/pio.cc"],
-        },
-    ),
-    hdrs = ["pio.hpp"] + select(
-        {
-            "@platforms//cpu:armv6-m": [
-                "pico/pio_program.hpp",
-            ],
-            # Same as host, for now
-            "//bzl/platforms:unittest": [],
-            "//conditions:default": [],
-        },
-    ),
+    hdrs = ["pio.hpp"],
     visibility = ["//visibility:public"],
     deps = select(
         {
             "@platforms//cpu:armv6-m": [
-                ":blink_pio",
                 "@pico-sdk//src/rp2_common/hardware_pio",
             ],
-            "//conditions:default": [
-            ],
+            "//conditions:default": [],
         },
     ),
 )
@@ -144,13 +125,31 @@ cc_library(
 # Library of PIO programs
 #
 pio_cc_library(
-    name = "blink_pio",
-    hdrs = [
-        "pico/pio/blink.hpp",
-    ],
+    name = "pio_blink_h",
     pio = "pico/pio/blink.pio",
-    visibility = ["//visibility:public"],
     deps = [
         "@pico-sdk//src/rp2_common/hardware_clocks",
     ],
+)
+
+cc_library(
+    name = "pio_blink",
+    srcs = select(
+        {
+            "@platforms//cpu:armv6-m": ["pico/pio/blink.cc"],
+            # Same as host, for now
+            "//bzl/platforms:unittest": ["host/pio/blink.cc"],
+            "//conditions:default": ["host/pio/blink.cc"],
+        },
+    ),
+    hdrs = ["pio/blink.hpp"],
+    visibility = ["//visibility:public"],
+    deps = [":pio"] + select(
+        {
+            "@platforms//cpu:armv6-m": [
+                ":pio_blink_h",
+            ],
+            "//conditions:default": [],
+        },
+    ),
 )

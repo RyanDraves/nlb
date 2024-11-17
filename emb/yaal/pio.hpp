@@ -6,41 +6,15 @@
 namespace emb {
 namespace yaal {
 
-enum class Program : uint8_t {
-    BLINK_GPIO = 0,
-};
-
-class Pio {
+class PioProgram {
   public:
-    Pio(Program program, std::span<const uint8_t> pins);
-    ~Pio();
+    PioProgram() = default;
+    ~PioProgram() = default;
 
-    /**
-     * Run the PIO state machine
-     */
-    void run();
-
-    /**
-     * Pass data to the TX FIFO
-     */
-    void pass_data(const std::span<uint8_t> &data);
-
-    /**
-     * Read data from the RX FIFO
-     */
-    std::span<uint8_t> read_data(std::span<uint8_t> buffer);
-
-    /**
-     * Stop the PIO state machine
-     */
-    void stop();
-
-  private:
-    Program program_;
-    std::span<const uint8_t> pins_;
-
-    struct PioImpl;
-    PioImpl *impl_;
+    virtual void run() = 0;
+    virtual void pass_data(const std::span<uint8_t> &data) = 0;
+    virtual std::span<uint8_t> read_data(std::span<uint8_t> buffer) = 0;
+    virtual void stop() = 0;
 };
 
 }  // namespace yaal

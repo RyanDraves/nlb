@@ -43,7 +43,7 @@ cc_library(
         ":base_bh_cc",
         "//emb/project/bootloader:bootloader_bh_cc",
         "//emb/yaal:flash",
-        "//emb/yaal:pio",
+        "//emb/yaal:pio_blink",
         "//emb/yaal:watchdog",
     ],
 )

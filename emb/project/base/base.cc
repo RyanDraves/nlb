@@ -5,7 +5,7 @@
 #include "emb/project/base/base_bh.hpp"
 #include "emb/project/bootloader/bootloader_bh.hpp"
 #include "emb/yaal/flash.hpp"
-#include "emb/yaal/pio.hpp"
+#include "emb/yaal/pio/blink.hpp"
 #include "emb/yaal/watchdog.hpp"
 
 namespace emb {
@@ -17,7 +17,7 @@ struct Base::BaseImpl {
     ~BaseImpl() = default;
 
     bootloader::SystemFlashPage system;
-    std::optional<yaal::Pio> led_blink_pio;
+    std::optional<yaal::BlinkProgram> led_blink_pio;
 };
 
 Base::Base() : impl_(new BaseImpl()) {
@@ -27,10 +27,7 @@ Base::Base() : impl_(new BaseImpl()) {
     auto buffer = yaal::flash_sector_read(0);
     impl_->system = bootloader::SystemFlashPage::deserialize(buffer).first;
 
-    impl_->led_blink_pio.emplace(
-        yaal::Program::BLINK_GPIO,
-        // No pins need to be passed in; it will use the default LED pin
-        std::span<const uint8_t>{});
+    impl_->led_blink_pio.emplace(1 /* frequency */);
     impl_->led_blink_pio->run();
 }
 
