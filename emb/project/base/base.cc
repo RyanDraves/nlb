@@ -1,10 +1,11 @@
 
 #include <cinttypes>
-#include <vector>
+#include <optional>
 
 #include "emb/project/base/base_bh.hpp"
 #include "emb/project/bootloader/bootloader_bh.hpp"
 #include "emb/yaal/flash.hpp"
+#include "emb/yaal/pio/blink.hpp"
 #include "emb/yaal/watchdog.hpp"
 
 namespace emb {
@@ -12,10 +13,11 @@ namespace project {
 namespace base {
 
 struct Base::BaseImpl {
-    BaseImpl() {}
-    ~BaseImpl() {}
+    BaseImpl() = default;
+    ~BaseImpl() = default;
 
     bootloader::SystemFlashPage system;
+    std::optional<yaal::BlinkProgram> led_blink_pio;
 };
 
 Base::Base() : impl_(new BaseImpl()) {
@@ -24,6 +26,9 @@ Base::Base() : impl_(new BaseImpl()) {
     // need to gracefully handle bad deserialization
     auto buffer = yaal::flash_sector_read(0);
     impl_->system = bootloader::SystemFlashPage::deserialize(buffer).first;
+
+    impl_->led_blink_pio.emplace(1 /* frequency */);
+    impl_->led_blink_pio->run();
 }
 
 Base::~Base() { delete impl_; }

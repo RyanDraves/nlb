@@ -7,6 +7,9 @@ bazel_dep(name = "aspect_bazel_lib", version = "2.3.0")
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
 bazel_dep(name = "rules_platform", version = "0.1.0")
 
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
 #
 # Pico SDK & Picotool
 #
@@ -32,6 +35,16 @@ archive_override(
 )
 
 bazel_dep(name = "picotool", version = "2.0.0")
+
+# Pioasm is not yet available in the Pico SDK Bazel build
+# https://github.com/raspberrypi/pico-sdk/tree/master/bazel#known-issues-and-limitations
+# but the binary is distributed in another repo
+http_archive(
+    name = "pioasm",
+    build_file = "//bzl/deps:pioasm.BUILD",
+    integrity = "sha256-MyatUnHnx6syP+QhtjfQi/OOqo2iduhaJXM9kleXuA4=",
+    url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.0.0-5/pico-sdk-tools-2.0.0-x86_64-lin.tar.gz",
+)
 
 #
 # Rules Ruby
@@ -83,6 +96,15 @@ pip.parse(
 use_repo(pip, "pip")
 
 #
+# py_venv export
+#
+git_repository(
+    name = "rules_pyvenv",
+    commit = "0b03b0d1f5562223d1170c511e548dc0961f0c5f",
+    remote = "https://github.com/cedarai/rules_pyvenv",
+)
+
+#
 # Buildifier
 #
 bazel_dep(
@@ -111,3 +133,33 @@ bazel_dep(name = "rules_foreign_cc", version = "0.10.1")
 # Pybind11
 #
 bazel_dep(name = "pybind11_bazel", version = "2.12.0")
+
+#
+# Zmq
+#
+http_archive(
+    name = "cppzmq",
+    build_file = "//bzl/deps:cppzmq.BUILD",
+    integrity = "sha256-VNXYMV/WEWEkrH7sQRYQriFlLcpwwLyTbbXyzM9K1gs=",
+    patch_args = ["-p1"],
+    patches = ["//bzl/deps:cppzmq.patch"],
+    strip_prefix = "cppzmq-4.10.0",
+    url = "https://github.com/zeromq/cppzmq/archive/refs/tags/v4.10.0.zip",
+)
+
+http_archive(
+    name = "libzmq",
+    build_file = "//bzl/deps:libzmq.BUILD",
+    integrity = "sha256-SbnWzRInXZSidyT82mRlVPE68nhX4/53i3LLJFx0l24=",
+    strip_prefix = "libzmq-4.3.5",
+    url = "https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.5.zip",
+)
+
+#
+# Google Test
+#
+git_repository(
+    name = "com_google_googletest",
+    commit = "f8d7d77c06936315286eb55f8de22cd23c188571",
+    remote = "https://github.com/google/googletest.git",
+)

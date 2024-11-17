@@ -1,3 +1,5 @@
+load("//bzl/macros:pico.bzl", "pio_cc_library")
+
 cc_library(
     name = "flash",
     srcs = select(
@@ -53,6 +55,20 @@ cc_library(
 )
 
 cc_library(
+    name = "pio",
+    hdrs = ["pio.hpp"],
+    visibility = ["//visibility:public"],
+    deps = select(
+        {
+            "@platforms//cpu:armv6-m": [
+                "@pico-sdk//src/rp2_common/hardware_pio",
+            ],
+            "//conditions:default": [],
+        },
+    ),
+)
+
+cc_library(
     name = "timer",
     srcs = select(
         {
@@ -99,6 +115,39 @@ cc_library(
         {
             "@platforms//cpu:armv6-m": [
                 "@pico-sdk//src/rp2_common/hardware_watchdog",
+            ],
+            "//conditions:default": [],
+        },
+    ),
+)
+
+#
+# Library of PIO programs
+#
+pio_cc_library(
+    name = "pio_blink_h",
+    pio = "pico/pio/blink.pio",
+    deps = [
+        "@pico-sdk//src/rp2_common/hardware_clocks",
+    ],
+)
+
+cc_library(
+    name = "pio_blink",
+    srcs = select(
+        {
+            "@platforms//cpu:armv6-m": ["pico/pio/blink.cc"],
+            # Same as host, for now
+            "//bzl/platforms:unittest": ["host/pio/blink.cc"],
+            "//conditions:default": ["host/pio/blink.cc"],
+        },
+    ),
+    hdrs = ["pio/blink.hpp"],
+    visibility = ["//visibility:public"],
+    deps = [":pio"] + select(
+        {
+            "@platforms//cpu:armv6-m": [
+                ":pio_blink_h",
             ],
             "//conditions:default": [],
         },
