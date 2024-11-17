@@ -81,14 +81,13 @@ def pico_project(name, srcs, deps, linker_script = "//emb/project/bootloader:app
     # Add a target to flash the binary
     flash(name + "_flash", name + ".bin")
 
-def pio_cc_library(name, pio, hdrs = [], deps = [], **kwargs):
+def pio_cc_library(name, pio, hdrs = [], **kwargs):
     """Compile a PIO C++ library
 
     Args:
         name: The name of the library
         pio: The PIO assembly file
         hdrs: Additional headers to include
-        deps: Additional dependencies
         **kwargs: Additional arguments to pass to `cc_library`
     """
     native.genrule(
@@ -102,9 +101,9 @@ def pio_cc_library(name, pio, hdrs = [], deps = [], **kwargs):
 
     cc_library(
         name = name,
+        # The platform-specific PIO header is always included; it's innocuous if it's not used
         hdrs = [pio + ".h"] + hdrs,
-        deps = [
-            "@pico-sdk//src/rp2_common/hardware_pio",
-        ] + deps,
+        # This CC library explicitly does not call out its `@pico-sdk//src/rp2_common/hardware_pio` dependency;
+        # the caller of this macro should add it to the Pico select on the `deps` attribute.
         **kwargs
     )

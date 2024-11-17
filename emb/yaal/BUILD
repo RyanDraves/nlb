@@ -58,14 +58,6 @@ cc_library(
     name = "pio",
     hdrs = ["pio.hpp"],
     visibility = ["//visibility:public"],
-    deps = select(
-        {
-            "@platforms//cpu:armv6-m": [
-                "@pico-sdk//src/rp2_common/hardware_pio",
-            ],
-            "//conditions:default": [],
-        },
-    ),
 )
 
 cc_library(
@@ -125,14 +117,6 @@ cc_library(
 # Library of PIO programs
 #
 pio_cc_library(
-    name = "pio_blink_h",
-    pio = "pico/pio/blink.pio",
-    deps = [
-        "@pico-sdk//src/rp2_common/hardware_clocks",
-    ],
-)
-
-cc_library(
     name = "pio_blink",
     srcs = select(
         {
@@ -143,11 +127,13 @@ cc_library(
         },
     ),
     hdrs = ["pio/blink.hpp"],
+    pio = "pico/pio/blink.pio",
     visibility = ["//visibility:public"],
     deps = [":pio"] + select(
         {
             "@platforms//cpu:armv6-m": [
-                ":pio_blink_h",
+                "@pico-sdk//src/rp2_common/hardware_clocks",
+                "@pico-sdk//src/rp2_common/hardware_pio",
             ],
             "//conditions:default": [],
         },
