@@ -10,6 +10,8 @@ build:pico --platforms=@pico-sdk//bazel/platform:rp2040
 build:pages --nolegacy_external_runfiles
 build:pages --action_env=JEKYLL_ENV=production
 
+common:quiet --ui_event_filters=-info,-stdout,-stderr --noshow_progress
+
 test --test_output=errors
 
 try-import %workspace%/.user.bazelrc
