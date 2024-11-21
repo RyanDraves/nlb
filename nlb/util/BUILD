@@ -17,3 +17,21 @@ py_library(
     deps = [
     ],
 )
+
+py_library(
+    name = "prompt_utils",
+    srcs = ["prompt_utils.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("prompt_toolkit"),
+    ],
+)
+
+py_library(
+    name = "console_utils",
+    srcs = ["console_utils.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("rich"),
+    ],
+)
