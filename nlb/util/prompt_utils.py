@@ -20,7 +20,8 @@ class PathValidator(validation.Validator):
     def validate(self, document: document.Document) -> None:
         """Check if user input is a filepath that exists on the system based on conditions.
 
-        This method is used internally by `prompt_toolkit <https://python-prompt-toolkit.readthedocs.io/en/master/>`_.
+        This method is used internally by `prompt_toolkit`
+        https://python-prompt-toolkit.readthedocs.io/en/master/
 
         See Also:
             https://python-prompt-toolkit.readthedocs.io/en/master/pages/asking_for_input.html?highlight=validator#input-validation

@@ -80,7 +80,7 @@ class TailscaleWrapper:
         ).execute()
 
         # Gracefully add a wildcard to directories;
-        # tailscale file cp does not support directories
+        # `tailscale file cp` does not support directories
         if pathlib.Path(pattern).is_dir():
             pattern += '/*'
 
@@ -111,7 +111,7 @@ class TailscaleWrapper:
         sorted_files, dates = zip(
             *sorted(zip(files, dates), key=lambda x: x[1], reverse=True)
         )
-        # Filter for files modified in the last hour
+        # Filter for files modified in the last `hours_ago` hours
         now = datetime.datetime.now()
         files = [
             f
@@ -122,6 +122,10 @@ class TailscaleWrapper:
         if not files:
             # Backup: 5 most recent screenshots
             files = sorted_files[:5]
+
+        if not files:
+            self._console.warning('No screenshots found')
+            exit(1)
 
         selected_files: list[pathlib.Path] = list_prompt.ListPrompt(
             message='Select screenshots to send:',
