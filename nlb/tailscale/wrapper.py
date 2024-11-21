@@ -154,7 +154,6 @@ class TailscaleWrapper:
         )
 
     def _run_command(self, command: str) -> subprocess.CompletedProcess[bytes]:
-        print(command)
         result = subprocess.run(shlex.split(command), capture_output=True, check=False)
         if result.returncode != 0:
             self._console.print(f'Error running command: {result.stderr}')
