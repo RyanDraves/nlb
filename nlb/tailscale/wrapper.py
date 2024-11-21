@@ -70,6 +70,9 @@ class TailscaleWrapper:
             f'tailscale file cp {shlex.join([str(f) for f in files])} {device}:'
         )
 
+        files_str = 'Files' if len(files) > 1 else 'File'
+        self._console.success(f'{files_str} sent successfully')
+
     def _prompt_for_files(self) -> list[pathlib.Path]:
         pattern = filepath.FilePathPrompt(
             message='Select a file or glob pattern:',
@@ -87,12 +90,15 @@ class TailscaleWrapper:
 
     def send_screenshots(self, hours_ago: int = 1) -> None:
         """Send recent screenshots to a device"""
-        selected_files = self._prompt_for_screenshots(hours_ago)
         device = self._prompt_for_device()
+        selected_files = self._prompt_for_screenshots(hours_ago)
 
         self._run_command(
             f'tailscale file cp {shlex.join([str(f) for f in selected_files])} {device}:'
         )
+
+        files_str = 'Files' if len(selected_files) > 1 else 'File'
+        self._console.success(f'{files_str} sent successfully')
 
     def _prompt_for_screenshots(self, hours_ago: int) -> list[pathlib.Path]:
         files = [
@@ -133,6 +139,8 @@ class TailscaleWrapper:
         local_path = self._prompt_for_dir()
         self._run_command(f'tailscale file get {local_path}')
 
+        self._console.success('File(s) received successfully')
+
     def _prompt_for_dir(self) -> pathlib.Path:
         return pathlib.Path(
             filepath.FilePathPrompt(
@@ -145,7 +153,8 @@ class TailscaleWrapper:
             ).execute()
         )
 
-    def _run_command(self, command: str) -> subprocess.CompletedProcess:
+    def _run_command(self, command: str) -> subprocess.CompletedProcess[bytes]:
+        print(command)
         result = subprocess.run(shlex.split(command), capture_output=True, check=False)
         if result.returncode != 0:
             self._console.print(f'Error running command: {result.stderr}')
