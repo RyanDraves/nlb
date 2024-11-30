@@ -1,6 +1,7 @@
 import abc
 import logging
-from typing import ClassVar, cast
+import threading
+from typing import Callable, ClassVar, cast
 
 import serial
 from serial.tools import list_ports
@@ -19,6 +20,8 @@ class Serial(abc.ABC):
         self._stop_byte = self.STOP_BYTES
         self._port = port
         self._started = False
+        self._read_thread = threading.Thread(target=self._read_loop, daemon=True)
+        self._read_callback: Callable[[bytes], None] = lambda _: None
 
     def _find_device(self) -> str:
         devices: list[list_ports_common.ListPortInfo] = cast(
@@ -49,6 +52,8 @@ class Serial(abc.ABC):
         self._serial.port = self.port
         if not self._serial.is_open:
             self._serial.open()
+        if not self._read_thread.is_alive():
+            self._read_thread.start()
         self._started = True
 
     def stop(self) -> None:
@@ -61,13 +66,16 @@ class Serial(abc.ABC):
         logging.debug('Tx: ' + ' '.join(f'{byte:02x}' for byte in data))
         self._serial.write(data)
 
-    def receive(self) -> bytes:
+    def register_read_callback(self, callback: Callable[[bytes], None]) -> None:
+        self._read_callback = callback
+
+    def _read_loop(self) -> None:
         buffer = bytes()
         while True:
             buffer += self._serial.read_until(self._stop_byte, size=255)
             if buffer.endswith(self._stop_byte):
                 logging.debug('Rx: ' + ' '.join(f'{byte:02x}' for byte in buffer))
-                return buffer
+                self._read_callback(buffer)
 
 
 class PicoSerial(Serial):

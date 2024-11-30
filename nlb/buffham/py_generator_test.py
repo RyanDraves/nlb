@@ -111,6 +111,9 @@ class TestPyGenerator(unittest.TestCase):
                 bh.Transaction[sample_bh.FlashPage, sample_bh.FlashPage](3),
             )
 
+            # Test that our publishes are generated
+            self.assertEqual(sample_bh.PublishIds.LOG_MESSAGE.value, 4)
+
             # Test that our constants are generated
             self.assertEqual(sample_bh.MY_CONSTANT, 4)
             self.assertEqual(sample_bh.CONSTANT_STRING, 'Hello, world!')
@@ -122,7 +125,7 @@ class TestPyGenerator(unittest.TestCase):
             # Check the our file matches the golden file
             golden = self.golden_file.read_text()
             generated = outfile.read_text()
-            self.assertEqual(generated, golden)
+            self.assertListEqual(generated.splitlines(), golden.splitlines())
 
     def test_generate_python_stub(self):
         buffham = parser.Parser().parse_file(self.sample_file, self.ctx)
@@ -136,4 +139,4 @@ class TestPyGenerator(unittest.TestCase):
             # Check that the generated file matches the golden file
             golden = self.golden_stub_file.read_text()
             generated = outfile.read_text()
-            self.assertEqual(generated, golden)
+            self.assertListEqual(generated.splitlines(), golden.splitlines())

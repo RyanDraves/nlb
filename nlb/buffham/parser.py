@@ -13,6 +13,7 @@ FIELD_REGEX = re.compile(r'^\s*([\w|\[|\]|\.]+)\s+(\w+);')
 MESSAGE_START_REGEX = re.compile(r'^message (\w+) {')
 MESSAGE_END_REGEX = re.compile(r'^}')
 TRANSACTION_REGEX = re.compile(r'^transaction (\w+)\[([\w|\.]+), ([\w|\.]+)\]')
+PUBLISH_REGEX = re.compile(r'^publish (\w+)\[([\w|\.]+)\]')
 
 
 class FieldType(enum.Enum):
@@ -147,6 +148,26 @@ class Transaction:
 
 
 @dataclasses.dataclass
+class Publish:
+    name: str
+    namespace: str
+    request_id: int
+    send: Message
+    comments: list[str] = dataclasses.field(default_factory=list)
+
+    @property
+    def full_name(self) -> str:
+        if not self.namespace:
+            return self.name
+        return f'{self.namespace}.{self.name}'
+
+    def get_relative_name(self, namespace: str) -> str:
+        if namespace == self.namespace:
+            return self.name
+        return self.full_name
+
+
+@dataclasses.dataclass
 class Constant:
     name: str
     namespace: str
@@ -174,6 +195,7 @@ class Buffham:
     parent_namespace: str
     messages: list[Message]
     transactions: list[Transaction]
+    publishes: list[Publish]
     constants: list[Constant]
 
     @property
@@ -331,6 +353,34 @@ class Parser:
 
         return Transaction(name, '', request_id, receive, send, comments)
 
+    def parse_publish(
+        self, line: str, messages: list[Message], comments: list[str], ctx: ParseContext
+    ) -> Publish:
+        """Parse a publish from a line.
+
+        Publishes are arranged as:
+        - `publish [name][[send]]`
+
+        (Note the double brackets)
+        """
+        match = PUBLISH_REGEX.match(line)
+
+        if not match:
+            raise ValueError(f'Invalid publish line: {line}')
+
+        name, send = match.groups()
+        try:
+            send = next(
+                filter(lambda m: m.full_name == send, ctx.iter_messages(messages))
+            )
+        except StopIteration:
+            raise ValueError(f'Invalid message name(s) {send=} in transaction')
+
+        request_id = self._request_id
+        self._request_id += 1
+
+        return Publish(name, '', request_id, send, comments)
+
     @staticmethod
     def parse_message_lines(lines: list[str], ctx: ParseContext) -> list[Message]:
         # Use regex to find all starting indices of messages
@@ -395,6 +445,28 @@ class Parser:
             )
 
         return transactions
+
+    def parse_publish_lines(
+        self, lines: list[str], messages: list[Message], ctx: ParseContext
+    ) -> list[Publish]:
+        # Use regex to find all starting indices of publishes
+        # (i.e. `transaction [name][[receive], [send]]`)
+        indices = [i for i, line in enumerate(lines) if PUBLISH_REGEX.match(line)]
+
+        publishes = []
+        comments = []
+        comment_index = 0
+        for i in indices:
+            while comment_index < i:
+                if match := COMMENT_REGEX.match(lines[comment_index]):
+                    comments.append(match.groups()[0])
+                else:
+                    comments = []
+                comment_index += 1
+
+            publishes.append(self.parse_publish(lines[i], messages, comments, ctx))
+
+        return publishes
 
     @staticmethod
     def parse_constant(
@@ -472,17 +544,18 @@ class Parser:
     def parse_file(
         self, file: pathlib.Path, ctx: ParseContext, parent_namespace: str | None = None
     ) -> Buffham:
-        # Set the request ID to the max request ID in the context + 1
-        self._request_id = (
+        # Ensure the request ID is properly set
+        self._request_id = max(
+            self._request_id,
             max(
                 (
                     t.request_id
                     for buffham in ctx.buffhams.values()
-                    for t in buffham.transactions
+                    for t in buffham.transactions + buffham.publishes
                 ),
                 default=-1,
             )
-            + 1
+            + 1,
         )
 
         if parent_namespace is None:
@@ -493,9 +566,12 @@ class Parser:
         self.parse_imports(lines, ctx)
         messages = self.parse_message_lines(lines, ctx)
         transactions = self.parse_transaction_lines(lines, messages, ctx)
+        publishes = self.parse_publish_lines(lines, messages, ctx)
         constants = self.parse_constant_lines(lines, ctx)
 
-        bh = Buffham(file.stem, parent_namespace, messages, transactions, constants)
+        bh = Buffham(
+            file.stem, parent_namespace, messages, transactions, publishes, constants
+        )
 
         # Insert namespace into messages, transactions, and constants.
         # Deferring this allows not specifying the namespace in the Buffham file for

@@ -73,7 +73,7 @@ register_toolchains("@ruby_toolchains//:all")
 # rule is either underdocumented or broken.
 bazel_dep(name = "aspect_rules_py", version = "0.5.0")
 
-bazel_dep(name = "rules_python", version = "0.31.0")
+bazel_dep(name = "rules_python", version = "0.33.2")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 
@@ -158,8 +158,4 @@ http_archive(
 #
 # Google Test
 #
-git_repository(
-    name = "com_google_googletest",
-    commit = "f8d7d77c06936315286eb55f8de22cd23c188571",
-    remote = "https://github.com/google/googletest.git",
-)
+bazel_dep(name = "googletest", version = "1.15.2")

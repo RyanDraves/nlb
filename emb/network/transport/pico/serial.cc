@@ -9,12 +9,15 @@ struct Serial::SerialImpl {
     uint16_t rx_size = 0;
 };
 
-Serial::Serial() : impl_(new SerialImpl) {
+Serial::Serial() : impl_(new SerialImpl) {}
+
+Serial::~Serial() { delete impl_; }
+
+void Serial::initialize() {
+    // Initialize the serial port
     stdio_init_all();
     stdio_set_translate_crlf(&stdio_usb, false);
 }
-
-Serial::~Serial() { delete impl_; }
 
 void Serial::send(const std::span<uint8_t> &data) {
     // Send the message over the wire

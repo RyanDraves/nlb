@@ -40,3 +40,7 @@ transaction write_flash_sector[FlashSector, FlashSector];
 transaction read_flash_sector[FlashSector, FlashSector];
 # Reset the device (needs a type to send/receive; both unused)
 transaction reset[Ping, Ping];
+
+
+# Logging macros output over this
+publish log_message[LogMessage];

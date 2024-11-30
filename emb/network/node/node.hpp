@@ -34,6 +34,18 @@ class Node {
             projects_);
     }
 
+    void initialize() {
+        // Initialize the transport layer
+        transporter_.initialize();
+
+        // Initialize the serializer
+        serializer_.initialize();
+
+        // Initialize the projects
+        std::apply([](auto &&...project) { (project.initialize(), ...); },
+                   projects_);
+    }
+
     template <typename Recv, typename Send>
     void register_handler(uint8_t request_id,
                           std::function<Send(const Recv &)> handler) {
@@ -92,6 +104,21 @@ class Node {
         // // Debug logic to echo the framed message back
         // rx_buffer_[data.size()] = 0;
         // transporter_.send({rx_buffer_.data(), data.size() + 1});
+    }
+
+    template <typename Send> void publish(uint8_t request_id, const Send &msg) {
+        // Encode the outgoing message;
+        // offset by one to leave room for the message ID
+        auto [serialized, frame_padding] = serializer_.serialize(
+            msg, std::span(tx_buffer_.data() + 1, tx_buffer_.size() - 1));
+
+        // Add the message ID
+        tx_buffer_[frame_padding] = request_id;
+
+        // Add back our + 1 offset
+        auto framed = serializer_.frame(
+            std::span(tx_buffer_.data(), serialized.size() + 1));
+        transporter_.send(framed);
     }
 
   private:

@@ -4,6 +4,7 @@
 
 #include "emb/project/base/base_bh.hpp"
 #include "emb/project/bootloader/bootloader_bh.hpp"
+#include "emb/util/log.hpp"
 #include "emb/yaal/flash.hpp"
 #include "emb/yaal/pio/blink.hpp"
 #include "emb/yaal/watchdog.hpp"
@@ -20,7 +21,11 @@ struct Base::BaseImpl {
     std::optional<yaal::BlinkProgram> led_blink_pio;
 };
 
-Base::Base() : impl_(new BaseImpl()) {
+Base::Base() : impl_(new BaseImpl()) {}
+
+Base::~Base() { delete impl_; }
+
+void Base::initialize() {
     // Read the system flash page
     // TODO: This probably fails on a fresh Pico;
     // need to gracefully handle bad deserialization
@@ -31,12 +36,12 @@ Base::Base() : impl_(new BaseImpl()) {
     impl_->led_blink_pio->run();
 }
 
-Base::~Base() { delete impl_; }
-
 LogMessage Base::ping(const Ping &ping) {
     // Create a response message
     LogMessage log_message;
     log_message.message = "Pong!";
+
+    LOG << "Received ping" << LOG_END;
 
     return log_message;
 }

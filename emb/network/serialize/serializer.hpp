@@ -14,6 +14,7 @@ struct Any {};
 
 template <typename T>
 concept SerializerLike = requires(T t, std::span<uint8_t> buffer) {
+    { t.initialize() } -> std::same_as<void>;
     { t.frame(buffer) } -> std::same_as<std::span<uint8_t>>;
     { t.deframe(buffer) } -> std::same_as<std::span<uint8_t>>;
     {

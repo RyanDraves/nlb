@@ -14,7 +14,9 @@ namespace robo24 {
 
 struct Robo24::Robo24Impl {
     Robo24Impl(uint8_t trigger_pin, uint8_t echo_pin)
-        : trigger(trigger_pin), echo(echo_pin), hc_sr04(trigger, echo) {
+        : trigger(trigger_pin), echo(echo_pin), hc_sr04(trigger, echo) {}
+
+    void initialize() {
         trigger.set_mode(yaal::Mode::OUTPUT);
         echo.set_mode(yaal::Mode::INPUT);
     }
@@ -27,6 +29,8 @@ struct Robo24::Robo24Impl {
 Robo24::Robo24() : impl_(new Robo24Impl(1 /* trigger */, 0 /* echo */)) {}
 
 Robo24::~Robo24() { delete impl_; }
+
+void Robo24::initialize() { impl_->initialize(); }
 
 DistanceMeasurement Robo24::get_measurement(const base::Ping &ping) {
     DistanceMeasurement meas;

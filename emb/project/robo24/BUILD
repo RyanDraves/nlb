@@ -66,6 +66,7 @@ pico_project(
         "//emb/network/serialize:bh_cobs_cc",
         "//emb/network/transport:serial_cc",
         "//emb/project/base:base_cc",
+        "//emb/util:log",
     ],
 )
 

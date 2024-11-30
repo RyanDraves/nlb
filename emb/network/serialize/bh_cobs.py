@@ -19,10 +19,10 @@ class BhCobs:
             + b'\x00'
         )
 
-    def deserialize(self, data: bytes) -> bh.BuffhamLike:
+    def deserialize(self, data: bytes) -> tuple[int, bh.BuffhamLike]:
         # Drop the null byte
         decoded_buffer = cobs.cobs_decode(data[:-1])
 
         # Get the message type from the first byte
         message_cls = self._registry[decoded_buffer[0]]
-        return message_cls.deserialize(decoded_buffer[1:])[0]
+        return decoded_buffer[0], message_cls.deserialize(decoded_buffer[1:])[0]

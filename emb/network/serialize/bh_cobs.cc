@@ -10,6 +10,8 @@ BhCobs::BhCobs() {}
 
 BhCobs::~BhCobs() {}
 
+void BhCobs::initialize() {}
+
 static_assert(SerializerLike<BhCobs>);
 
 }  // namespace serialize
