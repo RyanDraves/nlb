@@ -3,7 +3,7 @@ from rich import console
 
 class Console(console.Console):
     def info(self, msg: str) -> None:
-        self.print(msg)
+        self.print(f'[cyan]{msg}[/cyan]')
 
     def error(self, msg: str) -> None:
         self.print(f'[red]{msg}[/red]')

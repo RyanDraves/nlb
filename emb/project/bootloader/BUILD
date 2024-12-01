@@ -1,3 +1,5 @@
+load("@aspect_rules_py//py:defs.bzl", "py_binary")
+load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library", "buffham_template")
 load("//bzl/macros:patch.bzl", "patch")
 load("//bzl/macros:pico.bzl", "pico_project")
@@ -111,4 +113,29 @@ cc_library(
         "//conditions:default": [],
     }),
     visibility = [":__subpackages__"],
+)
+
+py_binary(
+    name = "provision",
+    srcs = ["provision.py"],
+    args = [
+        "$(location //emb/project/base:base.bin)",
+        "$(location bootloader.bin)",
+        "$(location @picotool)",
+    ],
+    data = [
+        "bootloader.bin",
+        "//emb/project/base:base.bin",
+        "@picotool",
+    ],
+    main = "provision.py",
+    visibility = ["//visibility:private"],
+    deps = [
+        requirement("rich-click"),
+        ":bootloader_bh_py",
+        "//emb/network/transport:usb",
+        "//emb/project/base:base_bh_py",
+        "//emb/project/base:client",
+        "//nlb/util:console_utils",
+    ],
 )

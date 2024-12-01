@@ -52,6 +52,10 @@ cc_library(
 pico_project(
     name = "base_pico",
     srcs = ["main.cc"],
+    visibility = [
+        ":__subpackages__",
+        "//emb/project/bootloader:__pkg__",
+    ],
     deps = [
         ":base_cc",
         "//emb/network/node:node_cc",

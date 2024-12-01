@@ -1,8 +1,11 @@
+constant uint32_t pico_flash_base_addr = 0x10000000;
 constant uint32_t pico_flash_size = 2 * 1024 * 1024;
 constant uint32_t pico_bootloader_size = 160 * 1024;
 constant uint32_t pico_app_size = 880 * 1024;
 constant uint32_t pico_app_addr_a = 160 * 1024;
 constant uint32_t pico_app_addr_b = {pico_app_addr_a} + 880 * 1024;
+constant uint32_t pico_scratchpad_addr = {pico_app_addr_b} + 880 * 1024;
+constant uint32_t pico_sector_size = 4 * 1024;
 constant uint8_t num_sectors = 32;
 
 message SystemFlashPage {

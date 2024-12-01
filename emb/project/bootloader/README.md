@@ -26,25 +26,13 @@ The "swap image A and B" sequence is to swap their values in flash, alternating 
 Note that this design offers an easy mechanism to revert to the previously flashed image; just set `SystemFlashPage.new_image_flashed` and reset the device.
 
 # Bootstrapping
-A fresh Pico can be bootstrapped with a few (tedious) steps (see roadmap):
+A fresh Pico can be bootstrapped with a couple simple steps:
 - Hold the BOOTSEL button and power on the Pico
-- `bazel build //emb/project/base:base_no_bootloader.bin`
-- `bazel run //tools:picotool -- load bazel-bin/emb/project/base/base_no_bootloader.bin`
+- `bazel run //emb/project/bootloader:provision`
 - Powercycle the Pico
-- `bazel build //emb/project/base:base.bin`
-- `bazel run //emb/project/base:shell`
-  - `from emb.project.bootloader import bootloader_bh`
-  - `import pathlib`
-  - `image = '/absolute/path/to/bazel-bin/emb/project/base/base.bin'`
-  - `size = pathlib.Path(image).stat().st_size`
-  - `s = bootloader_bh.SystemFlashPage(boot_count=1, image_size_a=size, image_size_b=size, new_image_flashed=0)`
-  - `c.write_system_page(s)`
-  - `c.write_flash_image(image)`
-- Hold the BOOTSEL button and powercycle the Pico
-- `bazel build //emb/project/bootloader:bootloader.bin`
-- `bazel run //tools:picotool -- load bazel-bin/emb/project/bootloader/bootloader.bin`
-- Powercycle the Pico
+- Done!
 
+This will provision the bootloader, the base image, and initialize the system flash page.
 
 # Roadmap
 - Allow writing to flash in multiple sectors & increase buffer size of the shuffle
@@ -52,9 +40,3 @@ A fresh Pico can be bootstrapped with a few (tedious) steps (see roadmap):
   - On the application side, consider skipping the flash if the CRC matches the running image
   - DMA CRC32 https://github.com/usedbytes/rp2040-serial-bootloader/blob/main/main.c#L266
   - Another DMA CRC32 https://github.com/rhulme/pico-flashloader/blob/urloader/flashloader.c#L125
-- Improve bootstrapping process
-  - Add binary file support for buffham
-  - Change bootstrap to 3 picotool commands
-    - Write bootloader
-    - Write initial firmware image to image A
-    - Write initial `SystemFlashPage` to its scractpad sector (from a fixed binary file)
