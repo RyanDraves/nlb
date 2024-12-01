@@ -71,11 +71,16 @@ class Serial(abc.ABC):
 
     def _read_loop(self) -> None:
         buffer = bytes()
-        while True:
-            buffer += self._serial.read_until(self._stop_byte, size=255)
-            if buffer.endswith(self._stop_byte):
-                logging.debug('Rx: ' + ' '.join(f'{byte:02x}' for byte in buffer))
-                self._read_callback(buffer)
+        try:
+            while True:
+                buffer += self._serial.read_until(self._stop_byte, size=255)
+                if buffer.endswith(self._stop_byte):
+                    logging.debug('Rx: ' + ' '.join(f'{byte:02x}' for byte in buffer))
+                    self._read_callback(buffer)
+                    buffer = bytes()
+        except:
+            # This is probably an error raised by program exit or USB unplug; ignore
+            pass
 
 
 class PicoSerial(Serial):

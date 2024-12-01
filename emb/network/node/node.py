@@ -1,6 +1,6 @@
 import logging
 import threading
-from typing import Any, Callable, Self, cast, get_args
+from typing import Any, Callable, Self, get_args
 
 from emb.network.serialize import serializer
 from emb.network.transport import transporter

@@ -34,6 +34,7 @@ void Base::initialize() {
 
     impl_->led_blink_pio.emplace(1 /* frequency */);
     impl_->led_blink_pio->run();
+    LOG << "Booted!" << LOG_END;
 }
 
 LogMessage Base::ping(const Ping &ping) {
