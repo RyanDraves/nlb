@@ -119,8 +119,8 @@ py_binary(
     name = "provision",
     srcs = ["provision.py"],
     args = [
-        "$(location //emb/project/base:base.bin)",
         "$(location bootloader.bin)",
+        "$(location //emb/project/base:base.bin)",
         "$(location @picotool)",
     ],
     data = [

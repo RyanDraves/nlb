@@ -12,29 +12,26 @@ from emb.network.transport import usb
 from emb.project.base import base_bh
 from emb.project.base import client
 from emb.project.bootloader import bootloader_bh
-from nlb.buffham import bh
 from nlb.util import console_utils
-
-PICO_BOOTSEL_VECTOR_PRODUCT_ID = '2e8a:0003'
 
 
 @click.command()
 @click.argument(
-    'bin_filepath',
+    'bootloader_path',
     type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path),
 )
 @click.argument(
-    'bootloader_filepath',
+    'base_image_path',
     type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path),
 )
 @click.argument(
-    'picotool_bin',
+    'picotool_path',
     type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path),
 )
 def main(
-    bin_filepath: pathlib.Path,
-    bootloader_filepath: pathlib.Path,
-    picotool_bin: pathlib.Path,
+    bootloader_path: pathlib.Path,
+    base_image_path: pathlib.Path,
+    picotool_path: pathlib.Path,
 ) -> None:
     console = console_utils.Console()
 
@@ -49,7 +46,7 @@ def main(
 
     console.info('Flashing bootloader')
     result = subprocess.run(
-        [str(picotool_bin), 'load', str(bootloader_filepath)],
+        [str(picotool_path), 'load', str(bootloader_path)],
         stdout=sys.stdout,
         stderr=sys.stderr,
     )
@@ -60,9 +57,9 @@ def main(
     console.info('Flashing base image')
     subprocess.run(
         [
-            str(picotool_bin),
+            str(picotool_path),
             'load',
-            str(bin_filepath),
+            str(base_image_path),
             '--offset',
             hex(bootloader_bh.PICO_FLASH_BASE_ADDR + bootloader_bh.PICO_APP_ADDR_A),
         ],
@@ -74,7 +71,7 @@ def main(
     console.info('Writing system page')
     init_system_page = bootloader_bh.SystemFlashPage(
         boot_count=0,
-        image_size_a=bin_filepath.stat().st_size,
+        image_size_a=base_image_path.stat().st_size,
         image_size_b=0,
         new_image_flashed=False,
     )
@@ -88,7 +85,7 @@ def main(
         temp_file.flush()
         subprocess.run(
             [
-                str(picotool_bin),
+                str(picotool_path),
                 'load',
                 temp_file.name,
                 '-t',
