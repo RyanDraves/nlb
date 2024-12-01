@@ -34,7 +34,7 @@ def _pico_elf_and_bin(name, binary, linker_script, **kwargs):
         **kwargs
     )
 
-def pico_project(name, srcs, deps, linker_script = "//emb/project/bootloader:application_linker_script"):
+def pico_project(name, srcs, deps, linker_script = "//emb/project/bootloader:application_linker_script", **kwargs):
     """Compile a Pico project
 
     Produces a host binary, an ELF file, a UF2 file, and a bin file.
@@ -49,6 +49,7 @@ def pico_project(name, srcs, deps, linker_script = "//emb/project/bootloader:app
         srcs: The source files
         deps: The dependencies
         linker_script: The linker script to use
+        **kwargs: Additional arguments to pass to binary targets
     """
     name = name.replace("_pico", "")
 
@@ -56,9 +57,10 @@ def pico_project(name, srcs, deps, linker_script = "//emb/project/bootloader:app
         name = name,
         srcs = srcs,
         deps = deps,
+        **kwargs
     )
 
-    _pico_elf_and_bin(name, name, linker_script)
+    _pico_elf_and_bin(name, name, linker_script, **kwargs)
 
     # Create an additional binary without the bootloader in the linker script
     _pico_elf_and_bin(
@@ -66,6 +68,7 @@ def pico_project(name, srcs, deps, linker_script = "//emb/project/bootloader:app
         name,
         "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
         tags = ["manual"],
+        **kwargs
     )
 
     # Generate a UF2 file from the ELF file
