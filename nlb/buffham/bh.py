@@ -1,7 +1,8 @@
 """Utilities for Buffham."""
 
 import dataclasses
-from typing import Protocol, Self, cast
+import pathlib
+from typing import Protocol, Self, Type, cast
 
 from emb.network.node import node
 from emb.network.transport import transporter
@@ -43,3 +44,13 @@ class Transaction[S: BuffhamLike, R: BuffhamLike]:
 
     def transact(self, node: BhNode, msg: S) -> R:
         return cast(R, node._transact(msg, self.request_id))
+
+
+def read_file(path: pathlib.Path, schema: Type[BuffhamLike]) -> BuffhamLike:
+    """Read a binary Buffham file (.bhb) from a schema"""
+    return schema.deserialize(path.read_bytes())[0]
+
+
+def write_file(path: pathlib.Path, msg: BuffhamLike) -> None:
+    """Write a message to a binary Buffham file (.bhb)"""
+    path.write_bytes(msg.serialize())
