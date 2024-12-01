@@ -15,10 +15,11 @@ namespace transport {
 TEST(SerialTest, TestBasic) {
     // Create a simple ZMQ client and connnect to the unittest port
     zmq::context_t context(1);
-    zmq::socket_t client(context, zmq::socket_type::req);
+    zmq::socket_t client(context, zmq::socket_type::dealer);
     client.connect("ipc://unittest");
 
     Serial serial;
+    serial.initialize();
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
 
     // Send the data

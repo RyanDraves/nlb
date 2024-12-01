@@ -17,10 +17,10 @@ class TestCppGenerator(unittest.TestCase):
         # Check that the generated file matches the golden file
         golden = self.golden_hpp.read_text()
         generated = self.other_hpp.read_text()
-        self.assertEqual(generated, golden)
+        self.assertListEqual(generated.splitlines(), golden.splitlines())
 
     def test_generate_cc(self):
         # Check that the generated file matches the golden file
         golden = self.golden_cc.read_text()
         generated = self.other_cc.read_text()
-        self.assertEqual(generated, golden)
+        self.assertListEqual(generated.splitlines(), golden.splitlines())

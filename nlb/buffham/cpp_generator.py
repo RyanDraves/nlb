@@ -178,6 +178,9 @@ def generate_project_class(
         f'class {name} {{\n' f'{T[::2]}public:\n' f'{T}{name}();\n' f'{T}~{name}();\n\n'
     )
 
+    # Add initialization method
+    definition += f'{T}void initialize();\n\n'
+
     # Add register_handlers method
     definition += (
         f'{T}template <emb::network::serialize::SerializerLike S,\n'
@@ -203,6 +206,23 @@ def generate_project_class(
     definition += f'{T}struct {name}Impl;\n'
     definition += f'{T}{name}Impl *impl_;\n'
 
+    definition += '};\n\n'
+
+    return definition
+
+
+def generate_publishes(publishes: list[parser.Publish]) -> str:
+    """Generate a publish definition."""
+    definition = ''
+
+    if not publishes:
+        return definition
+
+    definition += 'enum PublishIds : uint8_t {\n'
+    for publish in publishes:
+        if publish.comments:
+            definition += _generate_comment(publish.comments, T) + '\n'
+        definition += f'{T}{publish.name.upper()} = {publish.request_id},\n'
     definition += '};\n\n'
 
     return definition
@@ -309,5 +329,9 @@ def generate_cpp(
                     bh.name.title(), bh.transactions, primary_namespace
                 )
             )
+
+        # Generate publish definitions
+        if hpp:
+            fp.write(generate_publishes(bh.publishes))
 
         fp.write(generate_end_namespace(bh.namespace.split('.')[:-1]))

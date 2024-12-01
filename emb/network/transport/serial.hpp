@@ -13,6 +13,8 @@ class Serial {
     Serial();
     ~Serial();
 
+    void initialize();
+
     void send(const std::span<uint8_t> &data);
 
     std::span<uint8_t> receive(std::span<uint8_t> buffer);

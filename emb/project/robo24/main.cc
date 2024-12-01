@@ -7,6 +7,7 @@
 #include "emb/network/transport/serial.hpp"
 #include "emb/project/base/base_bh.hpp"
 #include "emb/project/robo24/robo24_bh.hpp"
+#include "emb/util/log.hpp"
 
 int main() {
     // Create named variables for the objects to prevent
@@ -18,6 +19,16 @@ int main() {
 
     emb::network::node::Node node(std::move(serializer), std::move(transporter),
                                   std::move(base), std::move(robo24));
+
+    // Configure the logger instance.
+    // We have to configure this here with a lambda to resolve both the
+    // template arguments of `node` and `node.publish`
+    emb::util::Logger::getInstance().set_publish_function(
+        [&node](uint8_t request_id, const emb::project::base::LogMessage &msg) {
+            node.publish(request_id, msg);
+        });
+
+    node.initialize();
 
     while (true) {
         node.receive();

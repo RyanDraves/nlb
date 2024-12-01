@@ -29,6 +29,8 @@ Serial::Serial() : impl_(new SerialImpl) {}
 
 Serial::~Serial() { delete impl_; }
 
+void Serial::initialize() {}
+
 void Serial::send(const std::span<uint8_t> &data) { impl_->send(data); }
 
 std::span<uint8_t> Serial::receive(std::span<uint8_t> buffer) {

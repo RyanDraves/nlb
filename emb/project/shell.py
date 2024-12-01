@@ -49,7 +49,9 @@ def shell_entry(
     log: str,
     ctx: ShellContext,
 ) -> None:
-    logging.basicConfig(level=log.upper())
+    logging.basicConfig(
+        level=log.upper(), format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
 
     if connection is ConnectionType.SERIAL:
         transporter = usb.PicoSerial(port)

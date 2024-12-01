@@ -176,6 +176,7 @@ class TestParserSimple(unittest.TestCase):
                 1,
                 receive,
                 receive,
+                comments=[],  # In-line transaction comments are ignored
             ),
         )
 
@@ -186,6 +187,52 @@ class TestParserSimple(unittest.TestCase):
         transaction = 'transaction flash_page[Ping, Ping'
         with self.assertRaises(ValueError):
             p.parse_transaction(transaction, messages, [], ctx)
+
+    def test_parse_publish(self):
+        p = parser.Parser()
+        ctx = parser.ParseContext({})
+
+        publish = 'publish log[LogMessage];'
+        send = parser.Message(
+            'LogMessage', '', [parser.Field('message', parser.FieldType.STRING, None)]
+        )
+        messages = [send]
+        parsed = p.parse_publish(publish, messages, ['some other comment'], ctx)
+        self.assertEqual(
+            parsed,
+            parser.Publish(
+                'log',
+                '',
+                0,
+                send,
+                ['some other comment'],
+            ),
+        )
+
+        publish = 'publish ping_pong[Ping];  # inline comment'
+        send = parser.Message(
+            'Ping', '', [parser.Field('pong', parser.FieldType.UINT8_T, None)]
+        )
+        messages = [send]
+        parsed = p.parse_publish(publish, messages, [], ctx)
+        self.assertEqual(
+            parsed,
+            parser.Publish(
+                'ping_pong',
+                '',
+                1,
+                send,
+                comments=[],  # In-line publish comments are ignored
+            ),
+        )
+
+        publish = 'publish noise[InvalidMessage];'
+        with self.assertRaises(ValueError):
+            p.parse_publish(publish, messages, [], ctx)
+
+        publish = 'publish noise[Ping'
+        with self.assertRaises(ValueError):
+            p.parse_publish(publish, messages, [], ctx)
 
     def test_parse_constant(self):
         p = parser.Parser()

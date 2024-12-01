@@ -14,7 +14,7 @@ def cc_unittest(name, srcs, deps, **kwargs):
         name = name + "_lib",
         srcs = srcs,
         deps = deps + [
-            "@com_google_googletest//:gtest_main",
+            "@googletest//:gtest_main",
         ],
     )
 
@@ -46,7 +46,7 @@ def cc_host_test(name, srcs, deps, **kwargs):
         name = name,
         srcs = srcs,
         deps = deps + [
-            "@com_google_googletest//:gtest_main",
+            "@googletest//:gtest_main",
         ],
         env = {"UNITTEST": "1"} | kwargs.get("env", {}),
         **kwargs

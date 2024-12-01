@@ -47,3 +47,6 @@ transaction ping[nlb.buffham.testdata.other.Pong, LogMessage];
 # Transaction comment
 transaction flash_page[FlashPage, FlashPage];
 transaction read_flash_page[FlashPage, FlashPage];  # In-line transaction comments are ignored
+
+# Publish comment
+publish log_message[LogMessage];  # In-line publish comments are ignored

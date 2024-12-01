@@ -11,6 +11,25 @@ from nlb.buffham import bh
 
 
 class BaseClient(client.Client):
+    def __init__(self, node: bh.BhNode) -> None:
+        super().__init__(node)
+
+        self._node.register_publish_callback(
+            base_bh.PublishIds.LOG_MESSAGE.value, self._on_log_msg
+        )
+
+        self._emb_logger: logging.Logger | None = None
+
+    def _on_log_msg(self, msg: base_bh.LogMessage) -> None:
+        # TODO: Make a more creative / richer logger
+        self.emb_logger.info(msg.message)
+
+    @property
+    def emb_logger(self) -> logging.Logger:
+        if self._emb_logger is None:
+            self._emb_logger = logging.getLogger('emb')
+        return self._emb_logger
+
     def ping(self) -> None:
         msg = base_bh.Ping(ping=0)
         resp = base_bh.PING.transact(self._node, msg)

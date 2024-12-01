@@ -17,6 +17,8 @@ class BhCobs {
     BhCobs();
     ~BhCobs();
 
+    void initialize();
+
     std::span<uint8_t> frame(std::span<uint8_t> buffer) {
         // COBS encode the message
         size_t cobs_size = emb::network::frame::cobsEncode(

@@ -172,7 +172,9 @@ def generate_message(
     return definition
 
 
-def generate_registry(transactions: list[parser.Transaction], stub: bool) -> str:
+def generate_registry(
+    transactions: list[parser.Transaction], publishes: list[parser.Publish], stub: bool
+) -> str:
     """Generate a registry for transactions."""
 
     definition = 'REGISTRY: dict[int, Type[bh.BuffhamLike]]'
@@ -183,6 +185,8 @@ def generate_registry(transactions: list[parser.Transaction], stub: bool) -> str
         definition += ' = {\n'
         for transaction in transactions:
             definition += f'{T}{transaction.request_id}: {transaction.send.name},\n'
+        for publish in publishes:
+            definition += f'{T}{publish.request_id}: {publish.send.name},\n'
         definition += '}\n\n'
 
     return definition
@@ -269,6 +273,23 @@ def generate_transaction(
     return definition
 
 
+def generate_publishes(publishes: list[parser.Publish]) -> str:
+    definition = ''
+
+    if not publishes:
+        return definition
+
+    definition += '\nclass PublishIds(enum.Enum):\n'
+
+    for publish in publishes:
+        for comment in publish.comments:
+            definition += f'{T}#{comment}\n'
+
+        definition += f'{T}{publish.name.upper()} = {publish.request_id}\n'
+
+    return definition
+
+
 def generate_python(
     ctx: parser.ParseContext, primary_namespace: str, outfile: pathlib.Path, stub: bool
 ) -> None:
@@ -280,6 +301,8 @@ def generate_python(
         if len(bh.messages):
             # Add imports
             fp.write('import dataclasses\n')
+            if len(bh.publishes):
+                fp.write('import enum\n')
             if not stub:
                 fp.write('import struct\n')
             fp.write('from typing import Self, Type\n\n')
@@ -311,13 +334,19 @@ def generate_python(
         for message in bh.messages:
             fp.write(generate_message(message, stub, primary_namespace))
 
+        # Generate registry
+        if len(bh.transactions) or len(bh.publishes):
+            fp.write(generate_registry(bh.transactions, bh.publishes, stub))
+
         # Generate transaction definitions
         if len(bh.transactions):
-            fp.write(generate_registry(bh.transactions, stub))
             fp.write(generate_serializer(bh.name.title(), ctx, primary_namespace, stub))
             fp.write(generate_node(bh.name.title(), stub))
         for transaction in bh.transactions:
             fp.write(generate_transaction(transaction, stub, primary_namespace))
+
+        # Generate publish definitions
+        fp.write(generate_publishes(bh.publishes))
 
     logging.debug(f'{stub=}')
     logging.debug(outfile.read_text())

@@ -42,6 +42,7 @@ cc_library(
     deps = [
         ":base_bh_cc",
         "//emb/project/bootloader:bootloader_bh_cc",
+        "//emb/util:log",
         "//emb/yaal:flash",
         "//emb/yaal:pio_blink",
         "//emb/yaal:watchdog",
@@ -56,6 +57,7 @@ pico_project(
         "//emb/network/node:node_cc",
         "//emb/network/serialize:bh_cobs_cc",
         "//emb/network/transport:serial_cc",
+        "//emb/util:log",
     ],
 )
 
