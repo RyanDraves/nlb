@@ -1,7 +1,6 @@
 """Bazel rule to transition a non-executable target to a different platform.
 
-This rule is paired with `@rules_platform//platform_data` / `//blz/macros:platform_binary`
-to handle transitioning executable targets.
+This rule also exposes `CCInfo` for CC target transitions.
 
 Example:
 platform_transition(
@@ -14,7 +13,7 @@ https://stackoverflow.com/a/71179440
 """
 
 def _impl(_, attrs):
-    return {"//command_line_option:platforms": str(attrs.platform)}
+    return {"//command_line_option:platforms": str(attrs.target_platform)}
 
 _platform_transition_impl = transition(
     implementation = _impl,
@@ -39,7 +38,7 @@ platform_transition = rule(
         "_allowlist_function_transition": attr.label(
             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
         ),
-        "dep": attr.label(cfg = _platform_transition_impl),
-        "platform": attr.label(),
+        "dep": attr.label(cfg = _platform_transition_impl, mandatory = True),
+        "target_platform": attr.label(mandatory = True),
     },
 )

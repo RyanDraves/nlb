@@ -1,22 +1,24 @@
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@pico-sdk//bazel/toolchain:objcopy.bzl", "objcopy_to_bin")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bzl/macros:emb.bzl", "flash")
-load("//bzl/macros:platform_binary.bzl", "platform_binary")
-load("//bzl/rules:platform_transition.bzl", "platform_transition")
+load("//bzl/rules:pico.bzl", "pico_binary")
 
-def _pico_elf_and_bin(name, binary, platform, **kwargs):
+def _pico_elf_and_bin(name, binary, platform, linker_script, **kwargs):
     """Macro for the ELF and bin files for a Pico project
 
     Args:
         name: The name of the project
         binary: The binary to use
         platform: The Pico platform to build for
+        linker_script: The linker script to use
         **kwargs: Additional arguments to pass to `rp2040_binary`
     """
-    platform_binary(
+    pico_binary(
         name = name + ".elf",
         binary = binary,
-        platform = platform,
+        target_platform = platform,
+        linker_script = linker_script,
     )
 
     # `_intermediate` as it doesn't have the right platform
@@ -27,14 +29,14 @@ def _pico_elf_and_bin(name, binary, platform, **kwargs):
         target_compatible_with = ["@pico-sdk//bazel/constraint:rp2040"],
     )
 
-    platform_transition(
+    platform_transition_filegroup(
         name = name + ".bin",
-        dep = name + "_bin_intermediate",
-        platform = platform,
+        srcs = [name + "_bin_intermediate"],
+        target_platform = platform,
         **kwargs
     )
 
-def pico_project(name, srcs, deps, platform = "//bzl/platforms:rp2040", **kwargs):
+def pico_project(name, srcs, deps, platform = "//bzl/platforms:rp2040", linker_script = "//emb/project/bootloader:application_linker_script", **kwargs):
     """Compile a Pico project
 
     Produces a host binary, an ELF file, a UF2 file, and a bin file.
@@ -49,6 +51,7 @@ def pico_project(name, srcs, deps, platform = "//bzl/platforms:rp2040", **kwargs
         srcs: The source files
         deps: The dependencies
         platform: The Pico platform to build for
+        linker_script: The linker script to use
         **kwargs: Additional arguments to pass to binary targets
     """
     name = name.replace("_pico", "")
@@ -60,7 +63,7 @@ def pico_project(name, srcs, deps, platform = "//bzl/platforms:rp2040", **kwargs
         **kwargs
     )
 
-    _pico_elf_and_bin(name, name, platform, **kwargs)
+    _pico_elf_and_bin(name, name, platform, linker_script, **kwargs)
 
     # Generate a UF2 file from the ELF file
     # Adapted from https://github.com/raspberrypi/pico-sdk/blob/efe2103f9b28458a1615ff096054479743ade236/tools/uf2_aspect.bzl

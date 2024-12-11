@@ -1,5 +1,5 @@
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_test")
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
-load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
 def cc_unittest(name, srcs, deps, **kwargs):
     """A cc_test that uses an explicit `host_unittest` platform.
@@ -18,18 +18,18 @@ def cc_unittest(name, srcs, deps, **kwargs):
         ],
     )
 
-    platform_transition(
-        name = name + "_platformed",
-        dep = name + "_lib",
-        platform = "//bzl/platforms:host_unittest",
-        visibility = kwargs.get("visibility", ["//visibility:public"]),
-        testonly = True,
+    cc_test(
+        name = name + "_intermediate",
+        deps = [name + "_lib"],
+        env = kwargs.get("env", {}).update({"UNITTEST": "1"}),
+        # Make sure we don't run this test alongside the transitioned test
+        tags = ["manual"],
     )
 
-    cc_test(
+    platform_transition_test(
         name = name,
-        deps = [name + "_platformed"],
-        env = kwargs.get("env", {}).update({"UNITTEST": "1"}),
+        binary = name + "_intermediate",
+        target_platform = "//bzl/platforms:host_unittest",
         **kwargs
     )
 
