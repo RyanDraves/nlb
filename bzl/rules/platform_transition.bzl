@@ -22,8 +22,7 @@ _platform_transition_impl = transition(
 )
 
 def _rule_impl(ctx):
-    # I can't figure out why this is a sequence, but we're expecting one element
-    dep = ctx.attr.dep[0]
+    dep = ctx.attr.dep
 
     providers = []
     if DefaultInfo in dep:
@@ -34,11 +33,12 @@ def _rule_impl(ctx):
 
 platform_transition = rule(
     implementation = _rule_impl,
+    cfg = _platform_transition_impl,
     attrs = {
         "_allowlist_function_transition": attr.label(
             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
         ),
-        "dep": attr.label(cfg = _platform_transition_impl, mandatory = True),
+        "dep": attr.label(mandatory = True),
         "target_platform": attr.label(mandatory = True),
     },
 )
