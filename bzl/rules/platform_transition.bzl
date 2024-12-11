@@ -1,4 +1,8 @@
-"""Bazel rule to transition a target to a different platform.
+"""Bazel rule to transition a non-executable target to a different platform.
+
+This rule is paired with `@rules_platform//platform_data` / `//blz/macros:platform_binary`
+to handle transitioning executable targets.
+
 Example:
 platform_transition(
     name = "my_library",
