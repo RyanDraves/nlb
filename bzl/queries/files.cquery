@@ -1,0 +1,6 @@
+# Return the output files of a target
+# Usage:
+#  bazel cquery //:target --output starlark --starlark:file=bzl/queries/files.cquery
+def format(target):
+    outputs = target.files.to_list()
+    return outputs[0].path if len(outputs) > 0 else "(missing)"

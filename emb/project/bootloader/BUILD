@@ -3,21 +3,6 @@ load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library", "buffham_template")
 load("//bzl/macros:patch.bzl", "patch")
 load("//bzl/macros:pico.bzl", "pico_project")
-load("//bzl/rules:platform_transition.bzl", "platform_transition")
-
-platform_transition(
-    name = "application_linker_script",
-    dep = ":memmap_application",
-    platform = "@pico-sdk//bazel/platform:rp2040",
-    visibility = ["//visibility:public"],
-)
-
-platform_transition(
-    name = "bootloader_linker_script",
-    dep = ":memmap_bootloader",
-    platform = "@pico-sdk//bazel/platform:rp2040",
-    visibility = ["//visibility:public"],
-)
 
 buffham(
     name = "bootloader_bh",
@@ -37,7 +22,7 @@ buffham_cc_library(
 pico_project(
     name = "bootloader_pico",
     srcs = ["main.cc"],
-    linker_script = ":bootloader_linker_script",
+    platform = "//bzl/platforms:rp2040_bootloader",
     deps = [
         ":bootloader_bh_cc",
         "//emb/network/serialize:bh_cobs_cc",
