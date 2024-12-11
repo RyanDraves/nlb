@@ -65,6 +65,16 @@ def pico_project(name, srcs, deps, platform = "//bzl/platforms:rp2040", linker_s
 
     _pico_elf_and_bin(name, name, platform, linker_script, **kwargs)
 
+    # Create an additional binary without the bootloader in the linker script
+    _pico_elf_and_bin(
+        name + "_no_bootloader",
+        name,
+        platform,
+        "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
+        tags = ["manual"],
+        **kwargs
+    )
+
     # Generate a UF2 file from the ELF file
     # Adapted from https://github.com/raspberrypi/pico-sdk/blob/efe2103f9b28458a1615ff096054479743ade236/tools/uf2_aspect.bzl
     native.genrule(
