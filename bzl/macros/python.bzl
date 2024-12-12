@@ -12,7 +12,9 @@ def py_test(name, srcs, deps = [], args = [], **kwargs):
     _py_test(
         name = name,
         srcs = srcs + ["//bzl/macros:pytest_wrapper.py"],
-        main = "//bzl/macros:pytest_wrapper.py",
+        # The `_determine_main` finds a matching subpath, so we pass
+        # a substring of the path instead of a label. Ew.
+        main = "pytest_wrapper.py",
         deps = deps + [
             requirement("pytest"),
         ],

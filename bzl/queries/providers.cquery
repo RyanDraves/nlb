@@ -1,0 +1,5 @@
+# Return the output files of a target
+# Usage:
+#  bazel cquery //:target --output starlark --starlark:file=bzl/queries/providers.cquery
+def format(target):
+    return [p for p in providers(target)]

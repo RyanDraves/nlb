@@ -1,87 +1,48 @@
-# @pico-sdk rule wrapper, based on:
-# https://github.com/antmicro/pigweed/blob/c9d5bef2f82612fa8d4be0d53b614bbc02bab62b/targets/rp2040/transition.bzl
-# https://github.com/dfr/rules_pico/blob/main/pico/defs.bzl#L322
+"""Perform a platform & linker script transition for a Pico binary.
 
-RP2040_FLAGS = {
-    "@pico-sdk//bazel/config:PICO_STDIO_UART": False,
-    "@pico-sdk//bazel/config:PICO_STDIO_USB": True,
-    "@pico-sdk//bazel/config:PICO_STDIO_SEMIHOSTING": False,
-    "@pico-sdk//bazel/config:PICO_DEFAULT_LINKER_SCRIPT": "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
-    "//command_line_option:platforms": "@pico-sdk//bazel/platform:rp2040",
-}
+Since we want to pick different values for the linker script within the same
+platform, we need a custom rule that does both. I think. Please prove me wrong,
+I hate writing these.
+"""
 
-def _rp2040_transition():
-    def _rp2040_transition_impl(settings, attr):
+def _transition():
+    def _transition_impl(settings, attr):
         # buildifier: disable=unused-variable
         _ignore = settings
-        overrides = {}
-        if hasattr(attr, "stdio_uart"):
-            overrides["@pico-sdk//bazel/config:PICO_STDIO_UART"] = attr.stdio_uart
-        if hasattr(attr, "stdio_usb"):
-            overrides["@pico-sdk//bazel/config:PICO_STDIO_USB"] = attr.stdio_usb
-        if hasattr(attr, "stdio_semihosting"):
-            overrides["@pico-sdk//bazel/config:PICO_STDIO_SEMIHOSTING"] = attr.stdio_semihosting
-        if hasattr(attr, "linker_script"):
-            overrides["@pico-sdk//bazel/config:PICO_DEFAULT_LINKER_SCRIPT"] = attr.linker_script
-        return RP2040_FLAGS | overrides
+        return {
+            "@pico-sdk//bazel/config:PICO_DEFAULT_LINKER_SCRIPT": attr.linker_script,
+            "//command_line_option:platforms": str(attr.target_platform),
+        }
 
     return transition(
-        implementation = _rp2040_transition_impl,
+        implementation = _transition_impl,
         inputs = [],
-        outputs = RP2040_FLAGS.keys(),
+        outputs = [
+            "@pico-sdk//bazel/config:PICO_DEFAULT_LINKER_SCRIPT",
+            "//command_line_option:platforms",
+        ],
     )
 
-def _rp2040_elf_impl(ctx):
+def _rule_impl(ctx):
     out = ctx.actions.declare_file(ctx.label.name)
     ctx.actions.symlink(output = out, is_executable = True, target_file = ctx.executable.binary)
     return [DefaultInfo(files = depset([out]), executable = out)]
 
-def _rp2040_binary_impl(ctx):
-    # I can't figure out why this is a sequence, but we're expecting one element
-    binary = ctx.attr.binary[0]
-
-    out = ctx.actions.declare_file(ctx.label.name)
-    ctx.actions.symlink(output = out, is_executable = False, target_file = binary.files.to_list()[0])
-    return [DefaultInfo(files = depset([out]))]
-
-rp2040_elf = rule(
-    _rp2040_elf_impl,
+pico_binary = rule(
+    _rule_impl,
     attrs = {
         "binary": attr.label(
-            doc = "cc_binary to build for the rp2040",
-            cfg = _rp2040_transition(),
+            doc = "Binary to transition",
+            cfg = _transition(),
             executable = True,
             mandatory = True,
         ),
-        "stdio_usb": attr.bool(
-            doc = "Set to true to enable stdio output over USB",
-            default = True,
-        ),
-        "stdio_uart": attr.bool(
-            doc = "Set to true to enable stdio output over UART",
-            default = False,
-        ),
-        "stdio_semihosting": attr.bool(
-            doc = "Set to true to enable stdio output via debugger",
-            default = False,
-        ),
         "linker_script": attr.label(
-            doc = "Linker script to use for the rp2040",
-            default = "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
+            doc = "Linker script to transition to",
+            mandatory = True,
         ),
-        "_allowlist_function_transition": attr.label(
-            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
-        ),
-    },
-)
-
-rp2040_binary = rule(
-    _rp2040_binary_impl,
-    attrs = {
-        "binary": attr.label(
-            doc = ".bin file from `objcopy` to generate for the rp2040",
-            cfg = _rp2040_transition(),
-            executable = False,
+        "target_platform": attr.label(
+            doc = "Target platform to transition to",
             mandatory = True,
         ),
     },

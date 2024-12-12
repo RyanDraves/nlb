@@ -5,20 +5,6 @@ load("//bzl/macros:patch.bzl", "patch")
 load("//bzl/macros:pico.bzl", "pico_project")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
-platform_transition(
-    name = "application_linker_script",
-    dep = ":memmap_application",
-    platform = "@pico-sdk//bazel/platform:rp2040",
-    visibility = ["//visibility:public"],
-)
-
-platform_transition(
-    name = "bootloader_linker_script",
-    dep = ":memmap_bootloader",
-    platform = "@pico-sdk//bazel/platform:rp2040",
-    visibility = ["//visibility:public"],
-)
-
 buffham(
     name = "bootloader_bh",
     srcs = ["bootloader.bh"],
@@ -77,6 +63,13 @@ cc_library(
     ],
 )
 
+platform_transition(
+    name = "application_linker_script",
+    dep = ":memmap_application",
+    target_platform = "//bzl/platforms:rp2040",
+    visibility = ["//visibility:public"],
+)
+
 patch(
     name = "memmap_bootloader_patch",
     src = "@pico-sdk//src/rp2_common/pico_crt0/rp2040:memmap_default.ld",
@@ -103,6 +96,13 @@ cc_library(
         ":no_warn_rwx_flag",
         "@pico-sdk//src/rp2_common/pico_standard_link:default_flash_region",
     ],
+)
+
+platform_transition(
+    name = "bootloader_linker_script",
+    dep = ":memmap_bootloader",
+    target_platform = "//bzl/platforms:rp2040",
+    visibility = ["//visibility:public"],
 )
 
 # Taken from the Pico SDK; wasn't marked public

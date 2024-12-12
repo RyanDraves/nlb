@@ -1,4 +1,7 @@
-"""Bazel rule to transition a target to a different platform.
+"""Bazel rule to transition a non-executable target to a different platform.
+
+This rule also exposes `CCInfo` for CC target transitions.
+
 Example:
 platform_transition(
     name = "my_library",
@@ -10,7 +13,7 @@ https://stackoverflow.com/a/71179440
 """
 
 def _impl(_, attrs):
-    return {"//command_line_option:platforms": str(attrs.platform)}
+    return {"//command_line_option:platforms": str(attrs.target_platform)}
 
 _platform_transition_impl = transition(
     implementation = _impl,
@@ -19,8 +22,7 @@ _platform_transition_impl = transition(
 )
 
 def _rule_impl(ctx):
-    # I can't figure out why this is a sequence, but we're expecting one element
-    dep = ctx.attr.dep[0]
+    dep = ctx.attr.dep
 
     providers = []
     if DefaultInfo in dep:
@@ -31,11 +33,12 @@ def _rule_impl(ctx):
 
 platform_transition = rule(
     implementation = _rule_impl,
+    cfg = _platform_transition_impl,
     attrs = {
         "_allowlist_function_transition": attr.label(
             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
         ),
-        "dep": attr.label(cfg = _platform_transition_impl),
-        "platform": attr.label(),
+        "dep": attr.label(mandatory = True),
+        "target_platform": attr.label(mandatory = True),
     },
 )

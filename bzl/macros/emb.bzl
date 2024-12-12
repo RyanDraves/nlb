@@ -11,6 +11,7 @@ def flash(name, binary, **kwargs):
     """
     py_binary(
         name = name,
+        srcs = ["//emb/project/base:flash.py"],
         main = "//emb/project/base:flash.py",
         deps = [
             "//emb/project/base:flash",
