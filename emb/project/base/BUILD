@@ -65,7 +65,7 @@ pico_project(
     ],
 )
 
-py_binary(
+py_library(
     name = "flash",
     srcs = ["flash.py"],
     visibility = ["//visibility:public"],
