@@ -86,7 +86,10 @@ def pico_project(name, srcs, deps, platform = "//bzl/platforms:rp2040", linker_s
     )
 
     # Add a target to flash the binary
-    flash(name + "_flash", name + ".bin")
+    flash(
+        name = name + "_flash",
+        binary = name + ".bin",
+    )
 
 def pio_cc_library(name, pio, hdrs = [], **kwargs):
     """Compile a PIO C++ library

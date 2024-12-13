@@ -1,5 +1,5 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
+load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write")
 load("//bzl/macros:python.bzl", "py_test")
 load("//bzl/macros:unittest.bzl", "cc_unittest")
 
@@ -60,15 +60,11 @@ cc_library(
 
 buffham(
     name = "testdata/test_bh",
-    srcs = ["testdata/test.bh"],
+    src = "testdata/test.bh",
+    cc = True,
+    py = True,
 )
 
-buffham_py_library(
-    name = "testdata/test_bh_py",
-    bh = ":testdata/test_bh",
-)
-
-buffham_cc_library(
-    name = "testdata/test_bh_cc",
-    bh = ":testdata/test_bh",
+buffham_py_write(
+    name = "testdata/test_bh_py_write",
 )

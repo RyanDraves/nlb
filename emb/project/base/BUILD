@@ -1,6 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
 load("@pip//:requirements.bzl", "requirement")
-load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
+load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write")
 load("//bzl/macros:emb.bzl", "host_test")
 load("//bzl/macros:pico.bzl", "pico_project")
 
@@ -22,17 +22,14 @@ py_library(
 
 buffham(
     name = "base_bh",
-    srcs = ["base.bh"],
+    src = "base.bh",
+    cc = True,
+    py = True,
+    visibility = ["//visibility:public"],
 )
 
-buffham_py_library(
-    name = "base_bh_py",
-    bh = ":base_bh",
-)
-
-buffham_cc_library(
-    name = "base_bh_cc",
-    bh = ":base_bh",
+buffham_py_write(
+    name = "base_bh_py_write",
 )
 
 cc_library(

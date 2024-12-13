@@ -1,23 +1,20 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary")
 load("@pip//:requirements.bzl", "requirement")
-load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library", "buffham_template")
+load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
 load("//bzl/macros:patch.bzl", "patch")
 load("//bzl/macros:pico.bzl", "pico_project")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
 buffham(
     name = "bootloader_bh",
-    srcs = ["bootloader.bh"],
+    src = "bootloader.bh",
+    cc = True,
+    py = True,
+    visibility = ["//visibility:public"],
 )
 
-buffham_py_library(
-    name = "bootloader_bh_py",
-    bh = ":bootloader_bh",
-)
-
-buffham_cc_library(
-    name = "bootloader_bh_cc",
-    bh = ":bootloader_bh",
+buffham_py_write(
+    name = "bootloader_bh_py_write",
 )
 
 pico_project(
@@ -40,15 +37,15 @@ pico_project(
 patch(
     name = "memmap_application_patch",
     src = "@pico-sdk//src/rp2_common/pico_crt0/rp2040:memmap_default.ld",
-    out_file = "memmap_application.ld",
+    out_file = "memmap_application_patch.ld",
     patch = "memmap_application.patch",
 )
 
 buffham_template(
-    name = "memmap_application_template",
+    name = "memmap_application_bh",
     bh = ":bootloader_bh",
     out_file = "memmap_application_bh.ld",
-    template = "memmap_application.ld",
+    template = "memmap_application_patch.ld",
     visibility = ["//visibility:public"],
 )
 
@@ -73,15 +70,15 @@ platform_transition(
 patch(
     name = "memmap_bootloader_patch",
     src = "@pico-sdk//src/rp2_common/pico_crt0/rp2040:memmap_default.ld",
-    out_file = "memmap_bootloader.ld",
+    out_file = "memmap_bootloader_patch.ld",
     patch = "memmap_bootloader.patch",
 )
 
 buffham_template(
-    name = "memmap_bootloader_template",
+    name = "memmap_bootloader_bh",
     bh = ":bootloader_bh",
     out_file = "memmap_bootloader_bh.ld",
-    template = "memmap_bootloader.ld",
+    template = "memmap_bootloader_patch.ld",
     visibility = ["//visibility:public"],
 )
 
