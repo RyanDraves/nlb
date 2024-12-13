@@ -1,5 +1,5 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
-load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library")
+load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write")
 load("//bzl/macros:emb.bzl", "host_test")
 load("//bzl/macros:pico.bzl", "pico_project")
 
@@ -18,30 +18,16 @@ py_library(
 
 buffham(
     name = "robo24_bh",
-    srcs = ["robo24.bh"],
-)
-
-buffham_py_library(
-    name = "robo24_bh_py",
-    bh = ":robo24_bh",
-    # Current limitation of Buffham that this needs to be spelled out
-    bh_deps = [
-        "//emb/project/base:base_bh",
-    ],
+    src = "robo24.bh",
+    cc = True,
+    py = True,
     deps = [
-        "//emb/project/base:base_bh_py",
+        "//emb/project/base:base_bh",
     ],
 )
 
-buffham_cc_library(
-    name = "robo24_bh_cc",
-    bh = ":robo24_bh",
-    bh_deps = [
-        "//emb/project/base:base_bh",
-    ],
-    deps = [
-        "//emb/project/base:base_bh_cc",
-    ],
+buffham_py_write(
+    name = "robo24_bh_py_write",
 )
 
 cc_library(

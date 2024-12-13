@@ -1,13 +1,5 @@
-def patch(name, src, out_file, patch, visibility = ["//visibility:public"]):
-    """Apply patches to a file.
-
-    Args:
-        name: The name of the target.
-        src: The file to patch.
-        out_file: The patched file.
-        patch: The patch file to apply.
-        visibility: The visibility of the patched file.
-    """
+def _patch_impl(name, visibility, src, out_file, patch, **kwargs):
+    """Apply patches to a file."""
     native.genrule(
         name = name,
         srcs = [src, patch],
@@ -16,4 +8,33 @@ def patch(name, src, out_file, patch, visibility = ["//visibility:public"]):
         # so route its complaints to /dev/null.
         cmd = "patch $$(readlink $(location {0})) -o $@ -i $(location {1}) --quiet 1>/dev/null".format(src, patch),
         visibility = visibility,
+        **kwargs
     )
+
+patch = macro(
+    inherit_attrs = native.genrule,
+    implementation = _patch_impl,
+    attrs = {
+        "src": attr.label(
+            mandatory = True,
+            allow_single_file = True,
+            doc = "The file to patch.",
+            # Prevent receiving a `select` object on the input
+            configurable = False,
+        ),
+        "out_file": attr.output(
+            mandatory = True,
+            doc = "The patched file.",
+        ),
+        "patch": attr.label(
+            mandatory = True,
+            allow_single_file = True,
+            doc = "The patch file to apply.",
+            # Prevent receiving a `select` object on the input
+            configurable = False,
+        ),
+        "srcs": None,
+        "outs": None,
+        "cmd": None,
+    },
+)

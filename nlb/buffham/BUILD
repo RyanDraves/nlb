@@ -1,6 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
 load("@pip//:requirements.bzl", "requirement")
-load("//bzl/macros:buffham.bzl", "buffham", "buffham_cc_library", "buffham_py_library", "buffham_template")
+load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
 load("//bzl/macros:python.bzl", "py_test")
 
 py_library(
@@ -126,46 +126,40 @@ py_test(
     name = "template_generator_test",
     srcs = ["template_generator_test.py"],
     data = [
-        "testdata/sample.md",
         "testdata/sample.md.golden",
         "testdata/sample.template.md",
+        "testdata/sample_template.md",
     ],
     env = {
-        "TEST_FILE": "testdata/sample.md",
+        "TEST_FILE": "testdata/sample_template.md",
     },
 )
 
 buffham(
     name = "testdata/other_bh",
-    srcs = ["testdata/other.bh"],
-)
-
-buffham_cc_library(
-    name = "testdata/other_bh_cc",
-    bh = ":testdata/other_bh",
-)
-
-buffham_py_library(
-    name = "testdata/other_bh_py",
-    bh = ":testdata/other_bh",
+    src = "testdata/other.bh",
+    cc = True,
+    py = True,
+    visibility = ["__pkg__"],
 )
 
 buffham(
     name = "testdata/sample_bh",
-    srcs = ["testdata/sample.bh"],
+    src = "testdata/sample.bh",
+    cc = True,
+    py = True,
+    visibility = ["__pkg__"],
+    deps = [":testdata/other_bh"],
 )
 
-buffham_cc_library(
-    name = "testdata/sample_bh_cc",
-    bh = ":testdata/sample_bh",
-    bh_deps = [":testdata/other_bh"],
-    deps = [":testdata/other_bh_cc"],
+buffham_py_write(
+    name = "testdata/sample_bh_py_write",
 )
 
 buffham_template(
-    name = "testdata/sample_bh_hpp",
+    name = "testdata/sample_template",
     bh = ":testdata/sample_bh",
     bh_deps = [":testdata/other_bh"],
-    out_file = "testdata/sample.md",
+    out_file = "testdata/sample_template.md",
     template = "testdata/sample.template.md",
 )

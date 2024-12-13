@@ -1,3 +1,5 @@
+"""Common rules for embedded development"""
+
 load("@aspect_rules_py//py:defs.bzl", "py_binary")
 load("//bzl/macros:python.bzl", "py_test")
 
