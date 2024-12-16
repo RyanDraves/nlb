@@ -1,5 +1,3 @@
-#include "emb/network/serialize/bh_cobs.hpp"
-#include "emb/network/transport/serial.hpp"
 #include "emb/project/base/base_bh.hpp"
 #include "emb/project/bootloader/bootloader_bh.hpp"
 #include "emb/yaal/flash.hpp"

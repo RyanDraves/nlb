@@ -1,5 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:python.bzl", "py_test")
 load("//bzl/macros:unittest.bzl", "cc_unittest")
 

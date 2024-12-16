@@ -27,6 +27,22 @@ platform(
         "--@pico-sdk//bazel/config:PICO_STDIO_UART=False",
         "--@pico-sdk//bazel/config:PICO_STDIO_USB=True",
         "--@pico-sdk//bazel/config:PICO_STDIO_SEMIHOSTING=False",
+        "--//emb/project/base:pio_blink=True",
+    ],
+    parents = ["@pico-sdk//bazel/platform:rp2040"],
+)
+
+platform(
+    name = "rp2040_w",
+    flags = [
+        "--@pico-sdk//bazel/config:PICO_STDIO_UART=False",
+        "--@pico-sdk//bazel/config:PICO_STDIO_USB=True",
+        "--@pico-sdk//bazel/config:PICO_STDIO_SEMIHOSTING=False",
+        "--@pico-sdk//bazel/config:PICO_BT_ENABLE_BLE=True",
+        "--@pico-sdk//bazel/config:PICO_BOARD=pico_w",
+        "--@pico-sdk//bazel/config:PICO_BTSTACK_CONFIG=//emb/network/transport:btstack_config",
+        # See https://github.com/raspberrypi/pico-sdk/issues/2139
+        "--@pico-sdk//bazel/config:PICO_MULTICORE_ENABLED=False",
     ],
     parents = ["@pico-sdk//bazel/platform:rp2040"],
 )

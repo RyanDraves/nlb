@@ -7,6 +7,7 @@ import rich_click as click
 from IPython.terminal import embed
 from IPython.terminal import ipapp
 
+from emb.network.transport import ble
 from emb.network.transport import tcp
 from emb.network.transport import usb
 from emb.project import client
@@ -15,6 +16,7 @@ from nlb.util import click_utils
 
 
 class ConnectionType(enum.Enum):
+    BLE = 'ble'
     SERIAL = 'serial'
     ZMQ = 'zmq'
 
@@ -55,6 +57,8 @@ def shell_entry(
 
     if connection is ConnectionType.SERIAL:
         transporter = usb.PicoSerial(port)
+    elif connection is ConnectionType.BLE:
+        transporter = ble.PicoBle()
     else:
         transporter = tcp.Zmq(address)
 

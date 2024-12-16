@@ -1,6 +1,8 @@
 #include "emb/network/transport/serial.hpp"
 #include "pico/stdlib.h"
 
+#include <cstdio>
+
 namespace emb {
 namespace network {
 namespace transport {

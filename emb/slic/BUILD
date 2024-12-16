@@ -1,3 +1,4 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:unittest.bzl", "cc_unittest")
 
 cc_library(

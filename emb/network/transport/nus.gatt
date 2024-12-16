@@ -1,0 +1,11 @@
+// Mimics the Nordic NUS UART-like service and characteristics
+// Courtesy of
+// https://www.designnews.com/electronics/using-raspberry-pi-pico-w-for-a-bluetooth-low-energy-application
+// and the BTstack example it's based on
+// https://github.com/bluekitchen/btstack/blob/2b49e57bd1fae85ac32ac1f41cdb7c794de335f6/example/nordic_spp_le_counter.c
+PRIMARY_SERVICE, GAP_SERVICE
+CHARACTERISTIC, GAP_DEVICE_NAME,READ,"Pico W NUS"
+
+PRIMARY_SERVICE, 6E400001-B5A3-F393-E0A9-E50E24DCCA9E
+CHARACTERISTIC,  6E400002-B5A3-F393-E0A9-E50E24DCCA9E, DYNAMIC | WRITE | WRITE_WITHOUT_RESPONSE,
+CHARACTERISTIC,  6E400003-B5A3-F393-E0A9-E50E24DCCA9E, DYNAMIC | NOTIFY,

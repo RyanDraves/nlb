@@ -2,7 +2,8 @@
 
 #include "emb/network/node/node.hpp"
 #include "emb/network/serialize/bh_cobs.hpp"
-#include "emb/network/transport/serial.hpp"
+#include "emb/network/transport/ble.hpp"
+// #include "emb/network/transport/serial.hpp"
 #include "emb/project/base/base_bh.hpp"
 #include "emb/util/log.hpp"
 
@@ -14,10 +15,14 @@ int main() {
     // Create named variables for the objects to prevent
     // the objects from being destroyed before the node
     emb::network::serialize::BhCobs serializer;
-    emb::network::transport::Serial transporter;
+    // TODO: Deal with making it easier to swap out transport layers
+    // or picking the serial layer for log messages
+    // emb::network::transport::Serial transporter;
+    emb::network::transport::Ble ble;
     emb::project::base::Base base;
 
-    emb::network::node::Node node(std::move(serializer), std::move(transporter),
+    emb::network::node::Node node(std::move(serializer),
+                                  std::move(ble),  // std::move(transporter),
                                   std::move(base));
 
     // Configure the logger instance.
@@ -29,6 +34,7 @@ int main() {
         });
 
     node.initialize();
+    // ble.initialize();
 
     while (true) {
         node.receive();

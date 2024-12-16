@@ -7,10 +7,10 @@ namespace emb {
 namespace network {
 namespace transport {
 
-class Serial {
+class Ble {
   public:
-    Serial();
-    ~Serial();
+    Ble();
+    ~Ble();
 
     void initialize();
 
@@ -19,8 +19,8 @@ class Serial {
     std::span<uint8_t> receive(std::span<uint8_t> buffer);
 
   private:
-    struct SerialImpl;
-    SerialImpl *impl_;
+    struct BleImpl;
+    BleImpl *impl_;
 };
 
 }  // namespace transport

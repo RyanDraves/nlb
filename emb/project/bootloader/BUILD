@@ -1,5 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary")
 load("@pip//:requirements.bzl", "requirement")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
 load("//bzl/macros:patch.bzl", "patch")
 load("//bzl/macros:pico.bzl", "pico_project")
@@ -23,8 +24,6 @@ pico_project(
     linker_script = ":bootloader_linker_script",
     deps = [
         ":bootloader_bh_cc",
-        "//emb/network/serialize:bh_cobs_cc",
-        "//emb/network/transport:serial_cc",
         "//emb/project/base:base_bh_cc",
         "//emb/yaal:flash",
         "@pico-sdk//src/rp2_common:hardware_structs",
@@ -113,7 +112,7 @@ cc_library(
 )
 
 py_binary(
-    name = "provision",
+    name = "provision_pico",
     srcs = ["provision.py"],
     args = [
         "$(location bootloader.bin)",
@@ -123,6 +122,32 @@ py_binary(
     data = [
         "bootloader.bin",
         "//emb/project/base:base.bin",
+        "@picotool",
+    ],
+    main = "provision.py",
+    visibility = ["//visibility:private"],
+    deps = [
+        requirement("rich-click"),
+        ":bootloader_bh_py",
+        "//emb/network/transport:usb",
+        "//emb/project/base:base_bh_py",
+        "//emb/project/base:client",
+        "//nlb/util:console_utils",
+    ],
+)
+
+# TODO: Macro this
+py_binary(
+    name = "provision_pico_w",
+    srcs = ["provision.py"],
+    args = [
+        "$(location bootloader.bin)",
+        "$(location //emb/project/base:base_w.bin)",
+        "$(location @picotool)",
+    ],
+    data = [
+        "bootloader.bin",
+        "//emb/project/base:base_w.bin",
         "@picotool",
     ],
     main = "provision.py",
