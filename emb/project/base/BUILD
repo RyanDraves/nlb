@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
-load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@pip//:requirements.bzl", "requirement")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write")
@@ -35,15 +34,9 @@ buffham_py_write(
     name = "base_bh_py_write",
 )
 
-# TODO: Make this a generic flag for all Pico_W specifics?
-bool_flag(
-    name = "pio_blink",
-    build_setting_default = False,
-)
-
 feature_cc_library(
     name = "pio_blink_cc",
-    build_setting = ":pio_blink",
+    build_setting = "//bzl/configs:PIO_BLINK",
 )
 
 cc_library(
@@ -72,7 +65,7 @@ pico_project(
         ":base_cc",
         "//emb/network/node:node_cc",
         "//emb/network/serialize:bh_cobs_cc",
-        "//emb/network/transport:serial_cc",
+        "//emb/network/transport",
         "//emb/util:log",
     ],
 )
@@ -91,8 +84,7 @@ pico_project(
         ":base_cc",
         "//emb/network/node:node_cc",
         "//emb/network/serialize:bh_cobs_cc",
-        "//emb/network/transport:ble_cc",
-        "//emb/network/transport:serial_cc",
+        "//emb/network/transport",
         "//emb/util:log",
     ],
 )

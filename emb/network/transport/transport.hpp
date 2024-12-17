@@ -7,10 +7,10 @@ namespace emb {
 namespace network {
 namespace transport {
 
-class Ble {
+class Transport {
   public:
-    Ble();
-    ~Ble();
+    Transport();
+    ~Transport();
 
     void initialize();
 
@@ -19,8 +19,8 @@ class Ble {
     std::span<uint8_t> receive(std::span<uint8_t> buffer);
 
   private:
-    struct BleImpl;
-    BleImpl *impl_;
+    struct TransportImpl;
+    TransportImpl *impl_;
 };
 
 }  // namespace transport

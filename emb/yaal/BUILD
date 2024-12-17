@@ -7,7 +7,7 @@ cc_library(
         {
             "@platforms//cpu:armv6-m": ["pico/flash.cc"],
             # Same as host, for now
-            "//bzl/platforms:unittest": ["host/flash.cc"],
+            "//bzl/constraints:unittest": ["host/flash.cc"],
             "//conditions:default": ["host/flash.cc"],
         },
     ),
@@ -30,7 +30,7 @@ cc_library(
         {
             "@platforms//cpu:armv6-m": ["pico/gpio.cc"],
             # Same as host, for now
-            "//bzl/platforms:unittest": ["host/gpio.cc"],
+            "//bzl/constraints:unittest": ["host/gpio.cc"],
             "//conditions:default": ["host/gpio.cc"],
         },
     ),
@@ -67,7 +67,7 @@ cc_library(
         {
             "@platforms//cpu:armv6-m": ["pico/timer.cc"],
             # Same as host, for now
-            "//bzl/platforms:unittest": ["host/timer.cc"],
+            "//bzl/constraints:unittest": ["host/timer.cc"],
             "//conditions:default": ["host/timer.cc"],
         },
     ),
@@ -75,7 +75,7 @@ cc_library(
         {
             "@platforms//cpu:armv6-m": [],
             # Same as host, for now
-            "//bzl/platforms:unittest": ["host/timer.hpp"],
+            "//bzl/constraints:unittest": ["host/timer.hpp"],
             "//conditions:default": ["host/timer.hpp"],
         },
     ),
@@ -98,7 +98,7 @@ cc_library(
         {
             "@platforms//cpu:armv6-m": ["pico/watchdog.cc"],
             # Same as host, for now
-            "//bzl/platforms:unittest": ["host/watchdog.cc"],
+            "//bzl/constraints:unittest": ["host/watchdog.cc"],
             "//conditions:default": ["host/watchdog.cc"],
         },
     ),
@@ -123,7 +123,7 @@ pio_cc_library(
         {
             "@platforms//cpu:armv6-m": ["pico/pio/blink.cc"],
             # Same as host, for now
-            "//bzl/platforms:unittest": ["host/pio/blink.cc"],
+            "//bzl/constraints:unittest": ["host/pio/blink.cc"],
             "//conditions:default": ["host/pio/blink.cc"],
         },
     ),

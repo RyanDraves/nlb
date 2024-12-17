@@ -4,11 +4,6 @@ load("@pip//:requirements.bzl", "requirement")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:unittest.bzl", "cc_host_test", "cc_unittest")
 
-pico_btstack_make_gatt_header(
-    name = "nus",
-    src = "nus.gatt",
-)
-
 py_library(
     name = "ble",
     srcs = ["ble.py"],
@@ -16,36 +11,6 @@ py_library(
     deps = [
         requirement("bleak"),
     ],
-)
-
-cc_library(
-    name = "ble_cc",
-    srcs = select(
-        {
-            "@platforms//cpu:armv6-m": ["pico/ble.cc"],
-            "//conditions:default": [],
-        },
-    ),
-    hdrs = ["ble.hpp"],
-    visibility = ["//visibility:public"],
-    deps = select(
-        {
-            "@platforms//cpu:armv6-m": [
-                ":nus",
-                "@pico-sdk//src/common/pico_sync",
-                "@pico-sdk//src/rp2_common/pico_btstack",
-                "@pico-sdk//src/rp2_common/pico_cyw43_arch",
-            ],
-            "//conditions:default": [],
-        },
-    ),
-)
-
-cc_library(
-    name = "btstack_config",
-    hdrs = ["btstack_config.h"],
-    includes = ["."],  # Shorten the include path to what dependents expect
-    visibility = ["//visibility:public"],
 )
 
 py_library(
@@ -72,50 +37,95 @@ py_library(
     deps = [requirement("pyzmq")],
 )
 
+pico_btstack_make_gatt_header(
+    name = "nus",
+    src = "nus.gatt",
+)
+
+cc_library(
+    name = "btstack_config",
+    hdrs = ["btstack_config.h"],
+    includes = ["."],  # Shorten the include path to what dependents expect
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "transporter_cc",
     hdrs = ["transporter.hpp"],
     visibility = ["//visibility:public"],
 )
 
-cc_library(
-    name = "serial_cc",
-    srcs = select(
+alias(
+    name = "transport",
+    actual = select(
         {
-            "@platforms//cpu:armv6-m": ["pico/serial.cc"],
-            "//bzl/platforms:unittest": ["unittest/serial.cc"],
-            "//conditions:default": ["host/serial.cc"],
+            "//bzl/constraints:comms_protocol_ble_enabled": ":transport_ble",
+            "//bzl/constraints:comms_protocol_serial_enabled": ":transport_serial",
+            "//bzl/constraints:comms_protocol_zmq_enabled": ":transport_zmq",
+            "//bzl/constraints:comms_protocol_unittest_enabled": ":transport_unittest",
         },
     ),
-    hdrs = ["serial.hpp"],
     visibility = ["//visibility:public"],
-    deps = select(
-        {
-            "@platforms//cpu:armv6-m": [
-                "@pico-sdk//src/rp2_common/pico_cyw43_arch",
-                "@pico-sdk//src/rp2_common/pico_stdlib",
-            ],
-            "//bzl/platforms:unittest": [":transporter_cc"],
-            "//conditions:default": ["@cppzmq"],
-        },
-    ),
+)
+
+cc_library(
+    name = "transport_ble",
+    srcs = ["pico/ble.cc"],
+    hdrs = ["transport.hpp"],
+    # Keep this as generic as possible; let the alias handle flag-related constraints
+    target_compatible_with = ["@platforms//cpu:armv6-m"],
+    deps = [
+        ":nus",
+        "@pico-sdk//src/common/pico_sync",
+        "@pico-sdk//src/rp2_common/pico_btstack",
+        "@pico-sdk//src/rp2_common/pico_cyw43_arch",
+        "@pico-sdk//src/rp2_common/pico_stdlib",
+    ],
+)
+
+cc_library(
+    name = "transport_serial",
+    srcs = ["pico/serial.cc"],
+    hdrs = ["transport.hpp"],
+    target_compatible_with = ["@platforms//cpu:armv6-m"],
+    deps = [
+        "@pico-sdk//src/rp2_common/pico_cyw43_arch",
+        "@pico-sdk//src/rp2_common/pico_stdlib",
+    ],
+)
+
+cc_library(
+    name = "transport_zmq",
+    srcs = ["host/zmq.cc"],
+    hdrs = ["transport.hpp"],
+    deps = ["@cppzmq"],
+)
+
+cc_library(
+    name = "transport_unittest",
+    srcs = ["unittest/bent_pipe.cc"],
+    hdrs = ["transport.hpp"],
+    target_compatible_with = ["//bzl/constraints:unittest"],
+    deps = [
+        ":transporter_cc",
+    ],
 )
 
 cc_unittest(
-    name = "serial_cc_test",
-    srcs = ["unittest/serial_test.cc"],
+    name = "bent_pipe_test",
+    srcs = ["unittest/bent_pipe_test.cc"],
     visibility = ["//visibility:public"],
     deps = [
-        ":serial_cc",
+        ":transport_unittest",
     ],
 )
 
 cc_host_test(
-    name = "serial_host_test",
-    srcs = ["host/serial_test.cc"],
+    name = "zmq_test",
+    srcs = ["host/zmq_test.cc"],
     visibility = ["//visibility:public"],
     deps = [
-        ":serial_cc",
+        ":transport_zmq",
         "@cppzmq",
     ],
 )

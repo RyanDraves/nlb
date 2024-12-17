@@ -20,7 +20,7 @@ def feature_cc_library(name, build_setting):
     )
 
 def _impl(ctx):
-    out = ctx.actions.declare_file(ctx.attr.build_setting.label.name + ".hpp")
+    out = ctx.actions.declare_file(ctx.attr.build_setting.label.name.lower() + ".hpp")
 
     # Convert boolean flags to canonical integer values.
     value = ctx.attr.build_setting[BuildSettingInfo].value

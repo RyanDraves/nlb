@@ -1,4 +1,4 @@
-#include "emb/network/transport/serial.hpp"
+#include "emb/network/transport/transport.hpp"
 #include "emb/network/transport/transporter.hpp"
 
 #include <vector>
@@ -7,7 +7,9 @@ namespace emb {
 namespace network {
 namespace transport {
 
-struct Serial::SerialImpl {
+// Simple bent-pipe implementation for unit tests
+
+struct Transport::TransportImpl {
     std::vector<uint8_t> buffer_;
 
     void send(const std::span<uint8_t> &data) {
@@ -25,19 +27,19 @@ struct Serial::SerialImpl {
     }
 };
 
-Serial::Serial() : impl_(new SerialImpl) {}
+Transport::Transport() : impl_(new TransportImpl) {}
 
-Serial::~Serial() { delete impl_; }
+Transport::~Transport() { delete impl_; }
 
-void Serial::initialize() {}
+void Transport::initialize() {}
 
-void Serial::send(const std::span<uint8_t> &data) { impl_->send(data); }
+void Transport::send(const std::span<uint8_t> &data) { impl_->send(data); }
 
-std::span<uint8_t> Serial::receive(std::span<uint8_t> buffer) {
+std::span<uint8_t> Transport::receive(std::span<uint8_t> buffer) {
     return impl_->receive(buffer);
 }
 
-static_assert(TransporterLike<Serial>);
+static_assert(TransporterLike<Transport>);
 
 }  // namespace transport
 }  // namespace network

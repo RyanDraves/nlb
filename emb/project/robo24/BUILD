@@ -51,7 +51,7 @@ pico_project(
         ":robo24_cc",
         "//emb/network/node:node_cc",
         "//emb/network/serialize:bh_cobs_cc",
-        "//emb/network/transport:serial_cc",
+        "//emb/network/transport",
         "//emb/project/base:base_cc",
         "//emb/util:log",
     ],
