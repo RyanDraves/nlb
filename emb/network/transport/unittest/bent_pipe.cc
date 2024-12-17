@@ -1,4 +1,4 @@
-#include "emb/network/transport/transport.hpp"
+#include "emb/network/transport/bent_pipe.hpp"
 #include "emb/network/transport/transporter.hpp"
 
 #include <vector>
@@ -9,7 +9,7 @@ namespace transport {
 
 // Simple bent-pipe implementation for unit tests
 
-struct Transport::TransportImpl {
+struct BentPipe::BentPipeImpl {
     std::vector<uint8_t> buffer_;
 
     void send(const std::span<uint8_t> &data) {
@@ -27,19 +27,25 @@ struct Transport::TransportImpl {
     }
 };
 
-Transport::Transport() : impl_(new TransportImpl) {}
+BentPipe::BentPipe() : impl_(new BentPipeImpl) {}
 
-Transport::~Transport() { delete impl_; }
+BentPipe::~BentPipe() { delete impl_; }
 
-void Transport::initialize() {}
+void BentPipe::initialize() {
+    if (initialized_) {
+        return;
+    }
 
-void Transport::send(const std::span<uint8_t> &data) { impl_->send(data); }
+    initialized_ = true;
+}
 
-std::span<uint8_t> Transport::receive(std::span<uint8_t> buffer) {
+void BentPipe::send(const std::span<uint8_t> &data) { impl_->send(data); }
+
+std::span<uint8_t> BentPipe::receive(std::span<uint8_t> buffer) {
     return impl_->receive(buffer);
 }
 
-static_assert(TransporterLike<Transport>);
+static_assert(TransporterLike<BentPipe>);
 
 }  // namespace transport
 }  // namespace network

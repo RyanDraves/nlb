@@ -14,17 +14,19 @@ namespace emb {
 namespace network {
 namespace node {
 
+enum class TransportType : uint8_t { COMMS, LOGGING };
+
 // A generic server node
-template <serialize::SerializerLike S, transport::TransporterLike T,
-          class... Project>
+template <serialize::SerializerLike S, transport::TransporterLike C,
+          transport::TransporterLike L, class... Project>
 class Node {
   protected:
     constexpr static size_t kFrameHeader = 1;
 
   public:
-    Node(S &&serializer, T &&transporter, Project &&...projects)
-        : serializer_(std::forward<S>(serializer)),
-          transporter_(std::forward<T>(transporter)),
+    Node(S &&serializer, C &comms, L &logging, Project &&...projects)
+        : serializer_(std::forward<S>(serializer)), comms_transporter_(comms),
+          log_transporter_(logging),
           projects_(std::forward_as_tuple(std::forward<Project>(projects)...)) {
         // Register all the handlers
         std::apply(
@@ -35,8 +37,9 @@ class Node {
     }
 
     void initialize() {
-        // Initialize the transport layer
-        transporter_.initialize();
+        // Initialize the transport layers
+        comms_transporter_.initialize();
+        log_transporter_.initialize();
 
         // Initialize the serializer
         serializer_.initialize();
@@ -66,7 +69,7 @@ class Node {
             // Add back our + 1 offset
             auto framed = serializer_.frame(
                 std::span(tx_buffer_.data(), serialized.size() + 1));
-            transporter_.send(framed);
+            comms_transporter_.send(framed);
 
             // // Debug logic to echo the deframed message back
             // // Write `request_id` and `buffer` back into `tx_buffer_`
@@ -75,12 +78,13 @@ class Node {
             // tx_buffer_[S::kMaxOverhead] = request_id;
             // auto framed = serializer_.frame(std::span(
             //     tx_buffer_.data(), buffer.size() + S::kMaxOverhead + 1));
-            // transporter_.send(framed);
+            // comms_transporter_.send(framed);
         };
     }
 
     void receive() {
-        auto data = transporter_.receive({rx_buffer_.data(), S::kBufSize});
+        auto data =
+            comms_transporter_.receive({rx_buffer_.data(), S::kBufSize});
 
         if (data.empty()) {
             return;
@@ -103,10 +107,11 @@ class Node {
 
         // // Debug logic to echo the framed message back
         // rx_buffer_[data.size()] = 0;
-        // transporter_.send({rx_buffer_.data(), data.size() + 1});
+        // comms_transporter_.send({rx_buffer_.data(), data.size() + 1});
     }
 
-    template <typename Send> void publish(uint8_t request_id, const Send &msg) {
+    template <typename Send>
+    void publish(uint8_t request_id, const Send &msg, TransportType type) {
         // Encode the outgoing message;
         // offset by one to leave room for the message ID
         auto [serialized, frame_padding] = serializer_.serialize(
@@ -118,12 +123,17 @@ class Node {
         // Add back our + 1 offset
         auto framed = serializer_.frame(
             std::span(tx_buffer_.data(), serialized.size() + 1));
-        transporter_.send(framed);
+        if (type == TransportType::COMMS) {
+            comms_transporter_.send(framed);
+        } else {
+            log_transporter_.send(framed);
+        }
     }
 
   private:
     S serializer_;
-    T transporter_;
+    C &comms_transporter_;
+    L &log_transporter_;
 
     std::tuple<Project...> projects_;
 
@@ -131,9 +141,9 @@ class Node {
     std::unordered_map<uint8_t, std::function<void(std::span<uint8_t>)>>
         message_handlers_;
 
-    // A neat trick with COBS encoding is that we can write the encoded message
-    // in-place, provided that our data is <overhead_bytes> bytes into the
-    // buffer; we'll manipulate the buffer to make this true
+    // A neat trick with COBS encoding is that we can write the encoded
+    // message in-place, provided that our data is <overhead_bytes> bytes
+    // into the buffer; we'll manipulate the buffer to make this true
     std::array<uint8_t, S::kBufSize + S::kMaxOverhead> tx_buffer_;
 
     // We can write the decoded message in-place as well

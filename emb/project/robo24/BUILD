@@ -45,13 +45,14 @@ cc_library(
 )
 
 pico_project(
-    name = "robo24_pico",
     srcs = ["main.cc"],
+    names = ["robo24_pico"],
     deps = [
         ":robo24_cc",
         "//emb/network/node:node_cc",
         "//emb/network/serialize:bh_cobs_cc",
-        "//emb/network/transport",
+        "//emb/network/transport:comms_transport",
+        "//emb/network/transport:log_transport",
         "//emb/project/base:base_cc",
         "//emb/util:log",
     ],

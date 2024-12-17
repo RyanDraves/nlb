@@ -18,3 +18,14 @@ string_flag(
         "unittest",
     ],
 )
+
+string_flag(
+    name = "LOG_PROTOCOL",
+    build_setting_default = "zmq",
+    values = [
+        "ble",
+        "serial",
+        "zmq",
+        "unittest",
+    ],
+)

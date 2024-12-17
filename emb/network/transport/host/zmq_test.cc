@@ -4,7 +4,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "emb/network/transport/transport.hpp"
+#include "emb/network/transport/zmq.hpp"
 
 using namespace testing;
 
@@ -18,7 +18,7 @@ TEST(ZmqTest, TestBasic) {
     zmq::socket_t client(context, zmq::socket_type::dealer);
     client.connect("ipc://unittest");
 
-    Transport transport;
+    Zmq &transport = Zmq::getInstance();
     transport.initialize();
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
 

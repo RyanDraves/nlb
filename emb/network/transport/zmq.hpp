@@ -7,10 +7,12 @@ namespace emb {
 namespace network {
 namespace transport {
 
-class Transport {
+class Zmq {
   public:
-    Transport();
-    ~Transport();
+    static Zmq &getInstance() {
+        static Zmq instance;
+        return instance;
+    }
 
     void initialize();
 
@@ -19,8 +21,16 @@ class Transport {
     std::span<uint8_t> receive(std::span<uint8_t> buffer);
 
   private:
-    struct TransportImpl;
-    TransportImpl *impl_;
+    Zmq();
+    ~Zmq();
+
+    Zmq(const Zmq &) = delete;
+    Zmq &operator=(const Zmq &) = delete;
+
+    struct ZmqImpl;
+    ZmqImpl *impl_;
+
+    bool initialized_ = false;
 };
 
 }  // namespace transport

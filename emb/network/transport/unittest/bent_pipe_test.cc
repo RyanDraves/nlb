@@ -3,7 +3,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "emb/network/transport/transport.hpp"
+#include "emb/network/transport/bent_pipe.hpp"
 
 using namespace testing;
 
@@ -12,7 +12,7 @@ namespace network {
 namespace transport {
 
 TEST(BentPipeTest, TestBasic) {
-    Transport transport;
+    BentPipe &transport = BentPipe::getInstance();
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
     transport.send(data);
 

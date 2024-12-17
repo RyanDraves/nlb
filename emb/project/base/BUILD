@@ -55,8 +55,15 @@ cc_library(
 )
 
 pico_project(
-    name = "base_pico",
     srcs = ["main.cc"],
+    names = [
+        "base_pico",
+        "base_pico_w",
+    ],
+    platforms = [
+        "//bzl/platforms:rp2040",
+        "//bzl/platforms:rp2040_w",
+    ],
     visibility = [
         ":__subpackages__",
         "//emb/project/bootloader:__pkg__",
@@ -65,26 +72,8 @@ pico_project(
         ":base_cc",
         "//emb/network/node:node_cc",
         "//emb/network/serialize:bh_cobs_cc",
-        "//emb/network/transport",
-        "//emb/util:log",
-    ],
-)
-
-# TODO: Just make `pico_project` accept multiple platforms or more
-# flexibly pick the transport layer that it's compiled against.
-pico_project(
-    name = "base_pico_w",
-    srcs = ["main.cc"],
-    platform = "//bzl/platforms:rp2040_w",
-    visibility = [
-        ":__subpackages__",
-        "//emb/project/bootloader:__pkg__",
-    ],
-    deps = [
-        ":base_cc",
-        "//emb/network/node:node_cc",
-        "//emb/network/serialize:bh_cobs_cc",
-        "//emb/network/transport",
+        "//emb/network/transport:comms_transport",
+        "//emb/network/transport:log_transport",
         "//emb/util:log",
     ],
 )

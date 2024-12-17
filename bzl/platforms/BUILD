@@ -23,6 +23,7 @@ platform(
         "--@pico-sdk//bazel/config:PICO_STDIO_SEMIHOSTING=False",
         "--//bzl/configs:PIO_BLINK=True",
         "--//bzl/configs:COMMS_PROTOCOL=serial",
+        "--//bzl/configs:LOG_PROTOCOL=serial",
     ],
     parents = ["@pico-sdk//bazel/platform:rp2040"],
 )
@@ -39,6 +40,7 @@ platform(
         # See https://github.com/raspberrypi/pico-sdk/issues/2139
         "--@pico-sdk//bazel/config:PICO_MULTICORE_ENABLED=False",
         "--//bzl/configs:COMMS_PROTOCOL=ble",
+        "--//bzl/configs:LOG_PROTOCOL=serial",
     ],
     parents = ["@pico-sdk//bazel/platform:rp2040"],
 )

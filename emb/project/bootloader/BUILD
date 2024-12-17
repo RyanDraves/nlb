@@ -19,9 +19,9 @@ buffham_py_write(
 )
 
 pico_project(
-    name = "bootloader_pico",
     srcs = ["main.cc"],
     linker_script = ":bootloader_linker_script",
+    names = ["bootloader_pico"],
     deps = [
         ":bootloader_bh_cc",
         "//emb/project/base:base_bh_cc",

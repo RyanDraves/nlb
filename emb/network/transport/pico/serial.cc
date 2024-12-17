@@ -1,4 +1,4 @@
-#include "emb/network/transport/transport.hpp"
+#include "emb/network/transport/serial.hpp"
 #include "pico/stdlib.h"
 
 #include <cstdio>
@@ -7,21 +7,27 @@ namespace emb {
 namespace network {
 namespace transport {
 
-struct Transport::TransportImpl {
+struct Serial::SerialImpl {
     uint16_t rx_size = 0;
 };
 
-Transport::Transport() : impl_(new TransportImpl) {}
+Serial::Serial() : impl_(new SerialImpl) {}
 
-Transport::~Transport() { delete impl_; }
+Serial::~Serial() { delete impl_; }
 
-void Transport::initialize() {
+void Serial::initialize() {
+    if (initialized_) {
+        return;
+    }
+
     // Initialize the serial port
     stdio_init_all();
     stdio_set_translate_crlf(&stdio_usb, false);
+
+    initialized_ = true;
 }
 
-void Transport::send(const std::span<uint8_t> &data) {
+void Serial::send(const std::span<uint8_t> &data) {
     // Send the message over the wire
     //
     // `stdout` is buffered on newlines, so we need to use `stderr` to
@@ -29,7 +35,7 @@ void Transport::send(const std::span<uint8_t> &data) {
     fwrite(data.data(), 1, data.size(), stderr);
 }
 
-std::span<uint8_t> Transport::receive(std::span<uint8_t> buffer) {
+std::span<uint8_t> Serial::receive(std::span<uint8_t> buffer) {
     int16_t rc = getchar_timeout_us(10'000);
     while (rc != PICO_ERROR_TIMEOUT && impl_->rx_size < buffer.size()) {
         buffer[impl_->rx_size++] = rc;

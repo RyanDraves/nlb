@@ -1,4 +1,4 @@
-#include "emb/network/transport/transport.hpp"
+#include "emb/network/transport/zmq.hpp"
 
 #include "zmq.hpp"
 #include <vector>
@@ -7,13 +7,14 @@ namespace emb {
 namespace network {
 namespace transport {
 
-struct Transport::TransportImpl {
+struct Zmq::ZmqImpl {
     zmq::context_t context;
     zmq::socket_t socket;
 
-    TransportImpl() {}
+    ZmqImpl() {}
 
     void initialize() {
+
         // Create a ZMQ context
         context = zmq::context_t(1);
 
@@ -49,15 +50,21 @@ struct Transport::TransportImpl {
     }
 };
 
-Transport::Transport() : impl_(new TransportImpl) {}
+Zmq::Zmq() : impl_(new ZmqImpl) {}
 
-Transport::~Transport() { delete impl_; }
+Zmq::~Zmq() { delete impl_; }
 
-void Transport::initialize() { impl_->initialize(); }
+void Zmq::initialize() {
+    if (initialized_) {
+        return;
+    }
+    impl_->initialize();
+    initialized_ = true;
+}
 
-void Transport::send(const std::span<uint8_t> &data) { impl_->send(data); }
+void Zmq::send(const std::span<uint8_t> &data) { impl_->send(data); }
 
-std::span<uint8_t> Transport::receive(std::span<uint8_t> buffer) {
+std::span<uint8_t> Zmq::receive(std::span<uint8_t> buffer) {
     return impl_->receive(buffer);
 }
 

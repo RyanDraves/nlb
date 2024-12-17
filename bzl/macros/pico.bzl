@@ -36,7 +36,7 @@ def _pico_elf_and_bin(name, binary, platform, linker_script, **kwargs):
         **kwargs
     )
 
-def pico_project(name, srcs, deps, platform = "//bzl/platforms:rp2040", linker_script = "//emb/project/bootloader:application_linker_script", **kwargs):
+def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], linker_script = "//emb/project/bootloader:application_linker_script", **kwargs):
     """Compile a Pico project
 
     Produces a host binary, an ELF file, a UF2 file, and a bin file.
@@ -47,49 +47,50 @@ def pico_project(name, srcs, deps, platform = "//bzl/platforms:rp2040", linker_s
     ```
 
     Args:
-        name: The name of the project
+        names: The names of the project (one name per platform)
         srcs: The source files
         deps: The dependencies
-        platform: The Pico platform to build for
+        platforms: The Pico platform to build for
         linker_script: The linker script to use
         **kwargs: Additional arguments to pass to binary targets
     """
-    name = name.replace("_pico", "")
+    for name, platform in zip(names, platforms):
+        name = name.replace("_pico", "")
 
-    cc_binary(
-        name = name,
-        srcs = srcs,
-        deps = deps,
-        **kwargs
-    )
+        cc_binary(
+            name = name,
+            srcs = srcs,
+            deps = deps,
+            **kwargs
+        )
 
-    _pico_elf_and_bin(name, name, platform, linker_script, **kwargs)
+        _pico_elf_and_bin(name, name, platform, linker_script, **kwargs)
 
-    # Create an additional binary without the bootloader in the linker script
-    _pico_elf_and_bin(
-        name + "_no_bootloader",
-        name,
-        platform,
-        "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
-        tags = ["manual"],
-        **kwargs
-    )
+        # Create an additional binary without the bootloader in the linker script
+        _pico_elf_and_bin(
+            name + "_no_bootloader",
+            name,
+            platform,
+            "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
+            tags = ["manual"],
+            **kwargs
+        )
 
-    # Generate a UF2 file from the ELF file
-    # Adapted from https://github.com/raspberrypi/pico-sdk/blob/efe2103f9b28458a1615ff096054479743ade236/tools/uf2_aspect.bzl
-    native.genrule(
-        name = name + "_uf2",
-        srcs = [name + ".elf"],
-        outs = [name + ".uf2"],
-        cmd = "$(execpath @picotool//:picotool) uf2 convert --quiet -t elf $(location {}.elf) $(location {}.uf2)".format(name, name),
-        tools = ["@picotool//:picotool"],
-    )
+        # Generate a UF2 file from the ELF file
+        # Adapted from https://github.com/raspberrypi/pico-sdk/blob/efe2103f9b28458a1615ff096054479743ade236/tools/uf2_aspect.bzl
+        native.genrule(
+            name = name + "_uf2",
+            srcs = [name + ".elf"],
+            outs = [name + ".uf2"],
+            cmd = "$(execpath @picotool//:picotool) uf2 convert --quiet -t elf $(location {}.elf) $(location {}.uf2)".format(name, name),
+            tools = ["@picotool//:picotool"],
+        )
 
-    # Add a target to flash the binary
-    flash(
-        name = name + "_flash",
-        binary = name + ".bin",
-    )
+        # Add a target to flash the binary
+        flash(
+            name = name + "_flash",
+            binary = name + ".bin",
+        )
 
 def pio_cc_library(name, pio, hdrs = [], **kwargs):
     """Compile a PIO C++ library

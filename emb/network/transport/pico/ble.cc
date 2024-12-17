@@ -1,5 +1,5 @@
+#include "emb/network/transport/ble.hpp"
 #include "emb/network/transport/nus_gatt_generated/nus.h"
-#include "emb/network/transport/transport.hpp"
 
 #include <functional>
 
@@ -215,15 +215,19 @@ static void nordic_can_send(void *context) {
 }
 }  // namespace
 
-// Can't use the actual `Transport::TransportImpl` because we need to bind
+// Can't use the actual `Ble::BleImpl` because we need to bind
 // callbacks to raw function pointers, hence the namespaced `BleImpl` struct.
-struct Transport::TransportImpl {};
+struct Ble::BleImpl {};
 
-Transport::Transport() : impl_(nullptr) {}
+Ble::Ble() : impl_(nullptr) {}
 
-Transport::~Transport() {}
+Ble::~Ble() {}
 
-void Transport::initialize() {
+void Ble::initialize() {
+    if (initialized_) {
+        return;
+    }
+
     // Initialize the BLE implementation
     g_impl.initialize();
 
@@ -269,11 +273,13 @@ void Transport::initialize() {
 
     // Turn on bluetooth
     hci_power_control(HCI_POWER_ON);
+
+    initialized_ = true;
 }
 
-void Transport::send(const std::span<uint8_t> &data) { g_impl.send(data); }
+void Ble::send(const std::span<uint8_t> &data) { g_impl.send(data); }
 
-std::span<uint8_t> Transport::receive(std::span<uint8_t> buffer) {
+std::span<uint8_t> Ble::receive(std::span<uint8_t> buffer) {
     return g_impl.receive(buffer);
 }
 
