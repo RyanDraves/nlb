@@ -1,5 +1,4 @@
 def _patch_impl(name, visibility, src, out_file, patch, **kwargs):
-    """Apply patches to a file."""
     native.genrule(
         name = name,
         srcs = [src, patch],
@@ -13,6 +12,7 @@ def _patch_impl(name, visibility, src, out_file, patch, **kwargs):
 
 patch = macro(
     inherit_attrs = native.genrule,
+    doc = "Apply patches to a file",
     implementation = _patch_impl,
     attrs = {
         "src": attr.label(

@@ -100,6 +100,7 @@ def buffham_py_write(name, visibility = ["//visibility:public"]):
 
 buffham = macro(
     implementation = _buffham_impl,
+    doc = "Generate Buffham libraries from Buffham files",
     attrs = {
         "src": attr.label(
             mandatory = True,
@@ -127,6 +128,7 @@ buffham = macro(
 
 buffham_template = macro(
     inherit_attrs = native.genrule,
+    doc = "Generate a template from a Buffham file and a source file",
     implementation = _buffham_template_impl,
     attrs = {
         "bh": attr.label(
