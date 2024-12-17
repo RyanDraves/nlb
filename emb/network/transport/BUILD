@@ -67,7 +67,7 @@ cc_library(
     ],
 )
 
-# This alias will automatically resolve to the transport layer picked by the
+# This library will automatically resolve to the transport layer picked by the
 # `//bzl/configs:LOG_PROTOCOL` flag
 cc_library(
     name = "log_transport",
@@ -78,6 +78,7 @@ cc_library(
     ],
 )
 
+# Magically pick the correct library
 alias(
     name = "comms_transport_lib",
     actual = select(
@@ -155,6 +156,7 @@ write_file(
         ],
 )
 
+# Back to sanity; these are the real libraries implementing the transport layers
 cc_library(
     name = "transport_ble",
     srcs = ["pico/ble.cc"],
