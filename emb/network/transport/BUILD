@@ -1,9 +1,8 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@pico-sdk//bazel:pico_btstack_make_gatt_header.bzl", "pico_btstack_make_gatt_header")
 load("@pip//:requirements.bzl", "requirement")
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("//bzl/macros:unittest.bzl", "cc_host_test", "cc_unittest")
+load("//bzl/macros:cc.bzl", "cc_alias_library", "cc_host_test", "cc_unittest")
 
 py_library(
     name = "ble",
@@ -58,30 +57,30 @@ cc_library(
 
 # This library will automatically resolve to the transport layer picked by the
 # `//bzl/configs:COMMS_PROTOCOL` flag
-cc_library(
+cc_alias_library(
     name = "comms_transport",
-    hdrs = [":comms_transport_hpp"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":comms_transport_lib",
-    ],
-)
-
-# This library will automatically resolve to the transport layer picked by the
-# `//bzl/configs:LOG_PROTOCOL` flag
-cc_library(
-    name = "log_transport",
-    hdrs = [":log_transport_hpp"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":log_transport_lib",
-    ],
-)
-
-# Magically pick the correct library
-alias(
-    name = "comms_transport_lib",
-    actual = select(
+    alias_classname = "CommsTransport",
+    include_and_classname = select(
+        {
+            "//bzl/constraints:comms_protocol_ble_enabled": {
+                "{include_path}": "emb/network/transport/ble.hpp",
+                "{dep_classname}": "Ble",
+            },
+            "//bzl/constraints:comms_protocol_serial_enabled": {
+                "{include_path}": "emb/network/transport/serial.hpp",
+                "{dep_classname}": "Serial",
+            },
+            "//bzl/constraints:comms_protocol_zmq_enabled": {
+                "{include_path}": "emb/network/transport/zmq.hpp",
+                "{dep_classname}": "Zmq",
+            },
+            "//bzl/constraints:comms_protocol_unittest_enabled": {
+                "{include_path}": "emb/network/transport/bent_pipe.hpp",
+                "{dep_classname}": "BentPipe",
+            },
+        },
+    ),
+    lib_select = select(
         {
             "//bzl/constraints:comms_protocol_ble_enabled": ":transport_ble",
             "//bzl/constraints:comms_protocol_serial_enabled": ":transport_serial",
@@ -89,11 +88,35 @@ alias(
             "//bzl/constraints:comms_protocol_unittest_enabled": ":transport_unittest",
         },
     ),
+    visibility = ["//visibility:public"],
 )
 
-alias(
-    name = "log_transport_lib",
-    actual = select(
+# This library will automatically resolve to the transport layer picked by the
+# `//bzl/configs:LOG_PROTOCOL` flag
+cc_alias_library(
+    name = "log_transport",
+    alias_classname = "LogTransport",
+    include_and_classname = select(
+        {
+            "//bzl/constraints:log_protocol_ble_enabled": {
+                "{include_path}": "emb/network/transport/ble.hpp",
+                "{dep_classname}": "Ble",
+            },
+            "//bzl/constraints:log_protocol_serial_enabled": {
+                "{include_path}": "emb/network/transport/serial.hpp",
+                "{dep_classname}": "Serial",
+            },
+            "//bzl/constraints:log_protocol_zmq_enabled": {
+                "{include_path}": "emb/network/transport/zmq.hpp",
+                "{dep_classname}": "Zmq",
+            },
+            "//bzl/constraints:log_protocol_unittest_enabled": {
+                "{include_path}": "emb/network/transport/bent_pipe.hpp",
+                "{dep_classname}": "BentPipe",
+            },
+        },
+    ),
+    lib_select = select(
         {
             "//bzl/constraints:log_protocol_ble_enabled": ":transport_ble",
             "//bzl/constraints:log_protocol_serial_enabled": ":transport_serial",
@@ -101,62 +124,10 @@ alias(
             "//bzl/constraints:log_protocol_unittest_enabled": ":transport_unittest",
         },
     ),
+    visibility = ["//visibility:public"],
 )
 
-# There's probably a better way to handle this, but it suffices for now.
-# This rule generates a header file that includes the correct transport layer
-# and aliases it to `CommsTransport`.
-write_file(
-    name = "comms_transport_hpp",
-    out = "comms_transport.hpp",
-    content =
-        select(
-            {
-                "//bzl/constraints:comms_protocol_ble_enabled": ["#include \"emb/network/transport/ble.hpp\""],
-                "//bzl/constraints:comms_protocol_serial_enabled": ["#include \"emb/network/transport/serial.hpp\""],
-                "//bzl/constraints:comms_protocol_zmq_enabled": ["#include \"emb/network/transport/zmq.hpp\""],
-                "//bzl/constraints:comms_protocol_unittest_enabled": ["#include \"emb/network/transport/bent_pipe.hpp\""],
-            },
-        ) + [
-            "namespace emb { namespace network { namespace transport {",
-        ] + select(
-            {
-                "//bzl/constraints:comms_protocol_ble_enabled": ["using CommsTransport = Ble;"],
-                "//bzl/constraints:comms_protocol_serial_enabled": ["using CommsTransport = Serial;"],
-                "//bzl/constraints:comms_protocol_zmq_enabled": ["using CommsTransport = Zmq;"],
-                "//bzl/constraints:comms_protocol_unittest_enabled": ["using CommsTransport = BentPipe;"],
-            },
-        ) + [
-            "} } }",
-        ],
-)
-
-write_file(
-    name = "log_transport_hpp",
-    out = "log_transport.hpp",
-    content =
-        select(
-            {
-                "//bzl/constraints:log_protocol_ble_enabled": ["#include \"emb/network/transport/ble.hpp\""],
-                "//bzl/constraints:log_protocol_serial_enabled": ["#include \"emb/network/transport/serial.hpp\""],
-                "//bzl/constraints:log_protocol_zmq_enabled": ["#include \"emb/network/transport/zmq.hpp\""],
-                "//bzl/constraints:log_protocol_unittest_enabled": ["#include \"emb/network/transport/bent_pipe.hpp\""],
-            },
-        ) + [
-            "namespace emb { namespace network { namespace transport {",
-        ] + select(
-            {
-                "//bzl/constraints:log_protocol_ble_enabled": ["using LogTransport = Ble;"],
-                "//bzl/constraints:log_protocol_serial_enabled": ["using LogTransport = Serial;"],
-                "//bzl/constraints:log_protocol_zmq_enabled": ["using LogTransport = Zmq;"],
-                "//bzl/constraints:log_protocol_unittest_enabled": ["using LogTransport = BentPipe;"],
-            },
-        ) + [
-            "} } }",
-        ],
-)
-
-# Back to sanity; these are the real libraries implementing the transport layers
+# These are the real libraries implementing the transport layers
 cc_library(
     name = "transport_ble",
     srcs = ["pico/ble.cc"],
