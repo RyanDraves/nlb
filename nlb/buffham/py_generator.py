@@ -76,6 +76,8 @@ def generate_constant(constant: parser.Constant) -> str:
     value = constant.value
     for ref, name in references.items():
         value = value.replace(f'{{{ref}}}', name)
+    if constant.type is parser.FieldType.STRING:
+        value = f"'{value}'"
     definition += f'{constant.name.upper()} = {value}'
 
     if constant.inline_comment:

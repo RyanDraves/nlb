@@ -9,6 +9,8 @@ from bleak import exc
 from bleak.backends import characteristic
 from bleak.backends import device
 
+from emb.network.transport import nus_bh
+
 
 class Ble(abc.ABC):
     ADDRESS: ClassVar[str]
@@ -108,6 +110,6 @@ class Ble(abc.ABC):
 
 class PicoBle(Ble):
     ADDRESS = 'D8:3A:DD:73:7F:C4'
-    WRITE_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'
-    NOTIFY_CHAR_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'
+    WRITE_CHAR_UUID = nus_bh.WRITE_CHARACTERISTIC_UUID
+    NOTIFY_CHAR_UUID = nus_bh.NOTIFY_CHARACTERISTIC_UUID
     DEVICE_NAME = 'Pico'

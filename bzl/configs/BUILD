@@ -8,6 +8,7 @@ bool_flag(
     build_setting_default = False,
 )
 
+# Protocol used for request/reply communication
 string_flag(
     name = "COMMS_PROTOCOL",
     build_setting_default = "zmq",
@@ -19,6 +20,7 @@ string_flag(
     ],
 )
 
+# Protocol used for logging
 string_flag(
     name = "LOG_PROTOCOL",
     build_setting_default = "zmq",

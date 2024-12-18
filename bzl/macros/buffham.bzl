@@ -118,10 +118,14 @@ buffham = macro(
         "py": attr.bool(
             default = False,
             doc = "Whether to generate Python libraries.",
+            # Prevent receiving a `select` object on the input
+            configurable = False,
         ),
         "cc": attr.bool(
             default = False,
             doc = "Whether to generate C++ libraries.",
+            # Prevent receiving a `select` object on the input
+            configurable = False,
         ),
     },
 )

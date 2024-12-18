@@ -2,6 +2,7 @@ load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pico-sdk//bazel:pico_btstack_make_gatt_header.bzl", "pico_btstack_make_gatt_header")
 load("@pip//:requirements.bzl", "requirement")
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
 load("//bzl/macros:cc.bzl", "cc_alias_library", "cc_host_test", "cc_unittest")
 
 py_library(
@@ -10,6 +11,7 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         requirement("bleak"),
+        ":nus_bh_py",
     ],
 )
 
@@ -37,9 +39,27 @@ py_library(
     deps = [requirement("pyzmq")],
 )
 
+buffham(
+    name = "nus_bh",
+    src = "nus.bh",
+    py = True,
+    visibility = ["//visibility:public"],
+)
+
+buffham_py_write(
+    name = "nus_bh_py_write",
+)
+
+buffham_template(
+    name = "nus_bh_gatt",
+    bh = ":nus_bh",
+    out_file = "nus.gatt",
+    template = "nus_template.gatt",
+)
+
 pico_btstack_make_gatt_header(
     name = "nus",
-    src = "nus.gatt",
+    src = ":nus_bh_gatt",
 )
 
 cc_library(
@@ -139,7 +159,6 @@ cc_library(
         "@pico-sdk//src/common/pico_sync",
         "@pico-sdk//src/rp2_common/pico_btstack",
         "@pico-sdk//src/rp2_common/pico_cyw43_arch",
-        "@pico-sdk//src/rp2_common/pico_stdlib",
     ],
 )
 

@@ -3,7 +3,8 @@ import nlb.buffham.testdata.other;
 # This is a constant in the global scope
 constant uint8_t my_constant = 4;
 
-constant string constant_string = "Hello, world!";  # constants can have inline comments
+# Constants can be strings as well; they're interpreted with bare words
+constant string constant_string = Hello, world!;  # constants can have inline comments
 
 # Constants may reference other constants with {brackets}
 constant uint16_t composed_constant = 2 + {my_constant} + {nlb.buffham.testdata.other.other_constant};

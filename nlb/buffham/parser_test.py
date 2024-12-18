@@ -407,8 +407,10 @@ class TestParserSample(unittest.TestCase):
                     'constant_string',
                     'sample',
                     parser.FieldType.STRING,
-                    '"Hello, world!"',
-                    [],
+                    'Hello, world!',
+                    [
+                        " Constants can be strings as well; they're interpreted with bare words"
+                    ],
                     ' constants can have inline comments',
                 ),
                 parser.Constant(

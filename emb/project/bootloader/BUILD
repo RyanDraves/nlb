@@ -111,53 +111,35 @@ cc_library(
     visibility = [":__subpackages__"],
 )
 
-py_binary(
-    name = "provision_pico",
-    srcs = ["provision.py"],
-    args = [
-        "$(location bootloader.bin)",
-        "$(location //emb/project/base:base.bin)",
-        "$(location @picotool)",
-    ],
-    data = [
-        "bootloader.bin",
-        "//emb/project/base:base.bin",
-        "@picotool",
-    ],
-    main = "provision.py",
-    visibility = ["//visibility:private"],
-    deps = [
-        requirement("rich-click"),
-        ":bootloader_bh_py",
-        "//emb/network/transport:usb",
-        "//emb/project/base:base_bh_py",
-        "//emb/project/base:client",
-        "//nlb/util:console_utils",
-    ],
-)
+provisions = [
+    ("pico", "//emb/project/base:base.bin"),
+    ("pico_w", "//emb/project/base:base_w.bin"),
+]
 
-# TODO: Macro this
-py_binary(
-    name = "provision_pico_w",
-    srcs = ["provision.py"],
-    args = [
-        "$(location bootloader.bin)",
-        "$(location //emb/project/base:base_w.bin)",
-        "$(location @picotool)",
-    ],
-    data = [
-        "bootloader.bin",
-        "//emb/project/base:base_w.bin",
-        "@picotool",
-    ],
-    main = "provision.py",
-    visibility = ["//visibility:private"],
-    deps = [
-        requirement("rich-click"),
-        ":bootloader_bh_py",
-        "//emb/network/transport:usb",
-        "//emb/project/base:base_bh_py",
-        "//emb/project/base:client",
-        "//nlb/util:console_utils",
-    ],
-)
+[
+    py_binary(
+        name = "provision_" + name,
+        srcs = ["provision.py"],
+        args = [
+            "$(location bootloader.bin)",
+            "$(location {0})".format(bin),
+            "$(location @picotool)",
+        ],
+        data = [
+            "bootloader.bin",
+            bin,
+            "@picotool",
+        ],
+        main = "provision.py",
+        visibility = ["//visibility:private"],
+        deps = [
+            requirement("rich-click"),
+            ":bootloader_bh_py",
+            "//emb/network/transport:usb",
+            "//emb/project/base:base_bh_py",
+            "//emb/project/base:client",
+            "//nlb/util:console_utils",
+        ],
+    )
+    for name, bin in provisions
+]
