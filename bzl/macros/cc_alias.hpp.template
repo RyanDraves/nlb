@@ -1,0 +1,6 @@
+#pragma once
+#include "{include_path}"
+
+{begin_namespace}
+using {alias_classname} = {dep_classname};
+{end_namespace}

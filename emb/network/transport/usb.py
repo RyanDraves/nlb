@@ -63,7 +63,7 @@ class Serial(abc.ABC):
         self._started = False
 
     def send(self, data: bytes) -> None:
-        logging.debug('Tx: ' + ' '.join(f'{byte:02x}' for byte in data))
+        logging.debug('Serial Tx: ' + ' '.join(f'{byte:02x}' for byte in data))
         self._serial.write(data)
 
     def register_read_callback(self, callback: Callable[[bytes], None]) -> None:
@@ -75,7 +75,9 @@ class Serial(abc.ABC):
             while True:
                 buffer += self._serial.read_until(self._stop_byte, size=255)
                 if buffer.endswith(self._stop_byte):
-                    logging.debug('Rx: ' + ' '.join(f'{byte:02x}' for byte in buffer))
+                    logging.debug(
+                        'Serial Rx: ' + ' '.join(f'{byte:02x}' for byte in buffer)
+                    )
                     self._read_callback(buffer)
                     buffer = bytes()
         except:

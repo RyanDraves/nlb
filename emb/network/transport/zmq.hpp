@@ -7,10 +7,10 @@ namespace emb {
 namespace network {
 namespace transport {
 
-class Serial {
+class Zmq {
   public:
-    static Serial &getInstance() {
-        static Serial instance;
+    static Zmq &getInstance() {
+        static Zmq instance;
         return instance;
     }
 
@@ -21,14 +21,14 @@ class Serial {
     std::span<uint8_t> receive(std::span<uint8_t> buffer);
 
   private:
-    Serial();
-    ~Serial();
+    Zmq();
+    ~Zmq();
 
-    Serial(const Serial &) = delete;
-    Serial &operator=(const Serial &) = delete;
+    Zmq(const Zmq &) = delete;
+    Zmq &operator=(const Zmq &) = delete;
 
-    struct SerialImpl;
-    SerialImpl *impl_;
+    struct ZmqImpl;
+    ZmqImpl *impl_;
 
     bool initialized_ = false;
 };

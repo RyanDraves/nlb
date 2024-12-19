@@ -3,6 +3,7 @@
 #include <optional>
 
 #include "emb/project/base/base_bh.hpp"
+#include "emb/project/base/pio_blink.hpp"
 #include "emb/project/bootloader/bootloader_bh.hpp"
 #include "emb/util/log.hpp"
 #include "emb/yaal/flash.hpp"
@@ -32,8 +33,10 @@ void Base::initialize() {
     auto buffer = yaal::flash_sector_read(0);
     impl_->system = bootloader::SystemFlashPage::deserialize(buffer).first;
 
+#if PIO_BLINK
     impl_->led_blink_pio.emplace(1 /* frequency */);
     impl_->led_blink_pio->run();
+#endif
     LOG << "Booted!" << LOG_END;
 }
 

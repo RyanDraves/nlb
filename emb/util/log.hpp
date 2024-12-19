@@ -56,10 +56,6 @@ class Logger {
         return instance;
     }
 
-    // Delete copy constructor and assignment operator
-    Logger(const Logger &) = delete;
-    Logger &operator=(const Logger &) = delete;
-
     void set_publish_function(
         const std::function<
             void(uint8_t, const emb::project::base::LogMessage &)> &func) {
@@ -88,6 +84,10 @@ class Logger {
         : buffer_(std::basic_string<char, std::char_traits<char>,
                                     StaticAllocator<char>>()) {}
     ~Logger() = default;
+
+    // Delete copy constructor and assignment operator
+    Logger(const Logger &) = delete;
+    Logger &operator=(const Logger &) = delete;
 
     // By the power of AI, we can make the buffer static and
     // generate comments about how we're using a static buffer

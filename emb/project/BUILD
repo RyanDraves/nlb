@@ -28,7 +28,9 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         ":client",
+        "//emb/network/transport:ble",
         "//emb/network/transport:tcp",
+        "//emb/network/transport:transporter",
         "//emb/network/transport:usb",
         "//nlb/util:click_utils",
         requirement("rich-click"),

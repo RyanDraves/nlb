@@ -1,6 +1,7 @@
 # - bazel run //:requirements.update
 # - bazel run //:venv venv
 black>=24.4.2,<25
+bleak>=0.22.3,<1
 inquirerpy>=0.3.4,<1
 ipython>=8.27.0,<9
 isort>=5.13.2,<6

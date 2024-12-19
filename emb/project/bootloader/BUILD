@@ -1,5 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary")
 load("@pip//:requirements.bzl", "requirement")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
 load("//bzl/macros:patch.bzl", "patch")
 load("//bzl/macros:pico.bzl", "pico_project")
@@ -18,13 +19,11 @@ buffham_py_write(
 )
 
 pico_project(
-    name = "bootloader_pico",
     srcs = ["main.cc"],
     linker_script = ":bootloader_linker_script",
+    names = ["bootloader_pico"],
     deps = [
         ":bootloader_bh_cc",
-        "//emb/network/serialize:bh_cobs_cc",
-        "//emb/network/transport:serial_cc",
         "//emb/project/base:base_bh_cc",
         "//emb/yaal:flash",
         "@pico-sdk//src/rp2_common:hardware_structs",
@@ -112,27 +111,35 @@ cc_library(
     visibility = [":__subpackages__"],
 )
 
-py_binary(
-    name = "provision",
-    srcs = ["provision.py"],
-    args = [
-        "$(location bootloader.bin)",
-        "$(location //emb/project/base:base.bin)",
-        "$(location @picotool)",
-    ],
-    data = [
-        "bootloader.bin",
-        "//emb/project/base:base.bin",
-        "@picotool",
-    ],
-    main = "provision.py",
-    visibility = ["//visibility:private"],
-    deps = [
-        requirement("rich-click"),
-        ":bootloader_bh_py",
-        "//emb/network/transport:usb",
-        "//emb/project/base:base_bh_py",
-        "//emb/project/base:client",
-        "//nlb/util:console_utils",
-    ],
-)
+provisions = [
+    ("pico", "//emb/project/base:base.bin"),
+    ("pico_w", "//emb/project/base:base_w.bin"),
+]
+
+[
+    py_binary(
+        name = "provision_" + name,
+        srcs = ["provision.py"],
+        args = [
+            "$(location bootloader.bin)",
+            "$(location {0})".format(bin),
+            "$(location @picotool)",
+        ],
+        data = [
+            "bootloader.bin",
+            bin,
+            "@picotool",
+        ],
+        main = "provision.py",
+        visibility = ["//visibility:private"],
+        deps = [
+            requirement("rich-click"),
+            ":bootloader_bh_py",
+            "//emb/network/transport:usb",
+            "//emb/project/base:base_bh_py",
+            "//emb/project/base:client",
+            "//nlb/util:console_utils",
+        ],
+    )
+    for name, bin in provisions
+]

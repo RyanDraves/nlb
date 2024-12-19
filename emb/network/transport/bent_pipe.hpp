@@ -7,10 +7,10 @@ namespace emb {
 namespace network {
 namespace transport {
 
-class Serial {
+class BentPipe {
   public:
-    static Serial &getInstance() {
-        static Serial instance;
+    static BentPipe &getInstance() {
+        static BentPipe instance;
         return instance;
     }
 
@@ -21,14 +21,14 @@ class Serial {
     std::span<uint8_t> receive(std::span<uint8_t> buffer);
 
   private:
-    Serial();
-    ~Serial();
+    BentPipe();
+    ~BentPipe();
 
-    Serial(const Serial &) = delete;
-    Serial &operator=(const Serial &) = delete;
+    BentPipe(const BentPipe &) = delete;
+    BentPipe &operator=(const BentPipe &) = delete;
 
-    struct SerialImpl;
-    SerialImpl *impl_;
+    struct BentPipeImpl;
+    BentPipeImpl *impl_;
 
     bool initialized_ = false;
 };

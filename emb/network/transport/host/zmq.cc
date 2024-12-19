@@ -1,4 +1,4 @@
-#include "emb/network/transport/serial.hpp"
+#include "emb/network/transport/zmq.hpp"
 
 #include "zmq.hpp"
 #include <vector>
@@ -7,17 +7,14 @@ namespace emb {
 namespace network {
 namespace transport {
 
-// Our host "serial" implementation is a ZMQ socket;
-// rather than making a `tcp` transporter, implementing the
-// serial class lets us compile the same code on the host
-// and set up simple client <-> host tests.
-struct Serial::SerialImpl {
+struct Zmq::ZmqImpl {
     zmq::context_t context;
     zmq::socket_t socket;
 
-    SerialImpl() {}
+    ZmqImpl() {}
 
     void initialize() {
+
         // Create a ZMQ context
         context = zmq::context_t(1);
 
@@ -53,15 +50,21 @@ struct Serial::SerialImpl {
     }
 };
 
-Serial::Serial() : impl_(new SerialImpl) {}
+Zmq::Zmq() : impl_(new ZmqImpl) {}
 
-Serial::~Serial() { delete impl_; }
+Zmq::~Zmq() { delete impl_; }
 
-void Serial::initialize() { impl_->initialize(); }
+void Zmq::initialize() {
+    if (initialized_) {
+        return;
+    }
+    impl_->initialize();
+    initialized_ = true;
+}
 
-void Serial::send(const std::span<uint8_t> &data) { impl_->send(data); }
+void Zmq::send(const std::span<uint8_t> &data) { impl_->send(data); }
 
-std::span<uint8_t> Serial::receive(std::span<uint8_t> buffer) {
+std::span<uint8_t> Zmq::receive(std::span<uint8_t> buffer) {
     return impl_->receive(buffer);
 }
 

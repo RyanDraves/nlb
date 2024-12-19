@@ -90,7 +90,9 @@
         "coroutine": "cpp",
         "csignal": "cpp",
         "future": "cpp",
-        "source_location": "cpp"
+        "source_location": "cpp",
+        "expected": "cpp",
+        "battery_service_server.h": "c"
     },
     "files.exclude": {
         "**/__pycache__": true,

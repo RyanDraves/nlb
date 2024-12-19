@@ -7,17 +7,21 @@ from emb.network.transport import transporter
 
 
 class NlbNode[
-    Serializer: serializer.SerializerLike, Transporter: transporter.TransporterLike
+    Serializer: serializer.SerializerLike,
+    CommsTransporter: transporter.TransporterLike,
+    LogTransporter: transporter.TransporterLike,
 ]:
     """A generic client node"""
 
     def __init__(
         self,
         serializer: Serializer | None = None,
-        transporter: Transporter | None = None,
+        comms_transporter: CommsTransporter | None = None,
+        log_transporter: LogTransporter | None = None,
     ):
         self.__serializer = serializer
-        self.__transporter = transporter
+        self.__comms_transporter = comms_transporter
+        self.__log_transporter = log_transporter
 
         self._cv = threading.Condition()
         self._request_id = -1
@@ -34,19 +38,30 @@ class NlbNode[
         return self.__serializer  # type: ignore
 
     @property
-    def _transporter(self) -> Transporter:
+    def _comms_transporter(self) -> CommsTransporter:
         # Introspect the generic type; hidden as a property so the object
         # can be initialized first.
-        if self.__transporter is None:
-            self.__transporter = get_args(self.__orig_class__)[1]  # type: ignore
-        return self.__transporter  # type: ignore
+        if self.__comms_transporter is None:
+            self.__comms_transporter = get_args(self.__orig_class__)[1]  # type: ignore
+        return self.__comms_transporter  # type: ignore
+
+    @property
+    def _log_transporter(self) -> LogTransporter:
+        # Introspect the generic type; hidden as a property so the object
+        # can be initialized first.
+        if self.__log_transporter is None:
+            self.__log_transporter = get_args(self.__orig_class__)[2]  # type: ignore
+        return self.__log_transporter  # type: ignore
 
     def start(self) -> None:
-        self._transporter.register_read_callback(self._on_receive)
-        self._transporter.start()
+        self._comms_transporter.register_read_callback(self._on_receive)
+        self._comms_transporter.start()
+        self._log_transporter.register_read_callback(self._on_receive)
+        self._log_transporter.start()
 
     def stop(self) -> None:
-        self._transporter.stop()
+        self._comms_transporter.stop()
+        self._log_transporter.stop()
 
     def __enter__(self) -> Self:
         self.start()
@@ -79,11 +94,12 @@ class NlbNode[
                 logging.warning(f'Dropping message with ID {message_id}: {self._msg}')
 
     def _transact(self, message: Any, request_id: int) -> Any:
-        self._transporter.send(self._serializer.serialize(message, request_id))
-
         with self._cv:
             self._request_id = request_id
+            self._comms_transporter.send(
+                self._serializer.serialize(message, request_id)
+            )
             self._cv.wait()
             return self._msg
 
-        return self._serializer.deserialize(self._transporter.receive())
+        return self._serializer.deserialize(self._comms_transporter.receive())

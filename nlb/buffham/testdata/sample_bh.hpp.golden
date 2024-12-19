@@ -18,7 +18,8 @@ namespace testdata {
 
 // This is a constant in the global scope
 constexpr uint8_t kMyConstant = 4;
-constexpr std::string kConstantString = "Hello, world!";  // constants can have inline comments
+// Constants can be strings as well; they're interpreted with bare words
+constexpr std::string_view kConstantString = "Hello, world!";  // constants can have inline comments
 // Constants may reference other constants with {brackets}
 constexpr uint16_t kComposedConstant = 2 + kMyConstant + nlb::buffham::testdata::kOtherConstant;
 
