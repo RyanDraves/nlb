@@ -14,7 +14,6 @@ struct Zmq::ZmqImpl {
     ZmqImpl() {}
 
     void initialize() {
-
         // Create a ZMQ context
         context = zmq::context_t(1);
 
@@ -23,9 +22,13 @@ struct Zmq::ZmqImpl {
             socket = zmq::socket_t(context, zmq::socket_type::dealer);
             // Bind the socket to an inproc address
             socket.bind("ipc://unittest");
+        } else if (std::getenv("ZMQ_PORT")) {
+            socket = zmq::socket_t(context, zmq::socket_type::dealer);
+            // Bind the socket to the specified port
+            socket.bind(std::string("tcp://*:") + std::getenv("ZMQ_PORT"));
         } else {
             socket = zmq::socket_t(context, zmq::socket_type::dealer);
-            // Bind the socket to a TCP port
+            // Bind the socket to a default port
             socket.bind("tcp://*:1337");
         }
     }
