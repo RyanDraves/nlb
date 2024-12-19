@@ -228,13 +228,15 @@ def generate_node(name: str, stub: bool) -> str:
 
     definition = (
         f'class {name}Node['
-        f'Transporter: transporter.TransporterLike]('
-        f'bh.BhNode[{name}Serializer, Transporter]'
-        f'):\n'
+        'CommsTransporter: transporter.TransporterLike, '
+        'LogTransporter: transporter.TransporterLike]('
+        f'bh.BhNode[{name}Serializer, CommsTransporter, LogTransporter]'
+        '):\n'
         f'{T}def __init__('
-        f'self, '
+        'self, '
         f'serializer: {name}Serializer | None = None, '
-        f'transporter: Transporter | None = None):'
+        'comms_transporter: CommsTransporter | None = None, '
+        'log_transporter: LogTransporter | None = None):'
     )
 
     if stub:
@@ -242,7 +244,7 @@ def generate_node(name: str, stub: bool) -> str:
     else:
         definition += (
             f'\n'
-            f'{T}{T}super().__init__(serializer or {name}Serializer(), transporter)\n\n'
+            f'{T}{T}super().__init__(serializer or {name}Serializer(), comms_transporter, log_transporter)\n\n'
         )
 
     return definition

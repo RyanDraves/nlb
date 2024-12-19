@@ -126,8 +126,8 @@ int main() {
     }
 
     // Write the system flash page back to flash
-    system_flash_page.serialize(buffer_a);
-    emb::yaal::flash_sector_write(0, buffer_a);
+    auto page_buffer = system_flash_page.serialize(buffer_a);
+    emb::yaal::flash_sector_write(0, page_buffer);
 
     // Jump to the application
     uint32_t app_addr = XIP_BASE + emb::yaal::kAppAddrA;

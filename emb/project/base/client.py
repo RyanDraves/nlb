@@ -42,6 +42,9 @@ class BaseClient(client.Client):
 
     def write_flash_image(self, image: pathlib.Path | str) -> None:
         image = pathlib.Path(image)
+        # TODO: Make 1024 for serial
+        chunk_size = 128
+
         with progress.Progress() as progress_bar:
             address = 0
 
@@ -50,12 +53,12 @@ class BaseClient(client.Client):
             )
 
             with image.open('rb') as f:
-                data = list(f.read(1024))
+                data = list(f.read(chunk_size))
                 while data:
                     self._write_flash_image(address, data)
                     address += len(data)
                     progress_bar.update(task, advance=len(data))
-                    data = list(f.read(1024))
+                    data = list(f.read(chunk_size))
 
         system_page = self.read_system_page()
         system_page.image_size_b = image.stat().st_size
@@ -131,7 +134,7 @@ class BaseClient(client.Client):
 
     def reset(self) -> None:
         # Manually transmit the reset message to avoid waiting for a response
-        self._node._transporter.send(
+        self._node._comms_transporter.send(
             self._node._serializer.serialize(base_bh.Ping(0), base_bh.RESET.request_id)
         )
 

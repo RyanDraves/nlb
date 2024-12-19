@@ -5,7 +5,7 @@
 
 #include "ble/gatt-service/nordic_spp_service_server.h"
 #include "btstack.h"
-// #include "emb/util/log.hpp"
+#include "emb/util/log.hpp"
 #include "pico/btstack_cyw43.h"
 #include "pico/cyw43_arch.h"
 #include "pico/sem.h"
@@ -109,15 +109,15 @@ struct BleImpl {
             if (btstack_event_state_get_state(packet) != HCI_STATE_WORKING)
                 return;
             gap_local_bd_addr(local_addr);
-            // LOG << "BTstack up and running on " << bd_addr_to_str(local_addr)
-            //     << LOG_END;
+            LOG << "BTstack up and running on " << bd_addr_to_str(local_addr)
+                << LOG_END;
             break;
         case HCI_EVENT_CONNECTION_COMPLETE:
-            // LOG << "Connected" << LOG_END;
+            LOG << "Connected" << LOG_END;
             break;
         case HCI_EVENT_DISCONNECTION_COMPLETE:
             le_notification_enabled = 0;
-            // LOG << "Disconnected" << LOG_END;
+            LOG << "Disconnected" << LOG_END;
             connect_flag = 0;
             break;
         default:
@@ -126,6 +126,7 @@ struct BleImpl {
     }
 
     void can_send_handler() {
+        // LOG << "SEND: " << (uint16_t)tx_buffer.size() << LOG_END;
         nordic_spp_service_server_send(con_handle, tx_buffer.data(),
                                        tx_buffer.size());
     }
@@ -234,10 +235,10 @@ void Ble::initialize() {
     // Initialize CYW43 driver architecture
     if (cyw43_arch_init()) {
         // Ruh-roh
-        // LOG << "CYW43 architecture initialization failed" << LOG_END;
+        LOG << "CYW43 architecture initialization failed" << LOG_END;
         return;
     }
-    // LOG << "CYW43 architecture initialized" << LOG_END;
+    LOG << "CYW43 architecture initialized" << LOG_END;
     // Initialize Logical Link Control and Adaptation Protocol layer
     l2cap_init();
     // Initialize Security Manager Protocol layer

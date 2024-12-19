@@ -85,9 +85,7 @@ py_library(
     deps = [
         ":base_bh_py",
         ":client",
-        "//emb/network/transport:tcp",
-        "//emb/network/transport:usb",
-        "//nlb/util:click_utils",
+        "//emb/project:shell",
         requirement("rich-click"),
         requirement("IPython"),
     ],

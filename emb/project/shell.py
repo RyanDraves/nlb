@@ -9,6 +9,7 @@ from IPython.terminal import ipapp
 
 from emb.network.transport import ble
 from emb.network.transport import tcp
+from emb.network.transport import transporter
 from emb.network.transport import usb
 from emb.project import client
 from nlb.buffham import bh
@@ -36,6 +37,12 @@ def common_shell_options(func: Callable) -> Callable:
         default=ConnectionType.SERIAL,
         help='Connection type',
     )(func)
+    func = click.option(
+        '--log-connection',
+        '-lc',
+        type=click_utils.EnumChoice(ConnectionType),
+        help='Log connection type',
+    )(func)
     func = click.option('--port', '-p', default=None, help='Serial port')(func)
     func = click.option(
         '--address', '-a', default=tcp.Zmq.DEFAULT_ADDRESS, help='ZMQ address'
@@ -44,25 +51,55 @@ def common_shell_options(func: Callable) -> Callable:
     return func
 
 
+def resolve_shell_options(
+    connection: ConnectionType,
+    log_connection: ConnectionType | None,
+    port: str | None,
+    address: str,
+    log: str,
+) -> tuple[transporter.TransporterLike, transporter.TransporterLike]:
+    logging.basicConfig(
+        level=log.upper(), format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    comms_transporter = _get_transporter(connection, port, address)
+    log_transporter = (
+        comms_transporter
+        if log_connection is None
+        else _get_transporter(log_connection, port, address)
+    )
+
+    return comms_transporter, log_transporter
+
+
+def _get_transporter(
+    connection: ConnectionType, port: str | None, address: str
+) -> transporter.TransporterLike:
+    if connection is ConnectionType.SERIAL:
+        return usb.PicoSerial(port)
+    elif connection is ConnectionType.BLE:
+        return ble.PicoBle()
+    else:
+        return tcp.Zmq(address)
+
+
 def shell_entry(
     connection: ConnectionType,
+    log_connection: ConnectionType | None,
     port: str | None,
     address: str,
     log: str,
     ctx: ShellContext,
 ) -> None:
-    logging.basicConfig(
-        level=log.upper(), format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    comms_transporter, log_transporter = resolve_shell_options(
+        connection, log_connection, port, address, log
     )
 
-    if connection is ConnectionType.SERIAL:
-        transporter = usb.PicoSerial(port)
-    elif connection is ConnectionType.BLE:
-        transporter = ble.PicoBle()
-    else:
-        transporter = tcp.Zmq(address)
-
-    c = ctx.client_cls(ctx.node_cls(transporter=transporter))
+    c = ctx.client_cls(
+        ctx.node_cls(
+            comms_transporter=comms_transporter, log_transporter=log_transporter
+        )
+    )
 
     with c:
         config = ipapp.load_default_config()

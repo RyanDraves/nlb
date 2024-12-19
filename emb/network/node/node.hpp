@@ -112,17 +112,20 @@ class Node {
 
     template <typename Send>
     void publish(uint8_t request_id, const Send &msg, TransportType type) {
+        auto &buffer =
+            type == TransportType::COMMS ? tx_buffer_ : log_tx_buffer_;
+
         // Encode the outgoing message;
         // offset by one to leave room for the message ID
         auto [serialized, frame_padding] = serializer_.serialize(
-            msg, std::span(tx_buffer_.data() + 1, tx_buffer_.size() - 1));
+            msg, std::span(buffer.data() + 1, buffer.size() - 1));
 
         // Add the message ID
-        tx_buffer_[frame_padding] = request_id;
+        buffer[frame_padding] = request_id;
 
         // Add back our + 1 offset
-        auto framed = serializer_.frame(
-            std::span(tx_buffer_.data(), serialized.size() + 1));
+        auto framed =
+            serializer_.frame(std::span(buffer.data(), serialized.size() + 1));
         if (type == TransportType::COMMS) {
             comms_transporter_.send(framed);
         } else {
@@ -145,6 +148,14 @@ class Node {
     // message in-place, provided that our data is <overhead_bytes> bytes
     // into the buffer; we'll manipulate the buffer to make this true
     std::array<uint8_t, S::kBufSize + S::kMaxOverhead> tx_buffer_;
+
+    // Create a separate buffer for logging
+    //
+    // Note that this only serves to allow logging in the `can_send_handler`
+    // method for the BLE transport, after the tx buffer for transmission has
+    // been set. It's a simple code space optimization to remove this and
+    // disallow logging in that one function.
+    std::array<uint8_t, S::kBufSize + S::kMaxOverhead> log_tx_buffer_;
 
     // We can write the decoded message in-place as well
     std::array<uint8_t, S::kBufSize> rx_buffer_;

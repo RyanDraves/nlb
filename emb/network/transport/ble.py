@@ -41,6 +41,7 @@ class Ble(abc.ABC):
         return future.result()
 
     async def _find_device(self) -> None:
+        """Currently unused & not exposed"""
         if self._device is not None:
             return
         devices = await bleak.BleakScanner.discover()
@@ -59,7 +60,6 @@ class Ble(abc.ABC):
     @property
     def _client(self) -> bleak.BleakClient:
         if self.__client is None:
-            # assert self._device is not None
             self.__client = bleak.BleakClient(self.ADDRESS)
         return self.__client
 
@@ -70,8 +70,6 @@ class Ble(abc.ABC):
         self._started = True
 
     async def _start(self) -> None:
-        # Deferred device discovery to allow for context manager usage
-        # await self._find_device()
         if not self._client.is_connected:
             await self._client.connect()
         await self._client.start_notify(
@@ -93,9 +91,9 @@ class Ble(abc.ABC):
             pass
 
     def send(self, data: bytes) -> None:
-        logging.debug('Tx: ' + ' '.join(f'{byte:02x}' for byte in data))
+        logging.debug('Ble Tx: ' + ' '.join(f'{byte:02x}' for byte in data))
         self._run_coroutine_threadsafe(
-            self._client.write_gatt_char(self.WRITE_CHAR_UUID, data)
+            self._client.write_gatt_char(self.WRITE_CHAR_UUID, data, response=False)
         )
 
     def register_read_callback(self, callback: Callable[[bytes], None]) -> None:
@@ -104,7 +102,7 @@ class Ble(abc.ABC):
     def _notification_handler(
         self, char: characteristic.BleakGATTCharacteristic, data: bytearray
     ) -> None:
-        logging.debug('Rx: ' + ' '.join(f'{byte:02x}' for byte in data))
+        logging.debug('Ble Rx: ' + ' '.join(f'{byte:02x}' for byte in data))
         self._read_callback(bytes(data))
 
 

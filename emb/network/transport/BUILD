@@ -156,6 +156,7 @@ cc_library(
     target_compatible_with = ["@platforms//cpu:armv6-m"],
     deps = [
         ":nus",
+        "//emb/util:log",
         "@pico-sdk//src/common/pico_sync",
         "@pico-sdk//src/rp2_common/pico_btstack",
         "@pico-sdk//src/rp2_common/pico_cyw43_arch",
