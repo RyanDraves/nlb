@@ -59,14 +59,16 @@ static void packet_callback(uint8_t packet_type, uint16_t channel,
 static void nordic_can_send(void *context);
 
 struct BleImpl {
-    int le_notification_enabled;
     uint8_t connect_flag;
-    int led_on = true;
+    bool led_on = true;
 
+    // BTstack structures
     btstack_timer_source_t heartbeat;
     hci_con_handle_t con_handle;
     btstack_context_callback_registration_t send_request;
     btstack_packet_callback_registration_t hci_event_callback_registration;
+
+    // Buffers
     std::span<uint8_t> rx_buffer;
     uint16_t rx_size;
     std::span<uint8_t> tx_buffer;
@@ -116,7 +118,6 @@ struct BleImpl {
             LOG << "Connected" << LOG_END;
             break;
         case HCI_EVENT_DISCONNECTION_COMPLETE:
-            le_notification_enabled = 0;
             LOG << "Disconnected" << LOG_END;
             connect_flag = 0;
             break;
@@ -143,7 +144,7 @@ struct BleImpl {
                 con_handle =
                     gattservice_subevent_spp_service_connected_get_con_handle(
                         packet);
-                // LOG << "Connected with handle " << con_handle << LOG_END;
+                LOG << "Connected with handle " << con_handle << LOG_END;
                 connect_flag = 1;
                 break;
             case GATTSERVICE_SUBEVENT_SPP_SERVICE_DISCONNECTED:

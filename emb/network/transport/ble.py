@@ -106,6 +106,8 @@ class Ble(abc.ABC):
 
 
 class PicoBle(Ble):
+    # TODO: Use another device and figure out if this is device specific;
+    # probably is
     ADDRESS = 'D8:3A:DD:73:7F:C4'
     WRITE_CHAR_UUID = nus_bh.WRITE_CHARACTERISTIC_UUID
     NOTIFY_CHAR_UUID = nus_bh.NOTIFY_CHARACTERISTIC_UUID

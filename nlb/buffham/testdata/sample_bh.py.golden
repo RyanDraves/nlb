@@ -138,9 +138,9 @@ class SampleSerializer(bh_cobs.BhCobs):
         registry = (registry or {}) | REGISTRY | other_bh.REGISTRY
         super().__init__(registry)
 
-class SampleNode[Transporter: transporter.TransporterLike](bh.BhNode[SampleSerializer, Transporter]):
-    def __init__(self, serializer: SampleSerializer | None = None, transporter: Transporter | None = None):
-        super().__init__(serializer or SampleSerializer(), transporter)
+class SampleNode[CommsTransporter: transporter.TransporterLike, LogTransporter: transporter.TransporterLike](bh.BhNode[SampleSerializer, CommsTransporter, LogTransporter]):
+    def __init__(self, serializer: SampleSerializer | None = None, comms_transporter: CommsTransporter | None = None, log_transporter: LogTransporter | None = None):
+        super().__init__(serializer or SampleSerializer(), comms_transporter, log_transporter)
 
 PING = bh.Transaction[other_bh.Pong, LogMessage](1)
 # Transaction comment
