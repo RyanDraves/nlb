@@ -126,7 +126,6 @@ struct BleImpl {
     }
 
     void can_send_handler() {
-        // LOG << "SEND: " << (uint16_t)tx_buffer.size() << LOG_END;
         nordic_spp_service_server_send(con_handle, tx_buffer.data(),
                                        tx_buffer.size());
     }
@@ -156,8 +155,6 @@ struct BleImpl {
             }
             break;
         case RFCOMM_DATA_PACKET:
-            // LOG << "RECV: " << size << LOG_END;
-
             // NOTE: This is not "thread-safe" w.r.t. receiving data in this IRQ
             // handler before the main loop has a chance to read it, but we're
             // acknowledging and ignoring this for now.

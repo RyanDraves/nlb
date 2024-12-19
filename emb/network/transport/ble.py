@@ -2,7 +2,7 @@ import abc
 import asyncio
 import logging
 import threading
-from typing import Callable, ClassVar
+from typing import Awaitable, Callable, ClassVar
 
 import bleak
 from bleak import exc
@@ -34,8 +34,7 @@ class Ble(abc.ABC):
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._loop_thread.join()
 
-    # TODO: fix typing
-    def _run_coroutine_threadsafe(self, coro):
+    def _run_coroutine_threadsafe[T](self, coro: Awaitable[T]) -> T:
         future = asyncio.run_coroutine_threadsafe(coro, self._loop)
         # Wait for the coroutine to finish and get result
         return future.result()

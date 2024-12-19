@@ -43,7 +43,7 @@ class BaseClient(client.Client):
     def write_flash_image(self, image: pathlib.Path | str) -> None:
         image = pathlib.Path(image)
         # TODO: Make 1024 for serial
-        chunk_size = 128
+        chunk_size = 256
 
         with progress.Progress() as progress_bar:
             address = 0
