@@ -1,4 +1,5 @@
 load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write")
 load("//bzl/macros:emb.bzl", "host_test")
 load("//bzl/macros:pico.bzl", "pico_project")
@@ -44,13 +45,14 @@ cc_library(
 )
 
 pico_project(
-    name = "robo24_pico",
     srcs = ["main.cc"],
+    names = ["robo24_pico"],
     deps = [
         ":robo24_cc",
         "//emb/network/node:node_cc",
         "//emb/network/serialize:bh_cobs_cc",
-        "//emb/network/transport:serial_cc",
+        "//emb/network/transport:comms_transport",
+        "//emb/network/transport:log_transport",
         "//emb/project/base:base_cc",
         "//emb/util:log",
     ],

@@ -36,5 +36,8 @@ class HostTestBase[C: client.ClientLike, N: bh.BhNode](unittest.TestCase):
         # TODO: Use `address` instead of `DEFAULT_ADDRESS`
         address = tcp.Zmq.DEFAULT_HOST + f':{port}'
 
-        self.node = self.NODE_CLS(transporter=tcp.Zmq(tcp.Zmq.DEFAULT_ADDRESS))
+        transporter = tcp.Zmq(tcp.Zmq.DEFAULT_ADDRESS)
+        self.node = self.NODE_CLS(
+            comms_transporter=transporter, log_transporter=transporter
+        )
         self.client = self.CLIENT_CLS(self.node)

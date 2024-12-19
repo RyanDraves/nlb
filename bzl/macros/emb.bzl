@@ -21,6 +21,11 @@ def flash(name, binary, **kwargs):
         data = [binary],
         args = [
             "$(location {0})".format(binary),
+            # FIXME
+            "-c",
+            "ble",
+            "-lc",
+            "serial",
         ],
         **kwargs
     )

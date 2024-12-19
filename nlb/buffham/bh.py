@@ -26,8 +26,9 @@ class BhSerializer(Protocol):
 
 class BhNode[
     Bh_Serializer: BhSerializer,
-    Transporter: transporter.TransporterLike,
-](node.NlbNode[Bh_Serializer, Transporter]):
+    CommsTransporter: transporter.TransporterLike,
+    LogTransporter: transporter.TransporterLike,
+](node.NlbNode[Bh_Serializer, CommsTransporter, LogTransporter]):
     """Generic node that uses buffham datatypes for messages."""
 
     def _transact(

@@ -261,7 +261,12 @@ def generate_constant(constant: parser.Constant) -> str:
     value = constant.value
     for ref, name in references.items():
         value = value.replace(f'{{{ref}}}', name)
-    definition += f'constexpr {TYPE_MAP[constant.type]} {_to_konstant_case(constant.name)} = {value};'
+    extra_type = ''
+    if constant.type is parser.FieldType.STRING:
+        value = f'"{value}"'
+        # Gotta use string_view for constexpr strings
+        extra_type = '_view'
+    definition += f'constexpr {TYPE_MAP[constant.type]}{extra_type} {_to_konstant_case(constant.name)} = {value};'
 
     if constant.inline_comment:
         definition += f'  //{constant.inline_comment}'
@@ -293,6 +298,8 @@ def generate_cpp(
                 '#include <string.h>\n'
                 '#include <vector>\n\n'
             )
+        elif parser.FieldType.STRING in [constant.type for constant in bh.constants]:
+            fp.write('#include <string>\n\n')
 
         if len(bh.transactions) and hpp:
             # Add includes

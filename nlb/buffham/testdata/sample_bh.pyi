@@ -11,7 +11,8 @@ from nlb.buffham.testdata import other_bh
 
 # This is a constant in the global scope
 MY_CONSTANT = 4
-CONSTANT_STRING = "Hello, world!"  # constants can have inline comments
+# Constants can be strings as well; they're interpreted with bare words
+CONSTANT_STRING = 'Hello, world!'  # constants can have inline comments
 # Constants may reference other constants with {brackets}
 COMPOSED_CONSTANT = 2 + MY_CONSTANT + other_bh.OTHER_CONSTANT
 
@@ -77,8 +78,8 @@ REGISTRY: dict[int, Type[bh.BuffhamLike]] = ...
 class SampleSerializer(bh_cobs.BhCobs):
     def __init__(self, registry: bh_cobs.Registry | None = None): ...
 
-class SampleNode[Transporter: transporter.TransporterLike](bh.BhNode[SampleSerializer, Transporter]):
-    def __init__(self, serializer: SampleSerializer | None = None, transporter: Transporter | None = None): ...
+class SampleNode[CommsTransporter: transporter.TransporterLike, LogTransporter: transporter.TransporterLike](bh.BhNode[SampleSerializer, CommsTransporter, LogTransporter]):
+    def __init__(self, serializer: SampleSerializer | None = None, comms_transporter: CommsTransporter | None = None, log_transporter: LogTransporter | None = None): ...
 
 PING: bh.Transaction[other_bh.Pong, LogMessage] = ...
 # Transaction comment

@@ -35,7 +35,11 @@ def main(
 ) -> None:
     console = console_utils.Console()
 
-    c = client.BaseClient(base_bh.BaseNode(transporter=usb.PicoSerial()))
+    transporter = usb.PicoSerial()
+
+    c = client.BaseClient(
+        base_bh.BaseNode(comms_transporter=transporter, log_transporter=transporter)
+    )
     try:
         with c:
             console.error('Board is already provisioned')

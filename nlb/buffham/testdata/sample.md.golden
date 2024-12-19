@@ -1,3 +1,5 @@
 # Sample template
 
 Here's a neat sample template where we can generate files that reference Buffham constants, like 2 + 4 + 2.
+
+We can cleanly insert strings like Hello, world!.

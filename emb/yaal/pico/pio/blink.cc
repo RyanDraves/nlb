@@ -16,7 +16,7 @@ struct BlinkProgram::BlinkProgramImpl {
 
 BlinkProgram::BlinkProgram(uint8_t frequency)
     : impl_(new BlinkProgramImpl), frequency_(frequency) {
-    uint8_t pin = PICO_DEFAULT_LED_PIN;
+    uint8_t pin = 25;  // PICO_DEFAULT_LED_PIN
 
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(
         &blink_program, &impl_->pio, &impl_->sm, &impl_->offset, pin, 1,

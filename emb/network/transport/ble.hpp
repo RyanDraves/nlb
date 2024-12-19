@@ -7,10 +7,10 @@ namespace emb {
 namespace network {
 namespace transport {
 
-class Serial {
+class Ble {
   public:
-    static Serial &getInstance() {
-        static Serial instance;
+    static Ble &getInstance() {
+        static Ble instance;
         return instance;
     }
 
@@ -21,14 +21,14 @@ class Serial {
     std::span<uint8_t> receive(std::span<uint8_t> buffer);
 
   private:
-    Serial();
-    ~Serial();
+    Ble();
+    ~Ble();
 
-    Serial(const Serial &) = delete;
-    Serial &operator=(const Serial &) = delete;
+    Ble(const Ble &) = delete;
+    Ble &operator=(const Ble &) = delete;
 
-    struct SerialImpl;
-    SerialImpl *impl_;
+    struct BleImpl;
+    BleImpl *impl_;
 
     bool initialized_ = false;
 };

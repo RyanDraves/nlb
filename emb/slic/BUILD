@@ -1,4 +1,5 @@
-load("//bzl/macros:unittest.bzl", "cc_unittest")
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bzl/macros:cc.bzl", "cc_unittest")
 
 cc_library(
     name = "hc_sr04",

@@ -4,6 +4,7 @@ build --cxxopt='-std=c++23'
 
 # Not needed to build targets (due to platform transitions) but occasionally handy
 build:pico --platforms=//bzl/platforms:rp2040
+build:pico_w --platforms=//bzl/platforms:rp2040_w
 
 build:pages --nolegacy_external_runfiles
 build:pages --action_env=JEKYLL_ENV=production

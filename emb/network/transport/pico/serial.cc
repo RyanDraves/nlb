@@ -1,6 +1,8 @@
 #include "emb/network/transport/serial.hpp"
 #include "pico/stdlib.h"
 
+#include <cstdio>
+
 namespace emb {
 namespace network {
 namespace transport {
@@ -14,9 +16,15 @@ Serial::Serial() : impl_(new SerialImpl) {}
 Serial::~Serial() { delete impl_; }
 
 void Serial::initialize() {
+    if (initialized_) {
+        return;
+    }
+
     // Initialize the serial port
     stdio_init_all();
     stdio_set_translate_crlf(&stdio_usb, false);
+
+    initialized_ = true;
 }
 
 void Serial::send(const std::span<uint8_t> &data) {
