@@ -20,11 +20,7 @@ class HostTestBase[C: client.ClientLike, N: bh.BhNode](unittest.TestCase):
     def setUp(self) -> None:
         host_bin = pathlib.Path(os.environ['HOST_BIN'])
 
-        # NOTE: This `DEFAULT_ADDRESS` use is naughty and prevents concurrent tests
-        # from running. A port picker would be better, but right now there's no method
-        # to pass the port to the host binary (need to abstract `main` for host compilation).
         port = portpicker.pick_unused_port()
-        # TODO: Use `address` instead of `DEFAULT_ADDRESS`
         address = tcp.Zmq.DEFAULT_HOST + f':{port}'
 
         self.host = subprocess.Popen(
