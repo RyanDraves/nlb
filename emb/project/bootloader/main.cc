@@ -41,12 +41,13 @@ static void jump_to_vtor(uint32_t vtor) {
 /* End borrowed code
  */
 
-// 2KB of stack, so keep our buffer small. We can borrow some stack from
-// core 1's 2KB, but our flash logic is simple and requires sector alignment
-// (can't write to multiple sectors at once), so 1kB each will suffice.
-static const uint32_t kBufferSize = 1024;
+// We'll copy over one entire sector at a time. The flash implementation will
+// erase data in the same sector that we're writing to, so a read shouldn't
+// interleave with a write within the same sector.
+static uint8_t g_buffer[FLASH_SECTOR_SIZE];
 
-void read_buffer(uint8_t buffer[kBufferSize], uint32_t addr, uint32_t size) {
+void read_buffer(uint8_t buffer[FLASH_SECTOR_SIZE], uint32_t addr,
+                 uint32_t size) {
     memcpy(buffer, emb::yaal::get_flash_ptr(addr), size);
 }
 
@@ -80,8 +81,6 @@ int main() {
     sleep_ms(50);
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
-    uint8_t buffer_a[kBufferSize];
-    uint8_t buffer_b[kBufferSize];
     if (system_flash_page.new_image_flashed) {
         // Do a "double-shuffle" to move the new image from B to A
         // and the old image from A to B
@@ -93,12 +92,13 @@ int main() {
 
         bool led_on = false;
         while (addr_b < emb::yaal::kAppAddrB + system_flash_page.image_size_b) {
-            read_buffer(buffer_a, addr_a, kBufferSize);
-            read_buffer(buffer_b, addr_b, kBufferSize);
-            emb::yaal::flash_write(addr_b, buffer_a);
-            emb::yaal::flash_write(addr_a, buffer_b);
-            addr_a += kBufferSize;
-            addr_b += kBufferSize;
+            read_buffer(g_buffer, addr_a, FLASH_SECTOR_SIZE);
+            emb::yaal::flash_write(
+                addr_a,
+                std::span(emb::yaal::get_flash_ptr(addr_b), FLASH_SECTOR_SIZE));
+            emb::yaal::flash_write(addr_b, g_buffer);
+            addr_a += FLASH_SECTOR_SIZE;
+            addr_b += FLASH_SECTOR_SIZE;
 
             // Toggle the LED every 10KB
             if ((addr_b - emb::yaal::kAppAddrB) % 10240 == 0) {
@@ -109,10 +109,10 @@ int main() {
 
         // Make sure we copied all of image A to B
         while (addr_a < emb::yaal::kAppAddrA + system_flash_page.image_size_a) {
-            read_buffer(buffer_a, addr_a, kBufferSize);
-            emb::yaal::flash_write(addr_b, buffer_a);
-            addr_a += kBufferSize;
-            addr_b += kBufferSize;
+            read_buffer(g_buffer, addr_a, FLASH_SECTOR_SIZE);
+            emb::yaal::flash_write(addr_b, g_buffer);
+            addr_a += FLASH_SECTOR_SIZE;
+            addr_b += FLASH_SECTOR_SIZE;
         }
 
         // Ensure the LED is off
@@ -126,7 +126,7 @@ int main() {
     }
 
     // Write the system flash page back to flash
-    auto page_buffer = system_flash_page.serialize(buffer_a);
+    auto page_buffer = system_flash_page.serialize(g_buffer);
     emb::yaal::flash_sector_write(0, page_buffer);
 
     // Jump to the application
