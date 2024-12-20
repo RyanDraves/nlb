@@ -15,7 +15,12 @@ const uint8_t *get_flash_ptr(uint32_t addr);
 // Get the address of a flash sector
 uint32_t get_flash_sector_addr(uint8_t sector);
 
-// Write data to flash memory
+// Write data to flash memory. Writes MUST be aligned to 256-byte pages;
+// i.e. `addr` and `data.size()` must be multiples of 256.
+//
+// This method is optimized for "minimal work"; i.e. it will only erase the
+// sector if it hasn't been written to before. This makes reads on the same
+// sector, but different address, after a write invalid.
 void flash_write(uint32_t addr, std::span<const uint8_t> data);
 
 // Write a sector of data to flash memory.

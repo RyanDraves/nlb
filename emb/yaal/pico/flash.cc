@@ -5,6 +5,8 @@
 #include "emb/project/bootloader/bootloader_bh.hpp"
 #include "emb/yaal/flash.hpp"
 
+#include "emb/util/ring_buffer.hpp"
+
 /*
 Pico flash memory layout:
 
@@ -47,6 +49,10 @@ constexpr uint32_t g_sector_start_addr =
 // TODO: Consider tracking which sectors need to be erased and assume
 // we're not writing to the same address twice (big assumption?)
 uint8_t g_sector_buffer[FLASH_SECTOR_SIZE];
+// Store recent sectors that have been written to;
+// a sector is erased when it's written to and not in this buffer
+emb::util::RingBuffer<uint16_t, 5> g_sector_write_buffer{
+    UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX};
 }  // namespace
 
 const uint32_t kAppAddrA = project::bootloader::kPicoAppAddrA;
@@ -63,21 +69,26 @@ uint32_t get_flash_sector_addr(uint8_t sector) {
 
 void flash_write(uint32_t addr, std::span<const uint8_t> data) {
     uint32_t sector_start = addr & ~4095;
-    uint32_t sector_offset = addr - sector_start;
+    uint16_t sector_num = addr / FLASH_SECTOR_SIZE;
 
-    // Copy the sector into RAM
-    memcpy(g_sector_buffer, get_flash_ptr(sector_start), FLASH_SECTOR_SIZE);
-
-    // Copy the data into the sector
-    memcpy(g_sector_buffer + sector_offset, data.data(), data.size());
+    // Copy the data into the sector buffer
+    memcpy(g_sector_buffer, data.data(), data.size());
 
     auto iterrupt_ctx = save_and_disable_interrupts();
 
-    // Erase the sector
-    flash_range_erase(sector_start, FLASH_SECTOR_SIZE);
+    // Check if the sector has been written to before
+    if (!g_sector_write_buffer.contains(sector_num)) {
+        // Erase the sector
+        flash_range_erase(sector_start, FLASH_SECTOR_SIZE);
+    }
 
-    // Write the sector back
-    flash_range_program(sector_start, g_sector_buffer, FLASH_SECTOR_SIZE);
+    g_sector_write_buffer.push(sector_num);
+
+    // Write the data to flash
+    // Round to the neartest 256 (FLASH_PAGE_SIZE) bytes
+    flash_range_program(addr, g_sector_buffer,
+                        (data.size() + FLASH_PAGE_SIZE - 1) &
+                            ~(FLASH_PAGE_SIZE - 1));
 
     restore_interrupts(iterrupt_ctx);
 }

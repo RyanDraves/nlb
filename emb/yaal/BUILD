@@ -16,6 +16,7 @@ cc_library(
     deps = select(
         {
             "@platforms//cpu:armv6-m": [
+                "//emb/util:ring_buffer",
                 "@pico-sdk//src/rp2_common/hardware_flash",
             ],
             "//conditions:default": [

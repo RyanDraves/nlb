@@ -24,7 +24,7 @@ class NlbNode[
         self.__log_transporter = log_transporter
 
         self._cv = threading.Condition()
-        self._request_id = -1
+        self._request_id: int | None = None
         self._msg: Any | None = None
 
         self._publish_callbacks: dict[int, Callable[[Any], None]] = {}
@@ -87,11 +87,18 @@ class NlbNode[
         with self._cv:
             message_id, self._msg = self._serializer.deserialize(data)
             if message_id == self._request_id:
+                self._request_id = None
                 self._cv.notify()
             elif message_id in self._publish_callbacks:
                 self._publish_callbacks[message_id](self._msg)
             else:
                 logging.warning(f'Dropping message with ID {message_id}: {self._msg}')
+
+    def command(self, message: Any, request_id: int) -> None:
+        """Send a one-way command with no response"""
+        return self._comms_transporter.send(
+            self._serializer.serialize(message, request_id)
+        )
 
     def _transact(self, message: Any, request_id: int) -> Any:
         with self._cv:
