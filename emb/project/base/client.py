@@ -134,9 +134,7 @@ class BaseClient(client.Client):
 
     def reset(self) -> None:
         # Manually transmit the reset message to avoid waiting for a response
-        self._node._comms_transporter.send(
-            self._node._serializer.serialize(base_bh.Ping(0), base_bh.RESET.request_id)
-        )
+        self._node.command(base_bh.Ping(0), base_bh.RESET.request_id)
 
     def revert_flash(self) -> None:
         # The previous image is stored in the other bank, so we can just tell
