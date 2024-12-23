@@ -1,0 +1,12 @@
+{
+  "name": "@nlb/one",
+  "private": true,
+  "main": "src/main.js",
+  "dependencies": {
+    "is-odd": "3.x.x"
+  },
+  "devDependencies": {
+    "@types/is-odd": "3.x.x",
+    "@types/node": "18.19.60"
+  }
+}
