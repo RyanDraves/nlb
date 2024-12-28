@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
 
-  // TODO
+  // TODO: don't steamroll through typescript errors
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -33,14 +33,15 @@ const nextConfig: NextConfig = {
   pageExtensions: ['jsx', 'js', 'ts', 'tsx', 'md', 'mdx'],
 
   reactStrictMode: true,
+
+  // TODO: didn't work, was in the examples at
+  // https://github.com/bazelbuild/examples
   // swcMinify: true,
 };
 
 const withMdx = require('@next/mdx')({
   extension: /\.mdx?$/,
   options: {
-    remarkPlugins: [],
-    rehypePlugins: [],
   },
 })
 

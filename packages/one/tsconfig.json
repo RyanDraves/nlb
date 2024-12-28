@@ -1,7 +1,0 @@
-{
-    "compilerOptions": {
-        "declaration": true,
-        "esModuleInterop": true,   
-    },
-    "exclude": []
-}

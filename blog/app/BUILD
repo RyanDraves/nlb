@@ -6,7 +6,7 @@ SRCS = [
     "mdx.d.ts",
 ] + glob(
     [
-        "posts/[slug]/*.tsx",
+        "posts/*/*.tsx",
         "_components/*.tsx",
     ],
 )
@@ -14,7 +14,7 @@ SRCS = [
 ts_project(
     name = "app",
     srcs = SRCS,
-    # assets = glob(["snips/*.mdx"]),
+    assets = glob(["_posts/*.mdx"]),
     declaration = True,
     preserve_jsx = True,
     resolve_json_module = True,
@@ -23,13 +23,12 @@ ts_project(
     visibility = ["//blog:__subpackages__"],
     deps = [
         "//blog:mdx_components",
-        "//blog:node_modules/@next/mdx",
         "//blog:node_modules/@types/react",
         "//blog:node_modules/@types/react-dom",
         "//blog:node_modules/classnames",
         "//blog:node_modules/date-fns",
         "//blog:node_modules/next",
-        "//blog:node_modules/next-mdx-remote",
+        "//blog:node_modules/shiki",
         "//blog/lib",
     ],
 )

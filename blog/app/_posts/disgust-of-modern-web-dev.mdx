@@ -1,0 +1,160 @@
+import MdxLayout from '@/app/_components/mdx-layout'
+import CodeBlock from '@/app/_components/code-block'
+
+export const metadata = {
+  title: "The disgust of modern web development",
+  excerpt:
+    "99 standards of web on the wall, 99 standards of web. Take one down, pass it around, 174 standards of web on the wall.",
+  coverImage: "/nlb/assets/disgust-of-modern-web-dev/cover.webp",
+  date: "2024-12-28T00:00:00.000Z",
+  author: {
+    name: "Ryan Draves",
+    picture: "/nlb/assets/authors/me.png"
+  },
+  ogImage: {
+    url: "/nlb/assets/disgust-of-modern-web-dev/cover.webp"
+  }
+}
+
+I intended to make this post about migrating my [blog](./jekyll-bazel) to NextJS + Bazel, but the time it took warranted a good old-fashioned rant. My web development experience is rather novice, so this isn't a detailed technical post. I did, however, start learning how to code with web development, so I have some reference to draw from.
+
+# What I made
+
+By the end of it, my blog migration achieved the following buzzword bingo:
+
+The site is __statically generated__ with __NextJS__'s __App router__, rendering __MDX__ content for rich content embedded in the Markdown-based blog posts. The site is styled with __TailwindCSS__ and built with our favorite build tool, __Bazel__.
+
+# The good
+
+A few things went right, so it's good to call them out:
+
+## Bazel rules for web dev
+
+The good folks maintaining [bazel-contrib](https://github.com/bazel-contrib) and [aspect-build](https://github.com/aspect-build) repositories have done a great job setting up rules for [NodeJS](https://github.com/bazel-contrib/rules_nodejs), [Javscript](https://github.com/aspect-build/rules_js) and [Typescript](https://github.com/aspect-build/rules_ts) that work out of the box and have a great [example for NextJS](https://github.com/bazelbuild/examples/blob/b51e3bdd468ce8c4a516d7dca993909dcc84af32/frontend/MODULE.bazel). The examples didn't cover the Bazel intricacies for all of the above buzzwords, but they were a great starting point.
+
+Two of the best features were that [ibazel](https://github.com/bazelbuild/bazel-watcher) worked for hot reloads without additional setup and that NPM package binaries were exposed in a consistent and straightforward way, something not as available in the [previous Jekyll setup](./jekyll-bazel).
+
+## Strength in ubiquity
+
+It goes without saying that web development is popular. Staying on the well-trodden path has several nice benefits, but the most notable is the increased quality of AI suggestions. Copilot has a lot more source material to draw from using these popular frameworks, so I found the chat faeture to be much-needed glue where documentation and standards fell short.
+
+## TailwindCSS & MDX just make sense
+
+I've heard of TailwindCSS before, but have yet to use it. I can't believe there's any other way to write CSS. It just makes sense.
+
+MDX is also a great development. I could only dream of making rich blog posts like [Bartosz Ciechanowski's blog](https://ciechanow.ski/gps/), but the simple intermingling of Markdown content with React components is a great step in that direction.
+
+Here's an example I'm using for code blocks that uses [Shiki](https://shiki.matsu.io/) for rich server-side syntax highlighting:
+
+<CodeBlock lang="jsx" name="sample.mdx">
+{`<CodeBlock lang="jsx" name="sample.mdx">
+{\`recursive self-referential text\`}
+</CodeBlock>`}
+</CodeBlock>
+
+Pretty nice!
+
+# The bad
+
+## Linting and type checking with Bazel
+
+While most of the Bazel rules worked pretty well, I could not manage to get linting or type checking working. The linting example is missing a file it references, and despite `declaration=True` being set in the `ts_project` rules, no `.d.ts` declaration files are produced.
+
+This workaround let me ignore the issue for now, however:
+
+<CodeBlock lang="ts" name="next.config.ts">
+{`// TODO: don't steamroll through typescript errors
+  typescript: {
+    ignoreBuildErrors: true,
+  },`}
+</CodeBlock>
+
+## Everything's a black box
+
+The black box structure of every tool and framework infuriates me. I can understand the convenience these tools provide, but there's a limit to the usefulness of an opaque system, and the answer to hitting those limits isn't to make it more opaque.
+
+Let's take NextJS's MDX support for example. NextJS's [MDX documentation](https://nextjs.org/docs/app/building-your-application/configuring/mdx) starts with the simple:
+
+- MDX is a combination of coverting Markdown into HTML and embedded React components into the Markdown content
+
+Sure, that's straightforward. But dear magic mirror, how do I use this?
+
+- Install the `@next/mdx @mdx-js/loader @mdx-js/react @types/mdx` packages
+
+Ok, we'll use `@next/mdx` & `@types/mdx` later in the setup, but what's with the transitive dependencies? Why do I need to specify them? Why does the build fail without them? If we want to keep the `next` dependencies to a minimum, then why shouldn't `@next/mdx` behave like [extras](https://packaging.python.org/en/latest/tutorials/installing-packages/#installing-extras) in Python and declare its own set of dependencies?
+
+- Add the `@next/mdx` plugin to the `next.config.js` file
+
+Fine, we're configuring our extension of NextJS in its config file. Makes sense.
+
+- Add `mdx-components.tsx` to define global MDX components
+
+What? What is this random hack? I already configured the plugin, why must I glue the black box together?
+
+This behavior continues depending on how you want to use MDX. Want to import the MDX files into other TS[X] files? Sure, just add a magic file to type hint the `.mdx` imports. Want to share layouts between MDX files? No problem, here's some extra syntax magic that makes that happen.
+
+What I find most frustrating with this approach isn't that it's difficult to understand the system's internals, but that it's difficult to ascertain what the system _can_ do. An example: I was have trouble using [next-mdx-remote](https://github.com/hashicorp/next-mdx-remote) to take a string of the MDX content and render it from a [dynamic route](https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes#example). This was closest to the [blog-starter](https://github.com/vercel/next.js/tree/b2c20c9f906814246f129c66646968008df6f2d0/examples/blog-starter) example NextJS provides. Perhaps my Bazel configuration was missing a transitive dependency; who knows. So instead I searched for a way to do this without Hashicorp's `next-mdx-remote` and just use NextJS's native features. But since every feature is its Own Special Thing, it wasn't clear that I was looking to combine dynamic imports and shared layouts. (They could let me dynamically import the shared layout component in the MDX file associated with the current page plug and render that.)
+
+Everything in modern web dev is like this. No consistency, even within the same framework. It seems to me that these tools are solely optimized to abstract away the problems of old web dev without concern for the new problems they introduce. That, to me, is a broken vision.
+
+# The ugly
+
+## No two black boxes are the same
+
+To expound on this lack of consistency, it's import to highlight that each of these black box model tools and frameworks insist on doing things their own way. When does the magic happen? How do I configure the magic? Do transitive dependencies need to be spoon-fed? What spells can be conjured?
+
+Let's compare TailwindCSS's setup to our previous example. TailwindCSS has its own configuration file. Fine, that's expected. It also needs to be added to the PostCSS configuration file. Now we're back to glueing together black boxes; here's some tool that does _something_ and will be magically invoked for us in the NextJS build process; just toss in the dependency pile and forget about it.
+
+How about when TailwindCSS will run? Well, now we need to break open the box to configure our Bazel `BUILD` files. It's clear that multiple layers of transpilation and happening, as we need to feed TailwindCSS each of our source files to generate the CSS output. That CSS output is actually imported by the source files themselves, not to mention that a TSX -> JS transpilation is happening somewhere along the way. For now we can feed Tailwind all of our source files and NextJS the source files plus Tailwind's output to establish some basic ordering: `ts_project` rules transpile the TSX files, `tailwind` rules generate the CSS output, and `next` rules compile the site and bundle it.
+
+Oh, and let's not forget the in-place magic TailwindCSS / PostCSS / _something_ is capable of. If we use [P]NPM tooling directly outside of Bazel, there's no need to import a separate file that TailwindCSS generates; it all "just happens" inside the black box.
+
+<CodeBlock lang="tsx" name="layout.tsx">
+{`// Generated path
+import "@/tailwind.css";
+// Original path (uncomment to use pnpm directly)
+// import "@/styles/globals.css";`}
+</CodeBlock>
+
+I couldn't get this working with Bazel's sandbox, so the explicit file generation is used. One could argue that semantic differences between enabling MDX support versus TailwindCSS's magic processing necessitate these differences in configuration. But I would argue that both are doing the same thing: they're reading source files and generating output files. Nothing more, nothing less. So why so different and opaque?
+
+## What really is an incremental build anyways?
+
+Touched upon in the last section, none of this tooling is conducive to incremental builds. The closest thing I could find for NextJS was this brief [feature request for incremental builds](https://github.com/vercel/next.js/discussions/30716), but it seems closer to the server runtime behavior of [incremental static regeneration](https://vercel.com/docs/incremental-static-regeneration) than a sensible build process. NextJS is clearly capable of an incremental build; this is exactly what it's doing when using `next dev` and requesting a page, which makes development bareable.
+
+What we end up with in the dependency graph are these monolithic targets that depend on everything.
+
+<CodeBlock lang="tsx" name="layout.tsx">
+{`_SRCS = [
+    "//blog/app",
+    "//blog/interfaces",
+    "//blog/lib",
+    "//blog/public",
+    "//blog/styles",
+    ":mdx_components",
+]
+
+next(
+    name = "next",
+    srcs = _SRCS + [
+        ":tailwind",
+    ],
+    ...
+)
+
+tailwind_bin.tailwind(
+    name = "tailwind",
+    srcs = _SRCS,
+    ...
+)`}
+</CodeBlock>
+
+This is poor dependency management. There isn't a file in `blog/` that I can change without nullifying the cache, and that `next` monolithic target will take ~8 seconds to build, even for a small site composed of 2 MDX files. How pitiful.
+
+export default function MDXPage({children}) {
+  return (
+    <MdxLayout metadata={metadata}>
+      {children}
+    </MdxLayout>
+  )
+}

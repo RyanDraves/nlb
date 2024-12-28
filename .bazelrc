@@ -30,6 +30,7 @@ startup --host_jvm_args=-DBAZEL_TRACK_SOURCE_DIRECTORIES=1
 
 ###########################
 # Linting
+# TODO: lint.bzl doesn't exist in the example repo
 # Enable with --config=lint
 # This is demonstrated by the next.js example:
 # cd blog; npm run lint

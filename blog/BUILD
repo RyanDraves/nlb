@@ -1,4 +1,4 @@
-load("@aspect_rules_js//js:defs.bzl", "js_library", "js_test")
+load("@aspect_rules_js//js:defs.bzl", "js_library")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_config", "ts_project")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@npm//:defs.bzl", "npm_link_all_packages")
@@ -28,11 +28,6 @@ ts_config(
     visibility = ["//visibility:public"],
 )
 
-filegroup(
-    name = "posts",
-    srcs = glob(["_posts/*.mdx"]),
-)
-
 ts_project(
     name = "mdx_components",
     srcs = ["mdx-components.tsx"],
@@ -55,8 +50,8 @@ next(
     ],
     data = [
         "next.config.ts",
-        "package.json",
         "tsconfig.json",
+        ":node_modules/@next/mdx",
         ":node_modules/autoprefixer",
         ":node_modules/next",
         ":node_modules/postcss",
@@ -64,18 +59,9 @@ next(
         ":node_modules/react-dom",
         ":node_modules/tailwindcss",
         ":node_modules/typescript",
-        ":posts",
     ],
     next_bin = "./node_modules/next/dist/bin/next",
     next_js_binary = ":next_js_binary",
-)
-
-# A smoke test on the artifact produced by the :next target
-js_test(
-    name = "build_smoke_test",
-    chdir = package_name(),
-    data = [":next"],
-    entry_point = "build_smoke_test.js",
 )
 
 tailwind_bin.tailwind(
@@ -107,30 +93,9 @@ js_library(
     visibility = ["//visibility:public"],
 )
 
-js_library(
-    name = "jest_config",
-    srcs = ["jest.config.js"],
-    visibility = ["//visibility:public"],
-    deps = [":node_modules/next"],
-)
-
-js_library(
-    name = "eslintrc",
-    srcs = [".eslintrc.js"],
-    visibility = ["//:__subpackages__"],
-    deps = [
-        ":node_modules/@next/eslint-plugin-next",
-        ":node_modules/eslint-config-next",
-    ],
-)
-
 build_test(
     name = "build_test",
     targets = [
         ":next",
-        # Not build testing the `:next_export` target since this `next export` writes back to the `.next` directory which
-        # causes issues with trying to write to an input. See https://github.com/vercel/next.js/issues/43344.
-        # TODO: fix in Next.js (https://github.com/vercel/next.js/issues/43344) or find work-around.
-        # ":next_export",
     ],
 )

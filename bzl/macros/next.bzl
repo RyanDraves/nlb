@@ -141,9 +141,10 @@ def next(
         tool = next_js_binary,
         args = ["build"],
         srcs = srcs + data,
-        out_dirs = [next_build_out, "out"],
-        stdout = "stdout.txt",
-        stderr = "stderr.txt",
+        out_dirs = [next_build_out, next_export_out],
+        # Output NextJS's stdout and stderr to files for debugging
+        stdout = "next_stdout.txt",
+        stderr = "next_stderr.txt",
         chdir = native.package_name(),
         tags = tags,
         **kwargs
@@ -170,21 +171,5 @@ def next(
         data = data + [name],
         chdir = native.package_name(),
         tags = tags,
-        **kwargs
-    )
-
-    # `next export` runs the application in production mode
-    # https://nextjs.org/docs/api-reference/cli#production
-    js_run_binary(
-        name = "{}_export".format(name),
-        tool = next_js_binary,
-        args = ["export"],
-        srcs = data + [name],
-        out_dirs = [next_export_out],
-        chdir = native.package_name(),
-        # Tagged as "manual" since this `next export` writes back to the `.next` directory which causes issues with
-        # trying to write to an input. See https://github.com/vercel/next.js/issues/43344.
-        # TODO: fix in Next.js (https://github.com/vercel/next.js/issues/43344) or find work-around.
-        tags = tags + ["manual"],
         **kwargs
     )

@@ -1,73 +1,46 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getAllPosts, getPostBySlug } from "@/lib/api";
-import { CMS_NAME } from "@/lib/constants";
-import markdownToHtml from "@/lib/markdownToHtml";
-import Alert from "@/app/_components/alert";
-import Container from "@/app/_components/container";
-import Header from "@/app/_components/header";
-import { PostBody } from "@/app/_components/post-body";
-import { PostHeader } from "@/app/_components/post-header";
+import { getPostSlugs } from "@/lib/api";
+import { Post as PostInferface } from "@/interfaces/post";
 
 
 export default async function Post(props: Params) {
-  const params = await props.params;
-  const post = getPostBySlug(params.slug);
+    const slug = (await props.params).slug;
+    const { default: MDXPage } = await import(`@/app/_posts/${slug}.mdx`);
 
-  if (!post) {
-    return notFound();
-  }
-
-  const content = await markdownToHtml(post.content || "");
-
-  return (
-    <main>
-      <Alert preview={post.preview} />
-      <Container>
-        <Header />
-        <article className="mb-32">
-          <PostHeader
-            title={post.title}
-            coverImage={post.coverImage}
-            date={post.date}
-            author={post.author}
-          />
-          <PostBody content={content} />
-        </article>
-      </Container>
-    </main>
-  );
+    return (
+        <MDXPage />
+    );
 }
 
 type Params = {
-  params: Promise<{
-    slug: string;
-  }>;
+    params: Promise<{
+        slug: string;
+    }>;
 };
 
 export async function generateMetadata(props: Params): Promise<Metadata> {
-  const params = await props.params;
-  const post = getPostBySlug(params.slug);
+    const slug = (await props.params).slug;
+    const { metadata }: { metadata: PostInferface } = await import(`@/app/_posts/${slug}.mdx`);
 
-  if (!post) {
-    return notFound();
-  }
+    const title = metadata.title;
 
-  const title = `${post.title} | Next.js Blog Example with ${CMS_NAME}`;
-
-  return {
-    title,
-    openGraph: {
-      title,
-      images: [post.ogImage.url],
-    },
-  };
+    return {
+        title,
+        openGraph: {
+            title,
+            images: [metadata.ogImage.url],
+        },
+    };
 }
 
 export async function generateStaticParams() {
-  const posts = getAllPosts();
+    const slugs = getPostSlugs();
 
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
+    return slugs.map((slug) => ({
+        slug: slug.replace(/\.mdx$/, ""),
+    }));
 }
+
+
+
+export const dynamicParams = false;

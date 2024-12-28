@@ -1,5 +1,4 @@
 import Container from "@/app/_components/container";
-import { EXAMPLE_PATH } from "@/lib/constants";
 
 export function Footer() {
   return (
@@ -7,17 +6,18 @@ export function Footer() {
       <Container>
         <div className="py-28 flex flex-col lg:flex-row items-center">
           <h3 className="text-4xl lg:text-[2.5rem] font-bold tracking-tighter leading-tight text-center lg:text-left mb-10 lg:mb-0 lg:pr-4 lg:w-1/2">
-            Statically Generated with Next.js.
+            Bold text that feigns importance.
           </h3>
+          <p>(Don't worry, I'm not selling anything)</p>
           <div className="flex flex-col lg:flex-row justify-center items-center lg:pl-4 lg:w-1/2">
             <a
-              href="https://nextjs.org/docs/app/building-your-application/routing/layouts-and-templates"
+              href="https://www.zeldadungeon.net/wiki/images/thumb/f/f3/Ssbu-younglink-art.png/600px-Ssbu-younglink-art.png?20180613095739"
               className="mx-3 bg-black hover:bg-white hover:text-black border border-black text-white font-bold py-3 px-12 lg:px-8 duration-200 transition-colors mb-6 lg:mb-0"
             >
-              Read Documentation
+              Random Link
             </a>
             <a
-              href={`https://github.com/vercel/next.js/tree/canary/examples/${EXAMPLE_PATH}`}
+              href={`https://github.com/RyanDraves/nlb/tree/main/blog`}
               className="mx-3 font-bold hover:underline"
             >
               View on GitHub
