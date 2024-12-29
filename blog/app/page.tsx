@@ -14,6 +14,7 @@ export default async function Index() {
     })
   );
 
+  // "const"; what a joke language
   allMetadatas.sort((a, b) => (a.date > b.date ? -1 : 1));
 
   const heroPost = allMetadatas[0];

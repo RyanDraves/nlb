@@ -14,6 +14,5 @@ ts_project(
     transpiler = "tsc",
     tsconfig = "//blog:tsconfig",
     visibility = ["//blog:__subpackages__"],
-    deps = [
-    ],
+    deps = [],
 )

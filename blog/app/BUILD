@@ -22,9 +22,7 @@ ts_project(
     tsconfig = "//blog:tsconfig",
     visibility = ["//blog:__subpackages__"],
     deps = [
-        "//blog:mdx_components",
         "//blog:node_modules/@types/react",
-        "//blog:node_modules/@types/react-dom",
         "//blog:node_modules/classnames",
         "//blog:node_modules/date-fns",
         "//blog:node_modules/next",

@@ -39,7 +39,6 @@ ts_project(
     visibility = [":__subpackages__"],
     deps = [
         ":node_modules/@types/mdx",
-        ":node_modules/@types/react",
     ],
 )
 
@@ -57,7 +56,6 @@ next(
         ":node_modules/postcss",
         ":node_modules/react",
         ":node_modules/react-dom",
-        ":node_modules/tailwindcss",
         ":node_modules/typescript",
     ],
     next_bin = "./node_modules/next/dist/bin/next",
