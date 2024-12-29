@@ -32,7 +32,7 @@ jobs:
       - name: Bazel Cache
         uses: actions/cache@v4
         with:
-          # Path must match `build --disk_cache=` in the bazelrc
+          # Path must match `build --disk_cache=` in the .bazelrc
           path: "~/.cache/bazel"
           key: ${{ runner.os }}-bazel-${{ github.workflow }}
       - name: Setup Pages
@@ -41,14 +41,13 @@ jobs:
       - name: Build Site
         id: build_site
         run: |
-          bazel build --config pages //pages:site
-          output_path=$(bazel cquery //pages:site_build --output files 2>/dev/null)
+          bazel build //blog:next
           # Set the output path as an output variable
-          echo "page_path=$output_path" >> $GITHUB_OUTPUT
+          echo "out_path=bazel-bin/blog/out" >> $GITHUB_OUTPUT
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ steps.build_site.outputs.page_path }}
+          path: ${{ steps.build_site.outputs.out_path }}
 
   deploy:
     if: github.event_name == 'push' || github.event.inputs.deploy

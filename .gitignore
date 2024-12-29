@@ -1,13 +1,17 @@
 # Generated things
-bazel-*
+bazel-*/
 MODULE.bazel.lock
 venv
 external
 compile_commands.json
 __pycache__/
+.aspect/
 
 # Per-user things
 .user.bazelrc
+
+# Web things
+node_modules/
 
 # Future development things
 vscode/

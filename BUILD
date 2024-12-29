@@ -1,11 +1,15 @@
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
+load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@pip//:requirements.bzl", "all_requirements")
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
 load("@rules_pyvenv//:venv.bzl", "py_venv")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//:__subpackages__"])
+
+# Create the root of the "virtual store" of npm dependencies under bazel-out
+npm_link_all_packages(name = "node_modules")
 
 buildifier(
     name = "buildifier.check",

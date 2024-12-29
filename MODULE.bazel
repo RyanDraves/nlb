@@ -3,11 +3,14 @@ module(
     version = "0.0.0",
 )
 
+#
+# "Standard" dependencies
+#
 bazel_dep(name = "aspect_bazel_lib", version = "2.10.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
-bazel_dep(name = "rules_platform", version = "0.1.0")
-bazel_dep(name = "rules_cc", version = "0.1.0")
 bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "rules_cc", version = "0.1.0")
+bazel_dep(name = "rules_platform", version = "0.1.0")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
@@ -152,3 +155,52 @@ http_archive(
 # Google Test
 #
 bazel_dep(name = "googletest", version = "1.15.2")
+
+#
+# Web development
+#
+bazel_dep(name = "aspect_rules_js", version = "2.0.2")
+bazel_dep(name = "aspect_rules_ts", version = "3.1.0")
+bazel_dep(name = "rules_nodejs", version = "6.2.0")
+bazel_dep(name = "aspect_rules_lint", version = "1.0.0-rc4")
+
+# TODO: Figure out the usefulness of these dependencies not directly being used
+bazel_dep(name = "aspect_rules_swc", version = "2.0.1")
+bazel_dep(name = "aspect_rules_rollup", version = "2.0.0")
+bazel_dep(name = "aspect_rules_webpack", version = "0.16.0")
+bazel_dep(name = "aspect_rules_jest", version = "0.22.0")
+
+node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node", dev_dependency = True)
+
+node.toolchain(node_version = "20.13.1")
+
+pnpm = use_extension("@aspect_rules_js//npm:extensions.bzl", "pnpm", dev_dependency = True)
+use_repo(pnpm, "pnpm")
+
+npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm", dev_dependency = True)
+npm.npm_translate_lock(
+    name = "npm",
+    npmrc = "//:.npmrc",
+    pnpm_lock = "//:pnpm-lock.yaml",
+    public_hoist_packages = {
+        "@next/eslint-plugin-next": ["blog"],
+        "eslint-config-react-app": ["react"],
+        "eslint@8.28.0": ["react"],
+    },
+    verify_node_modules_ignored = "//:.bazelignore",
+    update_pnpm_lock = True,
+    data = [
+        "//:package.json",
+        "//blog:package.json",
+        "//:pnpm-workspace.yaml",
+    ],
+)
+use_repo(npm, "npm")
+
+rules_ts_ext = use_extension(
+    "@aspect_rules_ts//ts:extensions.bzl",
+    "ext",
+    dev_dependency = True,
+)
+rules_ts_ext.deps()
+use_repo(rules_ts_ext, "npm_typescript")
