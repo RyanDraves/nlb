@@ -87,12 +87,6 @@ js_library(
     ],
 )
 
-js_library(
-    name = "package_json",
-    srcs = ["package.json"],
-    visibility = ["//visibility:public"],
-)
-
 build_test(
     name = "build_test",
     targets = [

@@ -5,7 +5,6 @@
     "//build": "next build",
     "dev": "ibazel run next_dev",
     "build": "bazel build next",
-    "export": "bazel build next_export",
     "lint": "bazel build --config=lint //blog/...",
     "test": "bazel test ... --test_lang_filters=jest --build_tests_only"
   },

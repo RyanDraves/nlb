@@ -181,7 +181,6 @@ npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm", dev_dependenc
 npm.npm_translate_lock(
     name = "npm",
     npmrc = "//:.npmrc",
-    # `pnpm i --lockfile-only` will regenerate this
     pnpm_lock = "//:pnpm-lock.yaml",
     public_hoist_packages = {
         "@next/eslint-plugin-next": ["blog"],

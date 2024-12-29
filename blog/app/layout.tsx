@@ -1,16 +1,12 @@
 import Footer from "@/app/_components/footer";
 import { HOME_OG_IMAGE_URL } from "@/lib/constants";
 import type { Metadata } from "next";
-// import { Inter } from "next/font/google";
-import cn from "classnames";
 import { ThemeSwitcher } from "./_components/theme-switcher";
 
 // Generated path
 import "@/tailwind.css";
 // Original path (uncomment to use pnpm directly)
 // import "@/styles/globals.css";
-
-// const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: `Ryan's Bizarre Blog`,
@@ -31,37 +27,35 @@ export default function RootLayout({
         <link
           rel="apple-touch-icon"
           sizes="180x180"
-          href="/favicon/apple-touch-icon.png"
+          href="/nlb/favicon/lukewarm_penguins_180.png"
         />
         <link
           rel="icon"
           type="image/png"
           sizes="32x32"
-          href="/favicon/favicon-32x32.png"
+          href="/nlb/favicon/lukewarm_penguins_32.png"
         />
         <link
           rel="icon"
           type="image/png"
           sizes="16x16"
-          href="/favicon/favicon-16x16.png"
+          href="/nlb/favicon/lukewarm_penguins_16.png"
         />
-        <link rel="manifest" href="/favicon/site.webmanifest" />
+        <link rel="manifest" href="/nlb/favicon/site.webmanifest" />
         <link
           rel="mask-icon"
-          href="/favicon/safari-pinned-tab.svg"
-          color="#000000"
+          href="/nlb/favicon/lukewarm_penguins_32.png"
         />
-        <link rel="shortcut icon" href="/favicon/favicon.ico" />
+        <link rel="shortcut icon" href="/nlb/favicon/nlb/favicon.ico" />
         <meta name="msapplication-TileColor" content="#000000" />
         <meta
           name="msapplication-config"
-          content="/favicon/browserconfig.xml"
+          content="/nlb/favicon/browserconfig.xml"
         />
         <meta name="theme-color" content="#000" />
         <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       </head>
       <body
-        // className={cn(inter.className, "dark:bg-slate-900 dark:text-slate-400")}
         className="dark:bg-slate-900 dark:text-slate-400"
       >
         <ThemeSwitcher />

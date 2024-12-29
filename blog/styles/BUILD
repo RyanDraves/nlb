@@ -4,7 +4,6 @@ js_library(
     name = "styles",
     srcs = [
         "globals.css",
-        "markdown-styles.module.css",
         "switch.module.css",
     ],
     visibility = ["//blog:__subpackages__"],

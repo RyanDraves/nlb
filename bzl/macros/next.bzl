@@ -92,13 +92,6 @@ def next(
     ibazel run //next.js:next_start
     ```
 
-    To export the above next app, equivalent to running
-    `next export` outside Bazel, run,
-
-    ```
-    bazel build //next.js:next_export
-    ```
-
     Args:
         name: The name of the build target.
 
