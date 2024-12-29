@@ -43,26 +43,6 @@ http_archive(
 )
 
 #
-# Rules Ruby
-#
-bazel_dep(name = "rules_ruby", version = "0.6.0")
-
-ruby = use_extension("@rules_ruby//ruby:extensions.bzl", "ruby")
-ruby.toolchain(
-    name = "ruby",
-    version = "3.0.6",
-)
-use_repo(ruby, "ruby")
-ruby.bundle_fetch(
-    name = "bundle",
-    gemfile = "//pages:Gemfile",
-    gemfile_lock = "//pages:Gemfile.lock",
-)
-use_repo(ruby, "bundle", "ruby_toolchains")
-
-register_toolchains("@ruby_toolchains//:all")
-
-#
 # Rules Python
 #
 # aspect_rules_py is promising, but its `py_venv` is 3.11+ and

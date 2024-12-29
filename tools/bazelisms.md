@@ -26,7 +26,7 @@ filegroup(
 
 ## Platforms transitions
 
-Multi-platform builds require a platform transition on the targets to be built for other platforms. There are a few competing rules to be the "generic rule that implements a platform transition.
+Multi-platform builds require a platform transition on the targets to be built for other platforms. There are a few competing rules to be the "generic rule that implements a platform transition".
 
 The current state of affairs is:
 - [rules_platform](https://registry.bazel.build/modules/rules_platform)'s `platform_data` (binary targets only)
@@ -34,3 +34,7 @@ The current state of affairs is:
 - `//bzl/rules:platform_transition.bzl` (file targets, CC libraries)
 
 It's a complete mess. If you want to customize flags within a platform, instead of binding all of them to the platform with platform flags, then custom rules for that are needed too.
+
+## Using Ruby / Bundle binaries
+
+If I (or anyone reading this) need to run a Ruby/Bundle/whatever binary as part of a build process, [jekyll.bzl](https://github.com/RyanDraves/nlb/blob/5bfad07ffbd7fbf1a0fd087b260b148b7e0f655f/bzl/macros/jekyll.bzl) implemented this.
