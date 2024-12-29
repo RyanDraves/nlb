@@ -6,9 +6,6 @@ build --cxxopt='-std=c++23'
 build:pico --platforms=//bzl/platforms:rp2040
 build:pico_w --platforms=//bzl/platforms:rp2040_w
 
-build:pages --nolegacy_external_runfiles
-build:pages --action_env=JEKYLL_ENV=production
-
 # https://github.com/bazelbuild/bazel/issues/4867#issuecomment-830402410
 common:quiet --ui_event_filters=-info,-stdout,-stderr --noshow_progress
 
