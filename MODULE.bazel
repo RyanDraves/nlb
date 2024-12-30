@@ -172,6 +172,7 @@ npm.npm_translate_lock(
     data = [
         "//:package.json",
         "//blog:package.json",
+        "//lrb:package.json",
         "//:pnpm-workspace.yaml",
     ],
 )
@@ -184,3 +185,38 @@ rules_ts_ext = use_extension(
 )
 rules_ts_ext.deps()
 use_repo(rules_ts_ext, "npm_typescript")
+
+#
+# Rust
+#
+# Latest release w/ extensions split borked the toolchains
+bazel_dep(name = "rules_rust", version = "0.51.0")
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = "2021",
+)
+use_repo(rust, "rust_toolchains")
+register_toolchains("@rust_toolchains//:all")
+
+wasm_bindgen = use_extension("@rules_rust//wasm_bindgen:extensions.bzl", "wasm_bindgen")
+use_repo(
+    wasm_bindgen,
+)
+register_toolchains(
+    "@rules_rust//wasm_bindgen:default_wasm_bindgen_toolchain",
+    "@rules_rust//rust/private/dummy_cc_toolchain:dummy_cc_wasm32_toolchain",
+)
+
+# TODO: Switch to direct dependencies
+# https://bazelbuild.github.io/rules_rust/crate_universe_bzlmod.html#direct-dependencies
+crate = use_extension(
+    "@rules_rust//crate_universe:extension.bzl",
+    "crate",
+)
+crate.from_cargo(
+    name = "crates",
+    cargo_lockfile = "//lrb/game_of_life:Cargo.lock",
+    manifests = ["//lrb/game_of_life:Cargo.toml"],
+)
+use_repo(crate, "crates")

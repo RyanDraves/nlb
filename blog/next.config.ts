@@ -30,6 +30,20 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
+  webpack(config, { isServer, dev, webpack }) {
+    config.experiments = {
+      asyncWebAssembly: true,
+      layers: true,
+    };
+
+    // https://github.com/vercel/next.js/issues/64792#issuecomment-2148766770
+    if (!isServer) {
+      config.output.environment = { ...config.output.environment, asyncFunction: true };
+    }
+
+    return config;
+  },
+
   pageExtensions: ['jsx', 'js', 'ts', 'tsx', 'md', 'mdx'],
 
   reactStrictMode: true,

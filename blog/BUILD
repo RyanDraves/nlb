@@ -11,6 +11,7 @@ npm_link_all_packages(name = "node_modules")
 _SRCS = [
     "//blog/app",
     "//blog/interfaces",
+    "//blog/rust",
     "//blog/lib",
     "//blog/public",
     "//blog/styles",

@@ -1,7 +1,7 @@
 import Footer from "@/app/_components/footer";
 import { HOME_OG_IMAGE_URL } from "@/lib/constants";
 import type { Metadata } from "next";
-import { ThemeSwitcher } from "./_components/theme-switcher";
+import { ThemeSwitcher } from "@/app/_components/theme-switcher";
 
 // Generated path
 import "@/tailwind.css";

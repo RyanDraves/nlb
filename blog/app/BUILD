@@ -28,5 +28,6 @@ ts_project(
         "//blog:node_modules/next",
         "//blog:node_modules/shiki",
         "//blog/lib",
+        "//blog/rust",
     ],
 )

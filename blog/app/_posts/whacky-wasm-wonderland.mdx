@@ -1,0 +1,30 @@
+import MdxLayout from '@/app/_components/mdx-layout'
+import CodeBlock from '@/app/_components/code-block'
+import GameOfLife from "@/rust/game-of-life"
+
+export const metadata = {
+  title: "Whacky Wasm Wonderland",
+  excerpt:
+    "An initial foray into using a real programming language in the browser.",
+  coverImage: "/nlb/assets/disgust-of-modern-web-dev/cover.webp",
+  date: "2024-12-28T00:00:00.000Z",
+  author: {
+    name: "Ryan Draves",
+    picture: "/nlb/assets/authors/me.png"
+  },
+  ogImage: {
+    url: "/nlb/assets/disgust-of-modern-web-dev/cover.webp"
+  }
+}
+
+Some initial text
+
+<GameOfLife />
+
+export default function MDXPage({children}) {
+  return (
+    <MdxLayout metadata={metadata}>
+      {children}
+    </MdxLayout>
+  )
+}
