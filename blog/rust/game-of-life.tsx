@@ -1,19 +1,24 @@
-//@ts-nocheck
 "use client";
 
 import * as wasm from "@nlb/lrb/game_of_life/game_of_life";
 import { memory } from "@nlb/lrb/game_of_life/game_of_life_bg.wasm";
 import React, { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 const GameOfLife = () => {
-    const canvasRef = useRef(null);
-    const playButtonRef = useRef(null);
-    const fpsRef = useRef(null);
+    const pathname = usePathname();
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const playButtonRef = useRef<HTMLButtonElement>(null);
+    const fpsRef = useRef<HTMLPreElement>(null);
     const animationIdRef = useRef<number | null>(null);
     let lastTimestamp: number | null = null;
 
     useEffect(() => {
-        console.log("a");
+        // Make sure to reset the state; saw weird caching behavior when traversing links
+        animationIdRef.current = null;
+
+        console.log("start");
+
         const TARGET_FPS = 60;
         const FRAME_INTERVAL = 1000 / TARGET_FPS;
 
@@ -28,13 +33,16 @@ const GameOfLife = () => {
         const height = wasm.height();
 
         const canvas = canvasRef.current;
+        if (!canvas) { return; }
         canvas.height = (CELL_SIZE + 1) * height + 1;
         canvas.width = (CELL_SIZE + 1) * width + 1;
 
         const ctx = canvas.getContext('2d');
         const playButton = playButtonRef.current;
+        if (!ctx || !playButton) { return; }
 
-        const renderLoop = (timestamp: number) => {
+        const renderLoop = (timestamp: number | null) => {
+            timestamp = timestamp || 0;
             if (lastTimestamp === null) {
                 lastTimestamp = timestamp;
             }
@@ -45,7 +53,7 @@ const GameOfLife = () => {
                 return;
             }
 
-            fps.render();
+            FpsMeter.render();
 
             wasm.tick();
 
@@ -60,7 +68,9 @@ const GameOfLife = () => {
         };
 
         const pause = () => {
-            console.log("pause");
+            if (animationIdRef.current === null) {
+                return;
+            }
             playButton.textContent = "▶";
             cancelAnimationFrame(animationIdRef.current);
             animationIdRef.current = null;
@@ -68,10 +78,10 @@ const GameOfLife = () => {
 
         const play = () => {
             playButton.textContent = "⏸";
-            renderLoop();
+            renderLoop(null);
         };
 
-        playButton.addEventListener("click", () => {
+        const handlePlayPause = () => {
             console.log("pause");
             console.log(isPaused());
             console.log(animationIdRef.current);
@@ -80,7 +90,9 @@ const GameOfLife = () => {
             } else {
                 pause();
             }
-        });
+        }
+
+        playButton.addEventListener("click", handlePlayPause);
 
         const drawGrid = () => {
             ctx.beginPath();
@@ -99,7 +111,7 @@ const GameOfLife = () => {
             ctx.stroke();
         };
 
-        const getIndex = (row, column) => {
+        const getIndex = (row: number, column: number) => {
             return row * width + column;
         };
 
@@ -144,7 +156,7 @@ const GameOfLife = () => {
             ctx.stroke();
         };
 
-        canvas.addEventListener("click", event => {
+        const handleCanvasClick = (event: MouseEvent) => {
             const boundingRect = canvas.getBoundingClientRect();
 
             const scaleX = canvas.width / boundingRect.width;
@@ -159,9 +171,15 @@ const GameOfLife = () => {
             wasm.toggle_cell(row, col);
 
             drawCells();
-        });
+        }
 
-        const fps = new class {
+        canvas.addEventListener("click", handleCanvasClick);
+
+        const FpsMeter = new class {
+            fps: HTMLPreElement | null;
+            frames: number[];
+            lastFrameTimeStamp: number
+
             constructor() {
                 this.fps = fpsRef.current;
                 this.frames = [];
@@ -189,6 +207,9 @@ const GameOfLife = () => {
                 }
                 let mean = sum / this.frames.length;
 
+                if (!this.fps) {
+                    return;
+                }
                 this.fps.textContent = `
 Frames per Second:
 latest = ${Math.round(fps)}
@@ -201,7 +222,16 @@ max of last 100 = ${Math.round(max)}
 
         drawGrid();
         drawCells();
-    }, []);
+
+        // Cleanup
+        return () => {
+            playButton.removeEventListener("click", handlePlayPause);
+            canvas.removeEventListener("click", handleCanvasClick);
+            cancelAnimationFrame(animationIdRef.current!);
+        };
+    },
+        // Re-run the effect when the pathname changes
+        [pathname]);
 
     return (
         <div className="max-w-2xl mx-auto flex flex-col items-center overflow-x-auto">

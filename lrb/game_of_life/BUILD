@@ -2,6 +2,8 @@ load("@crates//:defs.bzl", "aliases", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_shared_library")
 load("@rules_rust//wasm_bindgen:defs.bzl", "rust_wasm_bindgen")
 
+# TODO: Consider using some rustc flags
+# https://github.com/manekinekko/catsify/blob/90eda4d5440e542f6b1ebf1d26d6b2add1de48a0/api/rust/BUILD.bazel#L20-L26
 rust_shared_library(
     name = "game_of_life_so",
     srcs = [

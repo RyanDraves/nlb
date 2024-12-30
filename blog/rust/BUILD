@@ -18,5 +18,6 @@ ts_project(
     deps = [
         "//blog:node_modules/@nlb/lrb",
         "//blog:node_modules/@types/react",
+        "//blog:node_modules/next",
     ],
 )
