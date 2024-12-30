@@ -14,11 +14,6 @@ const GameOfLife = () => {
     let lastTimestamp: number | null = null;
 
     useEffect(() => {
-        // Make sure to reset the state; saw weird caching behavior when traversing links
-        animationIdRef.current = null;
-
-        console.log("start");
-
         const TARGET_FPS = 60;
         const FRAME_INTERVAL = 1000 / TARGET_FPS;
 
@@ -82,9 +77,6 @@ const GameOfLife = () => {
         };
 
         const handlePlayPause = () => {
-            console.log("pause");
-            console.log(isPaused());
-            console.log(animationIdRef.current);
             if (isPaused()) {
                 play();
             } else {
@@ -228,6 +220,7 @@ max of last 100 = ${Math.round(max)}
             playButton.removeEventListener("click", handlePlayPause);
             canvas.removeEventListener("click", handleCanvasClick);
             cancelAnimationFrame(animationIdRef.current!);
+            animationIdRef.current = null;
         };
     },
         // Re-run the effect when the pathname changes
