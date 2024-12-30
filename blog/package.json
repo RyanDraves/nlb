@@ -12,6 +12,7 @@
     "@mdx-js/loader": "3.x",
     "@mdx-js/react": "3.x",
     "@next/mdx": "15.x",
+    "@nlb/lrb": "workspace:*",
     "classnames": "^2.5.1",
     "date-fns": "^3.6.0",
     "next": "15.x",

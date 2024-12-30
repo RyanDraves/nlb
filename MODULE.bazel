@@ -172,6 +172,7 @@ npm.npm_translate_lock(
     data = [
         "//:package.json",
         "//blog:package.json",
+        "//lrb:package.json",
         "//:pnpm-workspace.yaml",
     ],
 )
@@ -184,3 +185,38 @@ rules_ts_ext = use_extension(
 )
 rules_ts_ext.deps()
 use_repo(rules_ts_ext, "npm_typescript")
+
+#
+# Rust
+#
+# Latest release w/ extensions split borked the toolchains
+bazel_dep(name = "rules_rust", version = "0.51.0")
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = "2021",
+)
+use_repo(rust, "rust_toolchains")
+register_toolchains("@rust_toolchains//:all")
+
+wasm_bindgen = use_extension("@rules_rust//wasm_bindgen:extensions.bzl", "wasm_bindgen")
+use_repo(
+    wasm_bindgen,
+)
+register_toolchains(
+    "@rules_rust//wasm_bindgen:default_wasm_bindgen_toolchain",
+    "@rules_rust//rust/private/dummy_cc_toolchain:dummy_cc_wasm32_toolchain",
+)
+
+crate = use_extension(
+    "@rules_rust//crate_universe:extension.bzl",
+    "crate",
+)
+crate.spec(package = "wasm-bindgen", version = "=0.2.92")
+crate.spec(package = "wee_alloc", version = "0.4.5")
+crate.spec(package = "spin", version = "0.9.8")
+crate.spec(package = "lazy_static", version = "1.4", features = ["spin_no_std"])
+crate.spec(package = "console_error_panic_hook", version = "0.1.7")
+crate.spec(package = "web-sys", version = "0.3", features = ["console"])
+crate.from_specs()
+use_repo(crate, "crates")

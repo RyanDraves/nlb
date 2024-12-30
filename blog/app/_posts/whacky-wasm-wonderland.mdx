@@ -1,0 +1,141 @@
+import MdxLayout from '@/app/_components/mdx-layout'
+import CodeBlock from '@/app/_components/code-block'
+import GameOfLife from "@/rust/game-of-life"
+
+export const metadata = {
+  title: "Whacky WASM Wonderland",
+  excerpt:
+    "An initial foray into using a real programming language in the browser.",
+  coverImage: "/nlb/assets/whacky-wasm-wonderland/cover.png",
+  date: "2024-12-30T00:00:00.000Z",
+  author: {
+    name: "Ryan Draves",
+    picture: "/nlb/assets/authors/me.png"
+  },
+  ogImage: {
+    url: "/nlb/assets/whacky-wasm-wonderland/cover.png"
+  }
+}
+
+# Rustic Adventures
+
+I've recently been trying to learn some basic Rust. It's an appealing language; certainly a far cry from the Javascript and Typescript glueing this site together.
+
+One of the neat tutorials Rust has is on their WASM support, where you build Conway's [Game of Life in WASM](https://rustwasm.github.io/docs/book/game-of-life/introduction.html). This is near and dear to my heart; I built something similar when I was first learning how to code through [FreeCodeCamp](https://www.freecodecamp.org/). I'll even entertain a link to my [old project](https://codepen.io/RyanDraves/pen/BdmmqV); enjoy.
+
+Anywho, the goal is to incorportate this tutorial into the blog and add some interactivity backed by Rust. For this post, I'll share some of the key parts of the setup to get this working with Bazel, as well as some things I gave up on.
+
+# Rust Bazel setup
+
+Getting toolschains setup for Rust was a rather large headache. It's become increasingly clear to me that every `rules_*` language repo does things their own way, none are quite perfect, and few translate well to the next. `rules_rust` is very much like this.
+
+The biggest part of the toolchain setup is to get the WASM bindgen toolchain registered and working. Someone on the Bazel Slack community very generously put together a [Rust WASM example](https://github.com/bazelbuild/rules_rust/pull/2914) that works quite nicely. A key detail is that this works with `version = 0.51.0` of `rules_rust`; I had a bad time using the latest version (currently `0.56.0`).
+
+Another key part of the setup was to use `target = "bundler"`. I was using `target = "web"`, which caused a good half a dozen problems stemming from [this issue](https://github.com/vercel/next.js/issues/27083) and attempts to (incorrectly) work around it.
+
+<CodeBlock lang="python" name="BUILD">
+{`rust_shared_library(
+    name = "game_of_life_so",
+    ...
+)
+
+rust_wasm_bindgen(
+    name = "game_of_life",
+    target = "bundler",
+    target_arch = "wasm32",
+    wasm_file = ":game_of_life_so",
+)`}
+</CodeBlock>
+
+Lastly, the world's simplest `package.json` helps us package up the bindgen outputs and import them back in the blog.
+
+<CodeBlock lang="python" name="BUILD">
+{`npm_package(
+    name = "pkg",
+    srcs = [
+        "package.json",
+        "//lrb/game_of_life",
+    ],
+    visibility = ["//visibility:public"],
+)`}
+</CodeBlock>
+
+<CodeBlock lang="json" name="package.json">
+{`{
+    "name": "@nlb/lrb",
+    "private": true,
+    "dependencies": {},
+    "devDependencies": {}
+}`}
+</CodeBlock>
+
+With that, we're ready to hop back into Javascript land (skipping the obvious step of implementing the tutorial).
+
+# WASM -> NextJS Setup
+
+With the prior setup, there's little we need to do on the Bazel side of things for the Blog frontend. We can add `"@nlb/lrb": "workspace:*"` as a dependency, use the dependency in our `ts_project` rule, and start importing the WASM module.
+
+<CodeBlock lang="typescript" name="game-of-life.tsx">
+{`import * as wasm from "@nlb/lrb/game_of_life/game_of_life";
+import { memory } from "@nlb/lrb/game_of_life/game_of_life_bg.wasm";`}
+</CodeBlock>
+
+The tougher part of the setup is getting `next.config.ts` to play nice with the WASM module. After a few rabbit holes I found these settings got `next build` & `next dev` happy again:
+
+<CodeBlock lang="typescript" name="next.config.ts">
+{`const nextConfig: NextConfig = {
+    webpack(config, { isServer, dev, webpack }) {
+      config.experiments = {
+        asyncWebAssembly: true,
+        layers: true,
+      };
+
+      // https://github.com/vercel/next.js/issues/64792#issuecomment-2148766770
+      if (!isServer) {
+        config.output.environment = { ...config.output.environment, asyncFunction: true };
+      }
+
+      // Slapped https://github.com/vercel/next.js/issues/29362#issuecomment-971377869
+      // onto https://github.com/vercel/next.js/issues/25852
+      if (!dev && isServer) {
+        config.output.webassemblyModuleFilename = "chunks/[id].wasm";
+        config.plugins.push(new WasmChunksFixPlugin());
+      }
+
+      return config;
+    },
+};
+
+class WasmChunksFixPlugin {
+    apply(compiler) {
+      compiler.hooks.thisCompilation.tap("WasmChunksFixPlugin", (compilation) => {
+        compilation.hooks.processAssets.tap(
+          { name: "WasmChunksFixPlugin" },
+          (assets) =>
+            Object.entries(assets).forEach(([pathname, source]) => {
+              if (!pathname.match(/\.wasm$/)) return;
+              compilation.deleteAsset(pathname);
+
+              const name = pathname.split("/")[1];
+              const info = compilation.assetsInfo.get(pathname);
+              compilation.emitAsset(name, source, info);
+            })
+        );
+      });
+    }
+}`}
+</CodeBlock>
+
+With that, we're done!
+
+# Conway's Game of Life
+
+<GameOfLife />
+
+export default function MDXPage({children}) {
+  return (
+    <MdxLayout metadata={metadata}>
+      {children}
+    </MdxLayout>
+  )
+}
