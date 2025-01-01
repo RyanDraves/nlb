@@ -15,3 +15,7 @@ node_modules/
 
 # Future development things
 vscode/
+
+# Shhhhh
+secrets/*
+!secrets/BUILD
