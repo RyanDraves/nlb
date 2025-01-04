@@ -19,3 +19,4 @@ vscode/
 # Shhhhh
 secrets/*
 !secrets/BUILD
+!secrets/README.md
