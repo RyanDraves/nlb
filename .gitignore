@@ -17,6 +17,5 @@ node_modules/
 vscode/
 
 # Shhhhh
-secrets/*
-!secrets/BUILD
-!secrets/README.md
+services/secrets/*
+!services/secrets/README.md

@@ -1,0 +1,59 @@
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - nginx-config:/etc/nginx
+      - nginx-html:/usr/share/nginx/html
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./secrets/recuv-laptop.barn-arcturus.ts.net.crt:/etc/nginx/cert.crt:ro
+      - ./secrets/recuv-laptop.barn-arcturus.ts.net.key:/etc/nginx/cert.key:ro
+    deploy:
+      restart_policy:
+        condition: always
+    command: >
+      /bin/sh -c "nginx -g 'daemon off;'"
+
+  lobe-chat:
+    image: ghcr.io/ryandraves/lobe-chat:pr-76
+    ports:
+      - "3210:3210"
+    environment:
+      ACCESS_CODE: /run/secrets/lobe_chat_password
+      OPENAI_API_KEY: /run/secrets/openai_key
+    secrets:
+      - lobe_chat_password
+      - openai_key
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  homer:
+    image: b4bz/homer:latest
+    ports:
+      - "1337:8080"
+    environment:
+      PORTAINER_TOKEN: /run/secrets/portainer_token
+    volumes:
+      - ./homer:/home/lighttpd
+    secrets:
+      - portainer_token
+    deploy:
+      restart_policy:
+        condition: on-failure
+    entrypoint: '/home/lighttpd/entrypoint.sh'
+
+volumes:
+  nginx-config:
+  nginx-html:
+
+
+secrets:
+  lobe_chat_password:
+    file: ./secrets/lobe_chat.password
+  openai_key:
+    file: ./secrets/openai.key
+  portainer_token:
+    file: ./secrets/portainer.token
