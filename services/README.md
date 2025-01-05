@@ -2,7 +2,6 @@
 Lazy `docker compose`-backed self-hosted services.
 
 # Laptop Host
-
 https://recuv-laptop.barn-arcturus.ts.net
 
 ## Portainer Server
@@ -17,5 +16,4 @@ Portainer is [started up manually](https://docs.portainer.io/start/install-ce/se
 [LobeChat](https://lobehub.com/) is a self-hosted portal for AI chat. It provides simple access to a few bucks' worth of OpenAI credits so I can use DALLE on demand when the free stuff hits rate limits.
 
 ## Homer
-
 [Homer](https://github.com/bastienwirtz/homer) provides a nice home page / portal for the services.
