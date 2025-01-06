@@ -1,3 +1,5 @@
+name: services
+
 services:
   nginx:
     image: nginx:latest
@@ -7,9 +9,9 @@ services:
     volumes:
       - nginx-config:/etc/nginx
       - nginx-html:/usr/share/nginx/html
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./secrets/recuv-laptop.barn-arcturus.ts.net.crt:/etc/nginx/cert.crt:ro
-      - ./secrets/recuv-laptop.barn-arcturus.ts.net.key:/etc/nginx/cert.key:ro
+      - ${PWD}/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${PWD}/secrets/recuv-laptop.barn-arcturus.ts.net.crt:/etc/nginx/cert.crt:ro
+      - ${PWD}/secrets/recuv-laptop.barn-arcturus.ts.net.key:/etc/nginx/cert.key:ro
     deploy:
       restart_policy:
         condition: always
@@ -37,7 +39,7 @@ services:
     environment:
       PORTAINER_TOKEN: /run/secrets/portainer_token
     volumes:
-      - ./homer:/home/lighttpd
+      - ${PWD}/homer:/home/lighttpd
     secrets:
       - portainer_token
     deploy:
@@ -52,8 +54,8 @@ volumes:
 
 secrets:
   lobe_chat_password:
-    file: ./secrets/lobe_chat.password
+    file: ${PWD}/secrets/lobe_chat.password
   openai_key:
-    file: ./secrets/openai.key
+    file: ${PWD}/secrets/openai.key
   portainer_token:
-    file: ./secrets/portainer.token
+    file: ${PWD}/secrets/portainer.token

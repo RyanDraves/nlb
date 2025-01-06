@@ -17,3 +17,16 @@ Portainer is [started up manually](https://docs.portainer.io/start/install-ce/se
 
 ## Homer
 [Homer](https://github.com/bastienwirtz/homer) provides a nice home page / portal for the services.
+
+# Overleaf
+https://overleaf.barn-arcturus.ts.net
+
+## Overleaf (& related services)
+[Overleaf Community Edition](https://github.com/overleaf/overleaf) provides a self-hosted Overleaf instance. Note that Overleaf doesn't get to play with the other children for two reasons:
+- It's unable to be served with a base URL (e.g. machine.barn-arcturus.ts.net/overleaf)
+- I might use [tailscale funnel](https://tailscale.com/kb/1223/funnel) for collaboration with other folks, so isolation is good
+
+NOTE: The container starts with a minimal set of TeXLive dependencies and must be [provisioned with scheme-full](https://shihabkhan1.github.io/overleaf/stepbystep.html#upgrading-texlive) (or one-by-one if that's your thing). This takes like an hour.
+
+## Tailscale
+Tailscale runs as a [sidecar container](https://tailscale.com/blog/docker-tailscale-guide) to provide TLS certs and expose the service at its nice URL. The funnel feature doesn't seem to be working yet; that's a TODO for later.
