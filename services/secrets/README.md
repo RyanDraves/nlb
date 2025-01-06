@@ -15,3 +15,6 @@
   - `[host].barn-arcturus.ts.net.[crt|key]`
   - Created through Tailscale magic
   - `tailscale cert` from each `[host]`; 90 day expiry
+- Tailscale OAUTH secret
+  - `tailnet_oauth.secret`
+  - Used to provision a [container as a machine on the tailnet](https://tailscale.com/kb/1282/docker#ts_socks5_server)

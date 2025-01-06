@@ -1,0 +1,126 @@
+name: overleaf
+
+services:
+  sharelatex:
+    restart: always
+    image: sharelatex/sharelatex
+    container_name: sharelatex
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ts-overleaf:
+        condition: service_started
+    network_mode: "service:ts-overleaf"
+    stop_grace_period: 60s
+    volumes:
+      - sharelatex-data:/var/lib/overleaf
+    environment:
+      OVERLEAF_APP_NAME: Overleaf CE
+      OVERLEAF_MONGO_URL: mongodb://mongo/sharelatex
+      # Same property, unfortunately with different names in
+      # different locations
+      OVERLEAF_REDIS_HOST: redis
+      REDIS_HOST: redis
+      ENABLED_LINKED_FILE_TYPES: 'project_file,project_output_file'
+      # Enables Thumbnail generation using ImageMagick
+      ENABLE_CONVERSIONS: 'true'
+      # Disables email confirmation requirement
+      EMAIL_CONFIRMATION_DISABLED: 'true'
+      # temporary fix for LuaLaTex compiles
+      # see https://github.com/overleaf/overleaf/issues/695
+      TEXMFVAR: /var/lib/overleaf/tmp/texmf-var
+
+      ## Set for SSL via nginx-proxy
+      #VIRTUAL_HOST: 103.112.212.22
+      OVERLEAF_BEHIND_PROXY: 'true'
+
+      OVERLEAF_SITE_URL: https://overleaf.barn-arcturus.ts.net
+      BASE_URL: https://overleaf.barn-arcturus.ts.net
+      OVERLEAF_NAV_TITLE: Overleaf CE
+      # OVERLEAF_HEADER_IMAGE_URL: http://example.com/mylogo.png
+      # OVERLEAF_ADMIN_EMAIL: support@it.com
+
+      OVERLEAF_LEFT_FOOTER: '[{"text": "<a href=\"https://www.tailscale.com\">Tailscale</a>"} ]'
+      OVERLEAF_RIGHT_FOOTER: '[{"text": "Hosted by Ryan"} ]'
+      # OVERLEAF_EMAIL_FROM_ADDRESS: "hello@example.com"
+
+      # OVERLEAF_EMAIL_AWS_SES_ACCESS_KEY_ID:
+      # OVERLEAF_EMAIL_AWS_SES_SECRET_KEY:
+
+      # OVERLEAF_EMAIL_SMTP_HOST: smtp.example.com
+      # OVERLEAF_EMAIL_SMTP_PORT: 587
+      # OVERLEAF_EMAIL_SMTP_SECURE: false
+      # OVERLEAF_EMAIL_SMTP_USER:
+      # OVERLEAF_EMAIL_SMTP_PASS:
+      # OVERLEAF_EMAIL_SMTP_TLS_REJECT_UNAUTH: true
+      # OVERLEAF_EMAIL_SMTP_IGNORE_TLS: false
+      # OVERLEAF_EMAIL_SMTP_NAME: '127.0.0.1'
+      # OVERLEAF_EMAIL_SMTP_LOGGER: true
+      # OVERLEAF_CUSTOM_EMAIL_FOOTER: "This system is run by department x"
+
+      # ENABLE_CRON_RESOURCE_DELETION: true
+
+  mongo:
+    restart: always
+    image: mongo:5.0
+    container_name: mongo
+    command: '--replSet overleaf'
+    volumes:
+      - sharelatex-mongo-data:/data/db
+      - ${PWD}/overleaf/mongodb-init-replica-set.js:/docker-entrypoint-initdb.d/mongodb-init-replica-set.js
+    environment:
+      MONGO_INITDB_DATABASE: sharelatex
+    extra_hosts:
+      # Required when using the automatic database setup for initializing the replica set.
+      # This override is not needed when running the setup after starting up mongo.
+      - mongo:127.0.0.1
+    healthcheck:
+      test: echo 'db.stats().ok' | mongo localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    restart: always
+    image: redis:6.2
+    container_name: redis
+    volumes:
+      - sharelatex-redis-data:/data
+
+  ts-overleaf:
+    image: tailscale/tailscale
+    container_name: ts-overleaf
+    hostname: overleaf
+    secrets:
+      - tailnet_oauth
+    environment:
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
+      TS_STATE_DIR: /var/lib/tailscale
+      # TS_USERSPACE: false
+      TS_SERVE_CONFIG: /config/ts-serve.json
+    volumes:
+      - ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the file config file for changes
+      - ${PWD}/overleaf/ts-serve:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+    command: >
+      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
+
+volumes:
+  sharelatex-data:
+  sharelatex-mongo-data:
+  sharelatex-redis-data:
+  ts-authkey:
+  tls:
+
+
+secrets:
+  tailnet_oauth:
+    file: ${PWD}/secrets/tailnet_oauth.secret
