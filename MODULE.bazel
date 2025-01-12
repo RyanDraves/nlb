@@ -220,3 +220,16 @@ crate.spec(package = "console_error_panic_hook", version = "0.1.7")
 crate.spec(package = "web-sys", version = "0.3", features = ["console"])
 crate.from_specs()
 use_repo(crate, "crates")
+
+#
+# Latex
+#
+bazel_dep(name = "bazel_latex")
+
+git_override(
+    module_name = "bazel_latex",
+    remote = "https://github.com/ProdriveTechnologies/bazel-latex.git",
+    patch_args = ["-p1"],
+    patches = ["//bzl/deps:latex.patch"],
+    commit = "c552d5bd09e4e9e49040ede60dd97720acb1cbb7",
+)

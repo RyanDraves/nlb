@@ -1,0 +1,101 @@
+diff --git a/packages/BUILD.bazel b/packages/BUILD.bazel
+index f386a90..c74864e 100644
+--- a/packages/BUILD.bazel
++++ b/packages/BUILD.bazel
+@@ -2,6 +2,80 @@ load(":packages.bzl", "latex_package")
+ 
+ # Externally usable library targets.
+ 
++latex_package(
++    name = "mathtools",
++    srcs = [
++        ":keyval",
++        ":calc",
++        ":amsmath",
++        "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__mathtools",
++    ],
++    tests = ["mathtools_test.tex"],
++)
++
++
++latex_package(
++    name = "inputenc",
++    srcs = [
++        "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__lualatex__luainputenc",
++    ],
++)
++
++latex_package(
++    name = "accents",
++    srcs = [
++        "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__accents",
++    ],
++    tests = ["accents_test.tex"],
++)
++
++# latex_package(
++#     name = "appendix",
++#     srcs = [
++#         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__appendix",
++#     ],
++#     tests = ["appendix_test.tex"],
++# )
++
++# latex_package(
++#     name = "arydshln",
++#     srcs = [
++#         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__arydshln",
++#     ],
++#     tests = ["arydshln_test.tex"],
++# )
++
++# latex_package(
++#     name = "minted",
++#     srcs = [
++#         ":calc",
++#         ":keyval",
++#         ":xcolor",
++#         ":lineno",
++#         ":etoolbox",
++#         ":float",
++#         ":upquote",
++#         ":xstring",
++#         ":framed",
++#         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__generic__catchfile",
++#         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__generic__etexcmds",
++#         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__ifplatform",
++#         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__fancyvrb",
++#         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__fvextra",
++#         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__minted",
++#     ],
++#     tests = ["minted_test.tex"],
++# )
++
++latex_package(
++    name = "cancel",
++    srcs = [
++        "@bazel_latex_texlive//:texlive_texmf__texmf-dist__fonts__type1__public__amsfonts__latxfont",
++        "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__cancel",
++    ],
++    tests = ["cancel_test.tex"],
++)
++
+ latex_package(
+     name = "adjustbox",
+     srcs = [
+@@ -887,6 +961,7 @@ latex_package(
+ latex_package(
+     name = "moderncv",
+     srcs = [
++        ":arydshln",
+         ":etoolbox",
+         ":fancyhdr",
+         ":fontawesome5",
+@@ -898,7 +973,6 @@ latex_package(
+         ":xcolor",
+         ":xparse",
+         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__academicons",
+-        "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__arydshln",
+         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__moderncv",
+         "@bazel_latex_texlive//:texlive_texmf__texmf-dist__tex__latex__multirow",
+     ],
