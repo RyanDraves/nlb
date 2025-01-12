@@ -89,7 +89,7 @@ services:
     volumes:
       - sharelatex-redis-data:/data
 
-  ts-overleaf:
+  tailscale:
     image: tailscale/tailscale
     container_name: ts-overleaf
     hostname: overleaf
@@ -118,7 +118,6 @@ volumes:
   sharelatex-mongo-data:
   sharelatex-redis-data:
   ts-authkey:
-  tls:
 
 
 secrets:

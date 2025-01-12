@@ -18,3 +18,6 @@
 - Tailscale OAUTH secret
   - `tailnet_oauth.secret`
   - Used to provision a [container as a machine on the tailnet](https://tailscale.com/kb/1282/docker#ts_socks5_server)
+- Postgres password
+  - `postgres.password`
+  - Used as the DB password for [Mealie](https://github.com/mealie-recipes/mealie)
