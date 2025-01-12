@@ -1,6 +1,6 @@
 # Bazelisms
 
-This short doc preserves some comments/code that was useful at one point, not needed now, but could easily be needed again when working with Bazel.
+This short doc preserves some comments/code that was useful at one point, not needed now, but could easily be needed again when working with Bazel. Or just general Bazelisms.
 
 ## Finding & using output groups
 
@@ -38,3 +38,16 @@ It's a complete mess. If you want to customize flags within a platform, instead 
 ## Using Ruby / Bundle binaries
 
 If I (or anyone reading this) need to run a Ruby/Bundle/whatever binary as part of a build process, [jekyll.bzl](https://github.com/RyanDraves/nlb/blob/5bfad07ffbd7fbf1a0fd087b260b148b7e0f655f/bzl/macros/jekyll.bzl) implemented this.
+
+## Patching
+Use `-p1` patch args for `git diff` patches to repos. E.g.
+
+```python
+git_override(
+    module_name = "repo",
+    remote = "https://github.com/example/repo.git",
+    patch_args = ["-p1"],
+    patches = ["//bzl/deps:example.patch"],
+    commit = "deafbeef",
+)
+```
