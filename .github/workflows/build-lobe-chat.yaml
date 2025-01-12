@@ -9,8 +9,8 @@ on:
       arm:
         description: 'Build for ARM architecture'
         required: true
-        # https://stackoverflow.com/a/76294014
-        default: 'true'
+        default: true
+        type: boolean
 
 env:
   REGISTRY: ghcr.io
@@ -18,8 +18,7 @@ env:
 
 jobs:
   build-and-push:
-    # Only MacOS runners are available for ARM builds
-    runs-on: ${{ inputs.arm == 'true' && 'macos-latest' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -37,6 +36,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        if: ${{ github.event.inputs.arm }}
+        uses: docker/setup-buildx-action@v3
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4
@@ -49,6 +52,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
+          platforms: ${{ github.event.inputs.arm && 'linux/arm64' || 'linux/amd64' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
