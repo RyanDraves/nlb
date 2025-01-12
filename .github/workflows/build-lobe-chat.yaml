@@ -5,6 +5,12 @@ name: Build Custom LobeHub Image
 
 on:
   workflow_dispatch:
+    inputs:
+      arm:
+        description: 'Build for ARM architecture'
+        required: false
+        default: true
+        type: boolean
 
 env:
   REGISTRY: ghcr.io
@@ -12,7 +18,8 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    # Only MacOS runners are available for ARM builds
+    runs-on: ${{ inputs.arm == 'true' && 'macos-latest' || 'ubuntu-latest' }}
     permissions:
       contents: read
       packages: write
