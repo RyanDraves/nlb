@@ -28,8 +28,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    command: >
-      /bin/sh -c "export ACCESS_CODE=$$(cat /run/secrets/lobe_chat_password) && export OPENAI_API_KEY=$$(cat /run/secrets/openai_key) && /app/startServer.js"
+    entrypoint: [ "/bin/sh", "-c", "export ACCESS_CODE=$(cat /run/secrets/lobe_chat_password) && export OPENAI_API_KEY=$(cat /run/secrets/openai_key) && /app/startServer.js" ]
 
   homer:
     image: b4bz/homer:latest
