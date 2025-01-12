@@ -23,16 +23,16 @@ services:
     ports:
       - "3210:3210"
     secrets:
-      - lobe_chat_password
-      - openai_key
+      - source: lobe_chat_password
+        uid: "1001"
+        gid: "1001"
+      - source: openai_key
+        uid: "1001"
+        gid: "1001"
     deploy:
       restart_policy:
         condition: on-failure
-    user: root
-    entrypoint: [ "/bin/sh", "-c", " set -ex; export ACCESS_CODE=$(cat /run/secrets/lobe_chat_password); export OPENAI_API_KEY=$(cat /run/secrets/openai_key); echo 'Secrets loaded successfully'; su nextjs -c '/bin/node /app/startServer.js'" ]
-    environment:
-      - ACCESS_CODE
-      - OPENAI_API_KEY
+    entrypoint: [ "/bin/sh", "-c", "set -e; export ACCESS_CODE=$(cat /run/secrets/lobe_chat_password); export OPENAI_API_KEY=$(cat /run/secrets/openai_key); echo 'Secrets loaded successfully'; /bin/node /app/startServer.js" ]
 
   homer:
     image: b4bz/homer:latest
