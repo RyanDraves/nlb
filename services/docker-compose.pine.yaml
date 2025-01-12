@@ -23,12 +23,8 @@ services:
     ports:
       - "3210:3210"
     secrets:
-      - source: lobe_chat_password
-        uid: "1001"
-        gid: "1001"
-      - source: openai_key
-        uid: "1001"
-        gid: "1001"
+      - lobe_chat_password
+      - openai_key
     deploy:
       restart_policy:
         condition: on-failure
