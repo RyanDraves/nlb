@@ -130,7 +130,7 @@ services:
         keywords: "monitoring"
         type: "Portainer"
         apikey: "PORTAINER_TOKEN"
-        url: "https://recuv-laptop.barn-arcturus.ts.net/portainer"
+        url: "https://pine.barn-arcturus.ts.net/portainer"
       - name: "Overleaf"
         icon: "fa-solid fa-file-lines"
         subtitle: "LaTeX"

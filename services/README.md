@@ -41,3 +41,6 @@ https://pine.barn-arcturus.ts.net
 
 ## Homer
 [Homer](https://github.com/bastienwirtz/homer) provides a nice home page / portal for the services.
+
+## Portainer Agent
+The [Portainer](https://www.portainer.io/) agent lets the server on the laptop host access, monitor, and manage this host.
