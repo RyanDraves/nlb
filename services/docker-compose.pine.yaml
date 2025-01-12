@@ -22,22 +22,19 @@ services:
     image: ghcr.io/ryandraves/lobe-chat:81-setup-pine
     ports:
       - "3210:3210"
-    environment:
-      ACCESS_CODE: /run/secrets/lobe_chat_password
-      OPENAI_API_KEY: /run/secrets/openai_key
     secrets:
       - lobe_chat_password
       - openai_key
     deploy:
       restart_policy:
         condition: on-failure
+    command: >
+      /bin/sh -c "export ACCESS_CODE=$$(cat /run/secrets/lobe_chat_password) && export OPENAI_API_KEY=$$(cat /run/secrets/openai_key) && /app/startServer.js"
 
   homer:
     image: b4bz/homer:latest
     ports:
       - "1337:8080"
-    environment:
-      PORTAINER_TOKEN: /run/secrets/portainer_token
     volumes:
       - ${PWD}/homer:/home/lighttpd
     secrets:
