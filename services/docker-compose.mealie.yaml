@@ -3,8 +3,7 @@ services:
     image: ghcr.io/mealie-recipes/mealie:v2.4.2
     container_name: mealie
     restart: always
-    ports:
-      - "9925:9000"
+    network_mode: service:mealie-tailscale
     deploy:
       resources:
         limits:
