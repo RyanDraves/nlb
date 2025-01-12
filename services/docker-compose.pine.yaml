@@ -19,7 +19,7 @@ services:
       /bin/sh -c "nginx -g 'daemon off;'"
 
   lobe-chat:
-    image: ghcr.io/ryandraves/lobe-chat:pr-76
+    image: ghcr.io/ryandraves/lobe-chat:81-setup-pine
     ports:
       - "3210:3210"
     environment:
