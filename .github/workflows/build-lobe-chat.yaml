@@ -8,9 +8,9 @@ on:
     inputs:
       arm:
         description: 'Build for ARM architecture'
-        required: false
-        default: true
-        type: boolean
+        required: true
+        # https://stackoverflow.com/a/76294014
+        default: 'true'
 
 env:
   REGISTRY: ghcr.io
