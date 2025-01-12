@@ -10,8 +10,8 @@ services:
       - nginx-config:/etc/nginx
       - nginx-html:/usr/share/nginx/html
       - ${PWD}/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ${PWD}/secrets/recuv-laptop.barn-arcturus.ts.net.crt:/etc/nginx/cert.crt:ro
-      - ${PWD}/secrets/recuv-laptop.barn-arcturus.ts.net.key:/etc/nginx/cert.key:ro
+      - ${PWD}/secrets/pine.barn-arcturus.ts.net.crt:/etc/nginx/cert.crt:ro
+      - ${PWD}/secrets/pine.barn-arcturus.ts.net.key:/etc/nginx/cert.key:ro
     deploy:
       restart_policy:
         condition: always
