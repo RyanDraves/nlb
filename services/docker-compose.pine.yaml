@@ -28,7 +28,8 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    entrypoint: [ "/bin/sh", "-c", "export ACCESS_CODE=$(cat /run/secrets/lobe_chat_password) && export OPENAI_API_KEY=$(cat /run/secrets/openai_key) && /app/startServer.js" ]
+    user: root
+    entrypoint: [ "/bin/sh", "-c", "export ACCESS_CODE=$(cat /run/secrets/lobe_chat_password) && export OPENAI_API_KEY=$(cat /run/secrets/openai_key) && su nextjs -c '/bin/node /app/startServer.js'" ]
 
   homer:
     image: b4bz/homer:latest
