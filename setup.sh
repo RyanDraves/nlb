@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script sets up a new Ubuntu 22.04 LTS installation with the following:
+# This script sets up the environment with the following:
 # - apt packages
 # - bazelisk
 # - udev rules
@@ -10,7 +10,7 @@
 #     - vscode keybindings
 #     - gh alias
 #
-# It probably works on anything Linux x86_64, but YMMV.
+# It probably works on anything Linux x86_64 / ARM64 that's Debian / Ubuntu based, but YMMV.
 #
 # Usage:
 #     ./setup.sh
@@ -18,11 +18,13 @@
 set -e
 set -o pipefail
 
-BAZELISK_VERSION=v1.19.0
-BAZELISK_SHA384_SUM=cc454c248a90c414bb1774e798ba87ecea6e81127f06c2ba73e93dab51a9159ca67a65deb2cc0b38095314e6a2a7a667
+BAZELISK_VERSION=v1.25.0
+BAZELISK_X86_SHA384_SUM=f452948139ca10fb2f85b9e9381f103c63978773884a3ee3092685b47556241058c7bc4e5806e5bd1c754076814fd60a
+BAZELISK_ARM64_SHA384_SUM=6457888166ac4c3fb5ee82323987bec29e97736caeeee46be2467b54ba27d7095f84271666f992af58978415bbb300a1
 
-GH_VERSION="2.42.0"
-GH_SHA384_SUM=c6d8060affe74fea9473d1c2393e5dc4e858521ebb6eb39db5551deaf442158e5f82edfb9d3680c5c14d72513601bf75
+GH_VERSION="2.65.0"
+GH_X86_SHA384_SUM=12c22b9132a09ac373465586a7eaaf26016ab5c47af3608400ef6d7b513b511b49057e37e8871fadd56a8236502de705
+GH_ARM64_SHA384_SUM=aae7887a1c577fcf1696754421e9f3f09e5b9807ef637d0ea29cd515924b255ed0481b0bae1877435ed4e718351ab0df
 
 REPO_ROOT=$(dirname $(readlink -f $0))
 
@@ -118,11 +120,17 @@ function install_bazelisk() {
         return 0
     fi
 
-    # Install bazelisk from release
-    wget https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-amd64 -O ~/.local/bin/bazel
+    if [[ "$(uname -m)" == "aarch64" ]]; then
+        # Install bazelisk for ARM64
+        wget https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-arm64 -O ~/.local/bin/bazel
+        verify_sha384sum ~/.local/bin/bazel $BAZELISK_ARM64_SHA384_SUM
+    else
+        # Install bazelisk from release
+        wget https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-amd64 -O ~/.local/bin/bazel
 
-    # Verify bazelisk checksum
-    verify_sha384sum ~/.local/bin/bazel $BAZELISK_SHA384_SUM
+        # Verify bazelisk checksum
+        verify_sha384sum ~/.local/bin/bazel $BAZELISK_X86_SHA384_SUM
+    fi
 
     # Make bazel executable
     chmod +x ~/.local/bin/bazel
@@ -183,12 +191,21 @@ function install_gh() {
         return 0
     fi
 
-    # Install gh from release
-    echo "Installing gh v$GH_VERSION"
-    local gh_url="https://github.com/cli/cli/releases/download/v$GH_VERSION/gh_${GH_VERSION}_linux_amd64.tar.gz"
+    if [[ "$(uname -m)" == "aarch64" ]]; then
+        # Install gh for ARM64
+        echo "Installing gh v$GH_VERSION"
+        local gh_url="https://github.com/cli/cli/releases/download/v$GH_VERSION/gh_${GH_VERSION}_linux_arm64.tar.gz"
 
-    wget $gh_url -O /tmp/gh.tar.gz
-    verify_sha384sum /tmp/gh.tar.gz $GH_SHA384_SUM
+        wget $gh_url -O /tmp/gh.tar.gz
+        verify_sha384sum /tmp/gh.tar.gz $GH_ARM64_SHA384_SUM
+    else
+        # Install gh from release
+        echo "Installing gh v$GH_VERSION"
+        local gh_url="https://github.com/cli/cli/releases/download/v$GH_VERSION/gh_${GH_VERSION}_linux_amd64.tar.gz"
+
+        wget $gh_url -O /tmp/gh.tar.gz
+        verify_sha384sum /tmp/gh.tar.gz $GH_X86_SHA384_SUM
+    fi
 
     # Unpack gh.tar.gz to ~/.local
     tar -xzf /tmp/gh.tar.gz -C ~/.local --strip-components=1
