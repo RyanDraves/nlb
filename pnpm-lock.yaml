@@ -10,6 +10,9 @@ importers:
 
   .:
     devDependencies:
+      '@bazel/ibazel':
+        specifier: 0.25.0
+        version: 0.25.0
       eslint:
         specifier: ^8.55.0
         version: 8.55.0
