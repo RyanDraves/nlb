@@ -112,4 +112,7 @@
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.formatOnType": false
     },
+    "[markdown]": {
+        "editor.wordWrap": "on",
+    }
 }

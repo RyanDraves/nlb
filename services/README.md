@@ -28,5 +28,13 @@ https://overleaf.barn-arcturus.ts.net
 
 NOTE: The container starts with a minimal set of TeXLive dependencies and must be [provisioned with scheme-full](https://shihabkhan1.github.io/overleaf/stepbystep.html#upgrading-texlive) (or one-by-one if that's your thing). This takes like an hour.
 
+TODO: Create new image per the above link
+```
+tlmgr install scheme-full
+apt update
+apt install python3-pip
+python -m pip install latexminted
+```
+
 ## Tailscale
 Tailscale runs as a [sidecar container](https://tailscale.com/blog/docker-tailscale-guide) to provide TLS certs and expose the service at its nice URL. The funnel feature doesn't seem to be working yet; that's a TODO for later.
