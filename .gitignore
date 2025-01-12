@@ -1,9 +1,9 @@
 # Generated things
 bazel-*/
-bazel-bin/
-bazel-nlb/
-bazel-out/
-bazel-testlogs/
+bazel-bin
+bazel-nlb
+bazel-out
+bazel-testlogs
 MODULE.bazel.lock
 venv
 external
