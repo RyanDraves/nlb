@@ -1,0 +1,29 @@
+import MdxLayout from '@/app/_components/mdx-layout'
+import SimpleMaze from '@/rust/simple-maze'
+
+export const metadata = {
+  title: "Simple Maze Example",
+  excerpt:
+    "TODO",
+  coverImage: "/nlb/assets/jekyll-bazel/cover.png",
+  date: "2024-12-31T00:00:00.000Z",
+  author: {
+    name: "Ryan Draves",
+    picture: "/nlb/assets/authors/me.png"
+  },
+  ogImage: {
+    url: "/nlb/assets/jekyll-bazel/cover.png"
+  }
+}
+
+Some initial text
+
+<SimpleMaze />
+
+export default function MDXPage({children}) {
+  return (
+    <MdxLayout metadata={metadata}>
+      {children}
+    </MdxLayout>
+  )
+}
