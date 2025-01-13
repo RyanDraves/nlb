@@ -4,15 +4,15 @@ services:
   sharelatex:
     restart: always
     image: sharelatex/sharelatex
-    container_name: sharelatex
+    container_name: overleaf
     depends_on:
       mongo:
         condition: service_healthy
       redis:
         condition: service_started
-      ts-overleaf:
+      tailscale:
         condition: service_started
-    network_mode: "service:ts-overleaf"
+    network_mode: service:tailscale
     stop_grace_period: 60s
     volumes:
       - sharelatex-data:/var/lib/overleaf
@@ -65,7 +65,7 @@ services:
   mongo:
     restart: always
     image: mongo:5.0
-    container_name: mongo
+    container_name: overleaf-mongo
     command: '--replSet overleaf'
     volumes:
       - sharelatex-mongo-data:/data/db
@@ -85,24 +85,23 @@ services:
   redis:
     restart: always
     image: redis:6.2
-    container_name: redis
+    container_name: overleaf-redis
     volumes:
       - sharelatex-redis-data:/data
 
-  ts-overleaf:
+  tailscale:
     image: tailscale/tailscale
-    container_name: ts-overleaf
+    container_name: overleaf-tailscale
     hostname: overleaf
     secrets:
       - tailnet_oauth
     environment:
       TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
-      # TS_USERSPACE: false
       TS_SERVE_CONFIG: /config/ts-serve.json
     volumes:
       - ts-authkey:/var/lib/tailscale
-      # Use a directory so `fsnotify` can watch the file config file for changes
+      # Use a directory so `fsnotify` can watch the config file for changes
       - ${PWD}/overleaf/ts-serve:/config
     devices:
       - /dev/net/tun:/dev/net/tun
@@ -113,12 +112,12 @@ services:
     command: >
       /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
 
+# TODO: If migrating to a new host, rename these to `overleaf-*`
 volumes:
   sharelatex-data:
   sharelatex-mongo-data:
   sharelatex-redis-data:
   ts-authkey:
-  tls:
 
 
 secrets:

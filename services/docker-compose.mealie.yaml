@@ -1,0 +1,83 @@
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:v2.4.2
+    container_name: mealie
+    restart: always
+    network_mode: service:tailscale
+    deploy:
+      resources:
+        limits:
+          memory: 1000M
+    volumes:
+      - mealie-data:/app/data/
+    environment:
+      ALLOW_SIGNUP: "false"
+      PUID: 1000
+      PGID: 1000
+      TZ: America/Denver
+      BASE_URL: https://recipes.barn-arcturus.ts.net
+      # Database Settings
+      DB_ENGINE: postgres
+      POSTGRES_USER: mealie
+      POSTGRES_SERVER: mealie-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: mealie
+    secrets:
+      - postgres_password
+    entrypoint: [ "/bin/sh", "-c", "set -e; export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); echo 'Secrets loaded successfully'; /app/run.sh" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    container_name: mealie-postgres
+    image: postgres:15
+    restart: always
+    volumes:
+      - mealie-pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_USER: mealie
+      PGUSER: mealie
+    secrets:
+      - postgres_password
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  tailscale:
+    image: tailscale/tailscale
+    container_name: mealie-tailscale
+    hostname: recipes
+    secrets:
+      - tailnet_oauth
+    environment:
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/ts-serve.json
+    volumes:
+      - mealie-ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the config file for changes
+      - ${PWD}/mealie/ts-serve:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+    command: >
+      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
+
+volumes:
+  mealie-data:
+  mealie-pgdata:
+  mealie-ts-authkey:
+
+
+secrets:
+  tailnet_oauth:
+    file: ${PWD}/secrets/tailnet_oauth.secret
+  postgres_password:
+    file: ${PWD}/secrets/postgres.password

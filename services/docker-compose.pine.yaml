@@ -38,6 +38,7 @@ services:
       - ${PWD}/homer:/home/lighttpd
     secrets:
       - portainer_token
+      - mealie_token
     deploy:
       restart_policy:
         condition: on-failure
@@ -68,3 +69,5 @@ secrets:
     file: ${PWD}/secrets/openai.key
   portainer_token:
     file: ${PWD}/secrets/portainer.token
+  mealie_token:
+    file: ${PWD}/secrets/mealie.token

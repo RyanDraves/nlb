@@ -1,13 +1,17 @@
 #!/bin/sh
 
+set -e
+
 mkdir -p /www/assets
 mkdir -p /www/assets/icons
 cp /home/lighttpd/config.yaml /www/assets/config.yml
 cp /home/lighttpd/favicon.ico /www/assets/icons/favicon.ico
 token=$(cat /run/secrets/portainer_token)
 sed -i 's@PORTAINER_TOKEN@'"$token"'@g' /www/assets/config.yml
+token=$(cat /run/secrets/mealie_token)
+sed -i 's@MEALIE_TOKEN@'"$token"'@g' /www/assets/config.yml
 
-# Rest of ntrypoint copied from https://github.com/bastienwirtz/homer
+# Rest of entrypoint copied from https://github.com/bastienwirtz/homer
 
 # Default assets & example configuration installation
 if [[ "${INIT_ASSETS}" == "1" ]] && [[ ! -f "/www/assets/config.yml" ]]; then
