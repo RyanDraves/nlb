@@ -56,11 +56,10 @@ services:
     environment:
       TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
-      # TS_USERSPACE: false
       TS_SERVE_CONFIG: /config/ts-serve.json
     volumes:
       - mealie-ts-authkey:/var/lib/tailscale
-      # Use a directory so `fsnotify` can watch the file config file for changes
+      # Use a directory so `fsnotify` can watch the config file for changes
       - ${PWD}/mealie/ts-serve:/config
     devices:
       - /dev/net/tun:/dev/net/tun
