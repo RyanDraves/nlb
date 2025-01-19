@@ -1,14 +1,14 @@
-version: '2.4'
-
 services:
   octoprint:
     image: octoprint/octoprint
+    container_name: octoprint
     restart: unless-stopped
     network_mode: service:tailscale
     devices:
       # use `python -m serial.tools.miniterm` to see what the name is of the printer, this requires pyserial
       - /dev/ttyUSB0:/dev/ttyUSB0
-      - /dev/video0:/dev/video0
+      # TODO make sure graphic acceleration is enabled
+      # - /dev/video0:/dev/video0
     volumes:
       - octoprint:/octoprint
     environment:
