@@ -8,11 +8,11 @@ services:
       # use `python -m serial.tools.miniterm` to see what the name is of the printer, this requires pyserial
       - /dev/ttyUSB0:/dev/ttyUSB0
       # TODO make sure graphic acceleration is enabled
-      # - /dev/video0:/dev/video0
+      - /dev/video0:/dev/video0
     volumes:
       - octoprint:/octoprint
     environment:
-      - ENABLE_MJPG_STREAMER=
+      - ENABLE_MJPG_STREAMER=true
 
   tailscale:
     image: tailscale/tailscale
