@@ -63,7 +63,6 @@ https://pinter.barn-arcturus.ts.net/webcam/stream
 Pinter is Raspberry Pi 3B connected to an Ender 3 3D printer. It's running the specialized OctoPi (w/ new camera stack) image, so its services are running directly on the host and not via Docker.
 
 ## HAProxy
-
 OctoPi ships with [HAProxy](https://www.haproxy.org/) to manage TLS and routing between Octoprint and the webcam server (which are separate).
 
 Pinter is setup with TLS certs created by Tailscale. The following steps point HAProxy to these certs:
@@ -78,5 +77,4 @@ sudo chmod 600 pinter.barn-arcturus.ts.net.pem
 ```
 
 ## OctoPrint
-
 [OctoPrint](https://octoprint.org/) provides a nice web UI for remote access and management of the 3D printer.
