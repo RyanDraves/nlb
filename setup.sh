@@ -32,6 +32,7 @@ APT_PACKAGES=(
     build-essential
     curl
     git
+    git-lfs
     unzip
     wget
     default-jdk
@@ -106,6 +107,9 @@ function filesystem_setup() {
     maybe_add_to_bashrc "export JAVA_HOME=/usr/lib/jvm/default-java"
 
     add_to_path $REPO_ROOT/tools/bin
+
+    # Setup Git LFS
+    git lfs install
 }
 
 function install_bazelisk() {
@@ -160,6 +164,44 @@ function copy_udev_rules() {
     sudo service udev restart
     sudo udevadm control --reload-rules
 }
+
+function install_docker() {
+    # Check if docker is already installed
+    if check_command docker; then
+        echo "docker is already installed"
+        return 0
+    fi
+
+    os_id=$(. /etc/os-release && echo "$ID")
+
+    # Add Docker's official GPG key:
+    sudo apt update
+    sudo apt install -y ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/${os_id}/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+    # Add the repository to Apt sources:
+    echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/${os_id} \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt update
+
+    # Install packages
+    sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    # Add user to docker group
+    sudo usermod -aG docker $USER
+
+    # Notify user to log out and back in
+    echo -e "\e[36m"
+    echo "----------------------------------------"
+    echo "Please log out and back in to use docker without sudo"
+    echo "----------------------------------------"
+    echo -e "\e[0m"
+}
+
 
 function setup_venv() {
     echo "Exporting venv..."
@@ -348,6 +390,7 @@ install_apt_packages "${APT_PACKAGES[@]}"
 filesystem_setup
 install_bazelisk
 copy_udev_rules
+install_docker
 setup_venv
 # Check if user is `dravesr` before setting up Ryan's environment
 if [ "$USER" = "dravesr" ]; then

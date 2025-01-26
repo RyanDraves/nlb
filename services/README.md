@@ -12,6 +12,8 @@ Portainer is [started up manually](https://docs.portainer.io/start/install-ce/se
 # Overleaf
 https://overleaf.barn-arcturus.ts.net
 
+Overleaf must run on an x86 machine (probably the laptop).
+
 ## Overleaf (& related services)
 [Overleaf Community Edition](https://github.com/overleaf/overleaf) provides a self-hosted Overleaf instance. Note that Overleaf doesn't get to play with the other children for two reasons:
 - It's unable to be served with a base URL (e.g. machine.barn-arcturus.ts.net/overleaf)
@@ -33,6 +35,8 @@ Tailscale runs as a [sidecar container](https://tailscale.com/blog/docker-tailsc
 # Pine
 https://pine.barn-arcturus.ts.net
 
+Raspberry Pi 4B. Acts as a host for most services. Runs a basic Raspberry Pi OS image.
+
 ## Nginx
 [nginx](https://nginx.org/) is setup as a reverse proxy to access other services on convenient URLs. It also deals with the TLS certs.
 
@@ -42,5 +46,35 @@ https://pine.barn-arcturus.ts.net
 ## Homer
 [Homer](https://github.com/bastienwirtz/homer) provides a nice home page / portal for the services.
 
+## Mealie
+https://recipes.barn-arcturus.ts.net
+
+[Mealie](https://mealie.io/) is a neat recipe server. It can scrape online recipes and put them into a sane format, share recipes with others, and generate shopping lists from meal plans.
+
+A Tailscale sidecar provides TLS certs.
+
 ## Portainer Agent
 The [Portainer](https://www.portainer.io/) agent lets the server on the laptop host access, monitor, and manage this host.
+
+# Pinter
+https://pinter.barn-arcturus.ts.net
+https://pinter.barn-arcturus.ts.net/webcam/stream
+
+Pinter is Raspberry Pi 3B connected to an Ender 3 3D printer. It's running the specialized OctoPi (w/ new camera stack) image, so its services are running directly on the host and not via Docker.
+
+## HAProxy
+OctoPi ships with [HAProxy](https://www.haproxy.org/) to manage TLS and routing between Octoprint and the webcam server (which are separate).
+
+Pinter is setup with TLS certs created by Tailscale. The following steps point HAProxy to these certs:
+
+```bash
+mkdir -p ~/.octoprint/ssl
+cd ~/.octoprint/ssl
+sudo tailscale cert pinter.barn-arcturus.ts.net`
+sudo cat pinter.barn-arcturus.ts.net.crt pinter.barn-arcturus.ts.net.key > pinter.barn-arcturus.ts.net.pem
+sudo chmod 600 pinter.barn-arcturus.ts.net.pem
+# Open /etc/haproxy/haproxy.cfg and make sure `frontend public` points its SSL config to `/home/pi/.octoprint/ssl/pinter.barn-arcturus.ts.net.pem`
+```
+
+## OctoPrint
+[OctoPrint](https://octoprint.org/) provides a nice web UI for remote access and management of the 3D printer.

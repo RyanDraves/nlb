@@ -10,6 +10,8 @@ token=$(cat /run/secrets/portainer_token)
 sed -i 's@PORTAINER_TOKEN@'"$token"'@g' /www/assets/config.yml
 token=$(cat /run/secrets/mealie_token)
 sed -i 's@MEALIE_TOKEN@'"$token"'@g' /www/assets/config.yml
+token=$(cat /run/secrets/octoprint_token)
+sed -i 's@OCTOPRINT_TOKEN@'"$token"'@g' /www/assets/config.yml
 
 # Rest of entrypoint copied from https://github.com/bastienwirtz/homer
 

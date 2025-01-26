@@ -39,6 +39,7 @@ services:
     secrets:
       - portainer_token
       - mealie_token
+      - octoprint_token
     deploy:
       restart_policy:
         condition: on-failure
@@ -71,3 +72,5 @@ secrets:
     file: ${PWD}/secrets/portainer.token
   mealie_token:
     file: ${PWD}/secrets/mealie.token
+  octoprint_token:
+    file: ${PWD}/secrets/octoprint.token

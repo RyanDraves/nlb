@@ -21,3 +21,7 @@
 - Postgres password
   - `postgres.password`
   - Used as the DB password for [Mealie](https://github.com/mealie-recipes/mealie)
+- Octoprint token
+  - `octoprint.token`
+  - Access token for Octoprint's API
+  - Used by Homer for pretty homepage things
