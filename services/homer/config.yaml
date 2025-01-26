@@ -150,4 +150,4 @@ services:
         type: "OctoPrint"
         apikey: "OCTOPRINT_TOKEN"
         display: "text"
-        url: "https://print.barn-arcturus.ts.net"
+        url: "https://pinter.barn-arcturus.ts.net"
