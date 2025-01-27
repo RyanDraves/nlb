@@ -224,6 +224,7 @@ function setup_gh() {
     install_gh
     authenticate_gh
     make_gh_alias feature 'issue develop "$1" -c'
+    make_gh_alias merge 'pr merge -s -d'
 }
 
 function install_gh() {
@@ -289,7 +290,7 @@ function make_gh_alias() {
             return 0
         fi
         echo "gh alias $alias already exists with a different command"
-        gh alias set $alias "$command"
+        gh alias set --clobber $alias "$command"
     else
         echo "Creating gh alias $alias"
         gh alias set $alias "$command"
