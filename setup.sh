@@ -224,6 +224,7 @@ function setup_gh() {
     install_gh
     authenticate_gh
     make_gh_alias feature 'issue develop "$1" -c'
+    make_gh_alias merge 'pr merge -s -d "$1"'
 }
 
 function install_gh() {
