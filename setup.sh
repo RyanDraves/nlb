@@ -324,6 +324,86 @@ EOF
 # Helpers
 #
 
+# Colors
+GREEN=$(tput setaf 2)
+RED=$(tput setaf 1)
+CYAN=$(tput setaf 6)
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+
+# Trap to restore cursor on exit
+cleanup() {
+    tput cnorm  # Restore cursor visibility
+}
+trap cleanup EXIT
+
+# Spinner function - always stays at the last line
+spinner() {
+    local pid=$1
+    local delay=0.1
+    local spin_chars=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+
+    tput civis  # Hide cursor
+    while kill -0 "$pid" 2>/dev/null; do
+        for i in "${spin_chars[@]}"; do
+            tput sc   # Save cursor position
+            tput cup "$(tput lines)" 0  # Move cursor to the last line
+            echo -ne "${CYAN}${BOLD}[$i] ${RESET}$SPINNER_MESSAGE   "
+            tput rc   # Restore cursor position
+            sleep $delay
+        done
+    done
+    tput cnorm  # Restore cursor when done
+}
+
+# Function to run a section with a spinner and live logs
+run_section() {
+    SPINNER_MESSAGE="$1"
+    shift  # Remove the first argument
+
+    echo -e "\n${BOLD}${CYAN}➤ $SPINNER_MESSAGE...${RESET}\n"
+
+    # Create a temporary log file
+    local log_file
+    log_file=$(mktemp)
+
+    # Run the command **in the background**, logging output
+    "$@" > "$log_file" 2>&1 &
+    local pid=$!
+
+    # Start the spinner (this stays until the command finishes)
+    spinner $pid &
+    local spinner_pid=$!
+
+    # Live log streaming while the command runs
+    tail -f "$log_file" | sed --unbuffered 's/^/  /' &
+    local tail_pid=$!
+
+    # Wait for command to finish
+    wait $pid
+    local exit_code=$?
+
+    # Stop the spinner and log streaming
+    kill $spinner_pid 2>/dev/null
+    kill $tail_pid 2>/dev/null
+    wait $spinner_pid 2>/dev/null || true  # Suppress error message
+    wait $tail_pid 2>/dev/null || true
+
+    # Clear spinner line before showing final status
+    tput cup "$(tput lines)" 0
+    echo -ne "\r\033[K"
+
+    # Show success or failure message
+    if [ $exit_code -eq 0 ]; then
+        echo -e "${GREEN}${BOLD}[✔] ${RESET}$SPINNER_MESSAGE\n"
+    else
+        echo -e "${RED}${BOLD}[✘] ${RESET}$SPINNER_MESSAGE (Failed!)\n"
+        echo -e "${RED}${BOLD}Error log:${RESET}"
+        tail -n 20 "$log_file"  # Show last 20 lines of error log
+        exit 1  # Stop execution
+    fi
+}
+
 function add_to_path() {
     local path=$1
     mkdir -p $path
@@ -387,14 +467,14 @@ function copy_if_not_up_to_date() {
     return 1
 }
 
-install_apt_packages "${APT_PACKAGES[@]}"
-filesystem_setup
-install_bazelisk
-copy_udev_rules
-install_docker
-setup_venv
+run_section "Install apt packages" install_apt_packages "${APT_PACKAGES[@]}"
+run_section "Filesystem setup" filesystem_setup
+run_section "Install Bazelisk" install_bazelisk
+run_section "Copy udev rules" copy_udev_rules
+run_section "Install docker" install_docker
+run_section "Setup venv" setup_venv
 # Check if user is `dravesr` before setting up Ryan's environment
 if [ "$USER" = "dravesr" ]; then
-    setup_ryans_custom_settings
+    run_section "Apply Ryan's dev settings" setup_ryans_custom_settings
 fi
 success
