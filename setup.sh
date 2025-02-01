@@ -331,44 +331,60 @@ CYAN=$(tput setaf 6)
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
 
-# Spinner function
+# Trap to restore cursor on exit
+cleanup() {
+    tput cnorm  # Restore cursor visibility
+}
+trap cleanup EXIT
+
+# Spinner function - always stays at the last line
 spinner() {
     local pid=$1
     local delay=0.1
     local spin_chars=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
 
+    tput civis  # Hide cursor
     while kill -0 "$pid" 2>/dev/null; do
         for i in "${spin_chars[@]}"; do
-            echo -ne "\r${CYAN}${BOLD}[$i] ${RESET}$SPINNER_MESSAGE  " # Clear to prevent overlap
+            tput sc   # Save cursor position
+            tput cup "$(tput lines)" 0  # Move cursor to the last line
+            echo -ne "${CYAN}${BOLD}[$i] ${RESET}$SPINNER_MESSAGE   "
+            tput rc   # Restore cursor position
             sleep $delay
         done
     done
+    tput cnorm  # Restore cursor when done
 }
 
-# Function to run a section with a spinner and live streaming logs
+# Function to run a section with a spinner and live logs
 run_section() {
     SPINNER_MESSAGE="$1"
     shift  # Remove the first argument
 
-    echo -e "\n${BOLD}${CYAN}➤ $SPINNER_MESSAGE...${RESET}"
+    echo -e "\n${BOLD}${CYAN}➤ $SPINNER_MESSAGE...${RESET}\n"
 
-    # Temporary log file for command output
+    # Create a temporary log file
     local log_file
     log_file=$(mktemp)
 
-    # Start command in the background, streaming output to log file
+    # Run the command in the background while capturing logs
     ("$@" > "$log_file" 2>&1) &
     local pid=$!
 
-    # Start the spinner in the background
+    # Start the spinner pinned to the bottom
     spinner $pid &
     local spinner_pid=$!
 
-    # Live log streaming using tail -f
-    tail -f "$log_file" --pid=$pid &
+    # Live log streaming - ensures logs stay above spinner
+    {
+        while kill -0 "$pid" 2>/dev/null; do
+            tail -n +1 -f "$log_file" | sed --unbuffered 's/^/  /'
+            sleep 1
+        done
+    } &
     local tail_pid=$!
 
-    # Wait for the main command to finish
+    # Wait for command to finish
     wait $pid
     local exit_code=$?
 
@@ -378,14 +394,15 @@ run_section() {
     wait $spinner_pid 2>/dev/null
     wait $tail_pid 2>/dev/null
 
-    # Erase spinner line before showing final status
+    # Clear spinner line before showing final status
+    tput cup "$(tput lines)" 0
     echo -ne "\r\033[K"
 
-    # Show final status
+    # Show success or failure message
     if [ $exit_code -eq 0 ]; then
-        echo -e "${GREEN}${BOLD}[✔] ${RESET}$SPINNER_MESSAGE"
+        echo -e "${GREEN}${BOLD}[✔] ${RESET}$SPINNER_MESSAGE\n"
     else
-        echo -e "${RED}${BOLD}[✘] ${RESET}$SPINNER_MESSAGE (Failed!)"
+        echo -e "${RED}${BOLD}[✘] ${RESET}$SPINNER_MESSAGE (Failed!)\n"
         echo -e "${RED}${BOLD}Error log:${RESET}"
         tail -n 20 "$log_file"  # Show last 20 lines of error log
         exit 1  # Stop execution
