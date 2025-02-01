@@ -41,13 +41,13 @@ http_archive(
     name = "pioasm-linux-x86",
     build_file = "//bzl/deps:pioasm.BUILD",
     integrity = "sha256-pMFMVugwDgGkmCztV4sYGoYeKiN4j84HnEKCw9rVXuk=",
-    url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.0.0-5/pico-sdk-tools-2.0.0-x86_64-lin.tar.gz",
+    url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.1.0-0/pico-sdk-tools-2.1.0-x86_64-lin.tar.gz",
 )
 http_archive(
     name = "pioasm-linux-arm",
     build_file = "//bzl/deps:pioasm.BUILD",
     integrity = "sha256-kBa73P7E6rVKcHIFysJLQZ2Ldc/LJFwTVxAjqCSFgJM=",
-    url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.0.0-5/pico-sdk-tools-2.1.0-aarch64-lin.tar.gz",
+    url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.1.0-0/pico-sdk-tools-2.1.0-aarch64-lin.tar.gz",
 )
 
 #
