@@ -18,4 +18,5 @@ alias(
             "@platforms//cpu:aarch64": "@pioasm-linux-arm//:pioasm",
         },
     ),
+    visibility = ["//visibility:public"],
 )
