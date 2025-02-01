@@ -15,7 +15,7 @@
 # Usage:
 #     ./setup.sh
 
-# set -e
+set -e
 set -o pipefail
 
 BAZELISK_VERSION=v1.25.0
@@ -386,8 +386,8 @@ run_section() {
     # Stop the spinner and log streaming
     kill $spinner_pid 2>/dev/null
     kill $tail_pid 2>/dev/null
-    wait $spinner_pid 2>/dev/null
-    wait $tail_pid 2>/dev/null
+    wait $spinner_pid 2>/dev/null || true  # Suppress error message
+    wait $tail_pid 2>/dev/null || true
 
     # Clear spinner line before showing final status
     tput cup "$(tput lines)" 0
