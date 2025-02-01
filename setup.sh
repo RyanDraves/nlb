@@ -367,25 +367,23 @@ run_section() {
     local log_file
     log_file=$(mktemp)
 
-    # Run the command **in the same shell**, logging output
+    # Run the command **in the background**, logging output
     "$@" > "$log_file" 2>&1 &
     local pid=$!
 
-    # Start the spinner pinned to the bottom
+    # Start the spinner (this stays until the command finishes)
     spinner $pid &
     local spinner_pid=$!
 
-    # Live log streaming - ensures logs stay above spinner
-    {
-        tail -n +1 -f "$log_file" | sed --unbuffered 's/^/  /'
-    } &
+    # Live log streaming while the command runs
+    tail -f "$log_file" | sed --unbuffered 's/^/  /' &
     local tail_pid=$!
 
     # Wait for command to finish
     wait $pid
     local exit_code=$?
 
-    # Stop the spinner and tail process
+    # Stop the spinner and log streaming
     kill $spinner_pid 2>/dev/null
     kill $tail_pid 2>/dev/null
     wait $spinner_pid 2>/dev/null
