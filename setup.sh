@@ -15,7 +15,7 @@
 # Usage:
 #     ./setup.sh
 
-set -e
+# set -e
 set -o pipefail
 
 BAZELISK_VERSION=v1.25.0
@@ -324,6 +324,74 @@ EOF
 # Helpers
 #
 
+# Colors
+GREEN=$(tput setaf 2)
+RED=$(tput setaf 1)
+CYAN=$(tput setaf 6)
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+
+# Spinner function
+spinner() {
+    local pid=$1
+    local delay=0.1
+    local spin_chars=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+
+    while kill -0 "$pid" 2>/dev/null; do
+        for i in "${spin_chars[@]}"; do
+            echo -ne "\r${CYAN}${BOLD}[$i] ${RESET}$SPINNER_MESSAGE  " # Clear to prevent overlap
+            sleep $delay
+        done
+    done
+}
+
+# Function to run a section with a spinner and live streaming logs
+run_section() {
+    SPINNER_MESSAGE="$1"
+    shift  # Remove the first argument
+
+    echo -e "\n${BOLD}${CYAN}➤ $SPINNER_MESSAGE...${RESET}"
+
+    # Temporary log file for command output
+    local log_file
+    log_file=$(mktemp)
+
+    # Start command in the background, streaming output to log file
+    ("$@" > "$log_file" 2>&1) &
+    local pid=$!
+
+    # Start the spinner in the background
+    spinner $pid &
+    local spinner_pid=$!
+
+    # Live log streaming using tail -f
+    tail -f "$log_file" --pid=$pid &
+    local tail_pid=$!
+
+    # Wait for the main command to finish
+    wait $pid
+    local exit_code=$?
+
+    # Stop the spinner and tail process
+    kill $spinner_pid 2>/dev/null
+    kill $tail_pid 2>/dev/null
+    wait $spinner_pid 2>/dev/null
+    wait $tail_pid 2>/dev/null
+
+    # Erase spinner line before showing final status
+    echo -ne "\r\033[K"
+
+    # Show final status
+    if [ $exit_code -eq 0 ]; then
+        echo -e "${GREEN}${BOLD}[✔] ${RESET}$SPINNER_MESSAGE"
+    else
+        echo -e "${RED}${BOLD}[✘] ${RESET}$SPINNER_MESSAGE (Failed!)"
+        echo -e "${RED}${BOLD}Error log:${RESET}"
+        tail -n 20 "$log_file"  # Show last 20 lines of error log
+        exit 1  # Stop execution
+    fi
+}
+
 function add_to_path() {
     local path=$1
     mkdir -p $path
@@ -387,14 +455,14 @@ function copy_if_not_up_to_date() {
     return 1
 }
 
-install_apt_packages "${APT_PACKAGES[@]}"
-filesystem_setup
-install_bazelisk
-copy_udev_rules
-install_docker
-setup_venv
+run_section "Install apt packages" install_apt_packages "${APT_PACKAGES[@]}"
+run_section "Filesystem setup" filesystem_setup
+run_section "Install Bazelisk" install_bazelisk
+run_section "Copy udev rules" copy_udev_rules
+run_section "Install docker" install_docker
+run_section "Setup venv" setup_venv
 # Check if user is `dravesr` before setting up Ryan's environment
 if [ "$USER" = "dravesr" ]; then
-    setup_ryans_custom_settings
+    run_section "Apply Ryan's dev settings" setup_ryans_custom_settings
 fi
 success
