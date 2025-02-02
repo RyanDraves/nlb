@@ -1,9 +1,10 @@
 #pragma once
 
 #include <cinttypes>
+#include <cstring>
 #include <span>
 #include <string>
-#include <string.h>
+#include <tuple>
 #include <vector>
 
 #include "emb/network/node/node.hpp"

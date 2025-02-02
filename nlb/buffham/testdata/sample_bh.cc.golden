@@ -1,9 +1,10 @@
 #include "nlb/buffham/testdata/sample_bh.hpp"
 
 #include <cinttypes>
+#include <cstring>
 #include <span>
 #include <string>
-#include <string.h>
+#include <tuple>
 #include <vector>
 
 #include "nlb/buffham/testdata/other_bh.hpp"

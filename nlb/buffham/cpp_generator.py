@@ -293,9 +293,10 @@ def generate_cpp(
             # includes to the cc file
             fp.write(
                 '#include <cinttypes>\n'
+                '#include <cstring>\n'
                 '#include <span>\n'
                 '#include <string>\n'
-                '#include <string.h>\n'
+                '#include <tuple>\n'
                 '#include <vector>\n\n'
             )
         elif parser.FieldType.STRING in [constant.type for constant in bh.constants]:

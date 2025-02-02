@@ -102,9 +102,9 @@ function filesystem_setup() {
     add_to_path $HOME/.local/bin
 
     mkdir -p $HOME/.local/share/completions
-    maybe_add_to_bashrc "source $HOME/.local/share/completions/*"
+    maybe_add_to_file $HOME/.bashrc "source $HOME/.local/share/completions/*"
 
-    maybe_add_to_bashrc "export JAVA_HOME=/usr/lib/jvm/default-java"
+    maybe_add_to_file $HOME/.bashrc "export JAVA_HOME=/usr/lib/jvm/default-java"
 
     add_to_path $REPO_ROOT/tools/bin
 
@@ -218,6 +218,7 @@ function setup_ryans_custom_settings() {
     install_apt_packages "${RYANS_APT_PACKAGES[@]}"
     install_vscode_keybindings misc/dravesr/keybindings.json
     setup_user_bazelrc
+    setup_bash_aliases
 }
 
 function setup_gh() {
@@ -314,10 +315,37 @@ function install_vscode_keybindings() {
 
 function setup_user_bazelrc() {
     echo "Setting up .user.bazelrc"
+    local bazelrc_file="$REPO_ROOT/.user.bazelrc"
+    local bazelrc_lines=(
+        "common --color=yes"
+    )
+    maybe_add_to_file "$bazelrc_file" "${bazelrc_lines[@]}"
+}
 
-    cat << EOF > $REPO_ROOT/.user.bazelrc
-common --color=yes
-EOF
+function setup_bash_aliases() {
+    echo "Setting up .bash_aliases"
+    local bash_aliases_file="$HOME/.bash_aliases"
+    local bash_aliases_lines=(
+        "# Turn on tap-to-click"
+        "alias silent_mode='gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click true'"
+        "# Remember why we turned off tap-to-click"
+        "alias fuck_silent_mode='gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click false'"
+        "# Matlab usability"
+        "alias matlab='matlab -nodesktop -nosplash'"
+        "# Output SHA256 integrity hashes as Bazel wants them"
+        "function bazel_sha256() {
+    openssl dgst -sha256 -binary \"\$1\" | openssl base64 -A | sed 's/^/sha256-/'
+    echo ""  # Newline
+        }"
+        "# Invoke custom tailscale CLI"
+        "function nlb_tailscale() {
+    pushd \$HOME/src/nlb > /dev/null
+    bazel run --config quiet //nlb/tailscale:wrapper -- \"\$@\"
+    popd > /dev/null
+        }"
+    )
+
+    maybe_add_to_file "$bash_aliases_file" "${bash_aliases_lines[@]}"
 }
 
 #
@@ -407,7 +435,7 @@ run_section() {
 function add_to_path() {
     local path=$1
     mkdir -p $path
-    maybe_add_to_bashrc "PATH=\"$path:\$PATH\""
+    maybe_add_to_file $HOME/.bashrc "PATH=\"$path:\$PATH\""
     # Export to make the new PATH available in the current shell
     export PATH="$path:$PATH"
 }
@@ -434,11 +462,17 @@ function check_command() {
     return 0
 }
 
-function maybe_add_to_bashrc() {
-    local line=$1
-    if ! grep -q "$line" ~/.bashrc; then
-        echo "$line" >> ~/.bashrc
-    fi
+function maybe_add_to_file() {
+    local file=$1
+    shift
+    local lines=("$@")
+    for line in "${lines[@]}"; do
+        echo $line
+        echo $file
+        if ! grep -qF "$line" "$file"; then
+            echo "$line" >> "$file"
+        fi
+    done
 }
 
 function success() {

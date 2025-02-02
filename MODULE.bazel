@@ -22,6 +22,8 @@ bazel_dep(name = "pico-sdk", version = "2.1.0")
 register_toolchains(
     "@pico-sdk//bazel/toolchain:linux-x86_64-rp2040",
     "@pico-sdk//bazel/toolchain:linux-x86_64-rp2350",
+    "@pico-sdk//bazel/toolchain:linux-aarch64-rp2040",
+    "@pico-sdk//bazel/toolchain:linux-aarch64-rp2350",
     "@pico-sdk//bazel/toolchain:win-x86_64-rp2040",
     "@pico-sdk//bazel/toolchain:win-x86_64-rp2350",
     "@pico-sdk//bazel/toolchain:mac-x86_64-rp2040",
@@ -36,10 +38,16 @@ bazel_dep(name = "picotool", version = "2.1.0")
 # https://github.com/raspberrypi/pico-sdk/tree/master/bazel#known-issues-and-limitations
 # but the binary is distributed in another repo
 http_archive(
-    name = "pioasm",
+    name = "pioasm-linux-x86",
     build_file = "//bzl/deps:pioasm.BUILD",
-    integrity = "sha256-MyatUnHnx6syP+QhtjfQi/OOqo2iduhaJXM9kleXuA4=",
-    url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.0.0-5/pico-sdk-tools-2.0.0-x86_64-lin.tar.gz",
+    integrity = "sha256-pMFMVugwDgGkmCztV4sYGoYeKiN4j84HnEKCw9rVXuk=",
+    url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.1.0-0/pico-sdk-tools-2.1.0-x86_64-lin.tar.gz",
+)
+http_archive(
+    name = "pioasm-linux-arm",
+    build_file = "//bzl/deps:pioasm.BUILD",
+    integrity = "sha256-kBa73P7E6rVKcHIFysJLQZ2Ldc/LJFwTVxAjqCSFgJM=",
+    url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.1.0-0/pico-sdk-tools-2.1.0-aarch64-lin.tar.gz",
 )
 
 #
@@ -103,7 +111,7 @@ git_override(
 #
 # rules_foreign_cc
 #
-bazel_dep(name = "rules_foreign_cc", version = "0.10.1")
+bazel_dep(name = "rules_foreign_cc", version = "0.13.0")
 
 #
 # Pybind11

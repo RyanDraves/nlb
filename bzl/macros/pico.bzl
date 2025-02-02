@@ -106,8 +106,8 @@ def pio_cc_library(name, pio, hdrs = [], **kwargs):
         srcs = [pio],
         outs = [pio + ".h"],
         # -v 0 corresponds to the version 0 of the PIO, which is the RP2040
-        cmd = "$(execpath @pioasm//:pioasm) -o c-sdk -v 0 $(location {}) $(location {})".format(pio, pio + ".h"),
-        tools = ["@pioasm//:pioasm"],
+        cmd = "$(execpath //tools:pioasm) -o c-sdk -v 0 $(location {}) $(location {})".format(pio, pio + ".h"),
+        tools = ["//tools:pioasm"],
     )
 
     cc_library(
