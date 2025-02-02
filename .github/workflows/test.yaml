@@ -1,0 +1,26 @@
+# Do the Bazel thing
+name: Test All
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: self-hosted
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+    #   - uses: bazelbuild/setup-bazelisk@v3
+      - name: Build
+        run: |
+          bazel build //...
+      - name: Test
+        run: |
+          bazel test //...
