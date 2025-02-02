@@ -11,13 +11,12 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-and-test:
     runs-on: self-hosted
     timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-    #   - uses: bazelbuild/setup-bazelisk@v3
       - name: Build
         run: |
           bazel build //...
