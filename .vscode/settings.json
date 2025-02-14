@@ -114,5 +114,5 @@
     },
     "[markdown]": {
         "editor.wordWrap": "on",
-    }
+    },
 }

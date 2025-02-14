@@ -19,10 +19,10 @@ def main(
     log_connection: shell.ConnectionType | None,
     port: str | None,
     address: str,
-    log: str,
+    log_level: int,
 ) -> None:
     comms_transporter, log_transporter = shell.resolve_shell_options(
-        connection, log_connection, port, address, log
+        connection, log_connection, port, address, log_level
     )
 
     c = client.BaseClient(

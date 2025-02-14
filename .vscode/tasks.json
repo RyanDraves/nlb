@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Update requirements.txt",
+            "type": "shell",
+            "command": "bazel run //:requirements.update && bazel run //:venv venv",
+            "problemMatcher": []
+        }
+    ]
+}
