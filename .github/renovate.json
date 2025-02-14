@@ -22,7 +22,7 @@
     },
     {
       "matchManagers": [
-        "bazel"
+        "bazel-module"
       ],
       "groupName": "bazel"
     },
@@ -44,5 +44,19 @@
       ],
       "groupName": "pip"
     }
-  ]
+  ],
+  "pip_requirements": {
+    "enabled": true,
+    "pinDigests": true,
+    "rangeStrategy": "bump"
+  },
+  "postUpgradeTasks": {
+    "commands": [
+      "bazel run //:requirements.update"
+    ],
+    "executionMode": "update",
+    "fileFilters": [
+      "**/*"
+    ]
+  }
 }
