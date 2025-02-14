@@ -84,7 +84,7 @@ use_repo(pip, "pip")
 #
 git_repository(
     name = "rules_pyvenv",
-    commit = "0b03b0d1f5562223d1170c511e548dc0961f0c5f",
+    commit = "7b3e110e361ba13c972dd74eb17420a81da36f1f",
     remote = "https://github.com/cedarai/rules_pyvenv",
 )
 
@@ -103,7 +103,7 @@ bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-    commit = "0e990032f3c5a866e72615cf67e5ce22186dcb97",
+    commit = "4f28899228fb3ad0126897876f147ca15026151e",
     # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
     # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
 )

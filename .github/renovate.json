@@ -11,6 +11,7 @@
   ],
   "commitBodyTable": true,
   "configMigration": true,
+  "dependencyDashboard": true,
   "enabled": true,
   "packageRules": [
     {
