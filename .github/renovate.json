@@ -27,7 +27,7 @@
     },
     {
       "matchManagers": [
-        "docker"
+        "docker-compose"
       ],
       "groupName": "docker"
     },
@@ -39,7 +39,7 @@
     },
     {
       "matchManagers": [
-        "pip"
+        "pip-requirements"
       ],
       "groupName": "pip"
     }
