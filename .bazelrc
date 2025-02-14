@@ -1,5 +1,7 @@
 build --disk_cache=~/.cache/bazel
 
+build --registry=https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/main
+
 build --cxxopt='-std=c++23'
 
 # Using nightly channel for WASM stuffs

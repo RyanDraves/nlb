@@ -1,0 +1,62 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "addLabels": [
+    "renovate"
+  ],
+  "reviewers": [
+    "RyanDraves"
+  ],
+  "commitBodyTable": true,
+  "configMigration": true,
+  "dependencyDashboard": true,
+  "enabled": true,
+  "packageRules": [
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "groupName": "npm"
+    },
+    {
+      "matchManagers": [
+        "bazel-module"
+      ],
+      "groupName": "bazel"
+    },
+    {
+      "matchManagers": [
+        "docker-compose"
+      ],
+      "groupName": "docker"
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github-actions"
+    },
+    {
+      "matchManagers": [
+        "pip_requirements"
+      ],
+      "groupName": "pip"
+    }
+  ],
+  "pip_requirements": {
+    "enabled": true,
+    "pinDigests": true,
+    "rangeStrategy": "bump"
+  },
+  "postUpgradeTasks": {
+    "commands": [
+      "bazel run //:requirements.update"
+    ],
+    "executionMode": "update",
+    "fileFilters": [
+      "**/*"
+    ]
+  }
+}
