@@ -47,7 +47,7 @@ def common_shell_options(func: Callable) -> Callable:
     func = click.option(
         '--address', '-a', default=tcp.Zmq.DEFAULT_ADDRESS, help='ZMQ address'
     )(func)
-    func = click.option('--log', '-l', default='INFO', help='Log level')(func)
+    func = click_utils.log_level(func)
     return func
 
 
@@ -56,10 +56,10 @@ def resolve_shell_options(
     log_connection: ConnectionType | None,
     port: str | None,
     address: str,
-    log: str,
+    log_level: int,
 ) -> tuple[transporter.TransporterLike, transporter.TransporterLike]:
     logging.basicConfig(
-        level=log.upper(), format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 
     comms_transporter = _get_transporter(connection, port, address)
@@ -88,11 +88,11 @@ def shell_entry(
     log_connection: ConnectionType | None,
     port: str | None,
     address: str,
-    log: str,
+    log_level: int,
     ctx: ShellContext,
 ) -> None:
     comms_transporter, log_transporter = resolve_shell_options(
-        connection, log_connection, port, address, log
+        connection, log_connection, port, address, log_level
     )
 
     c = ctx.client_cls(

@@ -11,11 +11,33 @@ py_library(
 )
 
 py_library(
+    name = "console_utils",
+    srcs = ["console_utils.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("rich"),
+    ],
+)
+
+py_library(
     name = "dataclass",
     srcs = ["dataclass.py"],
     visibility = ["//visibility:public"],
-    deps = [
-    ],
+    deps = [],
+)
+
+py_library(
+    name = "exception",
+    srcs = ["exception.py"],
+    visibility = ["//visibility:public"],
+    deps = [requirement("IPython")],
+)
+
+py_library(
+    name = "path_utils",
+    srcs = ["path_utils.py"],
+    visibility = ["//visibility:public"],
+    deps = [],
 )
 
 py_library(
@@ -24,14 +46,5 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         requirement("prompt_toolkit"),
-    ],
-)
-
-py_library(
-    name = "console_utils",
-    srcs = ["console_utils.py"],
-    visibility = ["//visibility:public"],
-    deps = [
-        requirement("rich"),
     ],
 )

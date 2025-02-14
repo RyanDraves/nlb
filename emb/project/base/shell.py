@@ -12,11 +12,11 @@ def main(
     log_connection: shell.ConnectionType | None,
     port: str | None,
     address: str,
-    log: str,
+    log_level: int,
 ):
     ctx = shell.ShellContext(client.BaseClient, base_bh.BaseNode, 'Base Shell')
 
-    shell.shell_entry(connection, log_connection, port, address, log, ctx)
+    shell.shell_entry(connection, log_connection, port, address, log_level, ctx)
 
 
 if __name__ == '__main__':
