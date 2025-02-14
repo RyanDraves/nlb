@@ -40,7 +40,7 @@
     },
     {
       "matchManagers": [
-        "pip-requirements"
+        "pip_requirements"
       ],
       "groupName": "pip"
     }
