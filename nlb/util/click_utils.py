@@ -45,7 +45,7 @@ class MappedChoice[V](click.Choice):
 
 
 class ClassChoice(click.Choice):
-    """Use a mapping as choices for a click option"""
+    """Select from a list of classes by name"""
 
     def __init__(self, classes: list[type], case_sensitive: bool = False):
         self.mapping = {clz.__name__: clz for clz in classes}

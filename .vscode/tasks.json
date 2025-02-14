@@ -4,7 +4,7 @@
         {
             "label": "Update requirements.txt",
             "type": "shell",
-            "command": "bazel run //:requirements.update &&  bazel run //:venv venv",
+            "command": "bazel run //:requirements.update && bazel run //:venv venv",
             "problemMatcher": []
         }
     ]
