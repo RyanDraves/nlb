@@ -11,5 +11,37 @@
   ],
   "commitBodyTable": true,
   "configMigration": true,
-  "enabled": true
+  "enabled": true,
+  "packageRules": [
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "groupName": "npm"
+    },
+    {
+      "matchManagers": [
+        "bazel"
+      ],
+      "groupName": "bazel"
+    },
+    {
+      "matchManagers": [
+        "docker"
+      ],
+      "groupName": "docker"
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github-actions"
+    },
+    {
+      "matchManagers": [
+        "pip"
+      ],
+      "groupName": "pip"
+    }
+  ]
 }
