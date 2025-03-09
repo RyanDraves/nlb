@@ -1,0 +1,29 @@
+services:
+  hyd-db:
+    image: postgres:15
+    container_name: hyd-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: hyd
+      PGUSER: hyd
+      POSTGRES_DB: hyd
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    ports:
+      - "2345:5432"
+    volumes:
+      - hyd-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "hyd" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+volumes:
+  hyd-pgdata:
+
+
+secrets:
+  postgres_password:
+    file: ${PWD}/secrets/hyd_postgres.password

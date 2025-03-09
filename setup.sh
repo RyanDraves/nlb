@@ -50,6 +50,8 @@ APT_PACKAGES=(
     cmake
     # For local Pico testing
     minicom
+    # DB
+    libpq-dev
 )
 
 function check_if_on_wsl() {
