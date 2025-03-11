@@ -1,3 +1,4 @@
+import logging
 from typing import Generator, Required, Self, Sequence, TypedDict
 
 import requests
@@ -14,7 +15,7 @@ class TaskProgress(TypedDict, total=False):
 
 
 class ProgressBar:
-    """Display a progress bar in the console and send updates to a HYD server."""
+    """Display a progress bar in the console and send updates to a(n) HYD server."""
 
     def __init__(
         self,
@@ -29,6 +30,8 @@ class ProgressBar:
         self._endpoint = endpoint
         self._value = 0
         self._status: str | None = None
+
+        self._first_failure = True
 
         self._progress = progress.Progress(console=console)
         self._task = self._progress.add_task(label, total=max_value)
@@ -46,8 +49,21 @@ class ProgressBar:
 
         with self:
             for i, item in enumerate(iterable):
-                yield item
                 self.update_value(i)
+                yield item
+
+    def _update_hyd(self, payload: TaskProgress) -> TaskProgress:
+        try:
+            response = requests.post(self._endpoint, json=payload)
+        except requests.ConnectionError as e:
+            if self._first_failure:
+                logging.warning(
+                    'Could not connect to HYD server. Progress updates will not be sent.'
+                )
+                self._first_failure = False
+            return payload
+        response.raise_for_status()
+        return response.json()
 
     def update_value(
         self,
@@ -67,9 +83,7 @@ class ProgressBar:
 
         self._progress.update(self._task, completed=self._value)
 
-        response = requests.post(self._endpoint, json=payload)
-        response.raise_for_status()
-        return response.json()
+        return self._update_hyd(payload)
 
     def update_status(
         self,
@@ -83,6 +97,4 @@ class ProgressBar:
         self._status = status
         payload['status'] = self._status
 
-        response = requests.post(self._endpoint, json=payload)
-        response.raise_for_status()
-        return response.json()
+        return self._update_hyd(payload)

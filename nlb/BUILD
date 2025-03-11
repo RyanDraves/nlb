@@ -17,6 +17,7 @@ py_package(
         "//nlb/buffham:py_generator",
         "//nlb/buffham:template_generator",
         "//nlb/datastructure:bidirectional_dict",
+        "//nlb/hyd:progress_bar",
         "//nlb/tailscale:wrapper",
         "//nlb/util:click_utils",
         "//nlb/util:console_utils",
@@ -27,6 +28,7 @@ py_package(
     ],
 )
 
+# bazel run --stamp --embed_label=0.0.3 -- //nlb:nlb_wheel.publish --repository testpypi
 py_wheel(
     name = "nlb_wheel",
     description_file = "pypi_README.md",
