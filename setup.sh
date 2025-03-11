@@ -221,6 +221,7 @@ function setup_ryans_custom_settings() {
     install_vscode_keybindings misc/dravesr/keybindings.json
     setup_user_bazelrc
     setup_bash_aliases
+    install_system_python_packages
 }
 
 function setup_gh() {
@@ -339,15 +340,14 @@ function setup_bash_aliases() {
     openssl dgst -sha256 -binary \"\$1\" | openssl base64 -A | sed 's/^/sha256-/'
     echo ""  # Newline
         }"
-        "# Invoke custom tailscale CLI"
-        "function nlb_tailscale() {
-    pushd \$HOME/src/nlb > /dev/null
-    bazel run --config quiet //nlb/tailscale:wrapper -- \"\$@\"
-    popd > /dev/null
-        }"
     )
 
     maybe_add_to_file "$bash_aliases_file" "${bash_aliases_lines[@]}"
+}
+
+function install_system_python_packages() {
+    # Big scary flag, but that won't stop the fun
+    /usr/bin/pip install nl-blocks --upgrade --break-system-packages
 }
 
 #

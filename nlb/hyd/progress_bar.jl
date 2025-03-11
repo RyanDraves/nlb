@@ -52,6 +52,7 @@ function fancyprogress(f::Function, pb::ProgressBar, items)
     end
 end
 
+# TODO: Remove me before publishing (or importing internally)
 pb = ProgressBar("Julia Progress", max_value=100)
 fancyprogress(pb, 1:100) do x
     update_status!(pb, status="Processing $x")
