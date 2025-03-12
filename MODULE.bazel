@@ -1,6 +1,7 @@
 module(
     name = "nlb",
-    version = "0.0.0",
+    version = "0.1.0",
+    compatibility_level = 0,
 )
 
 #
@@ -9,7 +10,7 @@ module(
 bazel_dep(name = "aspect_bazel_lib", version = "2.10.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "platforms", version = "0.0.10")
-bazel_dep(name = "rules_cc", version = "0.1.0")
+bazel_dep(name = "rules_cc", version = "0.1.1")
 bazel_dep(name = "rules_platform", version = "0.1.0")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -121,23 +122,7 @@ bazel_dep(name = "pybind11_bazel", version = "2.12.0")
 #
 # Zmq
 #
-http_archive(
-    name = "cppzmq",
-    build_file = "//bzl/deps:cppzmq.BUILD",
-    integrity = "sha256-VNXYMV/WEWEkrH7sQRYQriFlLcpwwLyTbbXyzM9K1gs=",
-    patch_args = ["-p1"],
-    patches = ["//bzl/deps:cppzmq.patch"],
-    strip_prefix = "cppzmq-4.10.0",
-    url = "https://github.com/zeromq/cppzmq/archive/refs/tags/v4.10.0.zip",
-)
-
-http_archive(
-    name = "libzmq",
-    build_file = "//bzl/deps:libzmq.BUILD",
-    integrity = "sha256-SbnWzRInXZSidyT82mRlVPE68nhX4/53i3LLJFx0l24=",
-    strip_prefix = "libzmq-4.3.5",
-    url = "https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.5.zip",
-)
+bazel_dep(name = "cppzmq", version = "4.10.0")
 
 #
 # Google Test
@@ -151,12 +136,6 @@ bazel_dep(name = "aspect_rules_js", version = "2.0.2")
 bazel_dep(name = "aspect_rules_ts", version = "3.1.0")
 bazel_dep(name = "rules_nodejs", version = "6.2.0")
 bazel_dep(name = "aspect_rules_lint", version = "1.0.0-rc4")
-
-# TODO: Figure out the usefulness of these dependencies not directly being used
-bazel_dep(name = "aspect_rules_swc", version = "2.0.1")
-bazel_dep(name = "aspect_rules_rollup", version = "2.0.0")
-bazel_dep(name = "aspect_rules_webpack", version = "0.16.0")
-bazel_dep(name = "aspect_rules_jest", version = "0.22.0")
 
 node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node", dev_dependency = True)
 
