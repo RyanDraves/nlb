@@ -177,7 +177,10 @@ cc_library(
     name = "transport_zmq",
     srcs = ["host/zmq.cc"],
     hdrs = ["zmq.hpp"],
-    deps = ["@cppzmq"],
+    deps = [
+        "@cppzmq",
+        "@libzmq",  # Need to pair this with cppzmq
+    ],
 )
 
 cc_library(
@@ -206,5 +209,6 @@ cc_host_test(
     deps = [
         ":transport_zmq",
         "@cppzmq",
+        # "@libzmq",
     ],
 )
