@@ -1,20 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Generated path
+import "@/tailwind.css";
+// Original path (uncomment to use pnpm directly)
+// import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Progress Bar MVP",
-  description: "An MVP that loads and displays progress bars",
+  title: "HYD",
+  description: "Fancy progress bars",
 };
 
 export default function RootLayout({
@@ -25,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`bg-[#222222] antialiased`}
       >
         {children}
       </body>
