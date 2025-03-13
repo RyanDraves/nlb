@@ -1,0 +1,6 @@
+# Generated things
+bazel-*/
+bazel-bin
+bazel-test_module
+bazel-out
+bazel-testlogs

@@ -1,0 +1,22 @@
+module(
+    name = "nlb_test_module",
+    version = "0.0.0",
+)
+
+bazel_dep(name = "ryandraves_nlb")
+local_path_override(
+    module_name = "ryandraves_nlb",
+    path = "../..",
+)
+
+bazel_dep(name = "rules_python", version = "0.40.0")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+
+python.toolchain(
+    python_version = "3.12",
+    is_default = True,
+)
+
+use_repo(python, "python_versions")
+use_repo(python, "python_3_12")
