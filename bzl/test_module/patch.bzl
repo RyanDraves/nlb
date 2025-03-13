@@ -5,7 +5,7 @@ def _patch_impl(name, visibility, src, out_file, patch, **kwargs):
         outs = [out_file],
         # `patch` will complain about the input file being read-only,
         # so route its complaints to /dev/null.
-        cmd = "patch $$(realpath $(location {0})) -o $@ -i $(location {1}) --quiet 1>/dev/null".format(src, patch),
+        cmd = "patch $$(realpath $(location {0})) -o $@ -i $(location {1})".format(src, patch),
         visibility = visibility,
         **kwargs
     )
