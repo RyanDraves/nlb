@@ -134,7 +134,7 @@ bazel_dep(name = "googletest", version = "1.15.2")
 # Web development
 #
 bazel_dep(name = "aspect_rules_js", version = "2.0.2")
-bazel_dep(name = "aspect_rules_ts", version = "3.1.0")
+bazel_dep(name = "aspect_rules_ts", version = "3.5.0")
 bazel_dep(name = "rules_nodejs", version = "6.2.0")
 bazel_dep(name = "aspect_rules_lint", version = "1.0.0-rc4")
 
@@ -159,6 +159,7 @@ npm.npm_translate_lock(
     update_pnpm_lock = True,
     data = [
         "//:package.json",
+        "//apps/hyd:package.json",
         "//blog:package.json",
         "//lrb:package.json",
         "//:pnpm-workspace.yaml",
@@ -171,7 +172,9 @@ rules_ts_ext = use_extension(
     "ext",
     dev_dependency = True,
 )
-rules_ts_ext.deps()
+rules_ts_ext.deps(
+    ts_version_from = "//:package.json",
+)
 use_repo(rules_ts_ext, "npm_typescript")
 
 #

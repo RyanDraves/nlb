@@ -2,7 +2,9 @@ load("@aspect_rules_js//js:defs.bzl", "js_library")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@npm//:defs.bzl", "npm_link_all_packages")
-load("@npm//blog:next/package_json.bzl", next_bin = "bin")
+load("@npm//apps/hyd:next/package_json.bzl", next_bin = "bin")
+
+# TODO: No clue why `apps/hyd:tailwindcss` doesn't exist
 load("@npm//blog:tailwindcss/package_json.bzl", tailwind_bin = "bin")
 load("//bzl/macros:next.bzl", "next")
 
@@ -30,7 +32,9 @@ next(
     srcs = _SRCS + [
         ":tailwind",
     ] + glob(
-        [".env*"],
+        [
+            ".env*",
+        ],
     ),
     data = [
         "next.config.ts",
@@ -38,6 +42,7 @@ next(
         ":node_modules/@tailwindcss/postcss",
         ":node_modules/autoprefixer",
         ":node_modules/next",
+        ":node_modules/pg",
         ":node_modules/react",
         ":node_modules/react-dom",
         ":node_modules/tailwindcss",
