@@ -1,27 +1,38 @@
 # Secrets
 
-- OpenAI key
-  - `openai.key`
-  - Provisioned at https://platform.openai.com/settings/organization/api-keys
-- Lobe Chat password
-  - `lobe_chat.password`
+- `claude.key`
+  - Anthropic API key
+  - Provisioned at https://console.anthropic.com/settings/keys
+- `gemini.key`
+  - Google Gemini API key
+  - Provision at https://console.cloud.google.com/apis/credentials (select correct Google account)
+- `hyd_postgres.password`
+  - DB password for HYD
+- `lobe_chat.password`
   - Used to unlock Lobe Chat service
   - Arbitrary password; sync with password manager to use in web UI
-- Portainer token
-  - `portainer.token`
-  - Access token for Portainer's API
+- `mealie_postgres.password`
+  - DB password for [Mealie](https://github.com/mealie-recipes/mealie)
+- `mealie.token`
+  - Mealie API token
   - Used by Homer for pretty homepage things
-- TLS certs
-  - `[host].barn-arcturus.ts.net.[crt|key]`
-  - Created through Tailscale magic
-  - `tailscale cert` from each `[host]`; 90 day expiry
-- Tailscale OAUTH secret
-  - `tailnet_oauth.secret`
-  - Used to provision a [container as a machine on the tailnet](https://tailscale.com/kb/1282/docker#ts_socks5_server)
-- Postgres password
-  - `postgres.password`
-  - Used as the DB password for [Mealie](https://github.com/mealie-recipes/mealie)
-- Octoprint token
-  - `octoprint.token`
+- `octoprint.token`
   - Access token for Octoprint's API
   - Used by Homer for pretty homepage things
+- `openai.key`
+  - OpenAI API key
+  - Provisioned at https://platform.openai.com/settings/organization/api-keys
+- `portainer.token`
+  - Access token for Portainer's API
+  - Used by Homer for pretty homepage things
+- `pypi_test.token`
+  - API token to publish to PyPI's test index
+  - Provisioned at https://test.pypi.org/manage/account/
+- `pypi.token`
+  - API token to publish to PyPI's production index
+  - Provisioned at https://pypi.org/manage/account/
+- `[host].barn-arcturus.ts.net.[crt|key]`
+  - TLS certs reated through Tailscale magic
+  - `tailscale cert` from each `[host]`; 90 day expiry
+- `tailnet_oauth.secret`
+  - Used to provision a [container as a machine on the tailnet](https://tailscale.com/kb/1282/docker#ts_socks5_server)

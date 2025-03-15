@@ -12,7 +12,7 @@ def next(
         next_js_binary,
         next_bin,
         next_build_out = ".next",
-        next_export_out = "out",
+        is_exported = False,
         **kwargs):
     """Generates Next.js targets build, dev & start targets.
 
@@ -120,12 +120,16 @@ def next(
 
         next_build_out: The `next build` output directory. Defaults to `.next` which is the Next.js default output directory for the `build` command.
 
-        next_export_out: The `next export` output directory. Defaults to `out` which is the Next.js default output directory for the `export` command.
+        is_exported: Whether static site export to `out/` is enabled.
 
         **kwargs: Other attributes passed to all targets such as `tags`.
     """
 
     tags = kwargs.pop("tags", [])
+
+    out_dirs = [next_build_out]
+    if is_exported:
+        out_dirs.append("out")
 
     # `next build` creates an optimized bundle of the application
     # https://nextjs.org/docs/api-reference/cli#build
@@ -134,7 +138,7 @@ def next(
         tool = next_js_binary,
         args = ["build"],
         srcs = srcs + data,
-        out_dirs = [next_build_out, next_export_out],
+        out_dirs = out_dirs,
         # Output NextJS's stdout and stderr to files for debugging
         stdout = "next_stdout.txt",
         stderr = "next_stderr.txt",

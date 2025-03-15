@@ -1,0 +1,48 @@
+services:
+  hyd-db:
+    image: postgres:15
+    container_name: hyd-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: hyd
+      PGUSER: hyd
+      POSTGRES_DB: hyd
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - hyd-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "hyd" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+  hyd:
+    image: hyd:latest
+    pull_policy: never # bazel run //apps/hyd:image_load
+    container_name: hyd
+    depends_on:
+      hyd-db:
+        condition: service_healthy
+    restart: always
+    environment:
+      POSTGRES_USER: hyd
+      POSTGRES_DB: hyd
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_HOST: hyd-postgres
+      POSTGRES_PORT: 5432
+    secrets:
+      - postgres_password
+    ports:
+      - "3000:3000"
+  # TODO: Deploy on RPi and Tailscale-ify
+
+volumes:
+  hyd-pgdata:
+
+
+secrets:
+  postgres_password:
+    file: ${PWD}/secrets/hyd_postgres.password

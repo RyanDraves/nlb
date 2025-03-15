@@ -37,9 +37,9 @@ def generate_serializer(
     return serializer
 
 
-def generate_deserializer[
-    T: dataclass.DataclassLike
-](message: parser.Message, clz: Type[T]) -> Callable[[bytes], tuple[T, int]]:
+def generate_deserializer[T: dataclass.DataclassLike](
+    message: parser.Message, clz: Type[T]
+) -> Callable[[bytes], tuple[T, int]]:
     """Generic deserializer generator for a message schema."""
 
     def deserializer(buffer: bytes) -> tuple[T, int]:
