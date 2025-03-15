@@ -27,6 +27,7 @@ services:
       hyd-db:
         condition: service_healthy
     restart: always
+    network_mode: service:tailscale
     environment:
       POSTGRES_USER: hyd
       POSTGRES_DB: hyd
@@ -35,14 +36,37 @@ services:
       POSTGRES_PORT: 5432
     secrets:
       - postgres_password
-    ports:
-      - "3000:3000"
-  # TODO: Deploy on RPi and Tailscale-ify
+
+  tailscale:
+    image: tailscale/tailscale
+    container_name: hyd-tailscale
+    hostname: hyd
+    secrets:
+      - tailnet_oauth
+    environment:
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/ts-serve.json
+    volumes:
+      - hyd-ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the config file for changes
+      - ${PWD}/hyd/ts-serve:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+    command: >
+      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
 
 volumes:
   hyd-pgdata:
+  hyd-ts-authkey:
 
 
 secrets:
+  tailnet_oauth:
+    file: ${PWD}/secrets/tailnet_oauth.secret
   postgres_password:
     file: ${PWD}/secrets/hyd_postgres.password
