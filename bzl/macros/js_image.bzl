@@ -42,6 +42,6 @@ def js_image(js_binary, platform_names):
         # Export the image to local Docker daemon
         oci_load(
             name = "image_{}_load".format(platform_name),
-            image = ":image",
+            image = ":image_{}".format(platform_name),
             repo_tags = ["hyd:latest"],
         )
