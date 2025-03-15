@@ -3,7 +3,6 @@ load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
 SRCS = [
     "page.tsx",
     "layout.tsx",
-    "favicon.ico",
     "api/progress/[id]/route.ts",
     "api/progress/route.ts",
 ]

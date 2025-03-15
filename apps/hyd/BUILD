@@ -6,8 +6,9 @@ load("@npm//apps/hyd:next/package_json.bzl", next_bin = "bin")
 
 # TODO: No clue why `apps/hyd:tailwindcss` doesn't exist
 load("@npm//blog:tailwindcss/package_json.bzl", tailwind_bin = "bin")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load", "oci_push")
 load("//bzl/macros:next.bzl", "next")
+load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
 npm_link_all_packages(name = "node_modules")
 
@@ -48,6 +49,7 @@ next(
         ":node_modules/react-dom",
         ":node_modules/tailwindcss",
         ":node_modules/typescript",
+        "//apps/hyd/public",
     ],
     next_bin = "./node_modules/next/dist/bin/next",
     next_js_binary = ":next_js_binary",
@@ -103,6 +105,7 @@ oci_image(
         "start",
     ],
     entrypoint = ["bash"],
+    labels = ":labels.txt",
     # TODO: Test on RPi to verify ARM support
     target_compatible_with = [
         "@platforms//os:linux",
@@ -112,6 +115,37 @@ oci_image(
     ],
     visibility = ["//visibility:public"],
     workdir = "/app/apps/hyd/next_start.runfiles/_main",
+)
+
+platform_transition(
+    name = "image_arm64",
+    dep = ":image",
+    target_platform = "//bzl/platforms:linux_arm64",
+)
+
+platform_transition(
+    name = "image_amd64",
+    dep = ":image",
+    target_platform = "//bzl/platforms:linux_amd64",
+)
+
+oci_image_index(
+    name = "image_index",
+    images = [
+        ":image_arm64",
+        ":image_amd64",
+    ],
+)
+
+# Push the image to Github
+# NOTE: Must login to ghcr.io first
+oci_push(
+    name = "image_push",
+    image = ":image_index",
+    remote_tags = [
+        "latest",
+    ],
+    repository = "ghcr.io/ryandraves/hyd",
 )
 
 # Export the image to local Docker daemon

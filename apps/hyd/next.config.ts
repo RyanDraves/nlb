@@ -6,10 +6,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: true,
-  // https://nextjs.org/docs/messages/export-image-api
-  images: {
-    unoptimized: true,
-  },
 };
 
 export default nextConfig;
