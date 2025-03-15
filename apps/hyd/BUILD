@@ -1,4 +1,4 @@
-load("@aspect_rules_js//js:defs.bzl", "js_image_layer", "js_library")
+load("@aspect_rules_js//js:defs.bzl", "js_library")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@npm//:defs.bzl", "npm_link_all_packages")
@@ -6,9 +6,9 @@ load("@npm//apps/hyd:next/package_json.bzl", next_bin = "bin")
 
 # TODO: No clue why `apps/hyd:tailwindcss` doesn't exist
 load("@npm//blog:tailwindcss/package_json.bzl", tailwind_bin = "bin")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load", "oci_push")
+load("@rules_oci//oci:defs.bzl", "oci_image_index", "oci_push")
+load("//bzl/macros:js_image.bzl", "js_image")
 load("//bzl/macros:next.bzl", "next")
-load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
 npm_link_all_packages(name = "node_modules")
 
@@ -85,48 +85,14 @@ js_library(
     ],
 )
 
-js_image_layer(
-    name = "next_image_layer",
-    binary = ":next_start",
-    platform = select({
-        "@platforms//cpu:arm64": "//bzl/platforms:linux_arm64",
-        "@platforms//cpu:x86_64": "//bzl/platforms:linux_amd64",
-    }),
-    root = "/app",
-)
+platforms = [
+    ("arm64", "//bzl/platforms:linux_arm64"),
+    ("amd64", "//bzl/platforms:linux_amd64"),
+]
 
-oci_image(
-    name = "image",
-    # Since js_binary depends on bash we have to bring in a base image that has bash
-    base = "@debian",
-    # This is `/[js_image_layer 'root']/[package name]/[js_image_layer 'binary']`
-    cmd = [
-        "/app/apps/hyd/next_start",
-        "start",
-    ],
-    entrypoint = ["bash"],
-    labels = ":labels.txt",
-    # TODO: Test on RPi to verify ARM support
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
-    tars = [
-        ":next_image_layer",
-    ],
-    visibility = ["//visibility:public"],
-    workdir = "/app/apps/hyd/next_start.runfiles/_main",
-)
-
-platform_transition(
-    name = "image_arm64",
-    dep = ":image",
-    target_platform = "//bzl/platforms:linux_arm64",
-)
-
-platform_transition(
-    name = "image_amd64",
-    dep = ":image",
-    target_platform = "//bzl/platforms:linux_amd64",
+js_image(
+    js_binary = ":next_start",
+    platform_names = platforms,
 )
 
 oci_image_index(
@@ -144,13 +110,7 @@ oci_push(
     image = ":image_index",
     remote_tags = [
         "latest",
+        "100-hyd",
     ],
     repository = "ghcr.io/ryandraves/hyd",
-)
-
-# Export the image to local Docker daemon
-oci_load(
-    name = "image_load",
-    image = ":image",
-    repo_tags = ["hyd:latest"],
 )
