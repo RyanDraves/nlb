@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+// TODO: Figure out a way to allow for both
 // Generated path
 import "@/tailwind.css";
 // Original path (uncomment to use pnpm directly)

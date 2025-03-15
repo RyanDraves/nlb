@@ -59,6 +59,7 @@ next(
         ":node_modules/react-dom",
         ":node_modules/typescript",
     ],
+    is_exported = True,
     next_bin = "./node_modules/next/dist/bin/next",
     next_js_binary = ":next_js_binary",
 )
