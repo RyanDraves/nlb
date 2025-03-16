@@ -6,7 +6,7 @@ Example:
 platform_transition(
     name = "my_library",
     dep = [":my_library_that_needs_a_custom_toolchain"],
-    platform = "//my_platform:my_platform",
+    target_platform = "//my_platform:my_platform",
 )
 Inspired by https://stackoverflow.com/a/77020123 and
 https://stackoverflow.com/a/71179440

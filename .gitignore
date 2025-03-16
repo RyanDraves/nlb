@@ -9,6 +9,7 @@ venv
 external
 compile_commands.json
 __pycache__/
+nlb.egg-info/
 .aspect/
 
 # Per-user things

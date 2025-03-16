@@ -1,0 +1,3 @@
+org.opencontainers.image.source=https://github.com/RyanDraves/nlb
+org.opencontainers.image.description="HYD image"
+org.opencontainers.image.licenses=MIT

@@ -1,2 +1,16 @@
+[project]
+name = "nlb"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["dependencies"]
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["nlb", "emb", "apps"]
+
 [tool.black]
 skip-string-normalization = true

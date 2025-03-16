@@ -11,6 +11,22 @@ platform(
     parents = ["@platforms//host"],
 )
 
+platform(
+    name = "linux_amd64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+platform(
+    name = "linux_arm64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:arm64",
+    ],
+)
+
 # Link to config options:
 # https://github.com/raspberrypi/pico-sdk/blob/master/bazel/config/BUILD.bazel
 platform(

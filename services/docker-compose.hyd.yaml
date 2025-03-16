@@ -1,0 +1,73 @@
+services:
+  hyd-db:
+    image: postgres:15
+    container_name: hyd-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: hyd
+      PGUSER: hyd
+      POSTGRES_DB: hyd
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - hyd-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "hyd" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+  hyd:
+    # bazel run //apps/hyd:hyd_amd64_load to build & load the image locally
+    # bazel run //apps/hyd:hyd_push to push the image to the registry
+    image: ghcr.io/ryandraves/hyd:latest
+    container_name: hyd
+    depends_on:
+      hyd-db:
+        condition: service_healthy
+    restart: always
+    network_mode: service:tailscale
+    environment:
+      POSTGRES_USER: hyd
+      POSTGRES_DB: hyd
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_HOST: hyd-postgres
+      POSTGRES_PORT: 5432
+    secrets:
+      - postgres_password
+
+  tailscale:
+    image: tailscale/tailscale
+    container_name: hyd-tailscale
+    hostname: hyd
+    secrets:
+      - tailnet_oauth
+    environment:
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/ts-serve.json
+    volumes:
+      - hyd-ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the config file for changes
+      - ${PWD}/hyd/ts-serve:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+    command: >
+      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
+
+volumes:
+  hyd-pgdata:
+  hyd-ts-authkey:
+
+
+secrets:
+  tailnet_oauth:
+    file: ${PWD}/secrets/tailnet_oauth.secret
+  postgres_password:
+    file: ${PWD}/secrets/hyd_postgres.password

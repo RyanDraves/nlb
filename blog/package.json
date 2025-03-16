@@ -8,6 +8,10 @@
     "lint": "bazel build --config=lint //blog/...",
     "test": "bazel test ... --test_lang_filters=jest --build_tests_only"
   },
+  "peerDependencies": {
+    "react": ">=18.3.1 <19.0.0",
+    "react-dom": ">=18.3.1 <19.0.0"
+  },
   "dependencies": {
     "@mdx-js/loader": "3.x",
     "@mdx-js/react": "3.x",
@@ -15,9 +19,7 @@
     "@nlb/lrb": "workspace:*",
     "classnames": "^2.5.1",
     "date-fns": "^3.6.0",
-    "next": "15.x",
-    "react": "19.x",
-    "react-dom": "19.x"
+    "next": "15.x"
   },
   "devDependencies": {
     "@bazel/ibazel": "0.25.0",

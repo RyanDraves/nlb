@@ -133,14 +133,15 @@ bazel_dep(name = "googletest", version = "1.15.2")
 #
 # Web development
 #
-bazel_dep(name = "aspect_rules_js", version = "2.0.2")
-bazel_dep(name = "aspect_rules_ts", version = "3.1.0")
-bazel_dep(name = "rules_nodejs", version = "6.2.0")
+bazel_dep(name = "aspect_rules_js", version = "2.2.0")
+bazel_dep(name = "aspect_rules_ts", version = "3.5.0")
+bazel_dep(name = "rules_nodejs", version = "6.3.4")
 bazel_dep(name = "aspect_rules_lint", version = "1.0.0-rc4")
 
 node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node", dev_dependency = True)
-
 node.toolchain(node_version = "20.13.1")
+use_repo(node, "nodejs_linux_amd64")
+use_repo(node, "nodejs_linux_arm64")
 
 pnpm = use_extension("@aspect_rules_js//npm:extensions.bzl", "pnpm", dev_dependency = True)
 use_repo(pnpm, "pnpm")
@@ -159,6 +160,7 @@ npm.npm_translate_lock(
     update_pnpm_lock = True,
     data = [
         "//:package.json",
+        "//apps/hyd:package.json",
         "//blog:package.json",
         "//lrb:package.json",
         "//:pnpm-workspace.yaml",
@@ -171,7 +173,9 @@ rules_ts_ext = use_extension(
     "ext",
     dev_dependency = True,
 )
-rules_ts_ext.deps()
+rules_ts_ext.deps(
+    ts_version_from = "//:package.json",
+)
 use_repo(rules_ts_ext, "npm_typescript")
 
 #
@@ -208,3 +212,31 @@ crate.spec(package = "console_error_panic_hook", version = "0.1.7")
 crate.spec(package = "web-sys", version = "0.3", features = ["console"])
 crate.from_specs()
 use_repo(crate, "crates")
+
+#
+# Containerization
+#
+bazel_dep(name = "rules_oci", version = "2.2.3")
+# TODO: Consider https://registry.bazel.build/modules/container_structure_test
+# https://github.com/aspect-build/rules_js/blob/08eb590169cf9c61a02f7056bb3486f8214e90b6/e2e/js_image_oci/src/BUILD.bazel#L78-L84
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+oci.pull(
+    name = "debian",
+    digest = "sha256:35286826a88dc879b4f438b645ba574a55a14187b483d09213a024dc0c0a64ed",
+    tag = "latest",
+    image = "debian",
+    platforms = [
+        "linux/386",
+        "linux/amd64",
+        "linux/arm/v5",
+        "linux/arm/v7",
+        "linux/arm64/v8",
+        "linux/mips64le",
+        "linux/ppc64le",
+        "linux/s390x",
+    ],
+)
+
+use_repo(oci, "debian", "debian_linux_386", "debian_linux_amd64", "debian_linux_arm64_v8", "debian_linux_arm_v5", "debian_linux_arm_v7", "debian_linux_mips64le", "debian_linux_ppc64le", "debian_linux_s390x")
