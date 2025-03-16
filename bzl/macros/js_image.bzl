@@ -1,48 +1,79 @@
 load("@aspect_rules_js//js:defs.bzl", "js_image_layer")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load", "oci_push")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
-# TODO: Make macro less ugly, add docstring
-def js_image(js_binary, platform_names):
+def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, remote_tags):
+    """Multi-arch OCI image for a JS binary.
+
+    Args:
+        name: The name of the image.
+        js_binary: The name of the JS binary to run.
+        args: The arguments to pass to the JS binary.
+        platform_names: A list of tuples containing the platform name and the platform.
+        local_tags: A list of tags to use for the local loads of the image.
+        remote_repo: The remote repository to push the image to.
+        remote_tags: A list of tags to use for the remote pushes of the image.
+
+    Creates:
+        {name}_image: The unplatformed image for the JS binary.
+        {name}_{platform_name}: The platformed image for the JS binary.
+        {name}_{platform_name}_load: The local load for the platformed image.
+        {name}_index: The index for the multi-arch image.
+        {name}_image_push: The remote push for the multi-arch image.
+          - NOTE: Must login to remote repo via Docker first
+    """
     pkg_dir = native.package_name()
 
+    js_image_layer(
+        name = "{}_js_image_layer".format(name),
+        binary = js_binary,
+        # platform = platform,
+        root = "/app",
+    )
+
+    oci_image(
+        name = "{}_image".format(name),
+        # Since js_binary depends on bash we have to bring in a base image that has bash
+        base = "@debian",
+        # This is `/[js_image_layer 'root']/[package name]/[js_image_layer 'binary']`
+        cmd = [
+            "/app/{0}/{1}".format(pkg_dir, js_binary),
+        ] + args,
+        entrypoint = ["bash"],
+        labels = ":labels.txt",
+        tars = [
+            ":{}_js_image_layer".format(name),
+        ],
+        visibility = ["//visibility:public"],
+        workdir = "/app/{0}/{1}.runfiles/_main".format(pkg_dir, js_binary),
+    )
+
     for platform_name, platform in platform_names:
-        js_binary_platform = js_binary.format(platform_name)
-
-        js_image_layer(
-            name = "next_image_layer_{}".format(platform_name),
-            binary = js_binary_platform,
-            platform = platform,
-            root = "/app",
-        )
-
-        oci_image(
-            name = "image_{}_unplatformed".format(platform_name),
-            # Since js_binary depends on bash we have to bring in a base image that has bash
-            base = "@debian",
-            # This is `/[js_image_layer 'root']/[package name]/[js_image_layer 'binary']`
-            cmd = [
-                "/app/{0}/{1}".format(pkg_dir, js_binary_platform),
-                "start",
-            ],
-            entrypoint = ["bash"],
-            labels = ":labels.txt",
-            tars = [
-                ":next_image_layer_{}".format(platform_name),
-            ],
-            visibility = ["//visibility:public"],
-            workdir = "/app/{0}/{1}.runfiles/_main".format(pkg_dir, js_binary_platform),
-        )
-
         platform_transition(
-            name = "image_{}".format(platform_name),
-            dep = ":image_{}_unplatformed".format(platform_name),
+            name = "{0}_{1}".format(name, platform_name),
+            dep = ":{}_image".format(name),
             target_platform = platform,
         )
 
         # Export the image to local Docker daemon
         oci_load(
-            name = "image_{}_load".format(platform_name),
-            image = ":image_{}".format(platform_name),
-            repo_tags = ["hyd:latest"],
+            name = "{0}_{1}_load".format(name, platform_name),
+            image = ":{0}_{1}".format(name, platform_name),
+            repo_tags = local_tags,
         )
+
+    oci_image_index(
+        name = "{}_index".format(name),
+        images = [
+            ":{0}_{1}".format(name, platform_name)
+            for platform_name, _ in platform_names
+        ],
+    )
+
+    # Push the image to the remote repo, e.g. the GitHub Container Registry
+    oci_push(
+        name = "{}_push".format(name),
+        image = ":{}_index".format(name),
+        remote_tags = remote_tags,
+        repository = "{0}/{1}".format(remote_repo, name),
+    )

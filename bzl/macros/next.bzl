@@ -126,7 +126,6 @@ def next(
     """
 
     tags = kwargs.pop("tags", [])
-    node_toolchain = kwargs.pop("node_toolchain", None)
 
     out_dirs = [next_build_out]
     if is_exported:
@@ -157,7 +156,13 @@ def next(
         data = srcs + data,
         chdir = native.package_name(),
         tags = tags,
-        node_toolchain = node_toolchain,
+        node_toolchain = select(
+            {
+                "@platforms//cpu:arm64": "@nodejs_linux_arm64//:toolchain",
+                "@platforms//cpu:x86_64": "@nodejs_linux_amd64//:toolchain",
+                "//conditions:default": "@platforms//:incompatible",
+            },
+        ),
         **kwargs
     )
 
@@ -170,6 +175,12 @@ def next(
         data = data + [name],
         chdir = native.package_name(),
         tags = tags,
-        node_toolchain = node_toolchain,
+        node_toolchain = select(
+            {
+                "@platforms//cpu:arm64": "@nodejs_linux_arm64//:toolchain",
+                "@platforms//cpu:x86_64": "@nodejs_linux_amd64//:toolchain",
+                "//conditions:default": "@platforms//:incompatible",
+            },
+        ),
         **kwargs
     )
