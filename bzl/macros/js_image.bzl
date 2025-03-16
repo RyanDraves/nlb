@@ -2,7 +2,7 @@ load("@aspect_rules_js//js:defs.bzl", "js_image_layer")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load", "oci_push")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
-def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, remote_tags):
+def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, remote_tags, **kwargs):
     """Multi-arch OCI image for a JS binary.
 
     Args:
@@ -13,6 +13,7 @@ def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, rem
         local_tags: A list of tags to use for the local loads of the image.
         remote_repo: The remote repository to push the image to.
         remote_tags: A list of tags to use for the remote pushes of the image.
+        **kwargs: Additional arguments to pass to the all rules.
 
     Creates:
         {name}_image: The unplatformed image for the JS binary.
@@ -28,6 +29,7 @@ def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, rem
         name = "{}_js_image_layer".format(name),
         binary = js_binary,
         root = "/app",
+        **kwargs
     )
 
     oci_image(
@@ -45,6 +47,7 @@ def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, rem
         ],
         visibility = ["//visibility:public"],
         workdir = "/app/{0}/{1}.runfiles/_main".format(pkg_dir, js_binary),
+        **kwargs
     )
 
     for platform_name, platform in platform_names:
@@ -59,6 +62,7 @@ def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, rem
             name = "{0}_{1}_load".format(name, platform_name),
             image = ":{0}_{1}".format(name, platform_name),
             repo_tags = local_tags,
+            **kwargs
         )
 
     oci_image_index(
@@ -67,6 +71,7 @@ def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, rem
             ":{0}_{1}".format(name, platform_name)
             for platform_name, _ in platform_names
         ],
+        **kwargs
     )
 
     # Push the image to the remote repo, e.g. the GitHub Container Registry
@@ -75,4 +80,5 @@ def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, rem
         image = ":{}_index".format(name),
         remote_tags = remote_tags,
         repository = "{0}/{1}".format(remote_repo, name),
+        **kwargs
     )
