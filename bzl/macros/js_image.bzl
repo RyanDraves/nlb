@@ -27,7 +27,6 @@ def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, rem
     js_image_layer(
         name = "{}_js_image_layer".format(name),
         binary = js_binary,
-        # platform = platform,
         root = "/app",
     )
 

@@ -175,6 +175,7 @@ def next(
         data = data + [name],
         chdir = native.package_name(),
         tags = tags,
+        # https://github.com/aspect-build/rules_js/issues/2135
         node_toolchain = select(
             {
                 "@platforms//cpu:arm64": "@nodejs_linux_arm64//:toolchain",

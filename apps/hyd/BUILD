@@ -94,6 +94,5 @@ js_image(
     remote_repo = "ghcr.io/ryandraves",
     remote_tags = [
         "latest",
-        "100-hyd",
     ],
 )
