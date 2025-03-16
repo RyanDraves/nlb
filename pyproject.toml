@@ -12,8 +12,5 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["nlb", "emb", "apps"]
 
-[tool.setuptools.dynamic]
-dependencies = { file = "requirements.txt" }
-
 [tool.black]
 skip-string-normalization = true

@@ -44,6 +44,18 @@ class ProgressBar:
         self._progress.stop()
 
     def iter[T](self, iterable: Sequence[T]) -> Generator[T, None, None]:
+        """Iterate over an iterable and update the progress bar
+
+        Example:
+        ```python
+        for i in progress_bar.iter(range(10)):
+            progress_bar.update_status(f'Update about {i}')  # Optional
+            # Do something with i
+        ```
+
+        Args:
+            iterable: The iterable to iterate over.
+        """
         self._max_value = len(iterable)
         self._progress.update(self._task, completed=0, total=self._max_value)
 
@@ -70,6 +82,7 @@ class ProgressBar:
         value: int,
         index_by_one: bool = True,
     ) -> TaskProgress:
+        """Update the progress bar value"""
         if index_by_one:
             value += 1
         self._value = value
@@ -89,6 +102,7 @@ class ProgressBar:
         self,
         status: str,
     ) -> TaskProgress:
+        """Update the status of the progress bar"""
         payload: TaskProgress = {'label': self._label}
         payload['value'] = self._value
         if self._max_value is not None:

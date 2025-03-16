@@ -86,7 +86,8 @@ js_image(
     name = "hyd",
     args = ["start"],
     js_binary = "next_start",
-    local_tags = ["hyd:latest"],
+    labels = ":labels.txt",
+    local_tags = ["ghcr.io/ryandraves/hyd:latest"],
     platform_names = [
         ("arm64", "//bzl/platforms:linux_arm64"),
         ("amd64", "//bzl/platforms:linux_amd64"),

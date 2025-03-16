@@ -2,7 +2,7 @@ load("@aspect_rules_js//js:defs.bzl", "js_image_layer")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load", "oci_push")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
-def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, remote_tags, **kwargs):
+def js_image(name, js_binary, args, platform_names, labels, local_tags, remote_repo, remote_tags, **kwargs):
     """Multi-arch OCI image for a JS binary.
 
     Args:
@@ -11,6 +11,7 @@ def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, rem
         args: The arguments to pass to the JS binary.
         platform_names: A list of tuples containing the platform name and the platform.
         local_tags: A list of tags to use for the local loads of the image.
+        labels: Labels file to use for the image.
         remote_repo: The remote repository to push the image to.
         remote_tags: A list of tags to use for the remote pushes of the image.
         **kwargs: Additional arguments to pass to the all rules.
@@ -41,7 +42,7 @@ def js_image(name, js_binary, args, platform_names, local_tags, remote_repo, rem
             "/app/{0}/{1}".format(pkg_dir, js_binary),
         ] + args,
         entrypoint = ["bash"],
-        labels = ":labels.txt",
+        labels = labels,
         tars = [
             ":{}_js_image_layer".format(name),
         ],

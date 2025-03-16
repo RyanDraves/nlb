@@ -20,9 +20,9 @@ services:
       timeout: 20s
       retries: 3
   hyd:
-    # bazel run //apps/hyd:image_load to build the image
-    # bazel run //apps/hyd:image_push to push the image
-    image: ghcr.io/ryandraves/hyd # Use hyd:latest for local builds
+    # bazel run //apps/hyd:hyd_amd64_load to build & load the image locally
+    # bazel run //apps/hyd:hyd_push to push the image to the registry
+    image: ghcr.io/ryandraves/hyd:latest
     container_name: hyd
     depends_on:
       hyd-db:

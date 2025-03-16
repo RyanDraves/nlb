@@ -8,5 +8,6 @@
 - Use `bazel run //apps/hyd:next_dev` or `pnpm dev`
 
 # Prod
-- `bazel run //apps/hyd:image_load`
+- Similar DB setup
+- `bazel run //apps/hyd:hyd_amd64_load` or push to GCR with `bazel run //apps/hyd:hyd_push`
 - From `/services/`: `docker compose -f docker-compose.hyd.yaml up -d`

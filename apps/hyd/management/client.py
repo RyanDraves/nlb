@@ -11,7 +11,7 @@ from apps.hyd.management import schema
 
 class DbClient:
     DB_HOST = 'localhost'
-    DB_PORT = 2345
+    DB_PORT = 5432
     DB_NAME = 'hyd'
 
     def __init__(self, loadenv: bool = True):
