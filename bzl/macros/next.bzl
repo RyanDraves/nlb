@@ -126,6 +126,7 @@ def next(
     """
 
     tags = kwargs.pop("tags", [])
+    node_toolchain = kwargs.pop("node_toolchain", None)
 
     out_dirs = [next_build_out]
     if is_exported:
@@ -140,8 +141,8 @@ def next(
         srcs = srcs + data,
         out_dirs = out_dirs,
         # Output NextJS's stdout and stderr to files for debugging
-        stdout = "next_stdout.txt",
-        stderr = "next_stderr.txt",
+        stdout = "{}_stdout.txt".format(name),
+        stderr = "{}_stderr.txt".format(name),
         chdir = native.package_name(),
         tags = tags,
         **kwargs
@@ -156,6 +157,7 @@ def next(
         data = srcs + data,
         chdir = native.package_name(),
         tags = tags,
+        node_toolchain = node_toolchain,
         **kwargs
     )
 
@@ -168,5 +170,6 @@ def next(
         data = data + [name],
         chdir = native.package_name(),
         tags = tags,
+        node_toolchain = node_toolchain,
         **kwargs
     )

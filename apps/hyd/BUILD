@@ -29,36 +29,45 @@ ts_config(
     visibility = ["//visibility:public"],
 )
 
-next(
-    name = "next",
-    srcs = _SRCS + [
-        ":tailwind",
-    ] + glob(
-        [
-            ".env*",
+platforms = [
+    ("arm64", "//bzl/platforms:linux_arm64"),
+    ("amd64", "//bzl/platforms:linux_amd64"),
+]
+
+[
+    next(
+        name = "next_{}".format(platform_name),
+        srcs = _SRCS + [
+            ":tailwind",
+        ] + glob(
+            [
+                ".env*",
+            ],
+        ),
+        data = [
+            "next.config.ts",
+            "tsconfig.json",
+            ":node_modules/@tailwindcss/postcss",
+            ":node_modules/autoprefixer",
+            ":node_modules/next",
+            ":node_modules/pg",
+            ":node_modules/react",
+            ":node_modules/react-dom",
+            ":node_modules/tailwindcss",
+            ":node_modules/typescript",
+            "//apps/hyd/public",
         ],
-    ),
-    data = [
-        "next.config.ts",
-        "tsconfig.json",
-        ":node_modules/@tailwindcss/postcss",
-        ":node_modules/autoprefixer",
-        ":node_modules/next",
-        ":node_modules/pg",
-        ":node_modules/react",
-        ":node_modules/react-dom",
-        ":node_modules/tailwindcss",
-        ":node_modules/typescript",
-        "//apps/hyd/public",
-    ],
-    next_bin = "./node_modules/next/dist/bin/next",
-    next_js_binary = ":next_js_binary",
-)
+        next_bin = "./node_modules/next/dist/bin/next",
+        next_js_binary = ":next_js_binary",
+        node_toolchain = "@nodejs_linux_{}//:toolchain".format(platform_name),
+    )
+    for platform_name, platform in platforms
+]
 
 build_test(
     name = "build_test",
     targets = [
-        ":next",
+        ":next_amd64",
     ],
 )
 
@@ -85,13 +94,9 @@ js_library(
     ],
 )
 
-platforms = [
-    ("arm64", "//bzl/platforms:linux_arm64"),
-    ("amd64", "//bzl/platforms:linux_amd64"),
-]
-
 js_image(
-    js_binary = ":next_start",
+    # This empty template is formatted later from `platform_names`
+    js_binary = ":next_{}_start",
     platform_names = platforms,
 )
 

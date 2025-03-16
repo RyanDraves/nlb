@@ -2,16 +2,13 @@ load("@aspect_rules_js//js:defs.bzl", "js_image_layer")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
+# TODO: Make macro less ugly, add docstring
 def js_image(js_binary, platform_names):
     for platform_name, platform in platform_names:
         js_image_layer(
             name = "next_image_layer_{}".format(platform_name),
-            binary = js_binary,
+            binary = js_binary.format(platform_name),
             platform = platform,
-            # platform = select({
-            #     "@platforms//cpu:arm64": "//bzl/platforms:linux_arm64",
-            #     "@platforms//cpu:x86_64": "//bzl/platforms:linux_amd64",
-            # }),
             root = "/app",
         )
 
