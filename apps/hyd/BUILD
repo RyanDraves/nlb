@@ -96,7 +96,7 @@ js_library(
 
 js_image(
     # This empty template is formatted later from `platform_names`
-    js_binary = ":next_{}_start",
+    js_binary = "next_{}_start",
     platform_names = platforms,
 )
 

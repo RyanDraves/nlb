@@ -4,10 +4,14 @@ load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
 # TODO: Make macro less ugly, add docstring
 def js_image(js_binary, platform_names):
+    pkg_dir = native.package_name()
+
     for platform_name, platform in platform_names:
+        js_binary_platform = js_binary.format(platform_name)
+
         js_image_layer(
             name = "next_image_layer_{}".format(platform_name),
-            binary = js_binary.format(platform_name),
+            binary = js_binary_platform,
             platform = platform,
             root = "/app",
         )
@@ -18,7 +22,7 @@ def js_image(js_binary, platform_names):
             base = "@debian",
             # This is `/[js_image_layer 'root']/[package name]/[js_image_layer 'binary']`
             cmd = [
-                "/app/apps/hyd/next_start",
+                "/app/{0}/{1}".format(pkg_dir, js_binary_platform),
                 "start",
             ],
             entrypoint = ["bash"],
@@ -27,7 +31,7 @@ def js_image(js_binary, platform_names):
                 ":next_image_layer_{}".format(platform_name),
             ],
             visibility = ["//visibility:public"],
-            workdir = "/app/apps/hyd/next_start.runfiles/_main",
+            workdir = "/app/{0}/{1}.runfiles/_main".format(pkg_dir, js_binary_platform),
         )
 
         platform_transition(
