@@ -95,6 +95,6 @@ js_image(
     remote_tags = [
         "latest",
     ],
-    # To big for CI
+    # Too big for CI
     tags = ["manual"],
 )
