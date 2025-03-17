@@ -28,6 +28,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - mealie
 
   postgres:
     container_name: mealie-postgres
@@ -46,6 +48,8 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - mealie
 
   tailscale:
     image: tailscale/tailscale
@@ -69,6 +73,12 @@ services:
     restart: unless-stopped
     command: >
       /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
+    networks:
+      - mealie
+
+networks:
+  mealie:
+    driver: bridge
 
 volumes:
   mealie-data:
