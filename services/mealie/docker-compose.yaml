@@ -1,3 +1,9 @@
+# Add the `services` prefix so we don't have to deal with
+# moving the prod data around. I tried copying the data with
+# `    docker run --rm -v source_volume:/from -v destination_volume:/to alpine sh -c "cp -av /from/* /to"`
+# but the user auth didn't like that (different salt?).
+name: services
+
 services:
   mealie:
     image: ghcr.io/mealie-recipes/mealie:v2.4.2
@@ -46,6 +52,8 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - mealie
 
   tailscale:
     image: tailscale/tailscale
@@ -60,7 +68,7 @@ services:
     volumes:
       - mealie-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
-      - ${PWD}/mealie/ts-serve:/config
+      - ${PWD}/ts-serve:/config
     devices:
       - /dev/net/tun:/dev/net/tun
     cap_add:
@@ -69,6 +77,14 @@ services:
     restart: unless-stopped
     command: >
       /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
+    networks:
+      - mealie
+
+# Custom network; only needed if other compose files are in the parent
+# `services` directory.
+networks:
+  mealie:
+    driver: bridge
 
 volumes:
   mealie-data:
@@ -78,6 +94,6 @@ volumes:
 
 secrets:
   tailnet_oauth:
-    file: ${PWD}/secrets/tailnet_oauth.secret
+    file: ${PWD}/../secrets/tailnet_oauth.secret
   postgres_password:
-    file: ${PWD}/secrets/mealie_postgres.password
+    file: ${PWD}/../secrets/mealie_postgres.password

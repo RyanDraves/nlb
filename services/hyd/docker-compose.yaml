@@ -19,6 +19,7 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+
   hyd:
     # bazel run //apps/hyd:hyd_amd64_load to build & load the image locally
     # bazel run //apps/hyd:hyd_push to push the image to the registry
@@ -51,7 +52,7 @@ services:
     volumes:
       - hyd-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
-      - ${PWD}/hyd/ts-serve:/config
+      - ${PWD}/ts-serve:/config
     devices:
       - /dev/net/tun:/dev/net/tun
     cap_add:
@@ -68,6 +69,6 @@ volumes:
 
 secrets:
   tailnet_oauth:
-    file: ${PWD}/secrets/tailnet_oauth.secret
+    file: ${PWD}/../secrets/tailnet_oauth.secret
   postgres_password:
-    file: ${PWD}/secrets/hyd_postgres.password
+    file: ${PWD}/../secrets/hyd_postgres.password

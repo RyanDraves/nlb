@@ -1,5 +1,3 @@
-name: overleaf
-
 services:
   sharelatex:
     restart: always
@@ -15,7 +13,7 @@ services:
     network_mode: service:tailscale
     stop_grace_period: 60s
     volumes:
-      - sharelatex-data:/var/lib/overleaf
+      - overleaf-data:/var/lib/overleaf
     environment:
       OVERLEAF_APP_NAME: Overleaf CE
       OVERLEAF_MONGO_URL: mongodb://mongo/sharelatex
@@ -68,8 +66,8 @@ services:
     container_name: overleaf-mongo
     command: '--replSet overleaf'
     volumes:
-      - sharelatex-mongo-data:/data/db
-      - ${PWD}/overleaf/mongodb-init-replica-set.js:/docker-entrypoint-initdb.d/mongodb-init-replica-set.js
+      - overleaf-mongo-data:/data/db
+      - ${PWD}/mongodb-init-replica-set.js:/docker-entrypoint-initdb.d/mongodb-init-replica-set.js
     environment:
       MONGO_INITDB_DATABASE: sharelatex
     extra_hosts:
@@ -87,7 +85,7 @@ services:
     image: redis:6.2
     container_name: overleaf-redis
     volumes:
-      - sharelatex-redis-data:/data
+      - overleaf-redis-data:/data
 
   tailscale:
     image: tailscale/tailscale
@@ -100,9 +98,9 @@ services:
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
     volumes:
-      - ts-authkey:/var/lib/tailscale
+      - overleaf-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
-      - ${PWD}/overleaf/ts-serve:/config
+      - ${PWD}/ts-serve:/config
     devices:
       - /dev/net/tun:/dev/net/tun
     cap_add:
@@ -112,14 +110,13 @@ services:
     command: >
       /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
 
-# TODO: If migrating to a new host, rename these to `overleaf-*`
 volumes:
-  sharelatex-data:
-  sharelatex-mongo-data:
-  sharelatex-redis-data:
-  ts-authkey:
+  overleaf-data:
+  overleaf-mongo-data:
+  overleaf-redis-data:
+  overleaf-ts-authkey:
 
 
 secrets:
   tailnet_oauth:
-    file: ${PWD}/secrets/tailnet_oauth.secret
+    file: ${PWD}/../secrets/tailnet_oauth.secret
