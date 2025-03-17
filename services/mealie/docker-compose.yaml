@@ -80,7 +80,8 @@ services:
     networks:
       - mealie
 
-# Custom network due to `-p` flag; see `up.sh`
+# Custom network; only needed if other compose files are in the parent
+# `services` directory.
 networks:
   mealie:
     driver: bridge
