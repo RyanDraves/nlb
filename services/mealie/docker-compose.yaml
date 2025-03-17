@@ -74,6 +74,7 @@ services:
     networks:
       - mealie
 
+# Custom network due to `-p` flag; see `up.sh`
 networks:
   mealie:
     driver: bridge
@@ -86,6 +87,6 @@ volumes:
 
 secrets:
   tailnet_oauth:
-    file: ${PWD}/secrets/tailnet_oauth.secret
+    file: ${PWD}/../secrets/tailnet_oauth.secret
   postgres_password:
-    file: ${PWD}/secrets/mealie_postgres.password
+    file: ${PWD}/../secrets/mealie_postgres.password

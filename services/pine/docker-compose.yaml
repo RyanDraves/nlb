@@ -18,8 +18,6 @@ services:
         condition: always
     command: >
       /bin/sh -c "nginx -g 'daemon off;'"
-    networks:
-      - pine
 
   lobe-chat:
     image: ghcr.io/ryandraves/lobe-chat:81-setup-pine
@@ -33,8 +31,6 @@ services:
       restart_policy:
         condition: on-failure
     entrypoint: [ "/bin/sh", "-c", "set -e; export ACCESS_CODE=$(cat /run/secrets/lobe_chat_password); export OPENAI_API_KEY=$(cat /run/secrets/openai_key); echo 'Secrets loaded successfully'; /bin/node /app/startServer.js" ]
-    networks:
-      - pine
 
   homer:
     image: b4bz/homer:latest
@@ -51,8 +47,6 @@ services:
       restart_policy:
         condition: on-failure
     entrypoint: '/home/lighttpd/entrypoint.sh'
-    networks:
-      - pine
 
   portainer:
     image: portainer/agent:2.21.5
@@ -66,12 +60,6 @@ services:
     deploy:
       restart_policy:
         condition: always
-    networks:
-      - pine
-
-networks:
-  pine:
-    driver: bridge
 
 volumes:
   nginx-config:

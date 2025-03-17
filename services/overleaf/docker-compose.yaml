@@ -131,4 +131,4 @@ volumes:
 
 secrets:
   tailnet_oauth:
-    file: ${PWD}/secrets/tailnet_oauth.secret
+    file: ${PWD}/../secrets/tailnet_oauth.secret
