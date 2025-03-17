@@ -69,7 +69,7 @@ services:
     command: '--replSet overleaf'
     volumes:
       - overleaf-mongo-data:/data/db
-      - ${PWD}/overleaf/mongodb-init-replica-set.js:/docker-entrypoint-initdb.d/mongodb-init-replica-set.js
+      - ${PWD}/mongodb-init-replica-set.js:/docker-entrypoint-initdb.d/mongodb-init-replica-set.js
     environment:
       MONGO_INITDB_DATABASE: sharelatex
     extra_hosts:
@@ -106,7 +106,7 @@ services:
     volumes:
       - overleaf-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
-      - ${PWD}/overleaf/ts-serve:/config
+      - ${PWD}/ts-serve:/config
     devices:
       - /dev/net/tun:/dev/net/tun
     cap_add:

@@ -62,7 +62,7 @@ services:
     volumes:
       - mealie-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
-      - ${PWD}/mealie/ts-serve:/config
+      - ${PWD}/ts-serve:/config
     devices:
       - /dev/net/tun:/dev/net/tun
     cap_add:
