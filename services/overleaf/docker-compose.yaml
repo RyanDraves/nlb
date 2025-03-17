@@ -79,8 +79,6 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
-    networks:
-      - overleaf
 
   redis:
     restart: always
@@ -88,8 +86,6 @@ services:
     container_name: overleaf-redis
     volumes:
       - overleaf-redis-data:/data
-    networks:
-      - overleaf
 
   tailscale:
     image: tailscale/tailscale
@@ -113,12 +109,6 @@ services:
     restart: unless-stopped
     command: >
       /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
-    networks:
-      - overleaf
-
-networks:
-  overleaf:
-    driver: bridge
 
 volumes:
   overleaf-data:
