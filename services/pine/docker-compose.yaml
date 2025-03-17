@@ -36,7 +36,7 @@ services:
     image: b4bz/homer:latest
     ports:
       - "1337:8080"
-    container-name: homer
+    container_name: homer
     volumes:
       - ${PWD}/homer:/home/lighttpd
     secrets:
