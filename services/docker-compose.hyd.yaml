@@ -40,8 +40,6 @@ services:
       POSTGRES_PORT: 5432
     secrets:
       - postgres_password
-    networks:
-      - hyd
 
   tailscale:
     image: tailscale/tailscale

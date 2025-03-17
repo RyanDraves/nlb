@@ -61,8 +61,6 @@ services:
       # OVERLEAF_CUSTOM_EMAIL_FOOTER: "This system is run by department x"
 
       # ENABLE_CRON_RESOURCE_DELETION: true
-    networks:
-      - overleaf
 
   mongo:
     restart: always

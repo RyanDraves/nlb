@@ -28,8 +28,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - mealie
 
   postgres:
     container_name: mealie-postgres
