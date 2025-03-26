@@ -1,5 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pip//:requirements.bzl", "requirement")
+load("//bzl/macros:python.bzl", "py_test")
 
 py_library(
     name = "click_utils",
@@ -34,6 +35,20 @@ py_library(
 )
 
 py_library(
+    name = "introspection",
+    srcs = ["introspection.py"],
+    visibility = ["//visibility:public"],
+)
+
+py_test(
+    name = "introspection_test",
+    srcs = ["introspection_test.py"],
+    deps = [
+        ":introspection",
+    ],
+)
+
+py_library(
     name = "path_utils",
     srcs = ["path_utils.py"],
     visibility = ["//visibility:public"],
@@ -46,5 +61,21 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         requirement("prompt_toolkit"),
+    ],
+)
+
+py_library(
+    name = "secrets",
+    srcs = ["secrets.py"],
+    visibility = ["//visibility:public"],
+    deps = [":path_utils"],
+)
+
+py_library(
+    name = "semantic_errors",
+    srcs = ["semantic_errors.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("thefuzz"),
     ],
 )

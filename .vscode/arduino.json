@@ -1,0 +1,5 @@
+{
+    "board": "arduino:avr:uno",
+    "sketch": "projects/wizaidry/wizaidry.ino",
+    "port": "/dev/ttyACM0"
+}

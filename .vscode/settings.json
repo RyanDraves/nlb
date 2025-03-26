@@ -115,4 +115,5 @@
     "[markdown]": {
         "editor.wordWrap": "on",
     },
+    "arduino.useArduinoCli": true,
 }
