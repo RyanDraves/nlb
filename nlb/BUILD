@@ -9,6 +9,7 @@ py_package(
     # `bazel query 'kind("py_binary", //nlb/...) + kind("py_library", //nlb/...)'`
     # Remove `testdata` targets (TODO: better query)
     deps = [
+        "//nlb/arduino:client",
         "//nlb/buffham",
         "//nlb/buffham:bh",
         "//nlb/buffham:cpp_generator",
@@ -16,6 +17,8 @@ py_package(
         "//nlb/buffham:parser",
         "//nlb/buffham:py_generator",
         "//nlb/buffham:template_generator",
+        "//nlb/buffham:testdata/other_bh_py",
+        "//nlb/buffham:testdata/sample_bh_py",
         "//nlb/datastructure:bidirectional_dict",
         "//nlb/hyd:progress_bar",
         "//nlb/tailscale:wrapper",
@@ -23,13 +26,21 @@ py_package(
         "//nlb/util:console_utils",
         "//nlb/util:dataclass",
         "//nlb/util:exception",
+        "//nlb/util:introspection",
         "//nlb/util:path_utils",
         "//nlb/util:prompt_utils",
+        "//nlb/util:secrets",
+        "//nlb/util:semantic_errors",
+        "//nlb/wizaidry:audio_util",
+        "//nlb/wizaidry:text_handler",
+        "//nlb/wizaidry:tool_manager",
+        "//nlb/wizaidry:util",
+        "//nlb/wizaidry:voice_handler",
     ],
 )
 
 # bazel run --config pypi_test --embed_label=0.0.7 -- //nlb:nlb_wheel.publish --repository testpypi
-# bazel run --config pypi --embed_label=0.1.0 -- //nlb:nlb_wheel.publish --repository pypi
+# bazel run --config pypi --embed_label=0.2.0 -- //nlb:nlb_wheel.publish --repository pypi
 py_wheel(
     name = "nlb_wheel",
     data_files = {},  # TODO: Add completion data for click entrypoints
