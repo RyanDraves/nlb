@@ -23,7 +23,7 @@ from nlb.wizaidry import util
 
 
 class VoiceHandler:
-    """Realtime interaction via voice-to-voice with the Realtime API.
+    """Tool-rich oice-to-voice interaction via the Realtime API.
 
     Derived from the push-to-talk example in the OpenAI Python SDK:
     https://github.com/openai/openai-python/blob/f66d2e6fdc51c4528c99bb25a8fbca6f9b9b872d/examples/realtime/push_to_talk_app.py
@@ -281,9 +281,12 @@ class VoiceHandler:
         """Handle a tool call from the AI assistant."""
         connection = await self._get_connection()
 
+        # Missing from the type hinting in the SDK
         func_name = event.name  # type: ignore
 
-        async def send_item_and_ask_for_response(client_event):
+        async def send_item_and_ask_for_response(
+            client_event,  # Really annoying to type hint
+        ):
             await connection.send(client_event)
             await connection.send(
                 {

@@ -15,6 +15,7 @@ portpicker>=1.6.0,<2
 psycopg2-binary>=2.9.10,<3
 # Matplotlib backend
 PyQt6>=6.8.0,<7
+# TODO: Consider distributing our own pre-built wheel for this
 pyaudio>=0.2.14,<1
 pydub>=0.25.1,<1
 pydantic>=2.10.6,<3

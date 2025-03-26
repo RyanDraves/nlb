@@ -17,8 +17,6 @@ py_package(
         "//nlb/buffham:parser",
         "//nlb/buffham:py_generator",
         "//nlb/buffham:template_generator",
-        "//nlb/buffham:testdata/other_bh_py",
-        "//nlb/buffham:testdata/sample_bh_py",
         "//nlb/datastructure:bidirectional_dict",
         "//nlb/hyd:progress_bar",
         "//nlb/tailscale:wrapper",
