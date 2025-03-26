@@ -17,6 +17,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set up apt
+        run: |
+          sudo apt-get install -y portaudio19-dev
       # TODO: Not enough disk space for Bazel
       - name: Build
         run: |

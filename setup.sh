@@ -52,6 +52,8 @@ APT_PACKAGES=(
     minicom
     # DB
     libpq-dev
+    # Sound
+    portaudio19-dev
 )
 
 function check_if_on_wsl() {
@@ -165,6 +167,25 @@ function copy_udev_rules() {
 
     sudo service udev restart
     sudo udevadm control --reload-rules
+}
+
+function arduino_setup() {
+    if ! check_command arduino-cli; then
+        echo "Installing Arduino CLI"
+        curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=$HOME/.local/bin sh
+    else
+        echo "Arduino CLI already installed"
+    fi
+
+    # Check if arduino-avr core is already installed
+    if arduino-cli core list | grep -q "arduino:avr"; then
+        echo "arduino:avr core already installed"
+        return 0
+    fi
+
+    echo "Installing arduino:avr core"
+    arduino-cli core update-index
+    arduino-cli core install arduino:avr
 }
 
 function install_docker() {
@@ -507,6 +528,7 @@ run_section "Install apt packages" install_apt_packages "${APT_PACKAGES[@]}"
 run_section "Filesystem setup" filesystem_setup
 run_section "Install Bazelisk" install_bazelisk
 run_section "Copy udev rules" copy_udev_rules
+run_section "Setup Aruindo CLI" arduino_setup
 run_section "Install docker" install_docker
 run_section "Setup venv" setup_venv
 # Check if user is `dravesr` before setting up Ryan's environment
