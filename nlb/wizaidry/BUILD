@@ -1,6 +1,9 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pip//:requirements.bzl", "requirement")
 
+# Visible for PyPI publishing
+package(default_visibility = ["//nlb:__pkg__"])
+
 py_library(
     name = "audio_util",
     srcs = ["audio_util.py"],
