@@ -43,10 +43,7 @@ def get_assistant_tool_schema(
     signature = introspection.parse_signature_and_docs(func)
 
     properties = {
-        arg: {
-            'description': signature.arg_descriptions[arg],
-            'title': arg.title().replace('_', ' '),  # Convert snake_case to Title Case
-        }
+        arg: {'description': signature.arg_descriptions[arg], 'title': arg}
         | _get_arg_type(signature.arg_types[arg])
         for arg in signature.arg_descriptions
     }
@@ -84,10 +81,7 @@ def get_realtime_tool_schema(
     signature = introspection.parse_signature_and_docs(func)
 
     properties = {
-        arg: {
-            'description': signature.arg_descriptions[arg],
-            'title': arg.title().replace('_', ' '),  # Convert snake_case to Title Case
-        }
+        arg: {'description': signature.arg_descriptions[arg], 'title': arg}
         | _get_arg_type(signature.arg_types[arg])
         for arg in signature.arg_descriptions
     }
