@@ -38,7 +38,7 @@ py_package(
 )
 
 # bazel run --config pypi_test --embed_label=0.0.7 -- //nlb:nlb_wheel.publish --repository testpypi
-# bazel run --config pypi --embed_label=0.2.0 -- //nlb:nlb_wheel.publish --repository pypi
+# bazel run --config pypi --embed_label=0.2.1 -- //nlb:nlb_wheel.publish --repository pypi
 py_wheel(
     name = "nlb_wheel",
     data_files = {},  # TODO: Add completion data for click entrypoints
