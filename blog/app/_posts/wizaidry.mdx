@@ -1,0 +1,154 @@
+import MdxLayout from '@/app/_components/mdx-layout'
+import CodeBlock from '@/app/_components/code-block'
+import YoutubeVideo from '@/app/_components/youtube-video'
+
+export const metadata = {
+  title: "Wizaidry: Building Blocks of Agentic AI",
+  excerpt:
+    "Exploring when AI is in control.",
+  coverImage: "/nlb/assets/wizaidry/cover.webp",
+  date: "2025-03-26T00:00:00.000Z",
+  author: {
+    name: "Ryan Draves",
+    picture: "/nlb/assets/authors/me.png"
+  },
+  ogImage: {
+    url: "/nlb/assets/wizaidry/cover.webp"
+  }
+}
+
+Recently I had this idea to shift the perspective of how AI is used; instead of treating the AI as a tool to assist us, what if the AI took on a more central role in the interaction? The original idea, and the inspiration for the name "Wizaidry," is that you take away the screen, the keyboard, and the mouse from the user, and the user enacts change in the world solely by speaking to the AI (by means of some embedded system). This makes the user a "wizard," chanting spells and incantations that result in physical realizations. While I did get a demo of just this idea working, I've also begun to think of the AI as more of the "wizard," as the resulting agents look more like the "theoretical" systems in [Wizard of Oz experiments](https://en.wikipedia.org/wiki/Wizard_of_Oz_experiment).
+
+I'll reference "agents" in this post, but really I think this library is moreso creating "proto-Agentic AI". While a true Agentic AI should be able to [perceive, reason, act, and learn](https://blogs.nvidia.com/blog/what-is-agentic-ai/), it would be a stretch to say that the resulting system is truly reasoning or learning. If modern (early 2025) reasoning models are your bar for what it means for an AI to "reason," then it's worth mentioning that the demo uses `gpt-4o-realtime-preview`, a "non-reasoning" model.
+
+# Demo
+
+<YoutubeVideo videoId="PztCVhWGYNg" videoTitle='Wizaidry Arduino Demo'/>
+
+My Arduino demo sets up the voice-to-reality interaction I envisioned; with two short interactions, a beginner-level Arduino project is implemented start-to-finish. No screen, no keyboard, no mouse. No idea what the code looks like, just a simple physical test of waving my hand in front of the sensor and observing the LED.
+
+# The Library
+
+Building your own agent is simple; I published a library for quickly adding tools the agent can interact with in a [realtime speech-to-speech](https://platform.openai.com/docs/guides/realtime-conversations) environment or a [turn-based text-to-text](https://platform.openai.com/docs/assistants/tools/function-calling) environment. The Python library is [published on PyPI](https://pypi.org/project/nl-blocks/) and accessible via `nlb.wizaidry`.
+
+The core idea (apart from abstracting the OpenAI API interactions) is to simplify the registration of functions the agent can invoke. A simple protocol for a "tool manager" is defined:
+
+<CodeBlock lang="python" name="nlb.wizaidry.tool_manager">
+{`class ToolManager(Protocol):
+    @property
+    def tool_functions(self) -> list[Callable[..., str]]:
+        """Return a list of tool functions for this tool.
+
+        A tool function must return a string output, but it can
+        take on any number of (JSON schema-able) arguments.
+        """
+        ...
+`}
+</CodeBlock>
+
+This allows for nearly aribtrary functions to be registered as tools, provided they:
+- return a string
+- have a well-structured docstring
+- type hint their arguments
+- have arguments that can be represented by [JSON Schema](https://json-schema.org/)
+
+Let's make a simple tool that adds two numbers:
+
+<CodeBlock lang="python" name="calculator_tool.py">
+{`class CalculatorToolManager:
+    @property
+    def tool_functions(self) -> list[Callable[..., str]]:
+        return [self.add]
+
+    def add(self, a: int, b: int) -> str:
+        """Add two numbers together.
+
+        Args:
+            a: The first number to add.
+            b: The second number to add.
+        """
+        return str(a + b)
+`}
+</CodeBlock>
+
+Notice that the docstring is structured to describe each argument. The descriptions aren't just for the user - the required string return makes this silly to use on its own anyways - but they are also instructions on how the AI should interact with the tool. If the argument is complicated, this is the place to provide a detailed description.
+
+Now when we create our agent, we can pass this tool manage into the handler's `*args` capture:
+
+<CodeBlock lang="python" name="demo.py">
+{`from nlb.wizaidry import voice_handler
+
+import calculator_tool
+
+handler = voice_handler.VoiceHandler(
+    calculator_tool.CalculatorToolManager(),
+    # Optional, default prompt is fine here
+    system_prompt='You are a calculator that adds two numbers together.',
+)
+handler.run()
+`}
+</CodeBlock>
+
+Ta-da! You can now ask the AI what the sum of any two numbers is, and it's _probably_ more reliable than it was before.
+
+## Further Details
+
+### Error Handling
+
+Since a string must be passed back up to the AI, it'd behoove you not to let exceptions raise through the tools. Instead, return simple strings of the error message with the intention that the AI will try and correct its call.
+
+Here's an example for adding `sqrt` to our `CalculatorToolManager`:
+
+<CodeBlock lang="python" name="calculator_tool.py">
+{`def sqrt(self, x: float) -> str:
+    """Calculate the square root of a number.
+
+    Args:
+        x: The number to calculate the square root of.
+    """
+    if x < 0:
+        return 'x must be greater than or equal to 0'
+
+    return str(math.sqrt(x))
+`}
+</CodeBlock>
+
+This way, if the AI tries to call `sqrt(-1)`, it will get a string back and can try again with a valid number or let you know your request was invalid.
+
+### Limitations
+
+I've only added support for functions that take in simple primitives. There are two major missing features on the function introspection to register the tools:
+
+1. Functions with no arguments (it just raises `ValueError`)
+2. Functions with complex arguments (e.g. lists, nested objects)
+
+Complex argument support would be trickier to add, but certainly doable with something like dataclass introspection. If you can avoid it, I recommend sticking to simple arguments anyways; the more complicated the tool is to use, the more options you're giving the AI to mess it up. This of it as trying to "user-proof" your software, where AI is the user you're not sure you can trust to always get it right.
+
+
+### API Key & Cost
+
+The voice and text handlers assume `OPENAI_API_KEY` is set in your environment before it's created. As for cost, the text-based mode is rather cheap (fractions of a penny per turn), whereas the voice mode is around 5-10 cents an interaction, depending on the complexity of the tool calls.
+
+
+# What's the Point, Anyways?
+
+Especially for the cost in the previous section, it's not immediately clear what the value of these tools is. There are a lot of practical limits:
+- The speech-to-speech cost quickly becomes prohibitive
+- The current-gen models will eventually fail to understand complicated enough tools
+- A lot of ideas are just adding "natural glue" to some existing system
+- The tools are better catered to commercial use cases (see the [OpenAI voice demo](https://www.openai.fm/))
+
+These are all valid, but they don't distract from the _potential_ of these tools. Let's envision a few examples:
+1. Education: consider a learning project like the Arduino demo, where the agent is tasked to helping a student learn how the circuitry works. If you keep the underlying software abstracted away, the demo already makes significant progress an creating an interactive project. Think of lesson-in-a-box kits like [CrunchLabs](https://www.crunchlabs.com/) being augmented to provide personalized instruction.
+2. UI Design: While already augmented by AI, designing mock UIs fits this paradigm well. Especially in the _mock_ scenario, the designer is free to not care about the underlying code powering the UI; they can instead focus on the appearance and functionality of the page.
+3. Home Assistants: Of course, self-hosted software enthusiasts can probaby get a lot of mileage out of this kind of system. Taking straight-forward systems out of screens and apps and into hands-free controls offers a seamless experience.
+
+Each of these examples would of course be improved by alleviating each of the limitations mentioned above, but as the technology matures, we can likely expect cheaper, self-hosted options to be readily available.
+
+export default function MDXPage({children}) {
+  return (
+    <MdxLayout metadata={metadata}>
+      {children}
+    </MdxLayout>
+  )
+}

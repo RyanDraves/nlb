@@ -26,6 +26,7 @@ ts_project(
         "//blog:node_modules/classnames",
         "//blog:node_modules/date-fns",
         "//blog:node_modules/next",
+        "//blog:node_modules/react-youtube",
         "//blog:node_modules/shiki",
         "//blog/lib",
         "//blog/rust",
