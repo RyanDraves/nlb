@@ -57,7 +57,6 @@ next(
         ":node_modules/postcss",
         ":node_modules/react",
         ":node_modules/react-dom",
-        ":node_modules/react-youtube",
         ":node_modules/typescript",
     ],
     is_exported = True,
