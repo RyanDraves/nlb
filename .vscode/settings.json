@@ -101,6 +101,8 @@
         "venv/**",
         "bazel-*/**",
         "external/**",
+        ".aspect/**",
+        "**/node_modules/**",
     ],
     "python.analysis.typeCheckingMode": "standard",
     "[python]": {

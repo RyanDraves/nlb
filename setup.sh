@@ -188,6 +188,46 @@ function arduino_setup() {
     arduino-cli core install arduino:avr
 }
 
+function setup_go() {
+    install_go
+
+    # Install tools for Go
+    # (currently none, `setec` didn't work out)
+}
+
+function install_go() {
+    # Check if go is already installed
+    if check_command go; then
+        echo "go is already installed"
+        return 0
+    fi
+
+    echo "Installing Go"
+    # Versions & SHA sums at https://go.dev/dl/
+    if [[ "$(uname -m)" == "aarch64" ]]; then
+        # Install Go for ARM64
+        local go_url="https://go.dev/dl/go1.24.1.linux-arm64.tar.gz"
+
+        wget $go_url -O /tmp/go.tar.gz 2> /dev/null
+        verify_sha256sum /tmp/go.tar.gz 8df5750ffc0281017fb6070fba450f5d22b600a02081dceef47966ffaf36a3af
+    else
+        # Install Go for x86_64
+        local go_url="https://go.dev/dl/go1.24.1.linux-amd64.tar.gz"
+
+        wget $go_url -O /tmp/go.tar.gz 2> /dev/null
+        verify_sha256sum /tmp/go.tar.gz cb2396bae64183cdccf81a9a6df0aea3bce9511fc21469fb89a0c00470088073
+    fi
+
+    # Unpack go.tar.gz to ~/.local
+    tar -C $HOME/.local -xzf /tmp/go.tar.gz
+
+    # Add Go to PATH
+    add_to_path $HOME/.local/go/bin
+
+    # Add GOPATH to PATH
+    add_to_path $HOME/go/bin
+}
+
 function install_docker() {
     # Check if docker is already installed
     if check_command docker; then
@@ -463,6 +503,18 @@ function add_to_path() {
     export PATH="$path:$PATH"
 }
 
+function verify_sha256sum() {
+    local file=$1
+    local sha256sum=$2
+    local actual_sha256sum=$(sha256sum $file | cut -d' ' -f1)
+    if [ "$sha256sum" != "$actual_sha256sum" ]; then
+        echo -e "\e[31msha256sum mismatch for $file"
+        echo "Expected: $sha256sum"
+        echo -e "Actual: $actual_sha256sum\e[0m"
+        exit 1
+    fi
+}
+
 function verify_sha384sum() {
     local file=$1
     local sha384sum=$2
@@ -529,6 +581,7 @@ run_section "Filesystem setup" filesystem_setup
 run_section "Install Bazelisk" install_bazelisk
 run_section "Copy udev rules" copy_udev_rules
 run_section "Setup Aruindo CLI" arduino_setup
+run_section "Setup Go" setup_go
 run_section "Install docker" install_docker
 run_section "Setup venv" setup_venv
 # Check if user is `dravesr` before setting up Ryan's environment

@@ -1,5 +1,7 @@
 #include "emb/slic/hc_sr04.hpp"
 
+#include <algorithm>
+
 #include "emb/yaal/gpio.hpp"
 #include "emb/yaal/timer.hpp"
 
@@ -41,7 +43,8 @@ uint32_t HcSr04::get_distance_mm() {
     uint32_t echo_end_us = yaal::get_time_us();
 
     // Calculate the distance
-    uint32_t pulse_width_us = echo_end_us - echo_start_us;
+    uint32_t pulse_width_us =
+        std::min(echo_end_us - echo_start_us, kMaxDistanceUs);
     // Calculated from the assumed speed of sound in air at sea level (~340
     // m/s); pulse. Constant provided in the datasheet.
     uint32_t distance_mm = pulse_width_us * 1000 / 5800;
