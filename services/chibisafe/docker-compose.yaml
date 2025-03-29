@@ -10,9 +10,9 @@ services:
     image: chibisafe/chibisafe-server:latest
     container_name: chibisafe-server
     volumes:
-      - ./database:/app/database:rw
-      - ./uploads:/app/uploads:rw
-      - ./logs:/app/logs:rw
+      - chibisafe-database:/app/database:rw
+      - chibisafe-uploads:/app/uploads:rw
+      - chibisafe-logs:/app/logs:rw
     restart: unless-stopped
 
   caddy:
@@ -21,7 +21,7 @@ services:
     network_mode: service:tailscale
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./uploads:/app/uploads:ro
+      - chibisafe-uploads:/app/uploads:ro
     environment:
       - BASE_URL=":8080"
     restart: unless-stopped
