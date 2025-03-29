@@ -8,12 +8,12 @@
         "${TS_CERT_DOMAIN}:443": {
             "Handlers": {
                 "/": {
-                    "Proxy": "http://127.0.0.1:9000"
+                    "Proxy": "http://127.0.0.1:8080"
                 }
             }
         }
     },
     "AllowFunnel": {
-        "${TS_CERT_DOMAIN}:443": false
+        "${TS_CERT_DOMAIN}:443": true
     }
 }

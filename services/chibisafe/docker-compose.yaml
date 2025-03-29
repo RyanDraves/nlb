@@ -23,7 +23,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./uploads:/app/uploads:ro
     environment:
-      - BASE_URL=":80"
+      - BASE_URL=":8080"
     restart: unless-stopped
 
   tailscale:
