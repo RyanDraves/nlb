@@ -1,9 +1,9 @@
-load("@aspect_rules_py//py:defs.bzl", "py_binary")
 load("@pip//:requirements.bzl", "requirement")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
 load("//bzl/macros:patch.bzl", "patch")
 load("//bzl/macros:pico.bzl", "pico_project")
+load("//bzl/macros:python.bzl", "py_binary")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
 buffham(
@@ -120,6 +120,7 @@ provisions = [
     py_binary(
         name = "provision_" + name,
         srcs = ["provision.py"],
+        add_completions = False,
         args = [
             "$(location bootloader.bin)",
             "$(location {0})".format(bin),
