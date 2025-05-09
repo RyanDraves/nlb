@@ -86,5 +86,6 @@ py_binary(
     visibility = ["//nlb:__pkg__"],
     deps = [
         requirement("rich-click"),
+        requirement("inquirerpy"),
     ],
 )
