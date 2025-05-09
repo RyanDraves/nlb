@@ -1,7 +1,7 @@
-load("@aspect_rules_py//py:defs.bzl", "py_binary", "py_library")
+load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
-load("//bzl/macros:python.bzl", "py_test")
+load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
 py_library(
     name = "bh",

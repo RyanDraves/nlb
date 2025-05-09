@@ -1,7 +1,6 @@
 """Common rules for embedded development"""
 
-load("@aspect_rules_py//py:defs.bzl", "py_binary")
-load("//bzl/macros:python.bzl", "py_test")
+load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
 def flash(name, binary, **kwargs):
     """Flash a binary to a device
@@ -14,6 +13,8 @@ def flash(name, binary, **kwargs):
     py_binary(
         name = name,
         srcs = ["//emb/project/base:flash.py"],
+        # Does not play nice with platforms
+        add_completions = False,
         main = "//emb/project/base:flash.py",
         deps = [
             "//emb/project/base:flash",

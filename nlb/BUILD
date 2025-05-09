@@ -19,7 +19,7 @@ py_package(
         "//nlb/buffham:template_generator",
         "//nlb/datastructure:bidirectional_dict",
         "//nlb/hyd:progress_bar",
-        "//nlb/tailscale:wrapper",
+        "//nlb/tailscale:nlb_tailscale",
         "//nlb/util:click_utils",
         "//nlb/util:console_utils",
         "//nlb/util:dataclass",
@@ -29,6 +29,7 @@ py_package(
         "//nlb/util:prompt_utils",
         "//nlb/util:secrets",
         "//nlb/util:semantic_errors",
+        "//nlb/util:venv_completions",
         "//nlb/wizaidry:audio_util",
         "//nlb/wizaidry:text_handler",
         "//nlb/wizaidry:tool_manager",
@@ -37,17 +38,22 @@ py_package(
     ],
 )
 
-# bazel run --config pypi_test --embed_label=0.0.7 -- //nlb:nlb_wheel.publish --repository testpypi
-# bazel run --config pypi --embed_label=0.2.1 -- //nlb:nlb_wheel.publish --repository pypi
+# bazel run --config pypi_test --embed_label=0.0.12 -- //nlb:nlb_wheel.publish --repository testpypi
+# bazel run --config pypi --embed_label=0.3.1 -- //nlb:nlb_wheel.publish --repository pypi
 py_wheel(
     name = "nlb_wheel",
-    data_files = {},  # TODO: Add completion data for click entrypoints
+    # TODO: Query completion files and generate this dictionary
+    data_files = {
+        "//nlb/buffham:buffham_completions": "data/share/completions/buffham-completion.bash",
+        "//nlb/tailscale:nlb_tailscale_completions": "data/share/completions/nlb_tailscale-completion.bash",
+    },
     description_file = "pypi_README.md",
     distribution = "nl_blocks",  # Unfortunate PyPI name collision
     # TODO: Query `py_binary` entrypoints and generate this dictionary
     entry_points = {"console_scripts": [
         "buffham = nlb.buffham.buffham:main",
-        "nlb_tailscale = nlb.tailscale.wrapper:main",
+        "nlb_tailscale = nlb.tailscale.nlb_tailscale:main",
+        "venv_completions = nlb.util.venv_completions:main",
     ]},
     license = "MIT",
     # https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls

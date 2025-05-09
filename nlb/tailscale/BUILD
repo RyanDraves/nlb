@@ -1,9 +1,9 @@
-load("@aspect_rules_py//py:defs.bzl", "py_binary")
 load("@pip//:requirements.bzl", "requirement")
+load("//bzl/macros:python.bzl", "py_binary")
 
 py_binary(
-    name = "wrapper",
-    srcs = ["wrapper.py"],
+    name = "nlb_tailscale",
+    srcs = ["nlb_tailscale.py"],
     visibility = ["//visibility:public"],
     deps = [
         requirement("inquirerpy"),

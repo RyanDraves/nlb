@@ -1,6 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pip//:requirements.bzl", "requirement")
-load("//bzl/macros:python.bzl", "py_test")
+load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
 py_library(
     name = "click_utils",
@@ -77,5 +77,15 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         requirement("thefuzz"),
+    ],
+)
+
+py_binary(
+    name = "venv_completions",
+    srcs = ["venv_completions.py"],
+    visibility = ["//nlb:__pkg__"],
+    deps = [
+        requirement("rich-click"),
+        requirement("inquirerpy"),
     ],
 )

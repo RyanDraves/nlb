@@ -1,4 +1,4 @@
-load("@aspect_rules_py//py:defs.bzl", _py_test = "py_test")
+load("@aspect_rules_py//py:defs.bzl", _py_binary = "py_binary", _py_test = "py_test")
 load("@pip//:requirements.bzl", "requirement")
 
 def py_test(name, srcs, deps = [], args = [], **kwargs):
@@ -21,3 +21,25 @@ def py_test(name, srcs, deps = [], args = [], **kwargs):
         args = args + ["$(location :%s)" % src for src in srcs],
         **kwargs
     )
+
+def py_binary(name, add_completions = True, **kwargs):
+    """py_binary wrapper to add bash completion"""
+    _py_binary(
+        name = name,
+        **kwargs
+    )
+
+    if add_completions:
+        # Follow `click`'s shell completion guide:
+        # https://click.palletsprojects.com/en/stable/shell-completion/
+        # Note that Python binaries will want to set
+        # `entry_point_func(prog_name='{name}')` so click recognizes the
+        # request for completions in Bazel settings. `{name}` should also
+        # be the name of the `console_scripts` entry in the wheel.
+        native.genrule(
+            name = name + "_completions",
+            outs = ["{}-completion.bash".format(name)],
+            cmd = "_{0}_COMPLETE=bash_source $(execpath :{1}) > $(@D)/{2}-completion.bash".format(name.upper(), name, name),
+            tools = [":{}".format(name)],
+            visibility = ["//visibility:public"],
+        )

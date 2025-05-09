@@ -1,14 +1,4 @@
-"""Simple CLI wrapper around the Tailscale CLI
-
-Add this to `~/.bash_aliases` to invoke the CLI:
-```bash
-function nlb_tailscale() {
-    pushd $HOME/path/to/nlb > /dev/null
-    bazel run --config quiet //nlb/tailscale:wrapper -- "$@"
-    popd > /dev/null
-}
-```
-"""
+"""Simple CLI wrapper around the Tailscale CLI"""
 
 import datetime
 import glob
@@ -76,7 +66,8 @@ class TailscaleWrapper:
     def _prompt_for_files(self) -> list[pathlib.Path]:
         pattern = filepath.FilePathPrompt(
             message='Select a file or glob pattern:',
-            default=str(pathlib.Path.home()),
+            default=str(pathlib.Path.cwd()),
+            multicolumn_complete=True,
         ).execute()
 
         # Gracefully add a wildcard to directories;
@@ -149,7 +140,8 @@ class TailscaleWrapper:
         return pathlib.Path(
             filepath.FilePathPrompt(
                 message='Select a directory:',
-                default=str(pathlib.Path.home()),
+                default=str(pathlib.Path.cwd()),
+                multicolumn_complete=True,
                 validate=prompt_utils.PathValidator(
                     message='Path must be a directory', is_dir=True, must_exist=True
                 ),
@@ -197,4 +189,4 @@ def receive(tailscale: TailscaleWrapper) -> None:
 
 
 if __name__ == '__main__':
-    main()
+    main(prog_name='nlb_tailscale')
