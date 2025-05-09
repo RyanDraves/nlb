@@ -120,6 +120,7 @@ provisions = [
     py_binary(
         name = "provision_" + name,
         srcs = ["provision.py"],
+        # Does not play nice with platforms
         add_completions = False,
         args = [
             "$(location bootloader.bin)",
