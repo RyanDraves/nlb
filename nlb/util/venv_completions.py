@@ -2,41 +2,66 @@ import os
 import pathlib
 
 import rich_click as click
+from InquirerPy.prompts import confirm
 
 
 @click.command()
 def main() -> None:
     """Install script for bash-completion in a virtual environment."""
     venv = os.environ.get('VIRTUAL_ENV')
-    if not venv:
+    backup_dir = pathlib.Path.home() / '.local'
+
+    if not venv and backup_dir.exists():
+        env_dir = backup_dir
+    elif not venv:
         print('Not inside a virtual environment.')
         exit(1)
+    else:
+        env_dir = pathlib.Path(venv)
 
-    activate_path = pathlib.Path(venv) / 'bin' / 'activate'
-    completions_dir = pathlib.Path(venv) / 'share' / 'completions'
+    if venv:
+        script_path = env_dir / 'bin' / 'activate'
+    else:
+        script_path = pathlib.Path.home() / '.bashrc'
+    completions_dir = env_dir / 'share' / 'completions'
 
-    if not activate_path.exists():
+    if not script_path.exists():
+        if not venv:
+            print('Not inside a virtual environment.')
+            exit(1)
         print('Cannot find venv activate script.')
         exit(1)
 
     if not completions_dir.exists():
+        if not venv:
+            print('Not inside a virtual environment.')
+            exit(1)
         print('No bash completions directory found.')
         exit(1)
 
-    marker = '# Added by venv_completions.py for completions files'
+    if not venv:
+        allow = confirm.ConfirmPrompt(
+            message='No virtual environment found. Do you want to proceed installing for ~/.local?',
+            default=False,
+        ).execute()
+        if not allow:
+            print('Exiting without changes.')
+            exit(1)
+
+    marker = '# Added by venv_completions for completions files'
     bash_block = (
-        f'{marker}'
-        f'_completion_dir="{completions_dir}"'
-        'if [ -d "$_completion_dir" ]; then'
-        '    for _script in "$_completion_dir"/*; do'
-        '        [ -f "$_script" ] && source "$_script"'
-        '    done'
-        'fi'
+        f'\n{marker}\n'
+        f'_completion_dir="{completions_dir}"\n'
+        'if [ -d "$_completion_dir" ]; then\n'
+        '    for _script in "$_completion_dir"/*; do\n'
+        '        [ -f "$_script" ] && source "$_script"\n'
+        '    done\n'
+        'fi\n'
     )
 
-    activate_text = activate_path.read_text()
+    activate_text = script_path.read_text()
     if marker not in activate_text:
-        with activate_path.open('a') as f:
+        with script_path.open('a') as f:
             f.write(bash_block)
         print(f'Patched activate script to source all completions in {completions_dir}')
     else:

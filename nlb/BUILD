@@ -38,8 +38,8 @@ py_package(
     ],
 )
 
-# bazel run --config pypi_test --embed_label=0.0.11 -- //nlb:nlb_wheel.publish --repository testpypi
-# bazel run --config pypi --embed_label=0.3.0 -- //nlb:nlb_wheel.publish --repository pypi
+# bazel run --config pypi_test --embed_label=0.0.12 -- //nlb:nlb_wheel.publish --repository testpypi
+# bazel run --config pypi --embed_label=0.3.1 -- //nlb:nlb_wheel.publish --repository pypi
 py_wheel(
     name = "nlb_wheel",
     # TODO: Query completion files and generate this dictionary
