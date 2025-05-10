@@ -225,7 +225,7 @@ class VoiceHandler:
         except Exception as e:
             # The TUI hides stuff, so this gross except block tries to print any errors
             traceback.print_exc()
-            self.update_agent_response(f"Error: {e}")
+            self.update_agent_response(f'Error: {e}')
 
     async def _get_connection(self) -> realtime.AsyncRealtimeConnection:
         await self._connected.wait()

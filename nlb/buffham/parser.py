@@ -514,7 +514,6 @@ class Parser:
     def parse_constant_lines(
         self, lines: list[str], ctx: ParseContext
     ) -> list[Constant]:
-
         indices = [i for i, line in enumerate(lines) if CONSTANT_REGEX.match(line)]
 
         constants = []

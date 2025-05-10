@@ -55,7 +55,7 @@ def _generate_comment(comments: list[str], tabs: str) -> str:
             if comment:
                 definition += f'\n{tabs}{comment.lstrip()}'
             else:
-                definition += f'\n'
+                definition += '\n'
         definition += f'\n{tabs} */'
     elif comments:
         definition += f'{tabs}//{comments[0]}'
@@ -114,17 +114,17 @@ def generate_message(message: parser.Message, primary_namespace: str, hpp: bool)
         for field in message.fields:
             if field.iterable:
                 definition += (
-                    f"\n{tab}{T}uint16_t {field.name}_size = {field.name}.size();"
-                    f"\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, &{field.name}_size, 2);"
+                    f'\n{tab}{T}uint16_t {field.name}_size = {field.name}.size();'
+                    f'\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, &{field.name}_size, 2);'
                 )
                 offset += 2
-                definition += f"\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, {field.name}.data(), {field.name}_size * {field.size});"
+                definition += f'\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, {field.name}.data(), {field.name}_size * {field.size});'
                 offset_str += f' + {field.name}_size * {field.size}'
             elif field.pri_type is parser.FieldType.MESSAGE:
                 definition += f'\n{tab}{T}auto {field.name}_buffer = {field.name}.serialize(buffer.subspan({offset}{offset_str}));'
                 offset_str += f' + {field.name}_buffer.size()'
             else:
-                definition += f"\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, &{field.name}, {field.size});"
+                definition += f'\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, &{field.name}, {field.size});'
                 offset += field.size
         definition += f'\n{tab}{T}return buffer.subspan(0, {offset}{offset_str});\n'
         definition += f'{tab}}}\n\n'
@@ -143,21 +143,21 @@ def generate_message(message: parser.Message, primary_namespace: str, hpp: bool)
         for field in message.fields:
             if field.iterable:
                 definition += (
-                    f"\n{tab}{T}uint16_t {field.name}_size;"
-                    f"\n{tab}{T}memcpy(&{field.name}_size, buffer.data() + {offset}{offset_str}, 2);"
+                    f'\n{tab}{T}uint16_t {field.name}_size;'
+                    f'\n{tab}{T}memcpy(&{field.name}_size, buffer.data() + {offset}{offset_str}, 2);'
                 )
                 offset += 2
                 definition += (
-                    f"\n{tab}{T}{message_name}.{field.name}.resize({field.name}_size);"
+                    f'\n{tab}{T}{message_name}.{field.name}.resize({field.name}_size);'
                 )
-                definition += f"\n{tab}{T}memcpy({message_name}.{field.name}.data(), buffer.data() + {offset}{offset_str}, {field.name}_size * {field.size});"
+                definition += f'\n{tab}{T}memcpy({message_name}.{field.name}.data(), buffer.data() + {offset}{offset_str}, {field.name}_size * {field.size});'
                 offset_str += f' + {field.name}_size * {field.size}'
             elif field.pri_type is parser.FieldType.MESSAGE:
                 definition += f'\n{tab}{T}auto {field.name}_buffer = buffer.subspan({offset}{offset_str});'
                 definition += f'\n{tab}{T}std::tie({message_name}.{field.name}, {field.name}_buffer) = {_cpp_type(field, primary_namespace)}::deserialize({field.name}_buffer);'
                 offset_str += f' + {field.name}_buffer.size()'
             else:
-                definition += f"\n{tab}{T}memcpy(&{message_name}.{field.name}, buffer.data() + {offset}{offset_str}, {field.size});"
+                definition += f'\n{tab}{T}memcpy(&{message_name}.{field.name}, buffer.data() + {offset}{offset_str}, {field.size});'
                 offset += field.size
 
         definition += f'\n{tab}{T}return {{{message_name}, buffer.subspan(0, {offset}{offset_str})}};\n'
@@ -174,9 +174,7 @@ def generate_project_class(
     name: str, transactions: list[parser.Transaction], primary_namespace: str
 ) -> str:
     """Generate a project class definition."""
-    definition = (
-        f'class {name} {{\n' f'{T[::2]}public:\n' f'{T}{name}();\n' f'{T}~{name}();\n\n'
-    )
+    definition = f'class {name} {{\n{T[::2]}public:\n{T}{name}();\n{T}~{name}();\n\n'
 
     # Add initialization method
     definition += f'{T}void initialize();\n\n'

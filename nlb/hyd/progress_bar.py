@@ -67,7 +67,7 @@ class ProgressBar:
     def _update_hyd(self, payload: TaskProgress) -> TaskProgress:
         try:
             response = requests.post(self._endpoint, json=payload)
-        except requests.ConnectionError as e:
+        except requests.ConnectionError:
             if self._first_failure:
                 logging.warning(
                     'Could not connect to HYD server. Progress updates will not be sent.'
