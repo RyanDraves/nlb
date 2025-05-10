@@ -2,10 +2,6 @@ load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 load("@npm//:defs.bzl", "npm_link_all_packages")
-
-# load("@pip//:requirements.bzl", "all_requirements")
-# load("@rules_python//python:pip.bzl", "compile_pip_requirements")
-# load("@rules_pyvenv//:venv.bzl", "py_venv")
 load("@rules_uv//uv:pip.bzl", "pip_compile")
 load("@rules_uv//uv:venv.bzl", "create_venv")
 
@@ -30,7 +26,7 @@ buildifier(
 pip_compile(
     name = "requirements",
     requirements_in = "//:requirements.txt",
-    requirements_txt = "//:requirements_lock.txt",  # default
+    requirements_txt = "//:requirements_lock.txt",
 )
 
 create_venv(
