@@ -20,5 +20,9 @@ exclude = [
     "*_bh.pyi",
 ]
 
+[tool.ruff.lint.isort]
+force-single-line = true
+single-line-exclusions = ["collections", "typing"]
+
 [tool.ruff.format]
 quote-style = "single"
