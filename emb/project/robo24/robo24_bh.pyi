@@ -17,7 +17,6 @@ class DistanceMeasurement:
     distance_mm: int
 
     def serialize(self) -> bytes: ...
-
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
 
@@ -26,7 +25,15 @@ REGISTRY: dict[int, Type[bh.BuffhamLike]] = ...
 class Robo24Serializer(bh_cobs.BhCobs):
     def __init__(self, registry: bh_cobs.Registry | None = None): ...
 
-class Robo24Node[CommsTransporter: transporter.TransporterLike, LogTransporter: transporter.TransporterLike](bh.BhNode[Robo24Serializer, CommsTransporter, LogTransporter]):
-    def __init__(self, serializer: Robo24Serializer | None = None, comms_transporter: CommsTransporter | None = None, log_transporter: LogTransporter | None = None): ...
+class Robo24Node[
+    CommsTransporter: transporter.TransporterLike,
+    LogTransporter: transporter.TransporterLike,
+](bh.BhNode[Robo24Serializer, CommsTransporter, LogTransporter]):
+    def __init__(
+        self,
+        serializer: Robo24Serializer | None = None,
+        comms_transporter: CommsTransporter | None = None,
+        log_transporter: LogTransporter | None = None,
+    ): ...
 
 GET_MEASUREMENT: bh.Transaction[base_bh.Ping, DistanceMeasurement] = ...

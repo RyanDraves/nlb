@@ -118,9 +118,9 @@ class BaseClient(client.Client):
         )
         assert resp.sector == sector
 
-    def _read_flash_sector[
-        M: bh.BuffhamLike
-    ](self, sector: int, msg_class: Type[M]) -> M:
+    def _read_flash_sector[M: bh.BuffhamLike](
+        self, sector: int, msg_class: Type[M]
+    ) -> M:
         resp = base_bh.READ_FLASH_SECTOR.transact(
             self._node, base_bh.FlashSector(sector=sector, data=[])
         )

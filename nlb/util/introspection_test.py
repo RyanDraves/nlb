@@ -22,7 +22,7 @@ class IntrospectionTest(unittest.TestCase):
         parsed = introspection.parse_signature_and_docs(sample_function)
 
         # Check the parsed values
-        self.assertEqual(parsed.description, "This is a sample function.")
+        self.assertEqual(parsed.description, 'This is a sample function.')
         self.assertEqual(
             parsed.arg_descriptions,
             {'arg1': 'The first argument.', 'arg2': 'The second argument.'},
@@ -45,7 +45,7 @@ class IntrospectionTest(unittest.TestCase):
 
         # Check the parsed values
         self.assertEqual(
-            parsed_no_return.description, "This function has no return section."
+            parsed_no_return.description, 'This function has no return section.'
         )
         self.assertEqual(
             parsed_no_return.arg_descriptions, {'arg1': 'The first argument.'}
@@ -71,7 +71,7 @@ class IntrospectionTest(unittest.TestCase):
 
         # Check the parsed values
         self.assertEqual(
-            parsed_optional_arg.description, "This function has an optional argument."
+            parsed_optional_arg.description, 'This function has an optional argument.'
         )
         self.assertEqual(
             parsed_optional_arg.arg_descriptions,

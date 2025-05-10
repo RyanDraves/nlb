@@ -16,17 +16,14 @@ CONSTANT_STRING = 'Hello, world!'  # constants can have inline comments
 # Constants may reference other constants with {brackets}
 COMPOSED_CONSTANT = 2 + MY_CONSTANT + other_bh.OTHER_CONSTANT
 
-
 @dataclasses.dataclass
 class Ping:
-    """A message comment
-    """
+    """A message comment"""
 
     # Add some comments here
     ping: int
 
     def serialize(self) -> bytes: ...
-
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
 
@@ -47,7 +44,6 @@ class FlashPage:
     read_size: int
 
     def serialize(self) -> bytes: ...
-
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
 
@@ -56,7 +52,6 @@ class LogMessage:
     message: str
 
     def serialize(self) -> bytes: ...
-
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
 
@@ -69,7 +64,6 @@ class NestedMessage:
     other_pong: other_bh.Pong
 
     def serialize(self) -> bytes: ...
-
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
 
@@ -78,8 +72,16 @@ REGISTRY: dict[int, Type[bh.BuffhamLike]] = ...
 class SampleSerializer(bh_cobs.BhCobs):
     def __init__(self, registry: bh_cobs.Registry | None = None): ...
 
-class SampleNode[CommsTransporter: transporter.TransporterLike, LogTransporter: transporter.TransporterLike](bh.BhNode[SampleSerializer, CommsTransporter, LogTransporter]):
-    def __init__(self, serializer: SampleSerializer | None = None, comms_transporter: CommsTransporter | None = None, log_transporter: LogTransporter | None = None): ...
+class SampleNode[
+    CommsTransporter: transporter.TransporterLike,
+    LogTransporter: transporter.TransporterLike,
+](bh.BhNode[SampleSerializer, CommsTransporter, LogTransporter]):
+    def __init__(
+        self,
+        serializer: SampleSerializer | None = None,
+        comms_transporter: CommsTransporter | None = None,
+        log_transporter: LogTransporter | None = None,
+    ): ...
 
 PING: bh.Transaction[other_bh.Pong, LogMessage] = ...
 # Transaction comment

@@ -4,8 +4,7 @@ import threading
 from typing import Callable, ClassVar, cast
 
 import serial
-from serial.tools import list_ports
-from serial.tools import list_ports_common
+from serial.tools import list_ports, list_ports_common
 
 
 class Serial(abc.ABC):
@@ -80,7 +79,7 @@ class Serial(abc.ABC):
                     )
                     self._read_callback(buffer)
                     buffer = bytes()
-        except:
+        except (serial.SerialException, KeyboardInterrupt):
             # This is probably an error raised by program exit or USB unplug; ignore
             pass
 

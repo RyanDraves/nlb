@@ -13,14 +13,12 @@ class Ping:
     ping: int
 
     def serialize(self) -> bytes: ...
-
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
 
 @dataclasses.dataclass
 class FlashPage:
-    """A page from the app flash image
-    """
+    """A page from the app flash image"""
 
     # Address to work with
     #
@@ -33,21 +31,18 @@ class FlashPage:
     data: list[int]
 
     def serialize(self) -> bytes: ...
-
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
 
 @dataclasses.dataclass
 class FlashSector:
-    """A scratchpad sector of flash memory
-    """
+    """A scratchpad sector of flash memory"""
 
     # Sector [0, 31] to work with
     sector: int
     data: list[int]
 
     def serialize(self) -> bytes: ...
-
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
 
@@ -56,7 +51,6 @@ class LogMessage:
     message: str
 
     def serialize(self) -> bytes: ...
-
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
 
@@ -65,8 +59,16 @@ REGISTRY: dict[int, Type[bh.BuffhamLike]] = ...
 class BaseSerializer(bh_cobs.BhCobs):
     def __init__(self, registry: bh_cobs.Registry | None = None): ...
 
-class BaseNode[CommsTransporter: transporter.TransporterLike, LogTransporter: transporter.TransporterLike](bh.BhNode[BaseSerializer, CommsTransporter, LogTransporter]):
-    def __init__(self, serializer: BaseSerializer | None = None, comms_transporter: CommsTransporter | None = None, log_transporter: LogTransporter | None = None): ...
+class BaseNode[
+    CommsTransporter: transporter.TransporterLike,
+    LogTransporter: transporter.TransporterLike,
+](bh.BhNode[BaseSerializer, CommsTransporter, LogTransporter]):
+    def __init__(
+        self,
+        serializer: BaseSerializer | None = None,
+        comms_transporter: CommsTransporter | None = None,
+        log_transporter: LogTransporter | None = None,
+    ): ...
 
 # Pong!
 PING: bh.Transaction[Ping, LogMessage] = ...

@@ -6,7 +6,6 @@
 # - udev rules
 # - Ryan's custom settings (optional)
 #     - gh
-#     - vscode extensions
 #     - vscode keybindings
 #     - gh alias
 #

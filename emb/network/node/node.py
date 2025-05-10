@@ -70,9 +70,9 @@ class NlbNode[
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.stop()
 
-    def register_publish_callback[
-        Send
-    ](self, request_id: int, callback: Callable[[Send], None]) -> None:
+    def register_publish_callback[Send](
+        self, request_id: int, callback: Callable[[Send], None]
+    ) -> None:
         """Register a callback on receipt of a published message
 
         NOTE: This callback will occur in the IO thread; don't waste time

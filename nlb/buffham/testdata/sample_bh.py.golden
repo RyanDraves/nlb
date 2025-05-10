@@ -17,11 +17,9 @@ CONSTANT_STRING = 'Hello, world!'  # constants can have inline comments
 # Constants may reference other constants with {brackets}
 COMPOSED_CONSTANT = 2 + MY_CONSTANT + other_bh.OTHER_CONSTANT
 
-
 @dataclasses.dataclass
 class Ping:
-    """A message comment
-    """
+    """A message comment"""
 
     # Add some comments here
     ping: int
@@ -138,8 +136,16 @@ class SampleSerializer(bh_cobs.BhCobs):
         registry = (registry or {}) | REGISTRY | other_bh.REGISTRY
         super().__init__(registry)
 
-class SampleNode[CommsTransporter: transporter.TransporterLike, LogTransporter: transporter.TransporterLike](bh.BhNode[SampleSerializer, CommsTransporter, LogTransporter]):
-    def __init__(self, serializer: SampleSerializer | None = None, comms_transporter: CommsTransporter | None = None, log_transporter: LogTransporter | None = None):
+class SampleNode[
+    CommsTransporter: transporter.TransporterLike,
+    LogTransporter: transporter.TransporterLike,
+](bh.BhNode[SampleSerializer, CommsTransporter, LogTransporter]):
+    def __init__(
+        self,
+        serializer: SampleSerializer | None = None,
+        comms_transporter: CommsTransporter | None = None,
+        log_transporter: LogTransporter | None = None,
+    ):
         super().__init__(serializer or SampleSerializer(), comms_transporter, log_transporter)
 
 PING = bh.Transaction[other_bh.Pong, LogMessage](1)

@@ -79,7 +79,7 @@ class TestEngine(unittest.TestCase):
         instance = FlashPage(0x1234, 0x5678, [0x9ABC, 0xDEF0])
         self.assertEqual(
             serializer(instance),
-            b'\x34\x12\x00\x00\x78\x56\x00\x00\x02\x00\xBC\x9A\x00\x00\xF0\xDE\x00\x00',
+            b'\x34\x12\x00\x00\x78\x56\x00\x00\x02\x00\xbc\x9a\x00\x00\xf0\xde\x00\x00',
         )
 
         message = self.LOG_MESSAGE
@@ -114,7 +114,7 @@ class TestEngine(unittest.TestCase):
         message = self.FLASH_PAGE
         deserializer = engine.generate_deserializer(message, FlashPage)
         buffer = (
-            b'\x34\x12\x00\x00\x78\x56\x00\x00\x02\x00\xBC\x9A\x00\x00\xF0\xDE\x00\x00'
+            b'\x34\x12\x00\x00\x78\x56\x00\x00\x02\x00\xbc\x9a\x00\x00\xf0\xde\x00\x00'
         )
         msg, size = deserializer(buffer)
         self.assertEqual(msg, FlashPage(0x1234, 0x5678, [0x9ABC, 0xDEF0]))

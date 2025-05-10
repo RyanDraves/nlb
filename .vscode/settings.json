@@ -111,7 +111,7 @@
         },
         "editor.formatOnSave": true,
         "editor.formatOnSaveMode": "file",
-        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnType": false
     },
     "[markdown]": {
