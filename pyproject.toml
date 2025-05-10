@@ -15,10 +15,6 @@ packages = ["nlb", "emb", "apps"]
 [tool.ruff]
 target-version = "py312"
 line-length = 88
-exclude = [
-    # Buffham generated files (tough to match formatting)
-    "*_bh.pyi",
-]
 
 [tool.ruff.lint.isort]
 force-single-line = true
