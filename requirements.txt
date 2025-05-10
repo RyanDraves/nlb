@@ -1,5 +1,5 @@
-# - bazel run //:requirements.update
-# - bazel run //:venv venv
+# - bazel run //:requirements
+# - bazel run //:venv
 # - pip install -e .  # (Optional)
 alembic>=1.15.1,<2
 black>=24.4.2,<25
@@ -12,6 +12,7 @@ matplotlib>=3.10.0,<4
 numpy>=2.2.2,<3
 OpenAI[realtime]>=1.68.2,<2
 portpicker>=1.6.0,<2
+pip>=25.1.1,<26
 psycopg2-binary>=2.9.10,<3
 # Matplotlib backend
 PyQt6>=6.8.0,<7

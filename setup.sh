@@ -268,7 +268,9 @@ function install_docker() {
 
 function setup_venv() {
     echo "Exporting venv..."
-    time bazel run //:venv venv
+    bazel run //:venv venv
+    # Allow local files to be used
+    venv/bin/pip install -e .
     echo "Done exporting venv"
 }
 
