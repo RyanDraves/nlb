@@ -139,6 +139,8 @@ def generate_message(
         definition += f'\n{T}{T}return buffer\n'
 
     # Add deserializer method
+    if not stub:
+        definition += '\n'
     definition += f'{T}@classmethod'
     definition += f'\n{T}def deserialize(cls, buffer: bytes) -> tuple[Self, int]:'
     if stub:
