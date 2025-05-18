@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up apt
         run: |
-          sudo apt-get install -y libc6 libstdc++6
+          sudo apt-get install -y libc6 libstdc++6 libglib2.0-dev
           # portaudio19-dev
       - name: Configure Bazel
         run: |
