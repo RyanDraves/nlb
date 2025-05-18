@@ -13,6 +13,9 @@ build --remote_executor=grpcs://remote.buildbuddy.io
 build --noslim_profile
 build --experimental_profile_include_target_label
 build --experimental_profile_include_primary_output
+# https://www.buildbuddy.io/docs/rbe-platforms
+build --host_platform=//bzl/platforms:rbe_platform
+
 
 # Using nightly channel for WASM stuffs
 build --@rules_rust//rust/toolchain/channel=nightly
