@@ -71,6 +71,6 @@ platform(
     exec_properties = {
         "OSFamily": "Linux",
         "dockerNetwork": "off",
-        "container-image": "docker://docker.io/ubuntu:noble",
+        "container-image": "docker://ghcr.io/ryandraves/env:noble-endeavor",
     },
 )
