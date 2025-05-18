@@ -56,7 +56,7 @@ http_archive(
 #
 # aspect_rules_py is promising, but its `py_venv` is 3.11+ and
 # rule is either underdocumented or broken.
-bazel_dep(name = "aspect_rules_py", version = "1.4.0")
+bazel_dep(name = "aspect_rules_py", version = "1.3.4")
 
 bazel_dep(name = "rules_python", version = "1.4.1")
 

@@ -9,7 +9,7 @@ local_path_override(
     path = "../..",
 )
 
-bazel_dep(name = "rules_python", version = "0.40.0")
+bazel_dep(name = "rules_python", version = "1.4.1")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 
