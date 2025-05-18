@@ -11,8 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     zip \
     unzip \
-    wget && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    portaudio19-dev \
+    wget \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 LABEL org.opencontainers.image.source=https://github.com/RyanDraves/nlb
 LABEL org.opencontainers.image.description="Environment image"
