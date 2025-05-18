@@ -1,4 +1,3 @@
-build --disk_cache=~/.cache/bazel
 build --cxxopt='-std=c++23'
 
 # Remote execution and caching
