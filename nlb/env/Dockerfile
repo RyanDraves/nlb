@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     portaudio19-dev \
     python3 \
     wget \
-    # Non-hermetic compiler due to issues finding `ld` with picotool's toolchain
+    # Non-hermetic compiler due to issues finding `ld` with pico SDK's toolchain
     # while using remote execution
     gcc-arm-none-eabi \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
