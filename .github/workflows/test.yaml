@@ -20,10 +20,12 @@ jobs:
       - name: Set up apt
         run: |
           sudo apt-get install -y portaudio19-dev
-      # TODO: Not enough disk space for Bazel
+      - name: Configure Bazel
+        run: |
+          echo "build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}" > .user.bazelrc
       - name: Build
         run: |
-          bazel build //nlb/... //emb/...
+          bazel build //...
       - name: Test
         run: |
-          bazel test //nlb/... //emb/...
+          bazel test //...

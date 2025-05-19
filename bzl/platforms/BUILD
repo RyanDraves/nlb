@@ -60,3 +60,17 @@ platform(
     ],
     parents = ["@pico-sdk//bazel/platform:rp2040"],
 )
+
+platform(
+    name = "rbe_platform",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+        "@bazel_tools//tools/cpp:gcc",
+    ],
+    exec_properties = {
+        "OSFamily": "Linux",
+        "dockerNetwork": "off",
+        "container-image": "docker://ghcr.io/ryandraves/env:nonhermetic-compile",
+    },
+)
