@@ -71,6 +71,6 @@ platform(
     exec_properties = {
         "OSFamily": "Linux",
         "dockerNetwork": "off",
-        "container-image": "docker://ghcr.io/ryandraves/env:lld",
+        "container-image": "docker://ghcr.io/ryandraves/env:nonhermetic-compile",
     },
 )
