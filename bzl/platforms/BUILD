@@ -71,6 +71,6 @@ platform(
     exec_properties = {
         "OSFamily": "Linux",
         "dockerNetwork": "off",
-        "container-image": "docker://ghcr.io/ryandraves/env:pythonic",
+        "container-image": "docker://ghcr.io/ryandraves/env:lld",
     },
 )

@@ -2,10 +2,7 @@ FROM ubuntu:noble
 
 # Install dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    g++ \
-    gcc \
-    make \
-    cmake \
+    build-essential \
     patch \
     bash \
     curl \
