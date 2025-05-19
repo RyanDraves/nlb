@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zip \
     unzip \
     portaudio19-dev \
+    python3 \
     wget \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
