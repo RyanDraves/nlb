@@ -18,6 +18,7 @@ py_package(
         "//nlb/buffham:py_generator",
         "//nlb/buffham:template_generator",
         "//nlb/datastructure:bidirectional_dict",
+        "//nlb/github:nlb_gh_feature",
         "//nlb/hyd:progress_bar",
         "//nlb/tailscale:nlb_tailscale",
         "//nlb/util:click_utils",
@@ -39,12 +40,13 @@ py_package(
 )
 
 # bazel run --config pypi_test --embed_label=0.0.12 -- //nlb:nlb_wheel.publish --repository testpypi
-# bazel run --config pypi --embed_label=0.3.1 -- //nlb:nlb_wheel.publish --repository pypi
+# bazel run --config pypi --embed_label=0.4.0 -- //nlb:nlb_wheel.publish --repository pypi
 py_wheel(
     name = "nlb_wheel",
     # TODO: Query completion files and generate this dictionary
     data_files = {
         "//nlb/buffham:buffham_completions": "data/share/completions/buffham-completion.bash",
+        "//nlb/github:nlb_gh_feature_completions": "data/share/completions/nlb_gh_feature.bash",
         "//nlb/tailscale:nlb_tailscale_completions": "data/share/completions/nlb_tailscale-completion.bash",
     },
     description_file = "pypi_README.md",
@@ -52,6 +54,7 @@ py_wheel(
     # TODO: Query `py_binary` entrypoints and generate this dictionary
     entry_points = {"console_scripts": [
         "buffham = nlb.buffham.buffham:main",
+        "nlb_gh_feature = nlb.github.nlb_gh_feature:main",
         "nlb_tailscale = nlb.tailscale.nlb_tailscale:main",
         "venv_completions = nlb.util.venv_completions:main",
     ]},

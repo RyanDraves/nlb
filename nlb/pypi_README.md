@@ -9,7 +9,8 @@ Docs? No thanks. Here's a simple directory tree until ReadTheDocs is setup:
 nlb<br />
 ├── arduino -> Client wrappers for the Arduino CLI<br />
 ├── buffham -> Serialization & RPC library<br />
-├── datastructure -> Datastruction implementations<br />
+├── datastructure -> Datastructure implementations<br />
+├── github -> Github utilities<br />
 ├── hyd -> Fancy progress bars<br />
 ├── models -> Toy problems for algorithmic development (mostly `.gitignore`'d)<br />
 ├── tailscale -> Tailscale utilities<br />

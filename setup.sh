@@ -21,9 +21,9 @@ BAZELISK_VERSION=v1.25.0
 BAZELISK_X86_SHA384_SUM=f452948139ca10fb2f85b9e9381f103c63978773884a3ee3092685b47556241058c7bc4e5806e5bd1c754076814fd60a
 BAZELISK_ARM64_SHA384_SUM=6457888166ac4c3fb5ee82323987bec29e97736caeeee46be2467b54ba27d7095f84271666f992af58978415bbb300a1
 
-GH_VERSION="2.65.0"
-GH_X86_SHA384_SUM=12c22b9132a09ac373465586a7eaaf26016ab5c47af3608400ef6d7b513b511b49057e37e8871fadd56a8236502de705
-GH_ARM64_SHA384_SUM=aae7887a1c577fcf1696754421e9f3f09e5b9807ef637d0ea29cd515924b255ed0481b0bae1877435ed4e718351ab0df
+GH_VERSION="2.73.0"
+GH_X86_SHA256_SUM=9ebc6b751ee182fdb291ceb2213cc17abb1624b30f6d7a3913097af41f48b1b4
+GH_ARM64_SHA256_SUM=cc2fc6a3ce9d00435a8bceebf89c37bff8a773c5ef2d74203f6f5ce4fb10d66a
 
 REPO_ROOT=$(dirname $(readlink -f $0))
 
@@ -129,11 +129,11 @@ function install_bazelisk() {
 
     if [[ "$(uname -m)" == "aarch64" ]]; then
         # Install bazelisk for ARM64
-        wget https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-arm64 -O ~/.local/bin/bazel
+        wget --no-verbose https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-arm64 -O ~/.local/bin/bazel
         verify_sha384sum ~/.local/bin/bazel $BAZELISK_ARM64_SHA384_SUM
     else
         # Install bazelisk from release
-        wget https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-amd64 -O ~/.local/bin/bazel
+        wget --no-verbose https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-amd64 -O ~/.local/bin/bazel
 
         # Verify bazelisk checksum
         verify_sha384sum ~/.local/bin/bazel $BAZELISK_X86_SHA384_SUM
@@ -207,13 +207,13 @@ function install_go() {
         # Install Go for ARM64
         local go_url="https://go.dev/dl/go1.24.1.linux-arm64.tar.gz"
 
-        wget $go_url -O /tmp/go.tar.gz 2> /dev/null
+        wget --no-verbose $go_url -O /tmp/go.tar.gz 2> /dev/null
         verify_sha256sum /tmp/go.tar.gz 8df5750ffc0281017fb6070fba450f5d22b600a02081dceef47966ffaf36a3af
     else
         # Install Go for x86_64
         local go_url="https://go.dev/dl/go1.24.1.linux-amd64.tar.gz"
 
-        wget $go_url -O /tmp/go.tar.gz 2> /dev/null
+        wget --no-verbose $go_url -O /tmp/go.tar.gz 2> /dev/null
         verify_sha256sum /tmp/go.tar.gz cb2396bae64183cdccf81a9a6df0aea3bce9511fc21469fb89a0c00470088073
     fi
 
@@ -289,7 +289,7 @@ function setup_ryans_custom_settings() {
 function setup_gh() {
     install_gh
     authenticate_gh
-    make_gh_alias feature 'issue develop "$1" -c'
+    make_gh_alias feature 'nlb_gh_feature $@' -s
     make_gh_alias merge 'pr merge -s -d'
 }
 
@@ -305,15 +305,15 @@ function install_gh() {
         echo "Installing gh v$GH_VERSION"
         local gh_url="https://github.com/cli/cli/releases/download/v$GH_VERSION/gh_${GH_VERSION}_linux_arm64.tar.gz"
 
-        wget $gh_url -O /tmp/gh.tar.gz
-        verify_sha384sum /tmp/gh.tar.gz $GH_ARM64_SHA384_SUM
+        wget --no-verbose $gh_url -O /tmp/gh.tar.gz
+        verify_sha256sum /tmp/gh.tar.gz $GH_ARM64_SHA256_SUM
     else
         # Install gh from release
         echo "Installing gh v$GH_VERSION"
         local gh_url="https://github.com/cli/cli/releases/download/v$GH_VERSION/gh_${GH_VERSION}_linux_amd64.tar.gz"
 
-        wget $gh_url -O /tmp/gh.tar.gz
-        verify_sha384sum /tmp/gh.tar.gz $GH_X86_SHA384_SUM
+        wget --no-verbose $gh_url -O /tmp/gh.tar.gz
+        verify_sha256sum /tmp/gh.tar.gz $GH_X86_SHA256_SUM
     fi
 
     # Unpack gh.tar.gz to ~/.local
@@ -349,17 +349,19 @@ function authenticate_gh() {
 function make_gh_alias() {
     local alias=$1
     local command=$2
+    shift 2
+    local additional_args=("$@")
     # Check if a matching alias and command already exist
     if gh alias list | grep -q "$alias"; then
         if gh alias list | grep -qx "$alias: $command"; then
             echo "gh alias $alias already exists"
             return 0
         fi
-        echo "gh alias $alias already exists with a different command"
-        gh alias set --clobber $alias "$command"
+        echo "gh alias $alias already a different command"
+        gh alias set --clobber $alias "$command" "${additional_args[@]}"
     else
         echo "Creating gh alias $alias"
-        gh alias set $alias "$command"
+        gh alias set $alias "$command" "${additional_args[@]}"
     fi
 }
 
