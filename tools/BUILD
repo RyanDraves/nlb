@@ -6,6 +6,11 @@ workspace_tool(
 )
 
 workspace_tool(
+    name = "buildozer",
+    tool = "@buildifier_prebuilt//:buildozer",
+)
+
+workspace_tool(
     name = "picotool",
     tool = "@picotool",
 )

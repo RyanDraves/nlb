@@ -92,7 +92,7 @@ bazel_dep(name = "rules_uv", version = "0.71.0")
 #
 bazel_dep(
     name = "buildifier_prebuilt",
-    version = "6.4.0",
+    version = "8.0.3",
     dev_dependency = True,
 )
 

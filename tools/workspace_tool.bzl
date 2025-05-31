@@ -12,8 +12,10 @@ def workspace_tool(name, tool):
         content = [
             "#!/bin/bash",
             "EXEC_ROOT=$(pwd)",
-            "cd $BUILD_WORKSPACE_DIRECTORY",
-            "$EXEC_ROOT/$1 ${@:2}",
+            'cd "$BUILD_WORKSPACE_DIRECTORY"',
+            # 'echo "Running tool: $EXEC_ROOT/$1"',
+            # 'echo "With arguments: ${@:2}"',
+            'exec "$EXEC_ROOT/$1" "${@:2}"',
         ],
     )
 

@@ -89,3 +89,17 @@ py_binary(
         requirement("inquirerpy"),
     ],
 )
+
+genrule(
+    name = "version_gen",
+    outs = ["version.py"],
+    cmd = "$(execpath :version.sh) bazel-out/stable-status.txt $(location version.py)",
+    stamp = -1,
+    tools = [":version.sh"],
+)
+
+py_library(
+    name = "version",
+    srcs = ["version.py"],
+    visibility = ["//visibility:public"],
+)

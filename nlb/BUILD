@@ -5,9 +5,7 @@ py_package(
     packages = [
         "nlb",
     ],
-    # Output of
-    # `bazel query 'kind("py_binary", //nlb/...) + kind("py_library", //nlb/...)'`
-    # Remove `testdata` targets (TODO: better query)
+    # Update via `tools/release/update_python_build.py`
     deps = [
         "//nlb/arduino:client",
         "//nlb/buffham",
@@ -31,6 +29,7 @@ py_package(
         "//nlb/util:secrets",
         "//nlb/util:semantic_errors",
         "//nlb/util:venv_completions",
+        "//nlb/util:version",
         "//nlb/wizaidry:audio_util",
         "//nlb/wizaidry:text_handler",
         "//nlb/wizaidry:tool_manager",
@@ -39,19 +38,18 @@ py_package(
     ],
 )
 
-# bazel run --config pypi_test --embed_label=0.0.12 -- //nlb:nlb_wheel.publish --repository testpypi
-# bazel run --config pypi --embed_label=0.4.0 -- //nlb:nlb_wheel.publish --repository pypi
 py_wheel(
     name = "nlb_wheel",
-    # TODO: Query completion files and generate this dictionary
+    # Update via `tools/release/update_python_build.py`
     data_files = {
         "//nlb/buffham:buffham_completions": "data/share/completions/buffham-completion.bash",
-        "//nlb/github:nlb_gh_feature_completions": "data/share/completions/nlb_gh_feature.bash",
+        "//nlb/github:nlb_gh_feature_completions": "data/share/completions/nlb_gh_feature-completion.bash",
         "//nlb/tailscale:nlb_tailscale_completions": "data/share/completions/nlb_tailscale-completion.bash",
+        "//nlb/util:venv_completions_completions": "data/share/completions/venv_completions-completion.bash",
     },
     description_file = "pypi_README.md",
     distribution = "nl_blocks",  # Unfortunate PyPI name collision
-    # TODO: Query `py_binary` entrypoints and generate this dictionary
+    # Update via `tools/release/update_python_build.py`
     entry_points = {"console_scripts": [
         "buffham = nlb.buffham.buffham:main",
         "nlb_gh_feature = nlb.github.nlb_gh_feature:main",
@@ -68,7 +66,6 @@ py_wheel(
     python_tag = "py3",
     # Looser requirements than the lockfile
     requires_file = "//:requirements.txt",
-    # TODO: Add version.py file from the Bazel stamping
     stamp = -1,  # Let the `--[no]stamp` flag control stamping
     summary = "Ryan's fever dreams",
     twine = "@publish_deps//twine",
