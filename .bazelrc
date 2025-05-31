@@ -68,7 +68,7 @@ build:lint --aspects_parameters=fail_on_violation=true --keep_going
 
 test --test_output=errors
 
-run:pypi --stamp --run_under="TWINE_PASSWORD=$(cat $BUILD_WORKING_DIRECTORY/services/secrets/pypi.token)"
-run:testpypi --stamp --run_under="TWINE_PASSWORD=$(cat $BUILD_WORKING_DIRECTORY/services/secrets/pypi_test.token)"
+run:pypi --run_under="TWINE_PASSWORD=$(cat $BUILD_WORKING_DIRECTORY/services/secrets/pypi.token)"
+run:testpypi --run_under="TWINE_PASSWORD=$(cat $BUILD_WORKING_DIRECTORY/services/secrets/pypi_test.token)"
 
 try-import %workspace%/.user.bazelrc

@@ -1,0 +1,33 @@
+name: Python Publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/release/python/VERSION.txt'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: python-release
+      url: https://pypi.org/project/nl-blocks/
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Common Setup
+        run: |
+          sudo apt-get install -y portaudio19-dev
+          echo "build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}" > .user.bazelrc
+
+      - name: Setup credentials
+        run: |
+          mkdir -p services/secrets
+          touch services/secrets/pypi.token
+          chmod 600 services/secrets/pypi.token
+          echo "${{ secrets.PYPI_TOKEN }}" > services/secrets/pypi.token
+
+      - name: Publish to PyPI
+        run: ./tools/release/python/publish.sh

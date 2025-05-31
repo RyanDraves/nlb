@@ -1,0 +1,46 @@
+name: Python Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Common Setup
+        run: |
+          sudo apt-get install -y portaudio19-dev
+          echo "build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}" > .user.bazelrc
+
+      - name: Set up Git user
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Prepare Python release
+        run: |
+          ./tools/release/python/update_build.sh --bump-${{ github.event.inputs.bump_type }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: 'Prepare Python release (${{ github.event.inputs.bump_type }} bump)'
+          branch: 'release/python-bump-${{ github.event.inputs.bump_type }}'
+          title: 'Python Release: ${{ github.event.inputs.bump_type }} bump'
+          body: |
+            Automated PR for a ${{ github.event.inputs.bump_type }} to the Python package version.
+
+            The package will be published to PyPI after this PR is merged.

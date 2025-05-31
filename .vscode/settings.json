@@ -118,4 +118,12 @@
         "editor.wordWrap": "on",
     },
     "arduino.useArduinoCli": true,
+    "[yaml]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+    },
+    "[github-actions-workflow]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+    },
 }
