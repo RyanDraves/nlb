@@ -17,11 +17,11 @@ fi
 function publish() {
     local repository="$1"
 
-    # Read the version from nlb/python_VERSION.txt
-    version=$(cat "$repo_root/tools/release/python/python_VERSION.txt" | tr -d '[:space:]')
+    # Read the version from tools/release/python/VERSION.txt
+    version=$(cat "$repo_root/tools/release/python/VERSION.txt" | tr -d '[:space:]')
 
     if [[ -z "$version" ]]; then
-        echo "Version not found in tools/release/python/python_VERSION.txt"
+        echo "Version not found in tools/release/python/VERSION.txt"
         exit 1
     fi
 
