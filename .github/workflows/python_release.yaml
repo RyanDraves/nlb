@@ -41,6 +41,6 @@ jobs:
           sign-commits: true
           draft: true
           body: |
-            Automated PR for a ${{ github.event.inputs.bump_type }} to the Python package version.
+            Automated PR for a ${{ github.event.inputs.bump_type }} bump to the Python package version.
 
             The package will be published to PyPI after this PR is merged.
