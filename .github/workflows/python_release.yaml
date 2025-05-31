@@ -15,7 +15,10 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,11 +27,6 @@ jobs:
         run: |
           sudo apt-get install -y portaudio19-dev
           echo "build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}" > .user.bazelrc
-
-      - name: Set up Git user
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Prepare Python release
         run: |
@@ -41,6 +39,7 @@ jobs:
           branch: 'release/python-bump-${{ github.event.inputs.bump_type }}'
           title: 'Python Release: ${{ github.event.inputs.bump_type }} bump'
           sign-commits: true
+          draft: true
           body: |
             Automated PR for a ${{ github.event.inputs.bump_type }} to the Python package version.
 
