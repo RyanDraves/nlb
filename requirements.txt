@@ -5,6 +5,7 @@ alembic>=1.15.1,<2
 black>=24.4.2,<25
 bleak>=0.22.3,<1
 dotenv>=0.9.9,<1
+fastmcp>=2.5.2,<3
 inquirerpy>=0.3.4,<1
 ipython>=8.27.0,<9
 isort>=5.13.2,<6
