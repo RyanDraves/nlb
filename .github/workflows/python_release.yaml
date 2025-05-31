@@ -40,6 +40,7 @@ jobs:
           commit-message: 'Prepare Python release (${{ github.event.inputs.bump_type }} bump)'
           branch: 'release/python-bump-${{ github.event.inputs.bump_type }}'
           title: 'Python Release: ${{ github.event.inputs.bump_type }} bump'
+          sign-commits: true
           body: |
             Automated PR for a ${{ github.event.inputs.bump_type }} to the Python package version.
 
