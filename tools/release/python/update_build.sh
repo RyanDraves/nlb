@@ -21,6 +21,7 @@ function update_deps() {
 
     # Create a temp file to write Buildozer commands
     temp_file=$(mktemp)
+    trap 'rm -f "$temp_file"' EXIT
     for label in $all_python_modules; do
         echo "add deps $label|//nlb:all_python_modules" >> "$temp_file"
     done
@@ -41,6 +42,7 @@ function update_completion_data_files() {
 
     # Create a temp file to write Buildozer commands
     temp_file=$(mktemp)
+    trap 'rm -f "$temp_file"' EXIT
     for label in $completion_files; do
         # Skip if the completion file is already in data_files
         if echo "$existing_data_files" | grep -q "$label"; then
@@ -74,6 +76,7 @@ function update_entry_points() {
 
     # Create a temp file to write Buildozer commands
     temp_file=$(mktemp)
+    trap 'rm -f "$temp_file"' EXIT
     for label in $python_binaries; do
         # Extract the name of the binary from the Bazel label (format: //path:label)
         binary_name=$(echo "$label" | awk -F: '{print $2}')

@@ -5,7 +5,7 @@ py_package(
     packages = [
         "nlb",
     ],
-    # Update via `tools/release/update_python_build.py`
+    # Update via `tools/release/python/update_build.sh`
     deps = [
         "//nlb/arduino:client",
         "//nlb/buffham",
@@ -40,7 +40,7 @@ py_package(
 
 py_wheel(
     name = "nlb_wheel",
-    # Update via `tools/release/update_python_build.py`
+    # Update via `tools/release/python/update_build.sh`
     data_files = {
         "//nlb/buffham:buffham_completions": "data/share/completions/buffham-completion.bash",
         "//nlb/github:nlb_gh_feature_completions": "data/share/completions/nlb_gh_feature-completion.bash",
@@ -49,7 +49,7 @@ py_wheel(
     },
     description_file = "pypi_README.md",
     distribution = "nl_blocks",  # Unfortunate PyPI name collision
-    # Update via `tools/release/update_python_build.py`
+    # Update via `tools/release/python/update_build.sh`
     entry_points = {"console_scripts": [
         "buffham = nlb.buffham.buffham:main",
         "nlb_gh_feature = nlb.github.nlb_gh_feature:main",

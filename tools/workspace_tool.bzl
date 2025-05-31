@@ -4,6 +4,7 @@ Adapted from https://dev.to/bazel/bazel-can-write-to-the-source-folder-b9b
 """
 
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 def workspace_tool(name, tool):
     write_file(
@@ -13,13 +14,11 @@ def workspace_tool(name, tool):
             "#!/bin/bash",
             "EXEC_ROOT=$(pwd)",
             'cd "$BUILD_WORKSPACE_DIRECTORY"',
-            # 'echo "Running tool: $EXEC_ROOT/$1"',
-            # 'echo "With arguments: ${@:2}"',
             'exec "$EXEC_ROOT/$1" "${@:2}"',
         ],
     )
 
-    native.sh_binary(
+    sh_binary(
         name = name,
         srcs = [name + ".sh"],
         data = [tool],
