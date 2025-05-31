@@ -30,4 +30,4 @@ jobs:
           echo "${{ secrets.PYPI_TOKEN }}" > services/secrets/pypi.token
 
       - name: Publish to PyPI
-        run: ./tools/release/python/publish.sh
+        run: ./tools/release/python/publish.sh pypi
