@@ -1,0 +1,2 @@
+GIT_COMMIT: str
+VERSION: str

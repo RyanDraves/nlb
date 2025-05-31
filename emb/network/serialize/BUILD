@@ -64,6 +64,7 @@ buffham(
     src = "testdata/test.bh",
     cc = True,
     py = True,
+    tags = ["testdata"],
 )
 
 buffham_py_write(

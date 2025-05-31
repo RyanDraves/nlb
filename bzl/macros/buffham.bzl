@@ -4,7 +4,7 @@ load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_file")
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
-def _buffham_impl(name, visibility, src, deps, py, cc):
+def _buffham_impl(name, visibility, src, deps, py, cc, tags):
     native.filegroup(
         name = name,
         srcs = [src],
@@ -37,6 +37,7 @@ def _buffham_impl(name, visibility, src, deps, py, cc):
                 "//emb/network/transport:transporter",
                 "//nlb/buffham:bh",
             ],
+            tags = tags,
             visibility = visibility,
         )
 
@@ -65,6 +66,7 @@ def _buffham_impl(name, visibility, src, deps, py, cc):
                 "//emb/network/serialize:serializer_cc",
                 "//emb/network/transport:transporter_cc",
             ],
+            tags = tags,
             visibility = visibility,
         )
 
@@ -124,6 +126,12 @@ buffham = macro(
         "cc": attr.bool(
             default = False,
             doc = "Whether to generate C++ libraries.",
+            # Prevent receiving a `select` object on the input
+            configurable = False,
+        ),
+        "tags": attr.string_list(
+            default = [],
+            doc = "Tags to apply to the generated targets.",
             # Prevent receiving a `select` object on the input
             configurable = False,
         ),
