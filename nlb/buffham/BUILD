@@ -141,6 +141,7 @@ buffham(
     cc = True,
     py = True,
     visibility = ["__pkg__"],
+    tags = ["testdata"],
 )
 
 buffham(
@@ -150,6 +151,7 @@ buffham(
     py = True,
     visibility = ["__pkg__"],
     deps = [":testdata/other_bh"],
+    tags = ["testdata"],
 )
 
 buffham_py_write(

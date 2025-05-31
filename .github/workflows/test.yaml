@@ -5,6 +5,11 @@ on:
   push:
     branches: ["main"]
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
   workflow_dispatch:
 
 permissions:
@@ -17,11 +22,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up apt
+      - name: Common Setup
         run: |
           sudo apt-get install -y portaudio19-dev
-      - name: Configure Bazel
-        run: |
           echo "build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}" > .user.bazelrc
       - name: Build
         run: |
