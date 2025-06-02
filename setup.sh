@@ -14,8 +14,6 @@
 # Usage:
 #     ./setup.sh
 
-# curl -fsSL https://ollama.com/install.sh | sh
-
 set -e
 set -o pipefail
 
