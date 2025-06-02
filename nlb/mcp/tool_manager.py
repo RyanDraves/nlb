@@ -1,9 +1,9 @@
-from typing import Callable, Protocol
+from typing import Any, Callable, Protocol
 
 
 class ToolManager(Protocol):
     @property
-    def tool_functions(self) -> list[Callable[..., str]]:
+    def tool_functions(self) -> list[Callable[..., Any]]:
         """Return a list of tool functions for this tool.
 
         A tool function must return a string output, but it can

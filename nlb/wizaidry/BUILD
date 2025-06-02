@@ -19,18 +19,13 @@ py_library(
     name = "text_handler",
     srcs = ["text_handler.py"],
     deps = [
-        ":tool_manager",
+        "//nlb/mcp:tool_manager",
         ":util",
         "//nlb/util:console_utils",
         requirement("openai"),
     ],
 )
 
-py_library(
-    name = "tool_manager",
-    srcs = ["tool_manager.py"],
-    deps = [],
-)
 
 py_library(
     name = "util",
@@ -46,7 +41,7 @@ py_library(
     srcs = ["voice_handler.py"],
     deps = [
         ":audio_util",
-        ":tool_manager",
+        "//nlb/mcp:tool_manager",
         ":util",
         "//nlb/util:console_utils",
         requirement("openai"),

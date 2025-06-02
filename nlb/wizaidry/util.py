@@ -9,7 +9,6 @@ from nlb.util import introspection
 
 # Keep file edits in this sandbox
 SANDBOX_DIR = pathlib.Path.home() / '.cache' / 'nlb' / 'wizaidry'
-SANDBOX_DIR.mkdir(parents=True, exist_ok=True)
 
 TYPE_MAP = {
     str: 'string',

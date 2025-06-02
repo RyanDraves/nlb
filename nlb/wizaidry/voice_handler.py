@@ -18,7 +18,7 @@ from rich import panel
 
 from nlb.util import console_utils
 from nlb.wizaidry import audio_util
-from nlb.wizaidry import tool_manager
+from nlb.mcp import tool_manager
 from nlb.wizaidry import util
 
 

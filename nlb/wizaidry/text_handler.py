@@ -8,7 +8,7 @@ from openai.types.beta.threads import run
 from openai.types.beta.threads import run_submit_tool_outputs_params
 
 from nlb.util import console_utils
-from nlb.wizaidry import tool_manager
+from nlb.mcp import tool_manager
 from nlb.wizaidry import util
 
 

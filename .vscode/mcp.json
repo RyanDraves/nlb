@@ -1,0 +1,10 @@
+{
+    "servers": {
+        "arduino": {
+            "url": "http://localhost:9100/mcp/"
+        },
+        "file_edit": {
+            "url": "http://localhost:9101/mcp/"
+        },
+    }
+}

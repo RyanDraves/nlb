@@ -32,7 +32,6 @@ py_package(
         "//nlb/util:version",
         "//nlb/wizaidry:audio_util",
         "//nlb/wizaidry:text_handler",
-        "//nlb/wizaidry:tool_manager",
         "//nlb/wizaidry:util",
         "//nlb/wizaidry:voice_handler",
     ],
