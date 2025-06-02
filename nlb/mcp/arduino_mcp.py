@@ -14,7 +14,7 @@ def main():
     for tool in arduino_tools.tool_functions:
         mcp.add_tool(tool)
 
-    mcp.run(transport='sse', host='127.0.0.1', port=9100)
+    mcp.run(transport='streamable-http', host='127.0.0.1', port=9100)
 
 
 if __name__ == '__main__':
