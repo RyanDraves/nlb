@@ -1,0 +1,45 @@
+services:
+  iir:
+    # bazel run //apps/iir:iir_amd64_load to build & load the image locally
+    # bazel run //apps/iir:iir_push to push the image to the registry
+    image: ghcr.io/ryandraves/iir:latest
+    container_name: iir
+    restart: always
+    network_mode: service:tailscale
+    environment:
+      OPENWEATHER_API_KEY_FILE: /run/secrets/openweather_api_key
+    secrets:
+      - openweather_api_key
+
+  tailscale:
+    image: tailscale/tailscale
+    container_name: iir-tailscale
+    hostname: isitraining
+    secrets:
+      - tailnet_oauth
+    environment:
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/ts-serve.json
+    volumes:
+      - iir-ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the config file for changes
+      - ${PWD}/ts-serve:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+    command: >
+      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
+
+volumes:
+  iir-ts-authkey:
+
+
+secrets:
+  tailnet_oauth:
+    file: ${PWD}/../secrets/tailnet_oauth.secret
+  openweather_api_key:
+    file: ${PWD}/../secrets/iir_openweather_api.key

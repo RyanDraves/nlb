@@ -8,6 +8,8 @@
   - Provision at https://console.cloud.google.com/apis/credentials (select correct Google account)
 - `hyd_postgres.password`
   - DB password for HYD
+- `iir_openweather_api.key`
+  - OpenWeatherMap API key
 - `lobe_chat.password`
   - Used to unlock Lobe Chat service
   - Arbitrary password; sync with password manager to use in web UI

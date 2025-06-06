@@ -160,6 +160,7 @@ npm.npm_translate_lock(
     data = [
         "//:package.json",
         "//apps/hyd:package.json",
+        "//apps/iir:package.json",
         "//blog:package.json",
         "//lrb:package.json",
         "//:pnpm-workspace.yaml",
