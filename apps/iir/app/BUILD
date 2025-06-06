@@ -16,8 +16,6 @@ ts_project(
     tsconfig = "//apps/iir:tsconfig",
     visibility = ["//apps/iir:__subpackages__"],
     deps = [
-        "//apps/iir:node_modules/@fortawesome/free-solid-svg-icons",
-        "//apps/iir:node_modules/@fortawesome/react-fontawesome",
         "//apps/iir:node_modules/@types/node",
         "//apps/iir:node_modules/@types/react",
         "//apps/iir:node_modules/next",

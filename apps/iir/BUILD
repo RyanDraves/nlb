@@ -42,7 +42,6 @@ next(
         ":node_modules/@tailwindcss/postcss",
         ":node_modules/autoprefixer",
         ":node_modules/next",
-        ":node_modules/pg",
         ":node_modules/react",
         ":node_modules/react-dom",
         ":node_modules/tailwindcss",
