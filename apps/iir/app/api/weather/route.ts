@@ -17,8 +17,8 @@ export async function GET(): Promise<NextResponse> {
         return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
     }
     const url = new URL('https://api.openweathermap.org/data/2.5/weather');
-    url.searchParams.set('lat', '40.0150');
-    url.searchParams.set('lon', '-105.2705');
+    url.searchParams.set('lat', '40.01003');
+    url.searchParams.set('lon', '-105.24389');
     url.searchParams.set('appid', apiKey);
     url.searchParams.set('units', 'metric');
 

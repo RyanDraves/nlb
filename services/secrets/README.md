@@ -6,6 +6,9 @@
 - `gemini.key`
   - Google Gemini API key
   - Provision at https://console.cloud.google.com/apis/credentials (select correct Google account)
+- `ghcr.io.pat`
+  - PAT for Github Docker registry (push permissions)
+  - `docker login ghcr.io` to rotate
 - `hyd_postgres.password`
   - DB password for HYD
 - `iir_openweather_api.key`
