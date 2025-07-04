@@ -17,7 +17,8 @@ services:
     volumes:
       - mealie-data:/app/data/
     environment:
-      ALLOW_SIGNUP: "false"
+      ALLOW_SIGNUP: false
+      ALLOW_PASSWORD_LOGIN: false
       PUID: 1000
       PGID: 1000
       TZ: America/Denver
