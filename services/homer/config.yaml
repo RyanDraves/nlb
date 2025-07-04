@@ -170,7 +170,7 @@ services:
         icon: "fa-solid fa-pen-to-square"
         subtitle: "Github Pages"
         keywords: "blog"
-        url: "https://ryandraves.github.io/nlb/"
+        url: "https://ryandraves.com"
       - name: "Git"
         icon: "fa-solid fa-code-branch"
         subtitle: "Github"

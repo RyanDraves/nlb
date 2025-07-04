@@ -17,4 +17,4 @@ nlb<br />
 ├── util -> Utilities<br />
 └── wizaidry -> Library for creating proto-Agentic AI wizards<br />
 
-`wizaidry` has its own [blog post](https://ryandraves.github.io/nlb/posts/wizaidry), which can serve as a Getting Started page.
+`wizaidry` has its own [blog post](https://ryandraves.com/posts/wizaidry), which can serve as a Getting Started page.

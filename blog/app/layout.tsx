@@ -27,30 +27,30 @@ export default function RootLayout({
         <link
           rel="apple-touch-icon"
           sizes="180x180"
-          href="/nlb/favicon/lukewarm_penguins_180.png"
+          href="/favicon/lukewarm_penguins_180.png"
         />
         <link
           rel="icon"
           type="image/png"
           sizes="32x32"
-          href="/nlb/favicon/lukewarm_penguins_32.png"
+          href="/favicon/lukewarm_penguins_32.png"
         />
         <link
           rel="icon"
           type="image/png"
           sizes="16x16"
-          href="/nlb/favicon/lukewarm_penguins_16.png"
+          href="/favicon/lukewarm_penguins_16.png"
         />
-        <link rel="manifest" href="/nlb/favicon/site.webmanifest" />
+        <link rel="manifest" href="/favicon/site.webmanifest" />
         <link
           rel="mask-icon"
-          href="/nlb/favicon/lukewarm_penguins_32.png"
+          href="/favicon/lukewarm_penguins_32.png"
         />
-        <link rel="shortcut icon" href="/nlb/favicon/nlb/favicon.ico" />
+        <link rel="shortcut icon" href="/favicon/nlb/favicon.ico" />
         <meta name="msapplication-TileColor" content="#000000" />
         <meta
           name="msapplication-config"
-          content="/nlb/favicon/browserconfig.xml"
+          content="/favicon/browserconfig.xml"
         />
         <meta name="theme-color" content="#000" />
         <link rel="alternate" type="application/rss+xml" href="/feed.xml" />

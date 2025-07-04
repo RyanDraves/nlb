@@ -28,9 +28,18 @@ services:
       POSTGRES_SERVER: mealie-postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: mealie
+      SMTP_HOST: mail.smtp2go.command
+      SMTP_PORT: 2525
+      SMTP_USER: mealie
+      SMTP_FROM_EMAIL: mealie@ryandraves.com
     secrets:
       - postgres_password
-    entrypoint: [ "/bin/sh", "-c", "set -e; export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); echo 'Secrets loaded successfully'; /app/run.sh" ]
+      - smtp_password
+    entrypoint: [
+      "/bin/sh",
+      "-c",
+      "set -e; export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); export SMTP_PASSWORD=$(cat /run/secrets/smtp_password); echo 'Secrets loaded successfully'; /app/run.sh"
+    ]
     depends_on:
       postgres:
         condition: service_healthy
@@ -97,3 +106,5 @@ secrets:
     file: ${PWD}/../secrets/tailnet_oauth.secret
   postgres_password:
     file: ${PWD}/../secrets/mealie_postgres.password
+  smtp_password:
+    file: ${PWD}/../secrets/mealie_smtp.password
