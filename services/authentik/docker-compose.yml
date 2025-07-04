@@ -84,7 +84,7 @@ services:
   tailscale:
     image: tailscale/tailscale
     container_name: authentik-tailscale
-    hostname: recipes
+    hostname: authentik
     secrets:
       - tailnet_oauth
     environment:
