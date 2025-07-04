@@ -32,13 +32,26 @@ services:
       SMTP_PORT: 2525
       SMTP_USER: mealie2
       SMTP_FROM_EMAIL: mealie@ryandraves.com
+      # https://integrations.goauthentik.io/integrations/services/mealie/
+      OIDC_AUTH_ENABLED: true
+      OIDC_PROVIDER_NAME: authentik
+      OIDC_CONFIGURATION_URL: https://authentik.company/application/o/<application_slug>/.well-known/openid-configuration
+      OIDC_CLIENT_ID: v4ZbXuorasB3YOCFaHIPft8TLetZ10enyki4dDOk
+      OIDC_SIGNUP_ENABLED: false
+      OIDC_USER_GROUP: Mealie Users
+      OIDC_ADMIN_GROUP: Mealie Admins
+      # The login page will be bypassed and you will be sent directly to your Identity Provider
+      OIDC_AUTO_REDIRECT: true
+      # By setting this value to true, a session will be extended as if "Remember Me" was checked.
+      OIDC_REMEMBER_ME: true
     secrets:
       - postgres_password
       - smtp_password
+      - oidc_secret
     entrypoint: [
       "/bin/sh",
       "-c",
-      "set -e; export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); export SMTP_PASSWORD=$(cat /run/secrets/smtp_password); echo 'Secrets loaded successfully'; /app/run.sh"
+      "set -e; export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); export SMTP_PASSWORD=$(cat /run/secrets/smtp_password); export OIDC_CLIENT_SECRET=$(cat /run/secrets/oidc_secret); echo 'Secrets loaded successfully'; /app/run.sh"
     ]
     depends_on:
       postgres:
@@ -108,3 +121,5 @@ secrets:
     file: ${PWD}/../secrets/mealie_postgres.password
   smtp_password:
     file: ${PWD}/../secrets/mealie_smtp.password
+  oidc_secret:
+    file: ${PWD}/../secrets/mealie_oidc.secret
