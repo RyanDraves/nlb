@@ -37,7 +37,7 @@ services:
       OIDC_PROVIDER_NAME: authentik
       OIDC_CONFIGURATION_URL: https://authentik.barn-arcturus.ts.net/application/o/mealie/.well-known/openid-configuration
       OIDC_CLIENT_ID: v4ZbXuorasB3YOCFaHIPft8TLetZ10enyki4dDOk
-      OIDC_SIGNUP_ENABLED: false
+      OIDC_SIGNUP_ENABLED: true
       OIDC_USER_GROUP: Mealie Users
       OIDC_ADMIN_GROUP: Mealie Admins
       # The login page will be bypassed and you will be sent directly to your Identity Provider
