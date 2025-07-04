@@ -28,7 +28,7 @@ services:
       POSTGRES_SERVER: mealie-postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: mealie
-      SMTP_HOST: mail.smtp2go.command
+      SMTP_HOST: mail.smtp2go.com
       SMTP_PORT: 2525
       SMTP_USER: mealie2
       SMTP_FROM_EMAIL: mealie@ryandraves.com
