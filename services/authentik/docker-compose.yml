@@ -16,7 +16,8 @@ services:
       POSTGRES_USER: ${PG_USER:-authentik}
       POSTGRES_DB: ${PG_DB:-authentik}
     env_file:
-      - .postgres.env
+      - path: ./.postgres.env
+        required: true
   redis:
     image: docker.io/library/redis:alpine
     command: --save 60 1 --loglevel warning
@@ -45,9 +46,12 @@ services:
       - ./media:/media
       - ./custom-templates:/templates
     env_file:
-      - .secrets.env
-      - .postgres.env
-      - .env
+      - path: ./.secrets.env
+        required: true
+      - path: ./.postgres.env
+        required: true
+      - path: ./.env
+        required: true
     depends_on:
       postgresql:
         condition: service_healthy
@@ -77,9 +81,12 @@ services:
       - ./certs:/certs
       - ./custom-templates:/templates
     env_file:
-      - .secrets.env
-      - .postgres.env
-      - .env
+      - path: ./.secrets.env
+        required: true
+      - path: ./.postgres.env
+        required: true
+      - path: ./.env
+        required: true
     depends_on:
       postgresql:
         condition: service_healthy
