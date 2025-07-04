@@ -61,11 +61,11 @@ const nextConfig: NextConfig = {
 };
 
 class WasmChunksFixPlugin {
-  apply(compiler) {
-    compiler.hooks.thisCompilation.tap("WasmChunksFixPlugin", (compilation) => {
+  apply(compiler: any) {
+    compiler.hooks.thisCompilation.tap("WasmChunksFixPlugin", (compilation: any) => {
       compilation.hooks.processAssets.tap(
         { name: "WasmChunksFixPlugin" },
-        (assets) =>
+        (assets: any) =>
           Object.entries(assets).forEach(([pathname, source]) => {
             if (!pathname.match(/\.wasm$/)) return;
             compilation.deleteAsset(pathname);
