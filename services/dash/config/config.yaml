@@ -122,7 +122,7 @@ services:
       - name: "LaTeX"
         icon: "fa-solid fa-file-lines"
         subtitle: "Overleaf"
-        keywords: "latex overleaf"
+        keywords: "latex overleaf"  # optional keyword used for searching purpose
         url: "https://overleaf.barn-arcturus.ts.net"
       - name: "Recipes"
         icon: "fa-solid fa-utensils"
@@ -152,8 +152,8 @@ services:
       - name: "Chat"
         icon: "fa-solid fa-message"
         subtitle: "Lobe Chat"
-        keywords: "chat ai" # optional keyword used for searching purpose
-        url: "https://pine.barn-arcturus.ts.net/chat"
+        keywords: "chat ai"
+        url: "https://chat.barn-arcturus.ts.net"
       - name: "Monitoring"
         icon: "fa-solid fa-toolbox"
         subtitle: "Portainer"

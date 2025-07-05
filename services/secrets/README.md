@@ -41,7 +41,7 @@
   - API token to publish to PyPI's production index
   - Provisioned at https://pypi.org/manage/account/
 - `[host].barn-arcturus.ts.net.[crt|key]`
-  - TLS certs related through Tailscale magic
+  - TLS certs created through Tailscale magic
   - `tailscale cert` from each `[host]`; 90 day expiry
 - `tailnet_oauth.secret`
   - Used to provision a [container as a machine on the tailnet](https://tailscale.com/kb/1282/docker#ts_socks5_server)

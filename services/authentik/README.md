@@ -11,7 +11,10 @@ To avoid the mess of hijacking entrypoints for Docker compose secrets, Authentik
 
 Due to poor design choices from Docker, only `.env` gets interpolated for env var substitution into the compose file, so `.public.env` is just a copy of the non-secret things, with `.env` as the source of truth.
 
+# Flows
+A hand-crafted `default-enrollment-flow.yaml` setups up user creation upon use of an invitation link.
+
 # Policies
-Some (one) useful expression policies are stored here (and configured in Authentik's settings).
 - `invitation_group_add.py`
   - Assign arbitrary groups a user will be added to when using a provided invite link. Example: user access to Mealie
+  - Used in the enrollment Flow
