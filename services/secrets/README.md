@@ -16,6 +16,8 @@
 - `lobe_chat.password`
   - Used to unlock Lobe Chat service
   - Arbitrary password; sync with password manager to use in web UI
+- `mealie_oidc.id`
+  - Authentik client ID for the Mealie provider. Some light reading suggests it's worth keeping secret.
 - `mealie_oidc.secret`
   - Authentik client secret for the Mealie provider
 - `mealie_postgres.password`

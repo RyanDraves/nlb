@@ -37,7 +37,6 @@ services:
       OIDC_AUTH_ENABLED: true
       OIDC_PROVIDER_NAME: authentik
       OIDC_CONFIGURATION_URL: https://authentik.barn-arcturus.ts.net/application/o/mealie/.well-known/openid-configuration
-      OIDC_CLIENT_ID: v4ZbXuorasB3YOCFaHIPft8TLetZ10enyki4dDOk
       OIDC_SIGNUP_ENABLED: true
       OIDC_USER_GROUP: Mealie Users
       OIDC_ADMIN_GROUP: Mealie Admins
@@ -48,11 +47,12 @@ services:
     secrets:
       - postgres_password
       - smtp_password
+      - oidc_id
       - oidc_secret
     entrypoint: [
       "/bin/sh",
       "-c",
-      "set -e; export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); export SMTP_PASSWORD=$(cat /run/secrets/smtp_password); export OIDC_CLIENT_SECRET=$(cat /run/secrets/oidc_secret); echo 'Secrets loaded successfully'; /app/run.sh"
+      "set -e; export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); export SMTP_PASSWORD=$(cat /run/secrets/smtp_password); export OIDC_CLIENT_ID=$(cat /run/secrets/oidc_id); export OIDC_CLIENT_SECRET=$(cat /run/secrets/oidc_secret); echo 'Secrets loaded successfully'; /app/run.sh"
     ]
     depends_on:
       postgres:
@@ -122,5 +122,7 @@ secrets:
     file: ${PWD}/../secrets/mealie_postgres.password
   smtp_password:
     file: ${PWD}/../secrets/mealie_smtp.password
+  oidc_id:
+    file: ${PWD}/../secrets/mealie_oidc.id
   oidc_secret:
     file: ${PWD}/../secrets/mealie_oidc.secret
