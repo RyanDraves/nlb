@@ -1,0 +1,51 @@
+services:
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer
+    network_mode: service:tailscale
+    volumes:
+      - ${PWD}/config:/home/lighttpd
+    secrets:
+      - portainer_token
+      - mealie_token
+      - octoprint_token
+    deploy:
+      restart_policy:
+        condition: on-failure
+    entrypoint: '/home/lighttpd/entrypoint.sh'
+
+  tailscale:
+    image: tailscale/tailscale
+    container_name: homer-tailscale
+    hostname: dash
+    secrets:
+      - tailnet_oauth
+    environment:
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/ts-serve.json
+    volumes:
+      - homer-ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the config file for changes
+      - ${PWD}/ts-serve:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+    command: >
+      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
+
+volumes:
+  homer-ts-authkey:
+
+secrets:
+  tailnet_oauth:
+    file: ${PWD}/../secrets/tailnet_oauth.secret
+  portainer_token:
+    file: ${PWD}/../secrets/portainer.token
+  mealie_token:
+    file: ${PWD}/../secrets/mealie.token
+  octoprint_token:
+    file: ${PWD}/../secrets/octoprint.token

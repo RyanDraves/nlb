@@ -175,7 +175,7 @@ services:
         keywords: "hyd monitoring"
         url: "https://hyd.barn-arcturus.ts.net"
   - name: "Hosted Elsewhere"
-    icon: "fa-solid fa-user"
+    icon: "fa-solid fa-globe"
     items:
       - name: "Blog"
         icon: "fa-solid fa-pen-to-square"
