@@ -9,6 +9,8 @@ To avoid the mess of hijacking entrypoints for Docker compose secrets, Authentik
 - `AUTHENTIK_EMAIL__PASSWORD`
   - SMTP password for Authentik's email auth
 
+Due to poor design choices from Docker, only `.env` gets interpolated for env var substitution into the compose file, so `.public.env` is just a copy of the non-secret things, with `.env` as the source of truth.
+
 # Policies
 Some (one) useful expression policies are stored here (and configured in Authentik's settings).
 - `invitation_group_add.py`

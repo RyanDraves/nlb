@@ -130,7 +130,7 @@ services:
         keywords: "monitoring"
         type: "Portainer"
         apikey: "PORTAINER_TOKEN"
-        url: "https://pine.barn-arcturus.ts.net/portainer"
+        url: "https://portainer.barn-arcturus.ts.net"
       - name: "LaTeX"
         icon: "fa-solid fa-file-lines"
         subtitle: "Overleaf"
