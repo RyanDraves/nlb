@@ -6,6 +6,7 @@ py_package(
         "nlb",
     ],
     # Update via `tools/release/python/update_build.sh`
+    # or https://github.com/RyanDraves/nlb/actions/workflows/python_release.yaml
     deps = [
         "//nlb/arduino:client",
         "//nlb/authentik:client",
@@ -48,6 +49,7 @@ py_package(
 py_wheel(
     name = "nlb_wheel",
     # Update via `tools/release/python/update_build.sh`
+    # or https://github.com/RyanDraves/nlb/actions/workflows/python_release.yaml
     data_files = {
         "//nlb/buffham:buffham_completions": "data/share/completions/buffham-completion.bash",
         "//nlb/github:nlb_gh_feature_completions": "data/share/completions/nlb_gh_feature-completion.bash",
@@ -60,6 +62,7 @@ py_wheel(
     description_file = "pypi_README.md",
     distribution = "nl_blocks",  # Unfortunate PyPI name collision
     # Update via `tools/release/python/update_build.sh`
+    # or https://github.com/RyanDraves/nlb/actions/workflows/python_release.yaml
     entry_points = {"console_scripts": [
         "arduino_mcp = nlb.mcp.arduino_mcp:main",
         "buffham = nlb.buffham.buffham:main",
