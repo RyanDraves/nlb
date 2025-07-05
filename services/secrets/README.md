@@ -16,8 +16,14 @@
 - `lobe_chat.password`
   - Used to unlock Lobe Chat service
   - Arbitrary password; sync with password manager to use in web UI
+- `mealie_oidc.id`
+  - Authentik client ID for the Mealie provider. Some light reading suggests it's worth keeping secret.
+- `mealie_oidc.secret`
+  - Authentik client secret for the Mealie provider
 - `mealie_postgres.password`
   - DB password for [Mealie](https://github.com/mealie-recipes/mealie)
+- `mealie_smtp.password`
+  - SMTP password for Mealie's email auth
 - `mealie.token`
   - Mealie API token
   - Used by Homer for pretty homepage things
@@ -37,7 +43,10 @@
   - API token to publish to PyPI's production index
   - Provisioned at https://pypi.org/manage/account/
 - `[host].barn-arcturus.ts.net.[crt|key]`
-  - TLS certs reated through Tailscale magic
+  - TLS certs created through Tailscale magic
   - `tailscale cert` from each `[host]`; 90 day expiry
 - `tailnet_oauth.secret`
   - Used to provision a [container as a machine on the tailnet](https://tailscale.com/kb/1282/docker#ts_socks5_server)
+
+## Exceptions
+Authentik had a template for `.env` file usage, so some secrets are stored and documented in Authentik's service folder.

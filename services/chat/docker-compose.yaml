@@ -1,0 +1,46 @@
+services:
+  lobe-chat:
+    image: ghcr.io/ryandraves/lobe-chat:whoami
+    container_name: lobe-chat
+    network_mode: service:tailscale
+    secrets:
+      - lobe_chat_password
+      - openai_key
+    deploy:
+      restart_policy:
+        condition: on-failure
+    entrypoint: [ "/bin/sh", "-c", "set -e; export ACCESS_CODE=$(cat /run/secrets/lobe_chat_password); export OPENAI_API_KEY=$(cat /run/secrets/openai_key); echo 'Secrets loaded successfully'; /bin/node /app/startServer.js" ]
+
+  tailscale:
+    image: tailscale/tailscale
+    container_name: lobe-chat-tailscale
+    hostname: chat
+    secrets:
+      - tailnet_oauth
+    environment:
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/ts-serve.json
+    volumes:
+      - lobe-chat-ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the config file for changes
+      - ${PWD}/ts-serve:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+    command: >
+      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
+
+volumes:
+  lobe-chat-ts-authkey:
+
+secrets:
+  tailnet_oauth:
+    file: ${PWD}/../secrets/tailnet_oauth.secret
+  lobe_chat_password:
+    file: ${PWD}/../secrets/lobe_chat.password
+  openai_key:
+    file: ${PWD}/../secrets/openai.key

@@ -55,5 +55,3 @@ jobs:
           platforms: ${{ github.event.inputs.arm && 'linux/arm64' || 'linux/amd64' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            NEXT_PUBLIC_BASE_PATH=/chat

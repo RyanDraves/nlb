@@ -3,12 +3,12 @@
   "short_name": "Ryan's Blog",
   "icons": [
     {
-      "src": "/nlb/favicons/lukewarm_penguins_192.png",
+      "src": "/favicons/lukewarm_penguins_192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/nlb/favicons/lukewarm_penguins_512.png",
+      "src": "/favicons/lukewarm_penguins_512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

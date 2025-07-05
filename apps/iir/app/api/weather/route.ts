@@ -19,8 +19,12 @@ export async function GET(): Promise<NextResponse> {
     const url = new URL('https://api.openweathermap.org/data/2.5/weather');
     url.searchParams.set('lat', '40.01003');
     url.searchParams.set('lon', '-105.24389');
-    url.searchParams.set('appid', apiKey);
     url.searchParams.set('units', 'metric');
+
+    // Log the URL before the API key is added
+    console.log(`Fetching weather data from: ${url.toString()}`);
+
+    url.searchParams.set('appid', apiKey);
 
     try {
         const res = await fetch(url.toString(), { next: { revalidate: 300 } });
@@ -28,6 +32,8 @@ export async function GET(): Promise<NextResponse> {
             return NextResponse.json({ error: 'Failed to fetch weather' }, { status: res.status });
         }
         const data = await res.json();
+        // Log the response data for debugging
+        console.log('Weather data received:', data);
         const raining = Array.isArray(data.weather) && data.weather.some((w: any) =>
             w.main.toLowerCase().includes('rain') || w.description.toLowerCase().includes('rain')
         );

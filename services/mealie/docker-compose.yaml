@@ -6,7 +6,7 @@ name: services
 
 services:
   mealie:
-    image: ghcr.io/mealie-recipes/mealie:v2.4.2
+    image: ghcr.io/mealie-recipes/mealie:v2.8.0
     container_name: mealie
     restart: always
     network_mode: service:tailscale
@@ -17,7 +17,8 @@ services:
     volumes:
       - mealie-data:/app/data/
     environment:
-      ALLOW_SIGNUP: "false"
+      ALLOW_SIGNUP: false
+      ALLOW_PASSWORD_LOGIN: false
       PUID: 1000
       PGID: 1000
       TZ: America/Denver
@@ -28,9 +29,31 @@ services:
       POSTGRES_SERVER: mealie-postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: mealie
+      SMTP_HOST: mail.smtp2go.com
+      SMTP_PORT: 2525
+      SMTP_USER: mealie2
+      SMTP_FROM_EMAIL: mealie@ryandraves.com
+      # https://integrations.goauthentik.io/integrations/services/mealie/
+      OIDC_AUTH_ENABLED: true
+      OIDC_PROVIDER_NAME: authentik
+      OIDC_CONFIGURATION_URL: https://authentik.barn-arcturus.ts.net/application/o/mealie/.well-known/openid-configuration
+      OIDC_SIGNUP_ENABLED: true
+      OIDC_USER_GROUP: Mealie Users
+      OIDC_ADMIN_GROUP: Mealie Admins
+      # The login page will be bypassed and you will be sent directly to your Identity Provider
+      OIDC_AUTO_REDIRECT: true
+      # By setting this value to true, a session will be extended as if "Remember Me" was checked.
+      OIDC_REMEMBER_ME: true
     secrets:
       - postgres_password
-    entrypoint: [ "/bin/sh", "-c", "set -e; export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); echo 'Secrets loaded successfully'; /app/run.sh" ]
+      - smtp_password
+      - oidc_id
+      - oidc_secret
+    entrypoint: [
+      "/bin/sh",
+      "-c",
+      "set -e; export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); export SMTP_PASSWORD=$(cat /run/secrets/smtp_password); export OIDC_CLIENT_ID=$(cat /run/secrets/oidc_id); export OIDC_CLIENT_SECRET=$(cat /run/secrets/oidc_secret); echo 'Secrets loaded successfully'; /app/run.sh"
+    ]
     depends_on:
       postgres:
         condition: service_healthy
@@ -97,3 +120,9 @@ secrets:
     file: ${PWD}/../secrets/tailnet_oauth.secret
   postgres_password:
     file: ${PWD}/../secrets/mealie_postgres.password
+  smtp_password:
+    file: ${PWD}/../secrets/mealie_smtp.password
+  oidc_id:
+    file: ${PWD}/../secrets/mealie_oidc.id
+  oidc_secret:
+    file: ${PWD}/../secrets/mealie_oidc.secret
