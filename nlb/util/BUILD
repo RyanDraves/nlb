@@ -68,7 +68,7 @@ py_library(
     name = "secrets",
     srcs = ["secrets.py"],
     visibility = ["//visibility:public"],
-    deps = [":path_utils"],
+    deps = [],
 )
 
 py_library(
