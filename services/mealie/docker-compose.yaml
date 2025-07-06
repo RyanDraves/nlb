@@ -33,6 +33,9 @@ services:
       SMTP_PORT: 2525
       SMTP_USER: mealie2
       SMTP_FROM_EMAIL: mealie@ryandraves.com
+      # Make newly created users automatically part of the "Invited" household.
+      # (So they can't edit my recipes, but can view them.)
+      DEFAULT_HOUSEHOLD: Invited
       # https://integrations.goauthentik.io/integrations/services/mealie/
       OIDC_AUTH_ENABLED: true
       OIDC_PROVIDER_NAME: authentik
