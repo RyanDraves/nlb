@@ -2,6 +2,7 @@ context: {}
 entries:
 - attrs:
     authentication: require_unauthenticated
+    compatibility_mode: true
     denied_action: message_continue
     designation: enrollment
     layout: stacked
@@ -105,10 +106,34 @@ entries:
   permissions: []
   state: present
 - attrs:
+    amount_digits: 1
+    amount_lowercase: 1
+    amount_symbols: 1
+    amount_uppercase: 1
+    check_have_i_been_pwned: true
+    check_static_rules: true
+    check_zxcvbn: true
+    error_message: Password must be at least 10 characters and have at least one upper/lower/digit/symbol
+      character.
+    hibp_allowed_count: 0
+    length_min: 10
+    name: password-complexity
+    password_field: password
+    symbol_charset: '!\"#$%&''()*+,-./:;<=>?@[]^_`{|}~'
+    zxcvbn_score_threshold: 2
+  conditions: []
+  identifiers:
+    pk: ececeeb0-b888-431b-b2c0-763ee26b9488
+  model: authentik_policies_password.passwordpolicy
+  permissions: []
+  state: present
+- attrs:
     fields:
     - d3380b4d-0ef8-4e16-883a-778d72613daf
     - df6dc7b9-be28-488f-a456-42e385529652
     - 0f689c27-f80a-4c18-ba88-1ec611597546
+    validation_policies:
+    - ececeeb0-b888-431b-b2c0-763ee26b9488
   conditions: []
   identifiers:
     name: default-enrollment-prompt-first
@@ -137,6 +162,7 @@ entries:
   permissions: []
   state: present
 - attrs:
+    create_users_as_inactive: true
     create_users_group: 051e6e55-1dfa-4662-a3b0-f29534f93f8f
     user_creation_mode: always_create
     user_type: internal
@@ -156,6 +182,34 @@ entries:
     name: default-enrollment-prompt-second
     pk: 106eec27-d73e-42d9-b2ed-9f0ae7c5de3e
   model: authentik_stages_prompt.promptstage
+  permissions: []
+  state: present
+- attrs:
+    activate_user_on_success: true
+    from_address: system@authentik.local
+    host: localhost
+    port: 25
+    subject: Authentik Account Confirmation
+    template: email/account_confirmation.html
+    timeout: 10
+    token_expiry: minutes=30
+    use_global_settings: true
+  conditions: []
+  identifiers:
+    name: email-account-verification
+    pk: d97ed84e-bedf-4061-881a-59f021783528
+  model: authentik_stages_email.emailstage
+  permissions: []
+  state: present
+- attrs:
+    configure_flow: 98c1464a-fe2d-4f09-a63c-ceb103cdb7a5
+    digits: '6'
+    friendly_name: TOTP Device
+  conditions: []
+  identifiers:
+    name: default-authenticator-totp-setup
+    pk: 9f8708cf-0cc0-4876-a7af-9833ea12459c
+  model: authentik_stages_authenticator_totp.authenticatortotpstage
   permissions: []
   state: present
 - attrs:
@@ -216,6 +270,32 @@ entries:
     re_evaluate_policies: true
   conditions: []
   identifiers:
+    order: 30
+    pk: 0eed5f23-6f8d-4183-a79c-11659ab4f2f2
+    stage: d97ed84e-bedf-4061-881a-59f021783528
+    target: d3d0cc20-4c6b-4081-b704-67375fcc1189
+  model: authentik_flows.flowstagebinding
+  permissions: []
+  state: present
+- attrs:
+    invalid_response_action: retry
+    policy_engine_mode: any
+    re_evaluate_policies: true
+  conditions: []
+  identifiers:
+    order: 40
+    pk: 91a063de-a44d-4260-997b-d8a1c9081632
+    stage: 9f8708cf-0cc0-4876-a7af-9833ea12459c
+    target: d3d0cc20-4c6b-4081-b704-67375fcc1189
+  model: authentik_flows.flowstagebinding
+  permissions: []
+  state: present
+- attrs:
+    invalid_response_action: retry
+    policy_engine_mode: any
+    re_evaluate_policies: true
+  conditions: []
+  identifiers:
     order: 100
     pk: a941e3fc-2a85-43b8-87c0-f88056e01ce6
     stage: 532788ef-2f2a-4c5e-b2f4-076168f65aa7
@@ -238,5 +318,5 @@ entries:
 metadata:
   labels:
     blueprints.goauthentik.io/generated: 'true'
-  name: authentik Export - 2025-07-05 03:37:01.163391+00:00
+  name: authentik Export - 2025-07-06 18:12:08.141829+00:00
 version: 1
