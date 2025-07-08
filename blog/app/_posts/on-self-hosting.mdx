@@ -1,0 +1,87 @@
+import MdxLayout from '@/app/_components/mdx-layout'
+import PostImage from '@/app/_components/post-image'
+
+export const metadata = {
+  title: "On Self-Hosting",
+  excerpt:
+    "Remarks on a setup that has become cool and practical.",
+  coverImage: "/assets/self_hosting/cover.jpg",
+  date: "2025-07-08T00:00:00.000Z",
+  author: {
+    name: "Ryan Draves",
+    picture: "/assets/authors/me.png"
+  },
+  ogImage: {
+    url: "/assets/self_hosting/cover.jpg"
+  }
+}
+
+My self-hosted setup has reached the point of being actively useful in my day-to-day life. Its current iteration is near what I would consider to be a "final form" before I would make drastic changes, such as a switch to Kubernetes.
+
+# Key Architecture
+While trying to avoid my tendency to over-explain how it works and how it comes together, I'll briefly explain the key pieces of my setup in isolation.
+
+## Hardware
+The hardware's simple. All of my self-hosted services are fairly lightweight and nominally idle, so I'm able to host most everything* on a single Raspberry Pi with a modestly-sized MicroSD card.
+
+*To spin up a community edition version of [Overleaf](https://www.overleaf.com/), an x86 machine is needed. Octoprint things are living in their own happy world out of this IaC on a Pi connected to my 3D printer.
+
+## "Orchestration"
+To manage the services, I've kept my setup extremely simple with Docker Compose. Despite striving for simplicity, this is actually where I've had the most churn to "get it right" (as choosing Docker Compose is, fundamentally, the wrong choice), but I've settled into a simple rule that makes it manageable: each service gets its own compose file in its own directory. It seems obvious, but I tried iterating on combined compose files, using Nginx for routing instead of committing to Tailscale's schemes, splitting services by what machine they're hosted on, and, the worst one, putting all of the compose files in the same folder with `docker-compose.*.yaml` patterns. For the relatively few machines running things, the simple rule is the best rule.
+
+## Tailscale
+Tailscale contributes several pieces of the heavy lifting. The zero-config VPN makes it simple to access the underlying hardware securely and remotely. More interestingly, we can add Tailscale as a sidecar container to each service stack, allowing each service to be registered as its own "machine" on my tailnet with a separate set of isolating access controls (right now, no service needs to talk directly to another). More interestingly, this sidecar service takes care of HTTPS certs and DNS entries automatically, allowing both secure connections to be served locally (intra-tailnet) and [funneled](https://tailscale.com/kb/1223/funnel) to the broader internet. Without any hassle of exposing ports from a residential internet service, we can securely expose a single port on a container with a custom subdomain name. Very nice!
+
+<PostImage title="NLB Invite" src="/assets/self_hosting/nlb_invite.png" width="680" height="110" />
+
+## Authentication
+While it's easy to leave services openly available within the tailnet, it's useful to have authentication and user accounts for services exposed to the broader internet. Necessary, one might even say. [Authentik](https://goauthentik.io/) provides SSO capabilities to my services supporting some relevant method of authentication. It offers an impressive feature suite that let me create a convenient workflow for adding friends and family to services:
+- A simple CLI tool lets me generate one-time invitation links that adds the invited user to select service groups
+- The invitation workflow enforces strong passwords, a verified email, and MFA
+- Straightforward mechanisms to add the user to other applications later
+
+How lovely!
+
+## Miscellaneous
+
+### SMTP
+Some services have obvious benefits to enabling them to send emails. Authentik, for instance, greatly benefits from sending email verifications or having the ability to send password resets. After some reading, however, I determined that it would be rather impractical to host my own SMTP server and try to get through everyone's spam filters. Instead, I set up [smtp2go](https://www.smtp2go.com/), which has a generous free tier well above the number of emails my services (should) be sending. An important reminder: when a service is free, you are the product. Thankfully, I don't mind them snooping on password reset traffic.
+
+### Domain Registration
+
+To configure SMTP, we need to have full control over a domain. By whatever means Tailscale is working its DNS Magic for [funneling](https://tailscale.com/kb/1223/funnel), it's just not possible to set arbitrary DNS records on your tailnet's subdomain. [Cloudflare](https://www.cloudflare.com/) had good pricing on a proper domain registration, however, so I bit the bullet on a ~$10/yr registration for my own name. In addition to sending emails, we can also [point Github Pages](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site) to this domain and use it for the blog. Now we look official!
+
+# What's Running?
+All of these features are wonderful, but what use is it if there's nothing important to run? While I am not above building infrastructure for its own sake, I've found three great use cases that has benefitted my day-to-day:
+- [Mealie](https://mealie.io/), a wonder recipe hosting applications
+- [My own applications](https://github.com/RyanDraves/nlb/tree/main/apps), which are primarily esoteric/joke apps
+- Internal services like [Homer](https://github.com/bastienwirtz/homer) that make it easier to navigate, manage, or otherwise support the other services
+
+From that list, with one of them also being "infrastructure," by and large the most useful is Mealie, so I'll make them a free sales pitch and sing their praises.
+
+<PostImage title="Shopping list example" src="/assets/self_hosting/shopping_list.png" width="400" height="400" />
+
+## Mealie is Wonderful
+
+Mealie offers a great platform to host recipes. Create your own, or better yet, use their robust recipe parser and import online recipes. No more ads or reading about how the author's kids jump up and down for 1 teaspoon of salt (real), just a simple list of ingredients and instructions to prepare the dish.
+
+While a simple deployment without any of the aforementioned architecture would suffice for this, where Mealie gets interesting its ability to share recipes publicly (no auth), invite friends to the platform (with or without permissions to edit your recipes), and, my most-day-to-day usage, *create shopping lists*.
+
+With their shopping list feature, I can export the ingredients from each recipe I want to cook this week and select which ones I need to buy. When I go shopping, the secure remote access lets me view the list on my phone and check off items. Each week I save a meaningful amount of time creating and going through my shopping list, and I never forget that one ingredient for the recipe; just superb!
+
+# What's Next?
+As much as I love the setup, there are a few key pieces that could use a major improvement:
+- **Secrets**: My secrets management is an abysmal plaintext file structure. I keep it as secure as such a system can be, but it needs an overhaul
+- **Orchestration**: Docker Compose-backed stacks are fundamentally limited in how well they can be orchestrated
+- **File storage**: My personal machines have (personal) files that should definitely be backed up somewhere. It's a pretty large gap in my current ecosystem that could be filled by self-hosted offerings
+- **Backups**: Similarly, I now have "production" data on my hands in the form of useful recipes I'd prefer not to lose. Mealie can generate backup files I can store on my device, but I need something more practical and automated. MicroSD cards are not the best solution for long-term storage...
+
+Looking through these problems, I can see where the solutions likely point. But from an initial foray into each of them, the only good answer I've come up with is to commit to using Kubernetes over my Docker Compose stack, then add the services I need to address the remaining issues. For secrets, the answer's probably [Vault](https://developer.hashicorp.com/vault), and for file storage, I'm looking at [Nextcloud](https://nextcloud.com/).
+
+export default function MDXPage({children}) {
+  return (
+    <MdxLayout metadata={metadata}>
+      {children}
+    </MdxLayout>
+  )
+}
