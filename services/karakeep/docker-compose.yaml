@@ -15,8 +15,6 @@ services:
       OAUTH_WELLKNOWN_URL: https://authentik.barn-arcturus.ts.net/application/o/karakeep/.well-known/openid-configuration
       OAUTH_PROVIDER_NAME: authentik
       OAUTH_ALLOW_DANGEROUS_EMAIL_ACCOUNT_LINKING: true
-      # OPENAI_API_KEY: ...
-
       # You almost never want to change the value of the DATA_DIR variable.
       # If you want to mount a custom directory, change the volume mapping above instead.
       DATA_DIR: /data # DON'T CHANGE THIS
@@ -29,7 +27,7 @@ services:
     entrypoint: [
       "/bin/sh",
       "-c",
-      "set -e; export NEXTAUTH_SECRET=$(cat /run/secrets/nextauth_secret); export MEILI_MASTER_KEY=$(cat /run/secrets/meili_master_key); export OIDC_CLIENT_ID=$(cat /run/secrets/oidc_id); export OIDC_CLIENT_SECRET=$(cat /run/secrets/oidc_secret); export OPENAI_API_KEY=$(cat /run/secrets/openai_key); echo 'Secrets loaded successfully'; /init"
+      "set -e; export NEXTAUTH_SECRET=$(cat /run/secrets/nextauth_secret); export MEILI_MASTER_KEY=$(cat /run/secrets/meili_master_key); export OAUTH_CLIENT_ID=$(cat /run/secrets/oidc_id); export OAUTH_CLIENT_SECRET=$(cat /run/secrets/oidc_secret); export OPENAI_API_KEY=$(cat /run/secrets/openai_key); echo 'Secrets loaded successfully'; /init"
     ]
   chrome:
     container_name: karakeep-chrome
