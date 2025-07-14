@@ -1,0 +1,100 @@
+services:
+  web:
+    container_name: karakeep
+    image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION:-release}
+    restart: unless-stopped
+    volumes:
+      - karakeep-data:/data
+    network_mode: service:tailscale
+    environment:
+      MEILI_ADDR: http://meilisearch:7700
+      BROWSER_WEB_URL: http://chrome:9222
+      NEXTAUTH_URL: https://bookmarks.barn-arcturus.ts.net
+      DISABLE_SIGNUPS: true
+      DISABLE_PASSWORD_AUTH: true
+      OAUTH_WELLKNOWN_URL: https://authentik.barn-arcturus.ts.net/application/o/karakeep/.well-known/openid-configuration
+      OAUTH_PROVIDER_NAME: authentik
+      OAUTH_ALLOW_DANGEROUS_EMAIL_ACCOUNT_LINKING: true
+      # OPENAI_API_KEY: ...
+
+      # You almost never want to change the value of the DATA_DIR variable.
+      # If you want to mount a custom directory, change the volume mapping above instead.
+      DATA_DIR: /data # DON'T CHANGE THIS
+    secrets:
+      - nextauth_secret
+      - meili_master_key
+      - oidc_id
+      - oidc_secret
+      - openai_key
+    entrypoint: [
+      "/bin/sh",
+      "-c",
+      "set -e; export NEXTAUTH_SECRET=$(cat /run/secrets/nextauth_secret); export MEILI_MASTER_KEY=$(cat /run/secrets/meili_master_key); export OIDC_CLIENT_ID=$(cat /run/secrets/oidc_id); export OIDC_CLIENT_SECRET=$(cat /run/secrets/oidc_secret); export OPENAI_API_KEY=$(cat /run/secrets/openai_key); echo 'Secrets loaded successfully'; /init"
+    ]
+  chrome:
+    container_name: karakeep-chrome
+    image: gcr.io/zenika-hub/alpine-chrome:123
+    restart: unless-stopped
+    command:
+      - --no-sandbox
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --remote-debugging-address=0.0.0.0
+      - --remote-debugging-port=9222
+      - --hide-scrollbars
+  meilisearch:
+    container_name: karakeep-meilisearch
+    image: getmeili/meilisearch:v1.13.3
+    restart: unless-stopped
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+    secrets:
+      - meili_master_key
+    volumes:
+      - karakeep-meilisearch:/meili_data
+    entrypoint: [
+      "/bin/sh",
+      "-c",
+      "set -e; export MEILI_MASTER_KEY=$(cat /run/secrets/meili_master_key); echo 'Secrets loaded successfully'; tini -- /bin/meilisearch"
+    ]
+  tailscale:
+    image: tailscale/tailscale
+    container_name: karakeep-tailscale
+    hostname: bookmarks
+    secrets:
+      - tailnet_oauth
+    environment:
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/ts-serve.json
+    volumes:
+      - karakeep-ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the config file for changes
+      - ${PWD}/ts-serve:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+    command: >
+      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
+
+volumes:
+  karakeep-meilisearch:
+  karakeep-data:
+  karakeep-ts-authkey:
+
+secrets:
+  tailnet_oauth:
+    file: ${PWD}/../secrets/tailnet_oauth.secret
+  nextauth_secret:
+    file: ${PWD}/../secrets/karakeep_nextauth.secret
+  meili_master_key:
+    file: ${PWD}/../secrets/karakeep_meili_master.key
+  oidc_id:
+    file: ${PWD}/../secrets/karakeep_oidc.id
+  oidc_secret:
+    file: ${PWD}/../secrets/karakeep_oidc.secret
+  openai_key:
+    file: ${PWD}/../secrets/openai.key
