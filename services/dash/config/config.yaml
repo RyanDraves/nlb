@@ -1,6 +1,7 @@
 ---
 # Homepage configuration
 # See https://fontawesome.com/search for icons options
+# See https://github.com/bastienwirtz/homer/blob/main/docs/customservices.md for custom integrations
 
 title: "Dashboard"
 subtitle: "NLB"
@@ -149,6 +150,19 @@ services:
   - name: "Private Apps"
     icon: "fa-solid fa-user"
     items:
+      - name: "Bookmarks"
+        icon: "fa-solid fa-bookmark"
+        subtitle: "Karakeep"
+        keywords: "bookmarks"
+        url: "https://bookmarks.barn-arcturus.ts.net"
+      - name: "Printing"
+        icon: "fa-solid fa-print"
+        subtitle: "OctoPrint"
+        keywords: "3d printing"
+        type: "OctoPrint"
+        apikey: "OCTOPRINT_TOKEN"
+        display: "text"
+        url: "https://pinter.barn-arcturus.ts.net"
       - name: "Chat"
         icon: "fa-solid fa-message"
         subtitle: "Lobe Chat"
@@ -161,14 +175,6 @@ services:
         type: "Portainer"
         apikey: "PORTAINER_TOKEN"
         url: "https://portainer.barn-arcturus.ts.net"
-      - name: "Printing"
-        icon: "fa-solid fa-print"
-        subtitle: "OctoPrint"
-        keywords: "3d printing"
-        type: "OctoPrint"
-        apikey: "OCTOPRINT_TOKEN"
-        display: "text"
-        url: "https://pinter.barn-arcturus.ts.net"
       - name: "Task Progress"
         icon: "fa-solid fa-hourglass-end"
         subtitle: "HYD"
