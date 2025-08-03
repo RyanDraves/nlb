@@ -6,5 +6,8 @@ A small, angled wedge to prop up my dry rack so water runs off into the sink ins
 ## Pi 5 Case
 Standalone case for a Pi 5, made by this [Thing](https://www.thingiverse.com/thing:69062830).
 
+## Pi 4b Case
+Standalone case for a Pi 4b, made by this [Thing](https://www.thingiverse.com/thing:3793664).
+
 ## Oreo Trophy
 A trophy stand for an Oreo cookie (or a suitable off-band).
