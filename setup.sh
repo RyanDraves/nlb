@@ -43,6 +43,18 @@ set -o pipefail
 # sudo apt-get install -y kubelet kubeadm kubectl
 # sudo apt-mark hold kubelet kubeadm kubectl
 
+
+# rpi setup
+# Append to /boot/firmware/cmdline.txt
+#   cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory
+#
+# laptop setup
+#   From control plane: sudo cat /etc/rancher/k3s/k3s.yaml
+#   Copy to ~/.config/k8s/k3s.yaml, edit IP address
+
+# Random stuff installed on the controle plane
+# curl -s https://fluxcd.io/install.sh | sudo bash
+
 BAZELISK_VERSION=v1.25.0
 BAZELISK_X86_SHA384_SUM=f452948139ca10fb2f85b9e9381f103c63978773884a3ee3092685b47556241058c7bc4e5806e5bd1c754076814fd60a
 BAZELISK_ARM64_SHA384_SUM=6457888166ac4c3fb5ee82323987bec29e97736caeeee46be2467b54ba27d7095f84271666f992af58978415bbb300a1
@@ -66,6 +78,7 @@ APT_PACKAGES=(
     libusb-1.0-0-dev
     tree
     htop
+    nmap
     python-is-python3
     python3-pip
     python3-ipython
