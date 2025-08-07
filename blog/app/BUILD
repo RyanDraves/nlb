@@ -4,6 +4,7 @@ SRCS = [
     "page.tsx",
     "layout.tsx",
     "mdx.d.ts",
+    "clif/page.tsx",
 ] + glob(
     [
         "posts/*/*.tsx",
