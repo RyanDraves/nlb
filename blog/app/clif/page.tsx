@@ -5,11 +5,11 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 
 export const metadata: Metadata = {
-    title: 'Over the Clif - A Love Letter to Clif Bars | Ryan\'s Bizarre Blog',
-    description: 'Personal reviews of every Clif bar flavor and a heartfelt poem about my love for these energy bars.',
+    title: 'Over the Clif | Ryan\'s Bizarre Blog',
+    description: 'A love letter to Clif bars.',
     openGraph: {
-        title: 'Over the Clif - A Love Letter to Clif Bars',
-        description: 'Personal reviews of every Clif bar flavor and a heartfelt poem about my love for these energy bars.',
+        title: 'Over the Clif | Ryan\'s Bizarre Blog',
+        description: 'A love letter to Clif bars.',
     },
 };
 
@@ -22,41 +22,72 @@ interface ClifBarReview {
 
 const clifBarReviews: ClifBarReview[] = [
     {
-        name: 'Lorem Ipsum Flavor',
-        rating: 4,
-        image: '/assets/clif/crunchy_peanut_butter.png',
-        review: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
-    },
-    {
-        name: 'Dolor Sit Amet',
+        name: 'Peanut Butter Banana w/ Dark Chocolate',
         rating: 5,
-        image: '/assets/clif/crunchy_peanut_butter.png',
-        review: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'
+        image: '/assets/clif/peanut_butter_banana.png',
+        review: 'This is the optimal Clif bar. Nothing can match its flawless execution of flavor, texture, creativity, and repeatability. To eat anything else is only to satiate a desire to explore that leaves you homesick for this masterpiece.'
     },
     {
-        name: 'Consectetur Adipiscing',
-        rating: 3.5,
-        image: '/assets/clif/crunchy_peanut_butter.png',
-        review: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.'
-    },
-    {
-        name: 'Tempor Incididunt',
+        name: 'Crunchy Peanut Butter',
         rating: 4.5,
         image: '/assets/clif/crunchy_peanut_butter.png',
-        review: 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
+        review: 'The peanut butter-centric Clif bar captures the true essence of what it means to enjoy a Clif bar. It nails the texture and flavor profile it advertises. Its repeatability is the only drawback; avoid making it a daily habit.'
     },
     {
-        name: 'Ut Labore',
+        name: 'Cool Mint Chocolate',
+        rating: 4.5,
+        image: '/assets/clif/cool_mint_chocolate.png',
+        review: 'The minty impact of this Clif bar realizes that unknown desire to have Mint Chocolate Chip ice cream in a Clif bar. Excellent execution.'
+    },
+    {
+        name: 'White Chocolate Macadamia Nut',
+        rating: 4.5,
+        image: '/assets/clif/white_chocolate_macadamia_nut.png',
+        review: 'This eloquent combination of flavors makes for an excellent Clif bar. It is one of the most repeatable flavors, but it always leaves you with a small, unsatiated feeling.'
+    },
+    {
+        name: 'Caramel Chocolate Chip',
+        rating: 4.5,
+        image: '/assets/clif/caramel_chocolate_chip.png',
+        review: 'This recent addition to the Clif bar lineup has exceeded expectations. While I have yet to explore its repeatability, initial tastings show promising flavor, texture, and creativity.'
+    },
+    {
+        name: 'Chocolate Chip',
         rating: 4,
-        image: '/assets/clif/crunchy_peanut_butter.png',
-        review: 'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.'
+        image: '/assets/clif/chocolate_chip.png',
+        review: 'The classic staple of Clif bars. What it lacks in originality, creativity, and flavor, it makes up for in nostalgia, repeatability, and a solid texture.'
     },
     {
-        name: 'Magna Aliqua',
+        name: 'Cookies & Cream',
+        rating: 4,
+        image: '/assets/clif/cookies_and_cream.png',
+        review: 'Cookies & Cream is a lackluster execution of Cool Mint Chocolate\'s fantasy. A solid flavor nonetheless, but eating it makes you dream of its better counterpart.'
+    },
+    {
+        name: 'Chocolate Brownie',
+        rating: 4,
+        image: '/assets/clif/chocolate_brownie.png',
+        review: 'Chocolate Brownie is a high performer in many regards, but it is weighed down by a feeling of guilt being the most dessert-like Clif bar.'
+    },
+    {
+        name: 'Oatmeal Raisin Walnut',
+        rating: 3.5,
+        image: '/assets/clif/oatmeal_raisin_walnut.png',
+        review: 'Where Blueberry Almond Crisp fails to meet expectations, Oatmeal Raisin Walnut succeeds. It helps that I like oatmeal raisin cookies, I suppose. A great low-guilt option.'
+    },
+    {
+        name: 'Vanilla Almond',
         rating: 3,
-        image: '/assets/clif/crunchy_peanut_butter.png',
-        review: 'Totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt.'
-    }
+        image: '/assets/clif/vanilla_almond.png',
+        review: 'Vanilla Almond improves on the shortcomings of Blueberry Almond Crisp, but does so in an unremarkable way.'
+    },
+    {
+        name: 'Blueberry Almond Crisp',
+        rating: 2.5,
+        image: '/assets/clif/blueberry_almond_crisp.png',
+        review: 'Blueberry Almond Crisp specializes in fulfilling the need for a Clif bar without the guilt or aftertaste of having eaten a sugary flavor. In all other regards, it is the worst Clif bar.'
+    },
+    // Missing flavors: Chocolate Chip Peanut Crunch
 ];
 
 const StarRating = ({ rating }: { rating: number }) => {
@@ -118,9 +149,7 @@ export default function ClifPage() {
 
                     <div className="prose prose-lg dark:prose-invert max-w-none mb-16">
                         <p className="text-xl leading-relaxed text-gray-700 dark:text-gray-300 mb-8">
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                            incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                            exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                            A love letter to my favorite snack, Clif bars.
                         </p>
                     </div>                    {/* Reviews Section */}
                     <section className="mb-20">
