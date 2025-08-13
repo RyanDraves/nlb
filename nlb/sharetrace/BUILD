@@ -27,6 +27,7 @@ py_binary(
     deps = [
         requirement("rich-click"),
         ":st",
+        "//nlb/util:click_utils",
     ],
 )
 
