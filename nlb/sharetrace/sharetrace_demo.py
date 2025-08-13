@@ -69,7 +69,6 @@ def main(demo: Demos) -> None:
     st.install_exception_hook()
 
     print(f'Testing {demo.name.lower()} sharetrace exception capturing...')
-    print('This will cause a ZeroDivisionError to be captured.')
 
     if demo is Demos.SIMPLE:
         test_simple_error()
