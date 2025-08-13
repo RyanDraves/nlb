@@ -10,6 +10,8 @@ package(default_visibility = ["//:__subpackages__"])
 # Create the root of the "virtual store" of npm dependencies under bazel-out
 npm_link_all_packages(name = "node_modules")
 
+exports_files(["requirements_legacy.txt"])
+
 buildifier(
     name = "buildifier.check",
     diff_command = "diff -u",
