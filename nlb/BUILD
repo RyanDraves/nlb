@@ -27,6 +27,10 @@ py_package(
         "//nlb/mcp:file_edit_mcp",
         "//nlb/mcp:tool_manager",
         "//nlb/mcp:util",
+        "//nlb/sharetrace",
+        "//nlb/sharetrace:interface",
+        "//nlb/sharetrace:sharetrace_demo",
+        "//nlb/sharetrace:st",
         "//nlb/tailscale:nlb_tailscale",
         "//nlb/util:click_utils",
         "//nlb/util:console_utils",
@@ -46,6 +50,21 @@ py_package(
     ],
 )
 
+py_package(
+    # This is a streamlined version of the main nlb package that supports Python 3.10
+    name = "some_python_modules",
+    packages = [
+        "nlb",
+    ],
+    deps = [
+        "//nlb/sharetrace",
+        "//nlb/sharetrace:interface",
+        "//nlb/sharetrace:sharetrace_demo",
+        "//nlb/sharetrace:st",
+        "//nlb/util:console_utils",
+    ],
+)
+
 py_wheel(
     name = "nlb_wheel",
     # Update via `tools/release/python/update_build.sh`
@@ -58,6 +77,8 @@ py_wheel(
         "//nlb/authentik:nlb_invite_completions": "data/share/completions/nlb_invite-completion.bash",
         "//nlb/mcp:arduino_mcp_completions": "data/share/completions/arduino_mcp-completion.bash",
         "//nlb/mcp:file_edit_mcp_completions": "data/share/completions/file_edit_mcp-completion.bash",
+        "//nlb/sharetrace:sharetrace_completions": "data/share/completions/sharetrace-completion.bash",
+        "//nlb/sharetrace:sharetrace_demo_completions": "data/share/completions/sharetrace_demo-completion.bash",
     },
     description_file = "pypi_README.md",
     distribution = "nl_blocks",  # Unfortunate PyPI name collision
@@ -70,6 +91,8 @@ py_wheel(
         "nlb_gh_feature = nlb.github.nlb_gh_feature:main",
         "nlb_invite = nlb.authentik.nlb_invite:main",
         "nlb_tailscale = nlb.tailscale.nlb_tailscale:main",
+        "sharetrace = nlb.sharetrace.sharetrace:main",
+        "sharetrace_demo = nlb.sharetrace.sharetrace_demo:main",
         "venv_completions = nlb.util.venv_completions:main",
     ]},
     license = "MIT",
@@ -78,7 +101,7 @@ py_wheel(
         "Repository": "https://github.com/RyanDraves/nlb",
         "Issues": "https://github.com/RyanDraves/nlb/issues",
     },
-    python_requires = ">=3.12",  # Uses new type var syntax
+    python_requires = ">=3.10",  # Uses new type var syntax
     python_tag = "py3",
     # Looser requirements than the lockfile
     requires_file = "//:requirements.txt",
@@ -88,5 +111,41 @@ py_wheel(
     version = "{BUILD_EMBED_LABEL}",
     deps = [
         ":all_python_modules",
+    ],
+)
+
+# repository="testpypi"  # Use "testpypi" for testing, "pypi" for production
+# version=$(cat tools/release/python/VERSION.txt)
+# bazel run --config quiet --config stamp --config "$repository" --embed_label="$version" //nlb:nlb_wheel_legacy.publish -- --repository "$repository"
+py_wheel(
+    name = "nlb_wheel_legacy",
+    data_files = {
+        "//nlb/util:venv_completions_completions": "data/share/completions/venv_completions-completion.bash",
+        "//nlb/sharetrace:sharetrace_completions": "data/share/completions/sharetrace-completion.bash",
+        "//nlb/sharetrace:sharetrace_demo_completions": "data/share/completions/sharetrace_demo-completion.bash",
+    },
+    description_file = "pypi_README_legacy.md",
+    distribution = "nlb_legacy",
+    entry_points = {"console_scripts": [
+        "sharetrace = nlb.sharetrace.sharetrace:main",
+        "sharetrace_demo = nlb.sharetrace.sharetrace_demo:main",
+        "venv_completions = nlb.util.venv_completions:main",
+    ]},
+    license = "MIT",
+    # https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
+    project_urls = {
+        "Repository": "https://github.com/RyanDraves/nlb",
+        "Issues": "https://github.com/RyanDraves/nlb/issues",
+    },
+    python_requires = ">=3.10",  # Looser version requirements
+    python_tag = "py3",
+    # Looser requirements than a lockfile
+    requires_file = "//:requirements_legacy.txt",
+    stamp = -1,  # Let the `--[no]stamp` flag control stamping
+    summary = "Ryan's fever dreams",
+    twine = "@publish_deps//twine",
+    version = "{BUILD_EMBED_LABEL}",
+    deps = [
+        ":some_python_modules",
     ],
 )

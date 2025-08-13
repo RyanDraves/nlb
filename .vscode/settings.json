@@ -126,4 +126,9 @@
         "editor.insertSpaces": true,
         "editor.tabSize": 2,
     },
+    "triggerTaskOnSave.tasks": {
+        "Update requirements.txt": [
+            "requirements.txt"
+        ]
+    }
 }

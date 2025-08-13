@@ -8,11 +8,13 @@ Docs? No thanks. Here's a simple directory tree until ReadTheDocs is setup:
 
 nlb<br />
 ├── arduino -> Client wrappers for the Arduino CLI<br />
+├── authentik -> CLI to add friends to an Authentik deployment<br />
 ├── buffham -> Serialization & RPC library<br />
 ├── datastructure -> Datastructure implementations<br />
 ├── github -> Github utilities<br />
 ├── hyd -> Fancy progress bars<br />
 ├── models -> Toy problems for algorithmic development (mostly `.gitignore`'d)<br />
+├── sharetrace -> Library & CLI to share Python tracebacks<br />
 ├── tailscale -> Tailscale utilities<br />
 ├── util -> Utilities<br />
 └── wizaidry -> Library for creating proto-Agentic AI wizards<br />
