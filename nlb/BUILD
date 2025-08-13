@@ -61,6 +61,7 @@ py_package(
         "//nlb/sharetrace:interface",
         "//nlb/sharetrace:sharetrace_demo",
         "//nlb/sharetrace:st",
+        "//nlb/util:click_utils",
         "//nlb/util:console_utils",
     ],
 )

@@ -123,7 +123,7 @@ def _get_system_info() -> interface.SystemInfo:
 
 
 def _capture_exception(
-    exc_type: type, exc_value: Exception, exc_traceback
+    exc_type: type, exc_value: BaseException, exc_traceback
 ) -> interface.ExceptionData:
     """Capture comprehensive exception information."""
     # Generate unique ID for this exception
@@ -169,6 +169,27 @@ def _capture_exception(
         traceback.format_exception(exc_type, exc_value, exc_traceback)
     )
 
+    # Recursively capture chained exceptions
+    cause_data = None
+    context_data = None
+
+    if exc_value.__cause__ is not None:
+        cause_data = _capture_exception(
+            type(exc_value.__cause__),
+            exc_value.__cause__,
+            exc_value.__cause__.__traceback__,
+        )
+
+    if (
+        exc_value.__context__ is not None
+        and exc_value.__context__ is not exc_value.__cause__
+    ):
+        context_data = _capture_exception(
+            type(exc_value.__context__),
+            exc_value.__context__,
+            exc_value.__context__.__traceback__,
+        )
+
     return interface.ExceptionData(
         id=exception_id,
         timestamp=timestamp,
@@ -179,10 +200,12 @@ def _capture_exception(
         stack_frames=stack_frames,
         system_info=_get_system_info(),
         git_info=git_info,
+        cause=cause_data,
+        context=context_data,
     )
 
 
-def _custom_excepthook(exc_type: type, exc_value: Exception, exc_traceback) -> None:
+def _custom_excepthook(exc_type: type, exc_value: BaseException, exc_traceback) -> None:
     """Custom exception hook that captures and saves exception data."""
     # Don't capture KeyboardInterrupt or SystemExit
     if exc_type in (KeyboardInterrupt, SystemExit):

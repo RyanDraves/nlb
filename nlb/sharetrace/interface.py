@@ -66,6 +66,9 @@ class ExceptionData:
     stack_frames: list[StackFrame]
     system_info: SystemInfo
     git_info: GitInfo | None
+    # Nested exception handling
+    cause: 'ExceptionData | None' = None
+    context: 'ExceptionData | None' = None
 
 
 def list_cached_exceptions() -> list[pathlib.Path]:

@@ -288,6 +288,47 @@ def _generate_html_report(
             color: #e6e6e6;
             margin-left: 10px;
         }
+
+        .exception-chain {
+            margin-top: 30px;
+            border-left: 3px solid #58a6ff;
+            padding-left: 20px;
+        }
+
+        .chain-label {
+            font-weight: bold;
+            color: #58a6ff;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .nested-exception {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .nested-header {
+            background-color: #21262d;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ffa657;
+        }
+
+        .nested-title {
+            font-size: 1.5em;
+            margin: 0 0 5px 0;
+            color: #ffa657;
+        }
+
+        .nested-message {
+            font-size: 1em;
+            margin: 0;
+            color: #e6e6e6;
+        }
     </style>
 </head>
 <body>
@@ -324,41 +365,72 @@ def _generate_html_report(
         </div>
         {% endif %}
 
-        <div class="section">
-            <h2 class="section-title">Stack Trace</h2>
-            {% for frame in exception_data.stack_frames %}
-            <div class="stack-frame">
-                <div class="frame-header">
-                    <span class="frame-location">{{ frame.filename }}:{{ frame.line_number }}</span>
-                    in <span class="frame-function">{{ frame.function_name }}()</span>
+        {% macro render_exception(exc, is_root=true) %}
+            {% if not is_root %}
+            <div class="nested-exception">
+                <div class="nested-header">
+                    <h3 class="nested-title">{{ exc.exception_type }}</h3>
+                    <p class="nested-message">{{ exc.exception_message }}</p>
                 </div>
+            {% endif %}
 
-                {% if frame.code_context.lines %}
-                <div class="code-context">
-                    {% set code_lines = [] %}
-                    {% for line in frame.code_context.lines %}
-                        {% set _ = code_lines.append(line.content) %}
-                    {% endfor %}
-                    {{ get_syntax_highlighted_code(code_lines|join('\n'), frame.filename) | safe }}
-                </div>
-                {% endif %}
-
-                {% if frame.locals %}
-                <div class="locals-section">
-                    <div class="locals-header">Local Variables</div>
-                    <div class="locals-content">
-                        {% for var_name, var_value in frame.locals.items() %}
-                        <div class="local-var">
-                            <span class="var-name">{{ var_name }}:</span>
-                            <span class="var-value">{{ var_value }}</span>
-                        </div>
-                        {% endfor %}
+            <div class="section">
+                <h2 class="section-title">{% if is_root %}Stack Trace{% else %}Nested Stack Trace{% endif %}</h2>
+                {% for frame in exc.stack_frames %}
+                <div class="stack-frame">
+                    <div class="frame-header">
+                        <span class="frame-location">{{ frame.filename }}:{{ frame.line_number }}</span>
+                        in <span class="frame-function">{{ frame.function_name }}()</span>
                     </div>
+
+                    {% if frame.code_context.lines %}
+                    <div class="code-context">
+                        {% set code_lines = [] %}
+                        {% for line in frame.code_context.lines %}
+                            {% set _ = code_lines.append(line.content) %}
+                        {% endfor %}
+                        {{ get_syntax_highlighted_code(code_lines|join('\n'), frame.filename) | safe }}
+                    </div>
+                    {% endif %}
+
+                    {% if frame.locals %}
+                    <div class="locals-section">
+                        <div class="locals-header">Local Variables</div>
+                        <div class="locals-content">
+                            {% for var_name, var_value in frame.locals.items() %}
+                            <div class="local-var">
+                                <span class="var-name">{{ var_name }}:</span>
+                                <span class="var-value">{{ var_value }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
+
+            {% if not is_root %}
+            </div>
+            {% endif %}
+
+            <!-- Recursively render nested exceptions -->
+            {% if exc.cause %}
+            <div class="exception-chain">
+                <div class="chain-label">The above exception was the direct cause of the following exception:</div>
+                {{ render_exception(exc.cause, false) }}
+            </div>
+            {% endif %}
+
+            {% if exc.context and not exc.cause %}
+            <div class="exception-chain">
+                <div class="chain-label">The above exception occurred during the handling of another exception:</div>
+                {{ render_exception(exc.context, false) }}
+            </div>
+            {% endif %}
+        {% endmacro %}
+
+        {{ render_exception(exception_data, true) }}
 
         <div class="section">
             <h2 class="section-title">System Information</h2>
