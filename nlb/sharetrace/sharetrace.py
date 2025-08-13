@@ -23,6 +23,11 @@ def _select_exception_file() -> pathlib.Path | None:
         console_utils.Console().error('No cached exception files found!')
         return None
 
+    # Filter to the 10 most recent files
+    cached_files = sorted(cached_files, key=lambda f: f.stat().st_mtime, reverse=True)[
+        :10
+    ]
+
     # Create display choices with exception info
     choices = []
     for file_path in cached_files:

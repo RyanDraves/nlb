@@ -144,7 +144,9 @@ def _capture_exception(
             git_info = _get_git_info(filename)
 
         filename_relative = (
-            filename.strip(git_info.root) if git_info and git_info.root else filename
+            filename.removeprefix(git_info.root + '/')
+            if git_info and git_info.root
+            else filename
         )
 
         # Get code context for this frame
@@ -198,9 +200,13 @@ def _custom_excepthook(exc_type: type, exc_value: Exception, exc_traceback) -> N
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
         # Inform user about the cached data
-        print(f'\nException data saved to: {cache_file}', file=sys.stderr)
-        print('Use sharetrace to generate a shareable report.', file=sys.stderr)
-
+        print(
+            f'\nException data saved to: \033[96m{cache_file}\033[0m', file=sys.stderr
+        )
+        print(
+            'Use \033[96msharetrace\033[0m to generate a shareable report.',
+            file=sys.stderr,
+        )
     except Exception as save_error:
         # If something goes wrong with our capturing, still show the original exception
         print(f'Error saving exception data: {save_error}', file=sys.stderr)
