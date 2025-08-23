@@ -1,5 +1,4 @@
 load(":workspace_tool.bzl", "workspace_tool")
-load("@rules_java//java:java_binary.bzl", "java_binary")
 
 workspace_tool(
     name = "buildifier",
@@ -14,12 +13,6 @@ workspace_tool(
 workspace_tool(
     name = "picotool",
     tool = "@picotool",
-)
-
-java_binary(
-   name = "copybara",
-   main_class = "com.google.copybara.Main",
-   runtime_deps = ["@copybara//jar"],
 )
 
 alias(
