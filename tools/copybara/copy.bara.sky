@@ -21,6 +21,11 @@ core.workflow(
             paths = glob(["**/BUILD"]),
         ),
         core.replace(
+            before = 'load("//bzl/macros:python.bzl", "py_binary")',
+            after = 'load("//:python.bzl", "py_binary")',
+            paths = glob(["**/BUILD"]),
+        ),
+        core.replace(
             before = "from nlb.sharetrace",
             after = "from sharetrace",
             paths = glob(["**/*.py"]),
@@ -38,6 +43,6 @@ core.workflow(
         core.move("nlb/sharetrace/README.md", "README.md"),
         core.move("nlb/sharetrace/VERSION.txt", "VERSION.txt"),
         core.move("nlb/sharetrace/", "sharetrace/"),
-        core.move("nlb/util/", "sharetrace/utils/"),
+        core.move("nlb/util/", "sharetrace/util/"),
     ],
 )
