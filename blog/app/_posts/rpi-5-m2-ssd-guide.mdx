@@ -1,0 +1,182 @@
+import MdxLayout from '@/app/_components/mdx-layout'
+import CodeBlock from '@/app/_components/code-block'
+import PostImage from '@/app/_components/post-image'
+
+export const metadata = {
+  title: "Mounting an M.2 SSD to an RPi 5",
+  excerpt:
+    "A complete guide for additional RPi storage",
+  coverImage: "/assets/rpi5_m2/cover.jpg",
+  date: "2025-08-23T00:00:00.000Z",
+  author: {
+    name: "Ryan Draves",
+    picture: "/assets/authors/me.png"
+  },
+  ogImage: {
+    url: "/assets/rpi5_m2/cover.jpg"
+  }
+}
+
+On my slow journey to learn Kubernetes and create a home cluster with Raspberry Pis, I added additional storage to my RPi 5 using its PCIe port. After a slew of guides not quite matching my use case (not trying to boot from the SSD) and a long debugging session, I thought I'd document the process in a blog post.
+
+# Hardware
+While researching how to add additional storage, or if I should buy a dedicated off-the-shelf NAS, I wanted something fast, large, and power efficient while avoiding vendor lock. The first three fit SSDs quite well (large sizes aren't terribly expensive these days), while the last one was trickier. Since I already owned a couple of RPi 5s, I ended up with the following items:
+
+- Raspberry Pi 5
+- [Pimoroni NVME Base](https://shop.pimoroni.com/products/nvme-base?variant=41219587178579)
+- [Inland 1TB QN450 NVME SSD (M-key)](https://www.microcenter.com/product/680085/inland-qn450-1tb-ssd-3d-qlc-nand-pcie-gen-4-x4-nvme-m2-2280-internal-solid-state-drive)
+- [A cheap case stack for temporary housing](https://www.amazon.com/GeeekPi-Raspberry-Heatsinks-Stackable-Enclosure/dp/B085XT8W9S/)
+
+The neat thing about the Pimoroni NVME Base is that is supports a wide variety of SSDs including full sized 2280. There's an option to purchase it with a sure-to-be-compatible SSD, but since I live near a Micro Center I was able to find a better deal on an Inland SSD. Be sure to check the compatibility list on the Pimoroni page before buying an SSD.
+
+The case stack listed lets me stack multiple Pis together and slightly alters the assembly. It's not tall enough for the added height of the NVME base, but you can easily use 2 levels of the stack on one Pi.
+
+## Assembly
+
+The [Pimoroni NVME base install guide](https://www.youtube.com/watch?v=odG7FbptgWQ) is a useful reference for assembly. To adapt it to the linked case stack, I used some of the case standoffs with screws embedded rather than some of the NVME base screws. Here's a reference order-of-operations in place of the video:
+
+- NVME + case standoffs into NVME base
+- Insert M.2 screw + nuts and SSD
+- PCIe ribbon into Pi
+- PCIe ribbon into NVME base
+- Screw NVME base into RPi
+- Screw case components into combined assembly
+
+When assembly is done, boot the Pi.
+
+# Mounting the SSD
+Most of the setup time now goes towards formatting and mounting the SSD. The rest of this guide is the combination of the following guides:
+
+- [Pimoroni's instructions (PCIe 3 Mode)](https://shop.pimoroni.com/products/nvme-base?variant=41219587178579)
+- [ThePiHut](https://thepihut.com/blogs/raspberry-pi-tutorials/how-to-set-up-an-ssd-with-the-raspberry-pi)
+- [This beautiful StackExchange answer](https://raspberrypi.stackexchange.com/a/1721)
+- A ton of how-to-Linux googling
+
+I performed the following in headless mode, where the Pi has already been given a suitable hostname. All of the following commands are assumed to be run from an SSH shell.
+
+## Configure PCIe 3 Mode
+Edit the end of `/boot/firmware/config.txt` to look like the following:
+<CodeBlock lang="text" name="/boot/firmware/config.txt">
+{`[all]
+dtparam=pciex1_gen=3
+`}
+</CodeBlock>
+
+<PostImage title="lsblk" src="/assets/rpi5_m2/lsblk.png" width="680" height="110" />
+
+Reboot when done. Before formatting, we can verify the SSD is connected by checking for an entry with NVME in its name in `lsblk`.
+
+## Enable X11 Forwarding From root
+To (most easily) format the SSD, we need to enable X11 forwarding and authorize it from root. If you're using a desktop on your RPi directly, skip this section.
+
+About two pages down in `/etc/ssh/sshd_config`, make sure the X11 entries match the following:
+
+<CodeBlock lang="text" name="/etc/ssh/sshd_config">
+{`X11Forwarding yes
+#X11DisplayOffset 10
+X11UseLocalhost no
+`}
+</CodeBlock>
+
+Afterwards, run the following commands:
+- `sudo systemctl restart sshd` to restart the SSH service
+- Exit and SSH again with the `-X` flag for X11
+- `xauth list $DISPLAY` to find our current authentication cookie
+- Copy the printed line from the previous command
+- `sudo su` to switch to the root user
+- `touch /root/.Xauthority` to ensure the Xauthority file exists
+- `xauth add [paste]` to authenticate X11 from the root user
+
+Complete the next section from `root`.
+
+## Format the SSD
+<PostImage title="gparted select" src="/assets/rpi5_m2/gparted_select.png" width="680" height="110" />
+
+<PostImage title="gparted partition table" src="/assets/rpi5_m2/gparted_partition_table.png" width="680" height="110" />
+
+<PostImage title="gparted partition new" src="/assets/rpi5_m2/gparted_partition_new.png" width="680" height="110" />
+
+<PostImage title="gparted partition options" src="/assets/rpi5_m2/gparted_partition_options.png" width="680" height="110" />
+
+<PostImage title="gparted apply" src="/assets/rpi5_m2/gparted_apply.png" width="680" height="110" />
+
+To format the SSD, we'll use `gparted`. Run the following commands:
+- `apt-get update`
+- `apt-get install gparted`
+- `gparted`
+
+First, select the device connected SSD in the upper-right corner (it should have NVME in its name).
+
+Then, create a partition table using the default settings (msdos).
+
+After that, create a new `ext4` partition that fills the drive. Give it a meaningful label.
+
+Lastly, press the green checkmark to apply the selected operations. Since we're using an SSD over a PCIe connection, this shouldn't take but a moment.
+
+## Manually Mount the SSD
+`exit` from the root user if you were using it for `gparted`.
+
+To test that everything is formatted, we'll first manually mount the drive.
+- `lsblk` to show our block devices; find the new partition device name, such as `nvme0n1p1`. Copy it.
+- `sudo mkdir -p /mnt/ssd` to create a mount point
+- `sudo mount /dev/[paste] /mnt/ssd` to mount the drive
+- `sudo chown -R pi:pi /mnt/ssd` to give the `pi` user access to the SSD
+
+If successful, we should see the drive with `df -h`:
+<CodeBlock lang="text" name="df -h">
+{`/dev/nvme0n1p1  916G   32K  870G   1% /mnt/ssd
+`}
+</CodeBlock>
+
+## Automount the SSD
+To ensure the drive is mounted on boot, we'll add it to `/etc/fstab`.
+
+First, run `blkid` and copy the `PARTUUID` from the result. The relevant line should be recognizable as it starts with the same partition device name and your chosen partition label.
+
+Next, append to `/etc/fstab` the following:
+<CodeBlock lang="text" name="/etc/fstab">
+{`PARTUUID=9f594e17-01 /mnt/ssd ext4 defaults,nofail,x-systemd.automount 0 0
+`}
+</CodeBlock>
+
+The `defaults` option provides sensible defaults, `nofail` ensures that the Pi can boot regardless of an issue mounting the SSD, and `x-systemd.automount` lets `systemd` handle the automount process, which I found both necessary for startup timings and useful for controlling other boot timings.
+
+Systemd should create a new pair of startup services for the `/etc/fstab` (probably after a daemon reload, but we'll restart soon). Based on the `/mnt/ssd` mount point, the names should be `mnt-ssd.automount` and `mnt-ssd.mount`. You can use these to start the debugging process if the drives aren't mounting on boot. If you have other services that depend on the SSD being mounted (say, K3s), append the following lines to the `[Unit]` section of your service file. Example for K3s:
+
+<CodeBlock lang="text" name="/etc/systemd/system/k3s.service">
+{`[Unit]
+Description=Lightweight Kubernetes
+Documentation=https://k3s.io
+Wants=network-online.target
+After=network-online.target
+Requires=mnt-ssd.mount
+After=mnt-ssd.mount
+`}
+</CodeBlock>
+
+A `sudo systemctl daemon-reload` would apply the configuration, but regardless we'll restart the Pi now and confirm if the drive is present on `df -h` after boot.
+
+### Debugging
+The following commands will help debug what's going on if the automount configuration was incorrectly specified:
+- `lsblk`
+- `blkid`
+- `df -h`
+- `systemctl status mnt-ssd.automount`
+- `systemctl status mnt-ssd.mount`
+- `journalctl -u mnt-ssd.automount`
+- `journalctl -u mnt-ssd.mount`
+- `dmesg | grep -i mount`
+- `journalctl -xe`
+
+I'll refer the reader to Google to explain the usefulness of each command.
+
+# Summary
+With all of the above completed, your Raspberry Pi should now have a speedy SSD connected to it!
+
+export default function MDXPage({children}) {
+  return (
+    <MdxLayout metadata={metadata}>
+      {children}
+    </MdxLayout>
+  )
+}

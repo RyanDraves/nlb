@@ -23,11 +23,11 @@ I've recently been trying to learn some basic Rust. It's an appealing language; 
 
 One of the neat tutorials Rust has is on their WASM support, where you build Conway's [Game of Life in WASM](https://rustwasm.github.io/docs/book/game-of-life/introduction.html). This is near and dear to my heart; I built something similar when I was first learning how to code through [FreeCodeCamp](https://www.freecodecamp.org/). I'll even entertain a link to my [old project](https://codepen.io/RyanDraves/pen/BdmmqV); enjoy.
 
-Anywho, the goal is to incorportate this tutorial into the blog and add some interactivity backed by Rust. For this post, I'll share some of the key parts of the setup to get this working with Bazel, as well as some things I gave up on.
+Anywho, the goal is to incorporate this tutorial into the blog and add some interactivity backed by Rust. For this post, I'll share some of the key parts of the setup to get this working with Bazel, as well as some things I gave up on.
 
 # Rust Bazel setup
 
-Getting toolschains setup for Rust was a rather large headache. It's become increasingly clear to me that every `rules_*` language repo does things their own way, none are quite perfect, and few translate well to the next. `rules_rust` is very much like this.
+Getting toolchains setup for Rust was a rather large headache. It's become increasingly clear to me that every `rules_*` language repo does things their own way, none are quite perfect, and few translate well to the next. `rules_rust` is very much like this.
 
 The biggest part of the toolchain setup is to get the WASM bindgen toolchain registered and working. Someone on the Bazel Slack community very generously put together a [Rust WASM example](https://github.com/bazelbuild/rules_rust/pull/2914) that works quite nicely. A key detail is that this works with `version = 0.51.0` of `rules_rust`; I had a bad time using the latest version (currently `0.56.0`).
 

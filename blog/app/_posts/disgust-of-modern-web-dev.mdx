@@ -30,13 +30,13 @@ A few things went right, so it's good to call them out:
 
 ## Bazel rules for web dev
 
-The good folks maintaining [bazel-contrib](https://github.com/bazel-contrib) and [aspect-build](https://github.com/aspect-build) repositories have done a great job setting up rules for [NodeJS](https://github.com/bazel-contrib/rules_nodejs), [Javscript](https://github.com/aspect-build/rules_js) and [Typescript](https://github.com/aspect-build/rules_ts) that work out of the box and have a great [example for NextJS](https://github.com/bazelbuild/examples/blob/b51e3bdd468ce8c4a516d7dca993909dcc84af32/frontend/MODULE.bazel). The examples didn't cover the Bazel intricacies for all of the above buzzwords, but they were a great starting point.
+The good folks maintaining [bazel-contrib](https://github.com/bazel-contrib) and [aspect-build](https://github.com/aspect-build) repositories have done a great job setting up rules for [NodeJS](https://github.com/bazel-contrib/rules_nodejs), [Javascript](https://github.com/aspect-build/rules_js) and [Typescript](https://github.com/aspect-build/rules_ts) that work out of the box and have a great [example for NextJS](https://github.com/bazelbuild/examples/blob/b51e3bdd468ce8c4a516d7dca993909dcc84af32/frontend/MODULE.bazel). The examples didn't cover the Bazel intricacies for all of the above buzzwords, but they were a great starting point.
 
 Two of the best features were that [ibazel](https://github.com/bazelbuild/bazel-watcher) worked for hot reloads without additional setup and that NPM package binaries were exposed in a consistent and straightforward way, something not as available in the [previous Jekyll setup](./jekyll-bazel).
 
 ## Strength in ubiquity
 
-It goes without saying that web development is popular. Staying on the well-trodden path has several nice benefits, but the most notable is the increased quality of AI suggestions. Copilot has a lot more source material to draw from using these popular frameworks, so I found the chat faeture to be much-needed glue where documentation and standards fell short.
+It goes without saying that web development is popular. Staying on the well-trodden path has several nice benefits, but the most notable is the increased quality of AI suggestions. Copilot has a lot more source material to draw from using these popular frameworks, so I found the chat feature to be much-needed glue where documentation and standards fell short.
 
 ## TailwindCSS & MDX just make sense
 
@@ -75,7 +75,7 @@ The black box structure of every tool and framework infuriates me. I can underst
 
 Let's take NextJS's MDX support for example. NextJS's [MDX documentation](https://nextjs.org/docs/app/building-your-application/configuring/mdx) starts with the simple:
 
-- MDX is a combination of coverting Markdown into HTML and embedded React components into the Markdown content
+- MDX is a combination of converting Markdown into HTML and embedded React components into the Markdown content
 
 Sure, that's straightforward. But dear magic mirror, how do I use this?
 
@@ -120,7 +120,7 @@ I couldn't get this working with Bazel's sandbox, so the explicit file generatio
 
 ## What really is an incremental build anyways?
 
-Touched upon in the last section, none of this tooling is conducive to incremental builds. The closest thing I could find for NextJS was this brief [feature request for incremental builds](https://github.com/vercel/next.js/discussions/30716), but it seems closer to the server runtime behavior of [incremental static regeneration](https://vercel.com/docs/incremental-static-regeneration) than a sensible build process. NextJS is clearly capable of an incremental build; this is exactly what it's doing when using `next dev` and requesting a page, which makes development bareable.
+Touched upon in the last section, none of this tooling is conducive to incremental builds. The closest thing I could find for NextJS was this brief [feature request for incremental builds](https://github.com/vercel/next.js/discussions/30716), but it seems closer to the server runtime behavior of [incremental static regeneration](https://vercel.com/docs/incremental-static-regeneration) than a sensible build process. NextJS is clearly capable of an incremental build; this is exactly what it's doing when using `next dev` and requesting a page, which makes development bearable.
 
 What we end up with in the dependency graph are these monolithic targets that depend on everything.
 

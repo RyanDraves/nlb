@@ -77,7 +77,7 @@ The `jekyll_site` macro I made works by taking in the following:
 With those inputs, the macro produces a few targets:
 - A target to call the Jekyll binary and build the site
 - A target to create a small script that wraps the Jekyll binary and sorts out runfile locations
-- An exectuable target to call the previous script
+- An executable target to call the previous script
 
 With this setup we get a clean interface to either `bazel build` or `bazel run` our site. Targets for this macro are also quite simple:
 <CodeBlock lang="python" name="BUILD">

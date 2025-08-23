@@ -117,6 +117,9 @@
     "[markdown]": {
         "editor.wordWrap": "on",
     },
+    "[mdx]": {
+        "editor.wordWrap": "on",
+    },
     "arduino.useArduinoCli": true,
     "[yaml]": {
         "editor.insertSpaces": true,
