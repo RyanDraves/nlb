@@ -1,0 +1,48 @@
+core.workflow(
+    name = "default",
+    origin = git.github_origin(
+        url = "git@github.com:RyanDraves/nlb.git",
+        ref = "main",
+        enable_lfs = True,
+    ),
+    destination = git.github_pr_destination(
+        url = "https://github.com/RyanDraves/sharetrace",
+        destination_ref = "main",
+    ),
+
+    # Copy source files but curate one particular BUILD file in the destination
+    origin_files = glob(["nlb/sharetrace/**", "nlb/util/click_utils.py", "nlb/util/console_utils.py"]),
+    destination_files = glob(["sharetrace/**", "README.md", "VERSION.txt"], exclude = ["sharetrace/util/BUILD"]),
+    authoring = authoring.pass_thru("Ryan Draves <dravesr@umich.edu>"),
+    transformations = [
+        core.replace(
+            before = "//nlb/util",
+            after = "//sharetrace/util",
+            paths = glob(["**/BUILD"]),
+        ),
+        core.replace(
+            before = 'load("//bzl/macros:python.bzl", "py_binary")',
+            after = 'load("//:python.bzl", "py_binary")',
+            paths = glob(["**/BUILD"]),
+        ),
+        core.replace(
+            before = "from nlb.sharetrace",
+            after = "from sharetrace",
+            paths = glob(["**/*.py"]),
+        ),
+        core.replace(
+            before = "from nlb.util",
+            after = "from sharetrace.util",
+            paths = glob(["**/*.py"]),
+        ),
+        core.replace(
+            before = "from nlb import sharetrace",
+            after = "import sharetrace",
+            paths = glob(["**/README.md"]),
+        ),
+        core.move("nlb/sharetrace/README.md", "README.md"),
+        core.move("nlb/sharetrace/VERSION.txt", "VERSION.txt"),
+        core.move("nlb/sharetrace/", "sharetrace/"),
+        core.move("nlb/util/", "sharetrace/util/"),
+    ],
+)

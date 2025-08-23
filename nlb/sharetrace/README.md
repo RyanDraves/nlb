@@ -18,7 +18,7 @@ All this information is saved to a cache directory as JSON files that can later 
 ### Capture Traceback Information
 
 ```python
-from nlb.sharetrace import st
+from nlb import sharetrace
 
 # Install the exception hook (call this early in your program)
 sharetrace.install_exception_hook()
