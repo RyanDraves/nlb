@@ -10,7 +10,7 @@ core.workflow(
         destination_ref = "main",
     ),
 
-    # Copy everything but don't remove a README.md file if it exists.
+    # Copy source files but curate one particular BUILD file in the destination
     origin_files = glob(["nlb/sharetrace/**", "nlb/util/click_utils.py", "nlb/util/console_utils.py"]),
     destination_files = glob(["sharetrace/**", "README.md", "VERSION.txt"], exclude = ["sharetrace/util/BUILD"]),
     authoring = authoring.pass_thru("Ryan Draves <dravesr@umich.edu>"),
