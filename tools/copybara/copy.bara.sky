@@ -2,7 +2,7 @@ core.workflow(
     name = "default",
     origin = git.github_origin(
         url = "git@github.com:RyanDraves/nlb.git",
-        ref = "159-copybara-sharetrace-to-a-separate-repo",  # XXX
+        ref = "main",
         enable_lfs = True,
     ),
     destination = git.github_pr_destination(
