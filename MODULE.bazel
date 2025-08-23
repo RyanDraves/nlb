@@ -240,3 +240,15 @@ oci.pull(
 )
 
 use_repo(oci, "debian", "debian_linux_386", "debian_linux_amd64", "debian_linux_arm64_v8", "debian_linux_arm_v5", "debian_linux_arm_v7", "debian_linux_mips64le", "debian_linux_ppc64le", "debian_linux_s390x")
+
+#
+# Repo shuffling
+#
+bazel_dep(name = "rules_java", version = "8.15.1")
+http_jar = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_jar")
+http_jar(
+    name = "copybara",
+    # From https://github.com/google/copybara/releases/download/v20250811/copybara_deploy.jar.sha256
+    sha256 = "513d98947a3468b2df74b8f3d524d261bed54609791bb789060f6eaac9aee57b",
+    urls = ["https://github.com/google/copybara/releases/download/v20250811/copybara_deploy.jar"],
+)

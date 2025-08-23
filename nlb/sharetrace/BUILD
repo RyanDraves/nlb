@@ -1,5 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pip//:requirements.bzl", "requirement")
+load("@rules_java//java:java_binary.bzl", "java_binary")
 load("//bzl/macros:python.bzl", "py_binary")
 
 py_library(
@@ -43,4 +44,16 @@ py_binary(
         ":interface",
         "//nlb/util:console_utils",
     ],
+)
+
+java_binary(
+    name = "sharetrace_copybara",
+    args = [
+        "$(location :copy.bara.sky)",
+    ],
+    data = [
+        ":copy.bara.sky",
+    ],
+    main_class = "com.google.copybara.Main",
+    runtime_deps = ["@copybara//jar"],
 )
