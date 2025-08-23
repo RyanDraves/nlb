@@ -5,6 +5,7 @@ load("//bzl/macros:python.bzl", "py_binary")
 py_library(
     name = "__init__",
     srcs = ["__init__.py"],
+    visibility = ["//visibility:public"],
     deps = [
         ":st",
     ],
