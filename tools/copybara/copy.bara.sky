@@ -30,6 +30,11 @@ core.workflow(
             after = "from sharetrace.util",
             paths = glob(["**/*.py"]),
         ),
+        core.replace(
+            before = "from nlb import sharetrace",
+            after = "import sharetrace",
+            paths = glob(["**/README.md"]),
+        ),
         core.move("nlb/sharetrace/README.md", "README.md"),
         core.move("nlb/sharetrace/VERSION.txt", "VERSION.txt"),
         core.move("nlb/sharetrace/", "sharetrace/"),
