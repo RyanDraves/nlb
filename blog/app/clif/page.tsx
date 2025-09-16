@@ -82,12 +82,17 @@ const clifBarReviews: ClifBarReview[] = [
         review: 'Vanilla Almond improves on the shortcomings of Blueberry Almond Crisp, but does so in an unremarkable way.'
     },
     {
+        name: 'Chocolate Chip Peanut Crunch',
+        rating: 3,
+        image: '/assets/clif/chocolate_chip_peanut_crunch.png',
+        review: 'Mush. Smells of soy. Has no distinct or impressionable flavor.'
+    },
+    {
         name: 'Blueberry Almond Crisp',
         rating: 2.5,
         image: '/assets/clif/blueberry_almond_crisp.png',
         review: 'Blueberry Almond Crisp specializes in fulfilling the need for a Clif bar without the guilt or aftertaste of having eaten a sugary flavor. In all other regards, it is the worst Clif bar.'
     },
-    // Missing flavors: Chocolate Chip Peanut Crunch
 ];
 
 const StarRating = ({ rating }: { rating: number }) => {
