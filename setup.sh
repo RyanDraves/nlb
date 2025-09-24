@@ -53,6 +53,8 @@ APT_PACKAGES=(
     libpq-dev
     # Sound
     portaudio19-dev
+    # Copying
+    xclip
 )
 
 function check_if_on_wsl() {
@@ -291,6 +293,7 @@ function setup_gh() {
     authenticate_gh
     make_gh_alias feature 'nlb_gh_feature $@' -s
     make_gh_alias merge 'pr merge -s -d'
+    install_gh_extension github/gh-copilot
 }
 
 function install_gh() {
@@ -365,6 +368,18 @@ function make_gh_alias() {
     fi
 }
 
+function install_gh_extension() {
+    local extension=$1
+    # Check if gh extension is already installed
+    if gh extension list | grep -q "$extension"; then
+        echo "gh extension $extension already installed"
+        return 0
+    fi
+
+    echo "Installing gh extension $extension"
+    gh extension install $extension
+}
+
 function install_vscode_keybindings() {
     local repo_keybindings_file=$1
 
@@ -404,6 +419,10 @@ function setup_bash_aliases() {
     openssl dgst -sha256 -binary \"\$1\" | openssl base64 -A | sed 's/^/sha256-/'
     echo ""  # Newline
         }"
+        "# List recent branches"
+        "function recent_branches() {
+    git branch --sort=-committerdate | head -n \"\${1:-8}\"
+}"
     )
 
     maybe_add_to_file "$bash_aliases_file" "${bash_aliases_lines[@]}"
