@@ -554,7 +554,7 @@ def main() -> None:
 
     if len(method_to_df) < 2:
         return
-    compare_reasoning_effort = 'low'
+    compare_reasoning_effort = 'medium'
     plot_policy_success_comparison(
         method_to_df,
         reasoning_effort=compare_reasoning_effort,

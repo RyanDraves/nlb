@@ -27,6 +27,7 @@ ACTION_MAP: dict[Action, tuple[int, int]] = {
 
 
 def action_from_tuple(action: tuple[int, int]) -> Action:
+    """Convert a (src, dst) tuple to an Action enum."""
     for act, (src, dst) in ACTION_MAP.items():
         if (src, dst) == action:
             return act
