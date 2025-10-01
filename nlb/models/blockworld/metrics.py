@@ -4,8 +4,11 @@ import enum
 
 class Policy(enum.Enum):
     HEURISTIC = enum.auto()
+    MDP = enum.auto()
     OPEN_LOOP_LLM = enum.auto()
     CLOSED_LOOP_LLM = enum.auto()
+    HEURISTIC_LLM = enum.auto()
+    MDP_LLM = enum.auto()
 
 
 @dataclasses.dataclass

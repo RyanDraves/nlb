@@ -516,11 +516,12 @@ def main() -> None:
     cur_dir = pathlib.Path(__file__).parent
 
     method_to_csv = {
+        metrics.Policy.HEURISTIC: cur_dir / 'results_heuristic_5_blocks_50_runs.csv',
+        metrics.Policy.MDP: cur_dir / 'results_mdp_5_blocks_50_runs.csv',
         metrics.Policy.OPEN_LOOP_LLM: cur_dir
         / 'results_open_loop_llm_5_blocks_50_runs.csv',
         metrics.Policy.CLOSED_LOOP_LLM: cur_dir
         / 'results_closed_loop_llm_5_blocks_50_runs_full.csv',
-        # metrics.Policy.HEURISTIC: cur_dir / 'results_heuristic_5_blocks_50_runs.csv',
     }
     method_to_df = {method: pd.read_csv(csv) for method, csv in method_to_csv.items()}
 
@@ -554,7 +555,7 @@ def main() -> None:
 
     if len(method_to_df) < 2:
         return
-    compare_reasoning_effort = 'medium'
+    compare_reasoning_effort = 'high'
     plot_policy_success_comparison(
         method_to_df,
         reasoning_effort=compare_reasoning_effort,

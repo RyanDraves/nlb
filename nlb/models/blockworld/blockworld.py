@@ -9,6 +9,10 @@ from openai.types import shared
 from nlb.models.blockworld import closed_loop_llm
 from nlb.models.blockworld import environment
 from nlb.models.blockworld import heuristic
+from nlb.models.blockworld import heuristic_llm
+
+# from nlb.models.blockworld import mdp_llm
+from nlb.models.blockworld import mdp_manual
 from nlb.models.blockworld import metrics
 from nlb.models.blockworld import open_loop_llm
 from nlb.models.blockworld import plot
@@ -77,8 +81,13 @@ def main(
 
     try:
         for reasoning_effort in reasoning_efforts:
+            mdp_manual_planner = mdp_manual.MdpPlanner(num_blocks)
             open_loop_planner = open_loop_llm.OpenLoopPlanner(model, reasoning_effort)
             closed_loop_planner = closed_loop_llm.ClosedLoopPlanner(
+                model, reasoning_effort
+            )
+            # mdp_planner = mdp_llm.MdpLlmPlanner(num_blocks, model, reasoning_effort)
+            heuristic_llm_planner = heuristic_llm.HeuristicLlmPlanner(
                 model, reasoning_effort
             )
 
@@ -87,12 +96,15 @@ def main(
                 Callable[[environment.State, metrics.Result], environment.Action],
             ] = {
                 metrics.Policy.HEURISTIC: heuristic.heuristic_policy,
+                metrics.Policy.MDP: mdp_manual_planner.mdp_policy,
                 metrics.Policy.OPEN_LOOP_LLM: open_loop_planner.open_loop_llm,
                 metrics.Policy.CLOSED_LOOP_LLM: closed_loop_planner.closed_loop_llm,
+                # metrics.Policy.MDP_LLM: mdp_planner.mdp_llm_policy,
+                metrics.Policy.HEURISTIC_LLM: heuristic_llm_planner.heuristic_llm,
             }
 
             assert reasoning_effort is not None
-            rng_seeds = [42] if monte_carlo is None else list(range(8, monte_carlo))
+            rng_seeds = [42] if monte_carlo is None else list(range(monte_carlo))
             for rng_seed in rng_seeds:
                 console.rule(f'Reasoning Effort: {reasoning_effort}, Seed: {rng_seed}')
                 np.random.seed(rng_seed)

@@ -46,11 +46,11 @@ class Action(enum.Enum):
     MOVE_2_TO_3 = 'MOVE_2_TO_3'
     MOVE_3_TO_1 = 'MOVE_3_TO_1'
     MOVE_3_TO_2 = 'MOVE_3_TO_2'
-```
 
 def action_from_tuple(action: tuple[int, int]) -> Action:
     """Convert a (src, dst) tuple to an Action enum."""
     ...
+```
 '''
 
 
@@ -73,12 +73,13 @@ class HeuristicLlmPlanner:
         )
         self._policy_code: str | None = None
         self._policy_module: ModuleType | None = None
+        self._tried_generation = False
 
     def heuristic_llm(
         self, state: environment.State, result: metrics.Result
     ) -> environment.Action:
         """Heuristic LLM-generated policy for the block world environment."""
-        if self._policy_module is None:
+        if self._policy_module is None and not self._tried_generation:
             self._console.info('Generating heuristic policy using LLM...')
 
             agent_result = agents.Runner().run_sync(
@@ -89,6 +90,7 @@ class HeuristicLlmPlanner:
             result.input_tokens += agent_result.context_wrapper.usage.input_tokens
             result.output_tokens += agent_result.context_wrapper.usage.output_tokens
 
+            self._tried_generation = True
             if self._policy_code is None:
                 self._console.error(
                     'LLM failed to generate a plan. Taking arbitrary action.'
@@ -119,8 +121,10 @@ class HeuristicLlmPlanner:
                     'Generated module does not have a heuristic_policy function. Taking arbitrary action.'
                 )
                 return environment.Action.MOVE_1_TO_2  # Arbitrary action
+        elif self._tried_generation:
+            return environment.Action.MOVE_1_TO_2  # Arbitrary action
 
-        return self._policy_module.heuristic_policy(state)
+        return self._policy_module.heuristic_policy(state)  # type: ignore
 
 
 @agents.function_tool
