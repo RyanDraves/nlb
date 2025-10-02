@@ -1,8 +1,8 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pip//:requirements.bzl", "requirement")
-load("//bzl/macros:python.bzl", "py_test")
+load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
-py_library(
+py_binary(
     name = "blockworld",
     srcs = ["blockworld.py"],
     visibility = ["//visibility:public"],
@@ -149,7 +149,7 @@ py_library(
     ],
 )
 
-py_library(
+py_binary(
     name = "plot",
     srcs = ["plot.py"],
     visibility = ["//visibility:public"],

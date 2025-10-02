@@ -523,10 +523,14 @@ def plot_token_usage_comparison(
 
 
 @click.command()
-def main() -> None:
+@click.option(
+    '--cur-dir',
+    type=click.Path(exists=True, file_okay=False, path_type=pathlib.Path),
+    default=pathlib.Path(__file__).parent,
+    help='Current directory (for loading plots and results)',
+)
+def main(cur_dir: pathlib.Path) -> None:
     """Load sim results and plot them"""
-    cur_dir = pathlib.Path(__file__).parent
-
     batch_size = 50
     method_to_csv = {
         metrics.Policy.HEURISTIC: cur_dir / 'results_heuristic_5_blocks_50_runs.csv',

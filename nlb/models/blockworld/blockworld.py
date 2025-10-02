@@ -57,13 +57,19 @@ def _save_results(
     is_flag=True,
     help='Whether to create a GIF of the environment execution (1 seed per sim)',
 )
+@click.option(
+    '--cur-dir',
+    type=click.Path(exists=True, file_okay=False, path_type=pathlib.Path),
+    default=pathlib.Path(__file__).parent,
+    help='Current directory (for saving plots and results)',
+)
 def main(
     num_blocks: int,
     monte_carlo: int | None,
     policy: list[metrics.Policy],
     make_gif: bool,
+    cur_dir: pathlib.Path,
 ) -> None:
-    cur_dir = pathlib.Path(__file__).parent
     console = console_utils.Console()
 
     results: list[metrics.Result] = []
