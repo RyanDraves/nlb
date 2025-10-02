@@ -1,11 +1,9 @@
 import dataclasses
-from typing import Type, TypeVar
+from typing import Type
 
 import pandas as pd
 
 from nlb.util import dataclass
-
-T = TypeVar('T', bound=dataclass.DataclassLike)
 
 
 def dataframe_from_type(

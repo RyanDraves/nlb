@@ -42,6 +42,8 @@ class Environment:
     def __init__(self, num_blocks: int):
         self._console = console_utils.Console()
 
+        # Create a psuedo-random initial state
+        # (smaller numbers are below larger numbers in a stack)
         blocks = np.random.randint(0, 3, size=num_blocks)
 
         # 3 stacks of blocks

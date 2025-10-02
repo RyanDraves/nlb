@@ -5,14 +5,14 @@ from typing import Generator
 from nlb.models.blockworld import environment
 
 
-def permutations_of_target(target: int = 5) -> Generator[list[int], None, None]:
+def _permutations_of_target(target: int = 5) -> Generator[list[int], None, None]:
     return itertools.permutations(range(target))  # type: ignore
 
 
-def find_permutations_sum_to_target(
+def _find_permutations_sum_to_target(
     target: int = 5,
 ) -> Generator[list[int], None, None]:
-    """Find a permutation of n numbers that sum to target."""
+    """Find all permutations of 3 numbers that sum to target."""
     # Tuples of 3 numbers that sum to target
     for i in range(target + 1):
         for j in range(target + 1):
@@ -58,8 +58,8 @@ class BlockworldSampleMdp:
         self._actions = list(environment.Action)
 
     def states(self) -> Generator[environment.State, None, None]:
-        for perm in permutations_of_target(self._num_blocks):
-            for sizes in find_permutations_sum_to_target(self._num_blocks):
+        for perm in _permutations_of_target(self._num_blocks):
+            for sizes in _find_permutations_sum_to_target(self._num_blocks):
                 state: environment.State = [[], [], []]
                 index = 0
                 for stack_index, size in enumerate(sizes):
