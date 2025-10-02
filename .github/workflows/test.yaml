@@ -26,11 +26,43 @@ jobs:
       - name: Show disk usage
         run: df -h
 
-      - name: Top-level directories
-        run: du -h -d1 / | sort -hr | head -n 20
+      - name: Trim runner
+        run: |
+          # Remove Java (JDKs)
+          sudo rm -rf /usr/lib/jvm
 
-      - name: Detailed file sizes
-        run: find / -type f -exec du -h {} + 2>/dev/null | sort -hr | head -n 100
+          # Remove .NET SDKs
+          sudo rm -rf /usr/share/dotnet
+
+          # Remove Swift toolchain
+          sudo rm -rf /usr/share/swift
+
+          # Remove Haskell (GHC)
+          sudo rm -rf /usr/local/.ghcup
+
+          # Remove Julia
+          sudo rm -rf /usr/local/julia*
+
+          # Remove Android SDKs
+          sudo rm -rf /usr/local/lib/android
+
+          # Remove Chromium (optional if not using for browser tests)
+          sudo rm -rf /usr/local/share/chromium
+
+          # Remove Microsoft/Edge and Google Chrome builds
+          sudo rm -rf /opt/microsoft /opt/google
+
+          # Remove Azure CLI
+          sudo rm -rf /opt/az
+
+          # Remove PowerShell
+          sudo rm -rf /usr/local/share/powershell
+
+          # Remove CodeQL and other toolcaches
+          sudo rm -rf /opt/hostedtoolcache
+
+      - name: Show disk usage
+        run: df -h
 
       - name: Common Setup
         run: |
