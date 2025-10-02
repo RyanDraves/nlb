@@ -28,9 +28,6 @@ jobs:
 
       - name: Trim runner
         run: |
-          # Remove Java (JDKs)
-          sudo rm -rf /usr/lib/jvm
-
           # Remove .NET SDKs
           sudo rm -rf /usr/share/dotnet
 
