@@ -1,0 +1,36 @@
+from nlb.models.blockworld import environment
+
+
+def heuristic_policy(state: environment.State) -> environment.Action:
+    """A simple heuristic policy to sort the stacks."""
+    goal_stack = state[2]
+
+    # Check if the goal stack is already sorted
+    for i, block in enumerate(goal_stack):
+        if block != i:
+            goal_sorted = False
+            break
+    else:
+        goal_sorted = True
+
+    if not goal_sorted:
+        # Move the blocks form the goal to the first stack
+        return environment.Action.MOVE_3_TO_1
+
+    # Find the next block to move to the goal stack
+    next_block = len(goal_stack)
+    for i, stack in enumerate(state[:2]):
+        if next_block in stack:
+            src_stack = i + 1
+            block_on_top = stack[-1] == next_block
+            break
+    else:
+        # All blocks are in the goal stack
+        return environment.Action.MOVE_1_TO_2  # Arbitrary action
+
+    if block_on_top:
+        return environment.action_from_tuple((src_stack, 3))
+
+    # Move the top block to the other non-goal stack
+    dst_stack = 3 - src_stack
+    return environment.action_from_tuple((src_stack, dst_stack))

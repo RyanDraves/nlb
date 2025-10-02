@@ -35,7 +35,7 @@ def get_assistant_tool_schema(
 ) -> assistant_tool_param.AssistantToolParam:
     """Generate the OpenAI Assistant tool schema for a given function.
 
-    This closes follows `openai.pydantic_function_tool`'s behavior on
+    This closely follows `openai.pydantic_function_tool`'s behavior on
     a schema analogous to a function spec, but instead generates directly
     from a function signature and docstring.
     """

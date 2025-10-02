@@ -28,6 +28,16 @@ py_library(
 )
 
 py_library(
+    name = "dataframe",
+    srcs = ["dataframe.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("pandas"),
+        ":dataclass",
+    ],
+)
+
+py_library(
     name = "exception",
     srcs = ["exception.py"],
     visibility = ["//visibility:public"],
@@ -78,6 +88,26 @@ py_library(
     deps = [
         requirement("thefuzz"),
     ],
+)
+
+py_library(
+    name = "timeout",
+    srcs = ["timeout.py"],
+    visibility = ["//visibility:public"],
+)
+
+py_test(
+    name = "timeout_test",
+    srcs = ["timeout_test.py"],
+    deps = [
+        ":timeout",
+    ],
+)
+
+py_library(
+    name = "timer",
+    srcs = ["timer.py"],
+    visibility = ["//visibility:public"],
 )
 
 py_binary(

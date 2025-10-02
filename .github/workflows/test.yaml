@@ -22,13 +22,47 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # https://dev.to/mathio/squeezing-disk-space-from-github-actions-runners-an-engineers-guide-3pjg#6-how-to-automate-cleanup-in-your-ci
+      - name: Trim runner
+        run: |
+          # Remove .NET SDKs
+          sudo rm -rf /usr/share/dotnet
+
+          # Remove Swift toolchain
+          sudo rm -rf /usr/share/swift
+
+          # Remove Haskell (GHC)
+          sudo rm -rf /usr/local/.ghcup
+
+          # Remove Julia
+          sudo rm -rf /usr/local/julia*
+
+          # Remove Android SDKs
+          sudo rm -rf /usr/local/lib/android
+
+          # Remove Chromium (optional if not using for browser tests)
+          sudo rm -rf /usr/local/share/chromium
+
+          # Remove Microsoft/Edge and Google Chrome builds
+          sudo rm -rf /opt/microsoft /opt/google
+
+          # Remove Azure CLI
+          sudo rm -rf /opt/az
+
+          # Remove PowerShell
+          sudo rm -rf /usr/local/share/powershell
+
+          # Remove CodeQL and other toolcaches
+          sudo rm -rf /opt/hostedtoolcache
+
       - name: Common Setup
         run: |
           sudo apt-get install -y portaudio19-dev
           echo "build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}" > .user.bazelrc
       - name: Build
         run: |
-          bazel build //...
+          bazel build //... --deleted_packages=apps
       - name: Test
         run: |
-          bazel test //...
+          bazel test //... --deleted_packages=apps
