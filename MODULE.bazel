@@ -20,7 +20,7 @@ git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "g
 #
 # Pico SDK & Picotool
 #
-bazel_dep(name = "pico-sdk", version = "2.1.1")
+bazel_dep(name = "pico-sdk", version = "2.2.0")
 register_toolchains(
     "@pico-sdk//bazel/toolchain:linux-x86_64-rp2040",
     "@pico-sdk//bazel/toolchain:linux-x86_64-rp2350",
