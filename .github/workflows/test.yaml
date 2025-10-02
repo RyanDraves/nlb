@@ -23,9 +23,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Show disk usage
-        run: df -h
-
+      # https://dev.to/mathio/squeezing-disk-space-from-github-actions-runners-an-engineers-guide-3pjg#6-how-to-automate-cleanup-in-your-ci
       - name: Trim runner
         run: |
           # Remove .NET SDKs
@@ -57,9 +55,6 @@ jobs:
 
           # Remove CodeQL and other toolcaches
           sudo rm -rf /opt/hostedtoolcache
-
-      - name: Show disk usage
-        run: df -h
 
       - name: Common Setup
         run: |
