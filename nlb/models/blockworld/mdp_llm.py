@@ -11,6 +11,7 @@ from nlb.models.blockworld import environment
 from nlb.models.blockworld import mdp
 from nlb.models.blockworld import metrics
 from nlb.util import console_utils
+from nlb.util import timeout
 
 _SYSTEM_PROMPT = '''You are modeling an MDP for a block world environment.
 
@@ -39,11 +40,15 @@ from nlb.models.blockworld import environment
 class MDP:
     def __init__(self, num_blocks: int): ...
 
-    def states(self) -> Generator[environment.State, None, None]: ...
+    def states(self) -> Generator[environment.State, None, None]:
+        """Enumerate all possible states of the environment."""
+        ...
 
     def state_index(self, state: environment.State) -> int: ...
 
-    def actions(self) -> Generator[environment.Action, None, None]: ...
+    def actions(self) -> Generator[environment.Action, None, None]:
+        """Enumerate all possible actions in the environment."""
+        ...
 
     def action_index(self, action: environment.Action) -> int: ...
 
@@ -89,10 +94,15 @@ consistent and correct indices.
 
 class MdpLlmPlanner:
     def __init__(
-        self, num_blocks: int, model: str, reasoning_effort: shared.ReasoningEffort
+        self,
+        num_blocks: int,
+        model: str,
+        reasoning_effort: shared.ReasoningEffort,
+        value_iteration_timeout_s: float = 600.0,
     ):
         self._console = console_utils.Console()
         self._num_blocks = num_blocks
+        self._value_iteration_timeout_s = value_iteration_timeout_s
 
         self._agent = agents.Agent(
             name='MdpLlmPlanner',
@@ -142,6 +152,7 @@ class MdpLlmPlanner:
 
             # Load the generated MDP module
             self._mdp_path.write_text(self._mdp_code)
+            self._console.info(f'Wrote mdp to {self._mdp_path}')
             spec = util.spec_from_file_location(
                 'nlb.modules.blockworld.mdp_llm_model', self._mdp_path
             )
@@ -150,8 +161,10 @@ class MdpLlmPlanner:
                     'Failed to load generated MDP model code. Taking arbitrary action.'
                 )
                 return environment.Action.MOVE_1_TO_2  # Arbitrary action
+            self._console.info(f'Loading spec from {self._mdp_path}')
             self._mdp_module = util.module_from_spec(spec)
             try:
+                self._console.info('Executing the generated policy module...')
                 spec.loader.exec_module(self._mdp_module)
             except Exception as e:
                 self._console.error(
@@ -165,17 +178,29 @@ class MdpLlmPlanner:
                 )
                 return environment.Action.MOVE_1_TO_2  # Arbitrary action
 
-            self._mdp = self._mdp_module.MDP(num_blocks=self._num_blocks)
-            assert self._mdp is not None
+            try:
+                self._mdp = self._mdp_module.MDP(num_blocks=self._num_blocks)
+                assert self._mdp is not None
 
-            self._console.info('Generating MDP policy using value iteration...')
-            self._policy = mdp.value_iteration(self._mdp)
-        elif self._tried_generation:
+                self._console.info('Generating MDP policy using value iteration...')
+                with timeout.timeout(self._value_iteration_timeout_s):
+                    self._policy = mdp.value_iteration(self._mdp)
+            except (Exception, timeout.TimeoutError) as e:
+                self._console.error(
+                    f'Error creating MDP or generating policy: {e}. Taking arbitrary action.'
+                )
+                return environment.Action.MOVE_1_TO_2  # Arbitrary action
+        elif self._mdp is None or self._policy is None:
             return environment.Action.MOVE_1_TO_2  # Arbitrary action
 
-        assert self._mdp is not None and self._policy is not None
-        state_index = self._mdp.state_index(state)
-        return self._action_from_action_index(self._policy[state_index])
+        try:
+            state_index = self._mdp.state_index(state)
+            return self._action_from_action_index(self._policy[state_index])
+        except Exception as e:
+            self._console.error(
+                f'Error getting action from policy: {e}. Taking arbitrary action.'
+            )
+            return environment.Action.MOVE_1_TO_2  # Arbitrary action
 
 
 @agents.function_tool

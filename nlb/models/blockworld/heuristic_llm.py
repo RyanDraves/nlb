@@ -99,6 +99,7 @@ class HeuristicLlmPlanner:
 
             # Load the generated policy code as a module
             self._policy_path.write_text(self._policy_code)
+            self._console.info(f'Wrote policy to {self._policy_path}')
             spec = util.spec_from_file_location(
                 'nlb.modules.blockworld.heuristic_llm_policy', self._policy_path
             )
@@ -107,8 +108,10 @@ class HeuristicLlmPlanner:
                     'Failed to load the generated policy module. Taking arbitrary action.'
                 )
                 return environment.Action.MOVE_1_TO_2  # Arbitrary action
+            self._console.info(f'Loading spec from {self._policy_path}')
             self._policy_module = util.module_from_spec(spec)
             try:
+                self._console.info('Executing the generated policy module...')
                 spec.loader.exec_module(self._policy_module)
             except Exception as e:
                 self._console.error(
@@ -121,10 +124,14 @@ class HeuristicLlmPlanner:
                     'Generated module does not have a heuristic_policy function. Taking arbitrary action.'
                 )
                 return environment.Action.MOVE_1_TO_2  # Arbitrary action
-        elif self._tried_generation:
+        elif self._policy_module is None:
             return environment.Action.MOVE_1_TO_2  # Arbitrary action
 
-        return self._policy_module.heuristic_policy(state)  # type: ignore
+        try:
+            return self._policy_module.heuristic_policy(state)
+        except Exception as e:
+            self._console.error(f'Heuristic policy raised an exception: {e}')
+            return environment.Action.MOVE_1_TO_2  # Arbitrary action
 
 
 @agents.function_tool

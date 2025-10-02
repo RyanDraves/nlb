@@ -341,7 +341,7 @@ def plot_steps_comparison(
 
 
 def plot_wall_time(
-    df: pd.DataFrame, policy: metrics.Policy, output: pathlib.Path
+    df: pd.DataFrame, policy: metrics.Policy, output: pathlib.Path, batch_size: int
 ) -> None:
     policy_df = df[df['policy'] == policy.name]
 
@@ -354,6 +354,9 @@ def plot_wall_time(
         .mean()
         .reindex(reasoning_efforts)
     )
+    if policy in {metrics.Policy.MDP_LLM, metrics.Policy.HEURISTIC_LLM}:
+        # Multiple by batch size to compute "offline" time
+        wall_times *= batch_size
 
     # Plotting
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -399,7 +402,7 @@ def plot_wall_time_comparison(
 
 
 def plot_token_usage(
-    df: pd.DataFrame, policy: metrics.Policy, output: pathlib.Path
+    df: pd.DataFrame, policy: metrics.Policy, output: pathlib.Path, batch_size: int
 ) -> None:
     policy_df = df[df['policy'] == policy.name]
 
@@ -417,6 +420,10 @@ def plot_token_usage(
         .mean()
         .reindex(reasoning_efforts)
     )
+    if policy in {metrics.Policy.MDP_LLM, metrics.Policy.HEURISTIC_LLM}:
+        # Multiple by batch size to compute "offline" tokens
+        input_tokens *= batch_size
+        output_tokens *= batch_size
 
     x = np.arange(len(reasoning_efforts))  # the label locations
     width = 0.35  # the width of the bars
@@ -449,6 +456,7 @@ def plot_token_usage_comparison(
     method_to_df: dict[metrics.Policy, pd.DataFrame],
     reasoning_effort: str,
     output: pathlib.Path,
+    batch_size: int,
 ) -> None:
     policies = list(method_to_df.keys())
     input_token_data = []
@@ -458,6 +466,10 @@ def plot_token_usage_comparison(
         policy_df = df[df['reasoning_effort'] == reasoning_effort]
         input_token_data.append(policy_df['input_tokens'])
         output_token_data.append(policy_df['output_tokens'])
+        if policy in {metrics.Policy.MDP_LLM, metrics.Policy.HEURISTIC_LLM}:
+            # Multiple by batch size to compute "offline" tokens
+            input_token_data[-1] *= batch_size
+            output_token_data[-1] *= batch_size
 
     x = np.arange(len(policies))  # the label locations
     width = 0.35  # the width of the bars
@@ -515,6 +527,7 @@ def main() -> None:
     """Load sim results and plot them"""
     cur_dir = pathlib.Path(__file__).parent
 
+    batch_size = 50
     method_to_csv = {
         metrics.Policy.HEURISTIC: cur_dir / 'results_heuristic_5_blocks_50_runs.csv',
         metrics.Policy.MDP: cur_dir / 'results_mdp_5_blocks_50_runs.csv',
@@ -522,6 +535,9 @@ def main() -> None:
         / 'results_open_loop_llm_5_blocks_50_runs.csv',
         metrics.Policy.CLOSED_LOOP_LLM: cur_dir
         / 'results_closed_loop_llm_5_blocks_50_runs_full.csv',
+        metrics.Policy.HEURISTIC_LLM: cur_dir
+        / 'results_heuristic_llm_5_blocks_50_runs.csv',
+        metrics.Policy.MDP_LLM: cur_dir / 'results_mdp_llm_5_blocks_50_runs.csv',
     }
     method_to_df = {method: pd.read_csv(csv) for method, csv in method_to_csv.items()}
 
@@ -545,12 +561,14 @@ def main() -> None:
             df,
             method,
             cur_dir / 'plots' / f'{method.name.lower()}_wall_time.png',
+            batch_size,
         )
 
         plot_token_usage(
             df,
             method,
             cur_dir / 'plots' / f'{method.name.lower()}_token_usage.png',
+            batch_size,
         )
 
     if len(method_to_df) < 2:
@@ -578,6 +596,7 @@ def main() -> None:
         method_to_df,
         reasoning_effort=compare_reasoning_effort,
         output=cur_dir / 'plots' / 'token_usage_comparison.png',
+        batch_size=batch_size,
     )
 
 
