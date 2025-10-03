@@ -11,9 +11,8 @@ class WallTimer:
         self._start_time = time.time()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self._elapsed_time = time.time() - self._start_time
-        return self
 
     @property
     def elapsed_time(self) -> float:
