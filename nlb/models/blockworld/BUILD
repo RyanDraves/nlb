@@ -153,6 +153,9 @@ py_binary(
     name = "plot",
     srcs = ["plot.py"],
     visibility = ["//visibility:public"],
+    data = [
+        ":claw.png",
+    ],
     deps = [
         requirement("imageio"),
         requirement("matplotlib"),
