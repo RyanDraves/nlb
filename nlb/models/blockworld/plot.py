@@ -500,9 +500,6 @@ def main(cur_dir: pathlib.Path) -> None:
     method_to_df = {method: pd.read_csv(csv) for method, csv in method_to_csv.items()}
 
     for method, df in method_to_df.items():
-        if method is metrics.Policy.HEURISTIC:
-            continue
-
         plot_policy(
             df,
             method,

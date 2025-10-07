@@ -133,5 +133,9 @@
         "Update requirements.txt": [
             "requirements.txt"
         ]
-    }
+    },
+    "cSpell.words": [
+        "autograder",
+        "situationally"
+    ]
 }
