@@ -6,14 +6,14 @@ export const metadata = {
   title: "Oh, you blockhead!",
   excerpt:
     "A dive into LLM reasoning over blocks",
-  coverImage: "/assets/oh_you_blockhead/cover.jpg",
+  coverImage: "/assets/oh_you_blockhead/cover.png",
   date: "2025-10-08T00:00:00.000Z",
   author: {
     name: "Ryan Draves",
     picture: "/assets/authors/me.png"
   },
   ogImage: {
-    url: "/assets/oh_you_blockhead/cover.jpg"
+    url: "/assets/oh_you_blockhead/cover.png"
   }
 }
 
@@ -33,8 +33,9 @@ So, I set out to make an equally contrived problem to better understand LLM-base
 
 To limit the scope of this post, only the first and third question are really answered. The results allow for an opinion on the second question, but no comparative analysis is performed to establish a firmer answer. To limit the length of this post, I'll gloss over _some_ of the implementation details and save them for a separate [rant post](./oh-you-blockhead-rant).
 
+<PostImage title="Heuristic" src="/assets/oh_you_blockhead/blockworld_5_heuristic.gif" width="680" height="110" enlargeable={true} />
 # Problem Overview
-The scenario we'll be looking at is a simple block stacking problem. Functionally equivalent to one of those stack-the-rings-by-size puzzles for toddlers, the LLM is asked to take a set of numbered blocks randomly placed into three stacks and sort them on the third stack.
+The scenario we'll be looking at is a simple block stacking problem. Functionally equivalent to one of those stack-the-rings-by-size puzzles for toddlers, where the LLM is asked to take a set of numbered blocks randomly placed into three stacks and sort them on the third stack.
 
 ## Problem Space
 The state space is represented by a straightforward list of lists, e.g. `[[1, 0], [3], [4, 2]]`. There are `N!(N+1)(N+2)/2` possible states for `N` blocks (proof omitted), which comes in at `2520` states for 5 blocks.
@@ -48,8 +49,10 @@ For the LLM configuration, I used `gpt-5-mini` across all experiments, using the
 
 # Baseline Results
 
+Note that all images in this post can be clicked to enlarge.
+
+<PostImage title="Heuristic" src="/assets/oh_you_blockhead/heuristic_policy.png" width="680" height="110" enlargeable={true} />
 ## Heuristic
-<PostImage title="Heuristic" src="/assets/oh_you_blockhead/heuristic_policy.png" width="680" height="110" />
 
 To compare against, I made a simple, 3 minutes of effort heuristic policy to compare against. It's certainly suboptimal and just greedily tries to get the next block onto stack 3. Here's some pseudocode:
 
@@ -79,8 +82,8 @@ To compare against, I made a simple, 3 minutes of effort heuristic policy to com
 
 The plot is structured for the LLM planners, but we can observe that the heuristic always succeeds, takes up to 16 steps on a more difficult initial arrangement, and takes a couple dozen microseconds to run.
 
+<PostImage title="MDP" src="/assets/oh_you_blockhead/mdp_policy.png" width="680" height="110" enlargeable={true} />
 ## MDP
-<PostImage title="MDP" src="/assets/oh_you_blockhead/mdp_policy.png" width="680" height="110" />
 
 As an additional comparison, I model a [Markov Decision Process](https://www.geeksforgeeks.org/machine-learning/markov-decision-process/) for the problem. I spent more time than I care to admit implementing `state_index` to directly hash the state to a unique index; we'll discuss later how the LLM approaches this. The interface looks something like this (relevant for the MDP-LLM section):
 
@@ -113,8 +116,8 @@ Note that `transition` is deterministic in this simple scenario. Using a simple 
 
 # LLM-as-a-Planner Results
 
+<PostImage title="Open Loop LLM" src="/assets/oh_you_blockhead/open_loop_llm_policy.png" width="680" height="110" enlargeable={true} />
 ## Open Loop LLM
-<PostImage title="Open Loop LLM" src="/assets/oh_you_blockhead/open_loop_llm_policy.png" width="680" height="110" />
 
 Our first LLM-based policy is the simplest one: feed the LLM the current state of the environment and let it omnisciently produce a list of actions to bring the environment to the goal state. Since I'm focusing on simple prompts, I'll provide this one its entirety. All of the other polices have prompts that are close derivatives of this.
 
@@ -141,8 +144,8 @@ When fed the tool, the LLM sees a simple `create_plan(plan: list[Action]) -> Non
 
 This result shows our first surprises. The `minimal` reasoning is completely inept and always fails. Tuning the reasoning knob, the `medium` reasoning level actually performs the best in both success rate and the number of steps, but it fails to optimally solve the 4 step scenario. Perhaps the `high` reasoning setting makes the LLM overthink, as it has meaningfully worse performance. We can see our token usage ticks upwards with each reasoning level, with the `high` reasoning setting costing a little more than $0.01. Of course, our overall planning time is just north of the microseconds our baseline policies need online. Just north.
 
+<PostImage title="Closed Loop LLM" src="/assets/oh_you_blockhead/closed_loop_llm_policy.png" width="680" height="110" enlargeable={true} />
 ## Closed Loop LLM
-<PostImage title="Closed Loop LLM" src="/assets/oh_you_blockhead/closed_loop_llm_policy.png" width="680" height="110" />
 
 Our other LLM-as-a-planner policy is to use a "closed" loop, where we invoke the LLM to generate the single next action based on the current state. I did not bother setting up conversation context or any other means of letting the LLM think about its past mistakes, so "closed" is debatable.
 
@@ -151,8 +154,8 @@ Similar trends emerged in the closed loop results as the open loop planner, most
 # LLM-as-a-Modeler Results
 For modeling results, we'll adjust our analysis a bit. Since the LLM only needs to be prompted once to create a heuristic function or write an MDP, we'll instead prompt it 50 times and run each solution against all 50 generated scenarios. Likewise to the MDP baseline, we'll plot the wall time as the offline computation time (including value iteration convergence for MDP-LLM). For both methods, the LLM gets one attempt to write the code, and any failures to produce correct code, such as an import error or runtime exception, results in a failure for that batch of 50 scenarios.
 
+<PostImage title="Heuristic LLM" src="/assets/oh_you_blockhead/heuristic_llm_policy.png" width="680" height="110" enlargeable={true} />
 ## Heuristic LLM
-<PostImage title="Heuristic LLM" src="/assets/oh_you_blockhead/heuristic_llm_policy.png" width="680" height="110" />
 
 The heuristic LLM works by prompting the LLM to write code that implements a simple policy function `def heuristic(state: State) -> Action`, running some modest checks on the output, then dynamically loading it into the simulator. In modification of the simple prompt given to the open loop LLM, the LLM is told to write a Python module and given some helper functions it may import.
 
@@ -172,8 +175,8 @@ Strategy:
 
 That's a good idea! More complicated than the heuristic policy I implemented, but trying to avoid burying smaller blocks should allow for a better performing solution. Yet, come run time, the policy got stuck and hit the 20 step limit.
 
+<PostImage title="MDP LLM" src="/assets/oh_you_blockhead/mdp_llm_policy.png" width="680" height="110" enlargeable={true} />
 ## MDP LLM
-<PostImage title="MDP LLM" src="/assets/oh_you_blockhead/mdp_llm_policy.png" width="680" height="110" />
 
 Lastly, we have MDP LLM, where the LLM is given a similar prompt but instead asked to implement the interface shown in the baseline MDP section. The prompt also directed that vectored value iteration would be used on the MDP, so the state and action index functions needed to be handled with care (instructions I would give to a human writing this for me). No prompting was given to inform the LLM that the actions were deterministic, but every solution I checked correctly made this assumption anyways. In addition to the code checks, a 10 minute time limit was placed on the value iteration convergence to avoid solving for the halting problem on unboundedly bad implementations.
 
@@ -188,7 +191,8 @@ Looking through some of the generated MDPs, I was surprised to see the same patt
         self._index_cache = {simple_hash_function(state): i for i, state in enumerate(self._state_cache)}
 
     def states(self) -> Generator[environment.State, None, None]:
-        # Yield all states in the state cache
+        for state in self._state_cache:
+          yield state
 
     def state_index(self, state: environment.State) -> int:
         return self._index_cache[simple_hash_function(state)]
@@ -197,15 +201,14 @@ Looking through some of the generated MDPs, I was surprised to see the same patt
 
 This is much simpler than figuring out how to directly hash to a sequential index, so I was delightfully surprised to see nearly every solution use this simpler solution without direct guidance. Most failures happened with either poorly converged policies or hitting the 10 minute timeout, suggesting that minor code deficiencies either failed to uniquely index a given state or degraded the performance of state enumeration too much.
 
+<PostImage title="Policy Success" src="/assets/oh_you_blockhead/policy_success_comparison.png" width="680" height="110" enlargeable={true} />
 # Bringing it All Together
 
-<PostImage title="Policy Success" src="/assets/oh_you_blockhead/policy_success_comparison.png" width="680" height="110" />
+<PostImage title="Steps" src="/assets/oh_you_blockhead/steps_comparison.png" width="680" height="110" enlargeable={true} />
 
-<PostImage title="Steps" src="/assets/oh_you_blockhead/steps_comparison.png" width="680" height="110" />
+<PostImage title="Token Usage" src="/assets/oh_you_blockhead/token_usage_comparison.png" width="680" height="110" enlargeable={true} />
 
-<PostImage title="Token Usage" src="/assets/oh_you_blockhead/token_usage_comparison.png" width="680" height="110" />
-
-<PostImage title="Wall Time" src="/assets/oh_you_blockhead/wall_time_comparison.png" width="680" height="110" />
+<PostImage title="Wall Time" src="/assets/oh_you_blockhead/wall_time_comparison.png" width="680" height="110" enlargeable={true} />
 
 To wrap up the findings, I made some plots to compare the best performing reasoning level for each planner. While the `medium` level reasoning closed loop policy had a perfect track record, I found MDP-LLM to be the most practical for its high probability of producing an optimal policy. I was most surprised by two results:
 

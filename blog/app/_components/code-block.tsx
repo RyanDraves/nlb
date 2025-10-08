@@ -14,7 +14,7 @@ export default async function CodeBlock(props: Props) {
     })
 
     return (
-        <div className="relative max-w-full mb-3">
+        <div className="relative max-w-full mb-3 clear-both">
             <div className="mx-1 bg-gray-800 text-gray-100 px-3 py-1 text-sm font-mono inline-block rounded-t-md border border-b-0 border-gray-700">
                 {props.name}
             </div>
