@@ -134,9 +134,5 @@
             "requirements.txt"
         ]
     },
-    "cSpell.showAutocompleteDirectiveSuggestions": false,
-    "cSpell.words": [
-        "autograder",
-        "situationally"
-    ]
+    "cSpell.showAutocompleteDirectiveSuggestions": false
 }
