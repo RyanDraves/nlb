@@ -225,29 +225,101 @@ def plot_environment(
     CONSOLE.success(f'Wrote GIF to {output.relative_to(path_utils.REPO_ROOT)}')
 
 
-def plot_policy_success(
-    df: pd.DataFrame, policy: metrics.Policy, output: pathlib.Path
-) -> None:
+def plot_policy(df: pd.DataFrame, policy: metrics.Policy, output: pathlib.Path) -> None:
+    """2x2 subplot combining success, steps, wall time, and token usage plots."""
     policy_df = df[df['policy'] == policy.name]
 
     # Get the reasoning effort levels
     reasoning_efforts = policy_df['reasoning_effort'].unique()
 
-    # Aggregate success rates by reasoning effort
+    # Create 2x2 subplot
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    fig.suptitle(f'Policy Analysis: {policy.name}', fontsize=16)
+
+    # Plot 1: Success Rate
+    ax1 = axes[0, 0]
     success_rates = (
         policy_df.groupby('reasoning_effort')['success']
         .mean()
         .reindex(reasoning_efforts)
     )
-
-    # Plotting
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.bar(reasoning_efforts, success_rates, color='skyblue')
-    ax.set_xlabel('Reasoning Effort')
-    ax.set_ylabel('Success Rate')
-    ax.set_title(f'Success Rate by Reasoning Effort for {policy.name}')
+    ax1.bar(reasoning_efforts, success_rates, color='skyblue')
+    ax1.set_xlabel('Reasoning Effort')
+    ax1.set_ylabel('Success Rate')
+    ax1.set_title('Success Rate by Reasoning Effort')
     for i, v in enumerate(success_rates):
-        ax.text(i, v + 0.02, f'{v:.2f}', ha='center', fontsize=12)
+        ax1.text(i, v + 0.02, f'{v:.2f}', ha='center', fontsize=10)
+
+    # Plot 2: Steps
+    ax2 = axes[0, 1]
+    ax2.boxplot(
+        [
+            policy_df[policy_df['reasoning_effort'] == reff]['steps']
+            for reff in reasoning_efforts
+        ],
+    )
+    ax2.set_xlabel('Reasoning Effort')
+    ax2.set_ylabel('Steps to Solution')
+    ax2.set_title('Steps to Solution by Reasoning Effort')
+    ax2.set_xticklabels(reasoning_efforts)
+
+    # Plot 3: Wall Time
+    ax3 = axes[1, 0]
+    wall_time_df = policy_df.copy()
+    if policy in {metrics.Policy.MDP_LLM, metrics.Policy.HEURISTIC_LLM}:
+        # Only use data where rng_seed is 0
+        wall_time_df = wall_time_df[wall_time_df['rng_seed'] == 0]
+
+    wall_times = (
+        wall_time_df.groupby('reasoning_effort')['wall_time_s']
+        .mean()
+        .reindex(reasoning_efforts)
+    )
+    ax3.bar(reasoning_efforts, wall_times, color='lightgreen')
+    ax3.set_xlabel('Reasoning Effort')
+    ax3.set_ylabel('Average Wall Time (s)')
+    ax3.set_title('Average Wall Time by Reasoning Effort')
+    for i, v in enumerate(wall_times):
+        ax3.text(i, v + 0.02, f'{v:.2f}s', ha='center', fontsize=10)
+
+    # Plot 4: Token Usage
+    ax4 = axes[1, 1]
+    token_df = policy_df.copy()
+    if policy in {metrics.Policy.MDP_LLM, metrics.Policy.HEURISTIC_LLM}:
+        # Only use data where rng_seed is 0
+        token_df = token_df[token_df['rng_seed'] == 0]
+
+    input_tokens = (
+        token_df.groupby('reasoning_effort')['input_tokens']
+        .mean()
+        .reindex(reasoning_efforts)
+    )
+    output_tokens = (
+        token_df.groupby('reasoning_effort')['output_tokens']
+        .mean()
+        .reindex(reasoning_efforts)
+    )
+
+    x = np.arange(len(reasoning_efforts))  # the label locations
+    width = 0.35  # the width of the bars
+
+    ax4.bar(
+        x - width / 2, input_tokens, width, label='Input Tokens', color='lightcoral'
+    )
+    ax4.bar(
+        x + width / 2, output_tokens, width, label='Output Tokens', color='lightsalmon'
+    )
+
+    ax4.set_xlabel('Reasoning Effort')
+    ax4.set_ylabel('Average Token Usage')
+    ax4.set_title('Average Token Usage by Reasoning Effort')
+    ax4.set_xticks(x)
+    ax4.set_xticklabels(reasoning_efforts)
+    ax4.legend()
+
+    for i, (in_tok, out_tok) in enumerate(zip(input_tokens, output_tokens)):
+        ax4.text(i - width / 2, in_tok + 5, f'{int(in_tok)}', ha='center', fontsize=8)
+        ax4.text(i + width / 2, out_tok + 5, f'{int(out_tok)}', ha='center', fontsize=8)
 
     plt.tight_layout()
     fig.savefig(output)
@@ -257,7 +329,7 @@ def plot_policy_success(
 
 def plot_policy_success_comparison(
     method_to_df: dict[metrics.Policy, pd.DataFrame],
-    reasoning_effort: str,
+    best_reasoning_efforts: dict[metrics.Policy, str],
     output: pathlib.Path,
 ) -> None:
     # Prepare data for comparison
@@ -265,7 +337,7 @@ def plot_policy_success_comparison(
     success_rates = []
     for policy in policies:
         df = method_to_df[policy]
-        policy_df = df[df['reasoning_effort'] == reasoning_effort]
+        policy_df = df[df['reasoning_effort'] == best_reasoning_efforts[policy]]
         success_rate = policy_df['success'].mean()
         success_rates.append(success_rate)
 
@@ -274,9 +346,7 @@ def plot_policy_success_comparison(
     ax.bar([p.name for p in policies], success_rates, color='lightblue')
     ax.set_xlabel('Policy')
     ax.set_ylabel('Success Rate')
-    ax.set_title(
-        f'Policy Success Rate Comparison at {reasoning_effort.capitalize()} Reasoning Effort'
-    )
+    ax.set_title('Policy Success Rate Comparison at Best Reasoning Effort')
     for i, v in enumerate(success_rates):
         ax.text(i, v + 0.02, f'{v:.2f}', ha='center', fontsize=12)
 
@@ -286,42 +356,16 @@ def plot_policy_success_comparison(
     CONSOLE.success(f'Wrote plot to {output.relative_to(path_utils.REPO_ROOT)}')
 
 
-def plot_steps(df: pd.DataFrame, policy: metrics.Policy, output: pathlib.Path) -> None:
-    """Box plot of steps to solution by reasoning effort."""
-    policy_df = df[df['policy'] == policy.name]
-
-    # Get the reasoning effort levels
-    reasoning_efforts = policy_df['reasoning_effort'].unique()
-
-    # Plotting
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.boxplot(
-        [
-            policy_df[policy_df['reasoning_effort'] == reff]['steps']
-            for reff in reasoning_efforts
-        ],
-    )
-    ax.set_xlabel('Reasoning Effort')
-    ax.set_ylabel('Steps to Solution')
-    ax.set_title(f'Steps to Solution by Reasoning Effort for {policy.name}')
-    ax.set_xticklabels(reasoning_efforts)
-
-    plt.tight_layout()
-    fig.savefig(output)
-    plt.close(fig)
-    CONSOLE.success(f'Wrote plot to {output.relative_to(path_utils.REPO_ROOT)}')
-
-
 def plot_steps_comparison(
     method_to_df: dict[metrics.Policy, pd.DataFrame],
-    reasoning_effort: str,
+    best_reasoning_efforts: dict[metrics.Policy, str],
     output: pathlib.Path,
 ) -> None:
     policies = list(method_to_df.keys())
     steps_data = []
     for policy in policies:
         df = method_to_df[policy]
-        policy_df = df[df['reasoning_effort'] == reasoning_effort]
+        policy_df = df[df['reasoning_effort'] == best_reasoning_efforts[policy]]
         steps_data.append(policy_df['steps'])
 
     # Plotting
@@ -329,43 +373,8 @@ def plot_steps_comparison(
     ax.boxplot(steps_data)
     ax.set_xlabel('Policy')
     ax.set_ylabel('Steps to Solution')
-    ax.set_title(
-        f'Policy Steps to Solution Comparison at {reasoning_effort.capitalize()} Reasoning Effort'
-    )
+    ax.set_title('Policy Steps to Solution Comparison at Best Reasoning Effort')
     ax.set_xticklabels([p.name for p in policies])
-
-    plt.tight_layout()
-    fig.savefig(output)
-    plt.close(fig)
-    CONSOLE.success(f'Wrote plot to {output.relative_to(path_utils.REPO_ROOT)}')
-
-
-def plot_wall_time(
-    df: pd.DataFrame, policy: metrics.Policy, output: pathlib.Path, batch_size: int
-) -> None:
-    policy_df = df[df['policy'] == policy.name]
-
-    # Get the reasoning effort levels
-    reasoning_efforts = policy_df['reasoning_effort'].unique()
-
-    # Aggregate wall time by reasoning effort
-    wall_times = (
-        policy_df.groupby('reasoning_effort')['wall_time_s']
-        .mean()
-        .reindex(reasoning_efforts)
-    )
-    if policy in {metrics.Policy.MDP_LLM, metrics.Policy.HEURISTIC_LLM}:
-        # Multiple by batch size to compute "offline" time
-        wall_times *= batch_size
-
-    # Plotting
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.bar(reasoning_efforts, wall_times, color='lightgreen')
-    ax.set_xlabel('Reasoning Effort')
-    ax.set_ylabel('Average Wall Time (s)')
-    ax.set_title(f'Average Wall Time by Reasoning Effort for {policy.name}')
-    for i, v in enumerate(wall_times):
-        ax.text(i, v + 0.02, f'{v:.2f}s', ha='center', fontsize=12)
 
     plt.tight_layout()
     fig.savefig(output)
@@ -375,14 +384,17 @@ def plot_wall_time(
 
 def plot_wall_time_comparison(
     method_to_df: dict[metrics.Policy, pd.DataFrame],
-    reasoning_effort: str,
+    best_reasoning_efforts: dict[metrics.Policy, str],
     output: pathlib.Path,
 ) -> None:
     policies = list(method_to_df.keys())
     wall_time_data = []
     for policy in policies:
         df = method_to_df[policy]
-        policy_df = df[df['reasoning_effort'] == reasoning_effort]
+        policy_df = df[df['reasoning_effort'] == best_reasoning_efforts[policy]]
+        if policy in {metrics.Policy.MDP_LLM, metrics.Policy.HEURISTIC_LLM}:
+            # Only use data where rng_seed is 0
+            policy_df = policy_df[policy_df['rng_seed'] == 0]
         wall_time_data.append(policy_df['wall_time_s'])
 
     # Plotting
@@ -390,61 +402,8 @@ def plot_wall_time_comparison(
     ax.boxplot(wall_time_data)
     ax.set_xlabel('Policy')
     ax.set_ylabel('Wall Time (s)')
-    ax.set_title(
-        f'Policy Wall Time Comparison at {reasoning_effort.capitalize()} Reasoning Effort'
-    )
+    ax.set_title('Policy Wall Time Comparison at Best Reasoning Effort')
     ax.set_xticklabels([p.name for p in policies])
-
-    plt.tight_layout()
-    fig.savefig(output)
-    plt.close(fig)
-    CONSOLE.success(f'Wrote plot to {output.relative_to(path_utils.REPO_ROOT)}')
-
-
-def plot_token_usage(
-    df: pd.DataFrame, policy: metrics.Policy, output: pathlib.Path, batch_size: int
-) -> None:
-    policy_df = df[df['policy'] == policy.name]
-
-    # Get the reasoning effort levels
-    reasoning_efforts = policy_df['reasoning_effort'].unique()
-
-    # Aggregate token usage by reasoning effort
-    input_tokens = (
-        policy_df.groupby('reasoning_effort')['input_tokens']
-        .mean()
-        .reindex(reasoning_efforts)
-    )
-    output_tokens = (
-        policy_df.groupby('reasoning_effort')['output_tokens']
-        .mean()
-        .reindex(reasoning_efforts)
-    )
-    if policy in {metrics.Policy.MDP_LLM, metrics.Policy.HEURISTIC_LLM}:
-        # Multiple by batch size to compute "offline" tokens
-        input_tokens *= batch_size
-        output_tokens *= batch_size
-
-    x = np.arange(len(reasoning_efforts))  # the label locations
-    width = 0.35  # the width of the bars
-
-    # Plotting
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.bar(x - width / 2, input_tokens, width, label='Input Tokens', color='lightcoral')
-    ax.bar(
-        x + width / 2, output_tokens, width, label='Output Tokens', color='lightsalmon'
-    )
-
-    ax.set_xlabel('Reasoning Effort')
-    ax.set_ylabel('Average Token Usage')
-    ax.set_title(f'Average Token Usage by Reasoning Effort for {policy.name}')
-    ax.set_xticks(x)
-    ax.set_xticklabels(reasoning_efforts)
-    ax.legend()
-
-    for i, (in_tok, out_tok) in enumerate(zip(input_tokens, output_tokens)):
-        ax.text(i - width / 2, in_tok + 5, f'{int(in_tok)}', ha='center', fontsize=10)
-        ax.text(i + width / 2, out_tok + 5, f'{int(out_tok)}', ha='center', fontsize=10)
 
     plt.tight_layout()
     fig.savefig(output)
@@ -454,22 +413,20 @@ def plot_token_usage(
 
 def plot_token_usage_comparison(
     method_to_df: dict[metrics.Policy, pd.DataFrame],
-    reasoning_effort: str,
+    best_reasoning_efforts: dict[metrics.Policy, str],
     output: pathlib.Path,
-    batch_size: int,
 ) -> None:
     policies = list(method_to_df.keys())
     input_token_data = []
     output_token_data = []
     for policy in policies:
         df = method_to_df[policy]
-        policy_df = df[df['reasoning_effort'] == reasoning_effort]
+        policy_df = df[df['reasoning_effort'] == best_reasoning_efforts[policy]]
+        if policy in {metrics.Policy.MDP_LLM, metrics.Policy.HEURISTIC_LLM}:
+            # Only use data where rng_seed is 0
+            policy_df = policy_df[policy_df['rng_seed'] == 0]
         input_token_data.append(policy_df['input_tokens'])
         output_token_data.append(policy_df['output_tokens'])
-        if policy in {metrics.Policy.MDP_LLM, metrics.Policy.HEURISTIC_LLM}:
-            # Multiple by batch size to compute "offline" tokens
-            input_token_data[-1] *= batch_size
-            output_token_data[-1] *= batch_size
 
     x = np.arange(len(policies))  # the label locations
     width = 0.35  # the width of the bars
@@ -493,9 +450,7 @@ def plot_token_usage_comparison(
 
     ax.set_xlabel('Policy')
     ax.set_ylabel('Average Token Usage')
-    ax.set_title(
-        f'Policy Token Usage Comparison at {reasoning_effort.capitalize()} Reasoning Effort'
-    )
+    ax.set_title('Policy Token Usage Comparison at Best Reasoning Effort')
     ax.set_xticks(x)
     ax.set_xticklabels([p.name for p in policies])
     ax.legend()
@@ -531,7 +486,6 @@ def plot_token_usage_comparison(
 )
 def main(cur_dir: pathlib.Path) -> None:
     """Load sim results and plot them"""
-    batch_size = 50
     method_to_csv = {
         metrics.Policy.HEURISTIC: cur_dir / 'results_heuristic_5_blocks_50_runs.csv',
         metrics.Policy.MDP: cur_dir / 'results_mdp_5_blocks_50_runs.csv',
@@ -546,61 +500,44 @@ def main(cur_dir: pathlib.Path) -> None:
     method_to_df = {method: pd.read_csv(csv) for method, csv in method_to_csv.items()}
 
     for method, df in method_to_df.items():
-        if method is metrics.Policy.HEURISTIC:
-            continue
-
-        plot_policy_success(
+        plot_policy(
             df,
             method,
-            cur_dir / 'plots' / f'{method.name.lower()}_success.png',
-        )
-
-        plot_steps(
-            df,
-            method,
-            cur_dir / 'plots' / f'{method.name.lower()}_steps.png',
-        )
-
-        plot_wall_time(
-            df,
-            method,
-            cur_dir / 'plots' / f'{method.name.lower()}_wall_time.png',
-            batch_size,
-        )
-
-        plot_token_usage(
-            df,
-            method,
-            cur_dir / 'plots' / f'{method.name.lower()}_token_usage.png',
-            batch_size,
+            cur_dir / 'plots' / f'{method.name.lower()}_policy.png',
         )
 
     if len(method_to_df) < 2:
         return
-    compare_reasoning_effort = 'high'
+    best_reasoning_efforts = {
+        metrics.Policy.HEURISTIC: 'high',
+        metrics.Policy.MDP: 'high',
+        metrics.Policy.OPEN_LOOP_LLM: 'medium',
+        metrics.Policy.CLOSED_LOOP_LLM: 'medium',
+        metrics.Policy.HEURISTIC_LLM: 'high',
+        metrics.Policy.MDP_LLM: 'medium',
+    }
     plot_policy_success_comparison(
         method_to_df,
-        reasoning_effort=compare_reasoning_effort,
+        best_reasoning_efforts=best_reasoning_efforts,
         output=cur_dir / 'plots' / 'policy_success_comparison.png',
     )
 
     plot_steps_comparison(
         method_to_df,
-        reasoning_effort=compare_reasoning_effort,
+        best_reasoning_efforts=best_reasoning_efforts,
         output=cur_dir / 'plots' / 'steps_comparison.png',
     )
 
     plot_wall_time_comparison(
         method_to_df,
-        reasoning_effort=compare_reasoning_effort,
+        best_reasoning_efforts=best_reasoning_efforts,
         output=cur_dir / 'plots' / 'wall_time_comparison.png',
     )
 
     plot_token_usage_comparison(
         method_to_df,
-        reasoning_effort=compare_reasoning_effort,
+        best_reasoning_efforts=best_reasoning_efforts,
         output=cur_dir / 'plots' / 'token_usage_comparison.png',
-        batch_size=batch_size,
     )
 
 

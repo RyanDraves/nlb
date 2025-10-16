@@ -133,5 +133,6 @@
         "Update requirements.txt": [
             "requirements.txt"
         ]
-    }
+    },
+    "cSpell.showAutocompleteDirectiveSuggestions": false
 }

@@ -8,3 +8,7 @@ pnpm-lock.yaml linguist-generated=true
 *.3mf filter=lfs diff=lfs merge=lfs -text
 *.gcode filter=lfs diff=lfs merge=lfs -text
 *.stl filter=lfs diff=lfs merge=lfs -text
+# Image files
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.gif filter=lfs diff=lfs merge=lfs -text
