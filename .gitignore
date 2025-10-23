@@ -24,3 +24,4 @@ vscode/
 # Shhhhh
 services/secrets/*
 !services/secrets/README.md
+hermetiq-credential-helper.sh

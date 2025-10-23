@@ -97,5 +97,5 @@ js_image(
         "latest",
     ],
     # Too big for CI
-    tags = ["manual"],
+    # tags = ["manual"],
 )
