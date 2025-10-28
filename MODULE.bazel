@@ -109,6 +109,11 @@ git_override(
 )
 
 #
+# Bazel-controlled dev tooling
+#
+bazel_dep(name = "bazel_env.bzl", version = "0.5.0", dev_dependency = True)
+
+#
 # Pybind11
 #
 bazel_dep(name = "pybind11_bazel", version = "2.12.0")
