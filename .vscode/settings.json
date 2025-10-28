@@ -2,7 +2,7 @@
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
-    "bazel.buildifierExecutable": "buildifier",
+    "bazel.buildifierExecutable": "./bazel-out/bazel_env-opt/bin/tools/bazel_env/bin/buildifier",
     "bazel.buildifierFixOnFormat": true,
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file",

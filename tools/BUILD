@@ -17,8 +17,9 @@ bazel_env(
     toolchains = {
         "jdk": "@rules_java//toolchains:current_host_java_runtime",
     },
+    # See https://github.com/buildbuddy-io/bazel_env.bzl?tab=readme-ov-file#fetching-external-tools
+    # when adding multitool support.
     tools = {
-        # Tools can be specified as labels.
         "buildifier": "@buildifier_prebuilt//:buildifier",
         "buildozer": "@buildifier_prebuilt//:buildozer",
         "picotool": "@picotool",
