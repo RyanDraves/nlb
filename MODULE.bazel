@@ -10,7 +10,7 @@ module(
 bazel_dep(name = "aspect_bazel_lib", version = "2.16.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "platforms", version = "0.0.11")
-bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "rules_cc", version = "0.2.12")
 bazel_dep(name = "rules_platform", version = "0.1.0")
 bazel_dep(name = "rules_shell", version = "0.4.1")
 
@@ -109,11 +109,6 @@ git_override(
 )
 
 #
-# rules_foreign_cc
-#
-bazel_dep(name = "rules_foreign_cc", version = "0.13.0")
-
-#
 # Pybind11
 #
 bazel_dep(name = "pybind11_bazel", version = "2.12.0")
@@ -121,8 +116,14 @@ bazel_dep(name = "pybind11_bazel", version = "2.12.0")
 #
 # Zmq
 #
-bazel_dep(name = "cppzmq", version = "4.10.0")
-bazel_dep(name = "libzmq", version = "4.3.5.bcr.1")
+bazel_dep(name = "cppzmq", version = "4.10.0.bcr.1")
+http_archive(
+    name = "libzmq",
+    build_file = "//bzl/deps:libzmq.BUILD",
+    sha256 = "39bea5d50a1ce7a01e23363d08e33f4b204f7da5da0b32a25ce40f6ef641eb69",
+    url = "https://github.com/RyanDraves/cache-and-release/releases/download/libzmq-v4.3.5/libzmq-linux-x86_64.tar.gz",
+    strip_prefix = "libzmq-linux-x86_64",
+)
 
 #
 # Google Test

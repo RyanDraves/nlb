@@ -48,6 +48,6 @@ git_override(
     remote = "https://github.com/example/repo.git",
     patch_args = ["-p1"],
     patches = ["//bzl/deps:example.patch"],
-    commit = "deafbeef",
+    commit = "deadbeef",
 )
 ```
