@@ -1,21 +1,6 @@
 load("@bazel_env.bzl", "bazel_env")
-load(":workspace_tool.bzl", "workspace_tool")
 
-# workspace_tool(
-#     name = "buildifier",
-#     tool = "@buildifier_prebuilt//:buildifier",
-# )
-
-# workspace_tool(
-#     name = "buildozer",
-#     tool = "@buildifier_prebuilt//:buildozer",
-# )
-
-# workspace_tool(
-#     name = "picotool",
-#     tool = "@picotool",
-# )
-
+# TODO: This is prime https://github.com/bazel-contrib/rules_multitool usage.
 alias(
     name = "pioasm",
     actual = select(
@@ -37,5 +22,6 @@ bazel_env(
         "buildifier": "@buildifier_prebuilt//:buildifier",
         "buildozer": "@buildifier_prebuilt//:buildozer",
         "picotool": "@picotool",
+        "pioasm": ":pioasm",
     },
 )

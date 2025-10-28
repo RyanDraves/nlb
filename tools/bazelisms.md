@@ -51,3 +51,8 @@ git_override(
     commit = "deadbeef",
 )
 ```
+
+## Running tools in the workspace
+Breaking out of the sandbox to use Bazel-built tools directly in a workspace it a bit of a pain. I previously relied upon [this strategy](https://github.com/RyanDraves/nlb/blob/a5dd59be58bb7fb1feabf447c4be66318571388b/tools/workspace_tool.bzl) and an extremely naive method of making a [wrapper script](https://github.com/RyanDraves/nlb/blob/a5dd59be58bb7fb1feabf447c4be66318571388b/tools/bin/buildifier) that places each "workspace tool" onto the `$PATH` and invoking `bazel run` on the workspace tool target. This works fine, but has the obvious overhead of a Bazel invocation for every tool invocation. Point your editor to it for linters and you quickly realize how annoying it is to invoke Bazel so frequently.
+
+The [bazel-devenv](https://blog.aspect.build/bazel-devenv) strategy is a big upgrade. But it comes with some tradeoffs, so this documents a fallback strategy (workspace tools for breaking out of the sandbox).
