@@ -1,20 +1,6 @@
-load(":workspace_tool.bzl", "workspace_tool")
+load("@bazel_env.bzl", "bazel_env")
 
-workspace_tool(
-    name = "buildifier",
-    tool = "@buildifier_prebuilt//:buildifier",
-)
-
-workspace_tool(
-    name = "buildozer",
-    tool = "@buildifier_prebuilt//:buildozer",
-)
-
-workspace_tool(
-    name = "picotool",
-    tool = "@picotool",
-)
-
+# TODO: This is prime https://github.com/bazel-contrib/rules_multitool usage.
 alias(
     name = "pioasm",
     actual = select(
@@ -24,4 +10,19 @@ alias(
         },
     ),
     visibility = ["//visibility:public"],
+)
+
+bazel_env(
+    name = "bazel_env",
+    toolchains = {
+        "jdk": "@rules_java//toolchains:current_host_java_runtime",
+    },
+    # See https://github.com/buildbuddy-io/bazel_env.bzl?tab=readme-ov-file#fetching-external-tools
+    # when adding multitool support.
+    tools = {
+        "buildifier": "@buildifier_prebuilt//:buildifier",
+        "buildozer": "@buildifier_prebuilt//:buildozer",
+        "picotool": "@picotool",
+        "pioasm": ":pioasm",
+    },
 )

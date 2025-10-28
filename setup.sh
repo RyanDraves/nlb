@@ -55,6 +55,8 @@ APT_PACKAGES=(
     portaudio19-dev
     # Copying
     xclip
+    # Dev tools
+    direnv
 )
 
 function check_if_on_wsl() {
@@ -110,8 +112,6 @@ function filesystem_setup() {
     maybe_add_to_file $HOME/.bashrc "source $HOME/.local/share/completions/*"
 
     maybe_add_to_file $HOME/.bashrc "export JAVA_HOME=/usr/lib/jvm/default-java"
-
-    add_to_path $REPO_ROOT/tools/bin
 
     # Setup Git LFS
     git lfs install
@@ -266,13 +266,23 @@ function install_docker() {
     echo -e "\e[0m"
 }
 
-
-function setup_venv() {
+function dev_env_setup() {
     echo "Exporting venv..."
     bazel run //:venv venv
     # Allow local files to be used
     venv/bin/pip install -e .
     echo "Done exporting venv"
+
+    # Setup direnv
+    maybe_add_to_file $HOME/.bashrc 'eval "$(direnv hook bash)"'
+
+    echo "Allowing direnv in repo root"
+    cd $REPO_ROOT
+    direnv allow
+    cd - > /dev/null
+
+    # Build dev environment
+    bazel run //tools:bazel_env
 }
 
 #
@@ -605,7 +615,7 @@ run_section "Copy udev rules" copy_udev_rules
 run_section "Setup Aruindo CLI" arduino_setup
 run_section "Setup Go" setup_go
 run_section "Install docker" install_docker
-run_section "Setup venv" setup_venv
+run_section "Setup dev environment" dev_env_setup
 # Check if user is `dravesr` before setting up Ryan's environment
 if [ "$USER" = "dravesr" ]; then
     run_section "Apply Ryan's dev settings" setup_ryans_custom_settings
