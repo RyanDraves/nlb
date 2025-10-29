@@ -19,7 +19,7 @@ jobs:
   release:
     uses: bazel-contrib/.github/.github/workflows/release_ruleset.yaml@v7.2.3
     with:
-      release_files: rules_nlb-*.tar.gz
+      release_files: nlb-*.tar.gz
       bazel_test_command: bazel test //:requirements_test
       mount_bazel_caches: true
       prerelease: false
