@@ -56,11 +56,9 @@ http_archive(
 #
 # Rules Python
 #
-# aspect_rules_py is promising, but its `py_venv` is 3.11+ and
-# rule is either underdocumented or broken.
-# Match version with `bzl/test_module/MODULE.bazel`
 bazel_dep(name = "aspect_rules_py", version = "1.6.6")
 
+# Match version with `bzl/test_module/MODULE.bazel`
 bazel_dep(name = "rules_python", version = "1.6.3")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+#
+# Derived from
+# https://github.com/bazel-contrib/rules-template/blob/335410353735bcbfc2551970504788791066ecb2/.github/workflows/release_prep.sh
 
 set -o errexit -o nounset -o pipefail
 
