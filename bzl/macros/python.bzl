@@ -1,3 +1,5 @@
+"""Macros for Python"""
+
 load("@aspect_rules_py//py:defs.bzl", _py_binary = "py_binary", _py_test = "py_test")
 load("@pip//:requirements.bzl", "requirement")
 

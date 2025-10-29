@@ -1,3 +1,5 @@
+"""File patch codegen macro."""
+
 def _patch_impl(name, visibility, src, out_file, patch, **kwargs):
     native.genrule(
         name = name,

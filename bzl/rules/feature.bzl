@@ -5,6 +5,7 @@ https://pigweed.dev/docs/blog/02-bazel-feature-flags.html#more-power-with-no-cod
 """
 
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 def feature_cc_library(name, build_setting):
     hdrs_name = name + ".hdr"
@@ -14,7 +15,7 @@ def feature_cc_library(name, build_setting):
         build_setting = build_setting,
     )
 
-    native.cc_library(
+    cc_library(
         name = name,
         hdrs = [":" + hdrs_name],
     )

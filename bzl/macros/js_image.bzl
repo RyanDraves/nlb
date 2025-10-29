@@ -1,9 +1,19 @@
+"""Macro for Yavascript OCI images"""
+
 load("@aspect_rules_js//js:defs.bzl", "js_image_layer")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load", "oci_push")
 load("//bzl/rules:platform_transition.bzl", "platform_transition")
 
 def js_image(name, js_binary, args, platform_names, labels, local_tags, remote_repo, remote_tags, **kwargs):
     """Multi-arch OCI image for a JS binary.
+
+    Creates:
+        {name}_image: The unplatformed image for the JS binary.
+        {name}_{platform_name}: The platformed image for the JS binary.
+        {name}_{platform_name}_load: The local load for the platformed image.
+        {name}_index: The index for the multi-arch image.
+        {name}_image_push: The remote push for the multi-arch image.
+          - NOTE: Must login to remote repo via Docker first
 
     Args:
         name: The name of the image.
@@ -15,14 +25,6 @@ def js_image(name, js_binary, args, platform_names, labels, local_tags, remote_r
         remote_repo: The remote repository to push the image to.
         remote_tags: A list of tags to use for the remote pushes of the image.
         **kwargs: Additional arguments to pass to the all rules.
-
-    Creates:
-        {name}_image: The unplatformed image for the JS binary.
-        {name}_{platform_name}: The platformed image for the JS binary.
-        {name}_{platform_name}_load: The local load for the platformed image.
-        {name}_index: The index for the multi-arch image.
-        {name}_image_push: The remote push for the multi-arch image.
-          - NOTE: Must login to remote repo via Docker first
     """
     pkg_dir = native.package_name()
 
