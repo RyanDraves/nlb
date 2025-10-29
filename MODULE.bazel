@@ -1,7 +1,7 @@
 """Bazel fun"""
 module(
     name = "ryandraves_nlb",
-    version = "0.1.1",
+    version = "0.1.2",
     compatibility_level = 0,
 )
 
