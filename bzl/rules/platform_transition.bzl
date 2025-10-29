@@ -12,6 +12,8 @@ Inspired by https://stackoverflow.com/a/77020123 and
 https://stackoverflow.com/a/71179440
 """
 
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+
 def _impl(_, attrs):
     return {"//command_line_option:platforms": str(attrs.target_platform)}
 
