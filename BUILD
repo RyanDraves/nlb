@@ -120,3 +120,9 @@ gazelle_python_manifest(
 #
 # Easier alternative to figuring out how to manage Buffham Py libraries
 # gazelle:python_validate_import_statements false
+#
+# Generated libraries
+# gazelle:python_ignore_dependencies //emb/network/frame:cobs_py
+#
+# Buffham dependences
+# gazelle:python_ignore_dependencies *_bh_py,
