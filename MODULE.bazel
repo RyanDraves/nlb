@@ -8,7 +8,6 @@ module(
 #
 # "Standard" dependencies
 #
-bazel_dep(name = "aspect_bazel_lib", version = "2.16.0")
 bazel_dep(name = "bazel_lib", version = "3.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.1")
 bazel_dep(name = "platforms", version = "0.0.11")
@@ -86,6 +85,12 @@ use_repo(pip, "pip")
 #
 
 bazel_dep(name = "rules_uv", version = "0.71.0")
+
+#
+# Gazelle
+#
+bazel_dep(name = "gazelle", version = "0.46.0")
+bazel_dep(name = "rules_python_gazelle_plugin", version = "1.6.3")
 
 #
 # Buildifier

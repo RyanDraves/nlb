@@ -1,6 +1,5 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pico-sdk//bazel:pico_btstack_make_gatt_header.bzl", "pico_btstack_make_gatt_header")
-load("@pip//:requirements.bzl", "requirement")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
 load("//bzl/macros:cc.bzl", "cc_alias_library", "cc_host_test", "cc_unittest")
@@ -10,8 +9,8 @@ py_library(
     srcs = ["ble.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("bleak"),
-        ":nus_bh_py",
+        "//emb/network/transport:nus_bh_py",
+        "@pip//bleak",
     ],
 )
 
@@ -20,7 +19,7 @@ py_library(
     srcs = ["usb.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("pyserial"),
+        "@pip//pyserial",
     ],
 )
 
@@ -28,15 +27,13 @@ py_library(
     name = "transporter",
     srcs = ["transporter.py"],
     visibility = ["//visibility:public"],
-    deps = [
-    ],
 )
 
 py_library(
     name = "tcp",
     srcs = ["tcp.py"],
     visibility = ["//visibility:public"],
-    deps = [requirement("pyzmq")],
+    deps = ["@pip//pyzmq"],
 )
 
 buffham(

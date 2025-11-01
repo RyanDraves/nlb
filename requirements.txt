@@ -1,9 +1,9 @@
 # - bazel run //:requirements
 # - bazel run //:venv
+# - bazel run //:gazelle_python_manifest.update
 # - pip install -e .  # (Optional)
 # - `Gruntfuggly.triggertaskonsave` will run this automatically
 alembic>=1.15.1,<2
-black>=24.4.2,<25
 bleak>=0.22.3,<1
 dotenv>=0.9.9,<1
 fastmcp>=2.5.2,<3

@@ -6,7 +6,7 @@ py_library(
     srcs = ["dataclass_node.py"],
     visibility = ["//visibility:public"],
     deps = [
-        "//emb/network/node",
+        ":node",
         "//emb/network/serialize:serializer",
         "//emb/network/transport:transporter",
         "//nlb/util:dataclass",

@@ -116,6 +116,7 @@ provisions = [
     ("pico_w", "//emb/project/base:base_w.bin"),
 ]
 
+# gazelle:python_ignore_files provision.py
 [
     py_binary(
         name = "provision_" + name,
@@ -145,3 +146,14 @@ provisions = [
     )
     for name, bin in provisions
 ]
+
+py_binary(
+    name = "shell",
+    srcs = ["shell.py"],
+    add_completions = False,
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//emb/network/transport:usb",
+        "//emb/project/base:base_bh_py",
+    ],
+)

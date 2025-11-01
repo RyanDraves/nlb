@@ -9,7 +9,7 @@ py_library(
     srcs = ["bh_cobs.py"],
     visibility = ["//visibility:public"],
     deps = [
-        "//emb/network/frame:cobs_lib",
+        "//emb/network/frame:cobs_py",
         "//nlb/buffham:bh",
     ],
 )
@@ -19,7 +19,7 @@ py_test(
     srcs = ["bh_cobs_test.py"],
     deps = [
         ":bh_cobs",
-        ":testdata/test_bh_py",
+        "//emb/network/serialize:testdata/test_bh_py",
     ],
 )
 

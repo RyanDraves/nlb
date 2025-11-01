@@ -4,7 +4,7 @@
         {
             "label": "Update requirements.txt",
             "type": "shell",
-            "command": "bazel run //:requirements.update && bazel run //:venv venv && venv/bin/pip install -e ${workspaceFolder}",
+            "command": "bazel run //:requirements.update && bazel run //:venv venv && bazel run //:gazelle_python_manifest.update && venv/bin/pip install -e ${workspaceFolder}",
             "problemMatcher": []
         }
     ]

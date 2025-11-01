@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
 load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
@@ -24,7 +23,7 @@ py_binary(
         ":py_generator",
         ":template_generator",
         "//nlb/util:click_utils",
-        requirement("rich-click"),
+        "@pip//rich_click",
     ],
 )
 
@@ -67,6 +66,7 @@ py_test(
     srcs = ["engine_test.py"],
     deps = [
         ":engine",
+        ":parser",
     ],
 )
 
@@ -74,8 +74,6 @@ py_library(
     name = "parser",
     srcs = ["parser.py"],
     visibility = ["//visibility:public"],
-    deps = [
-    ],
 )
 
 py_test(
@@ -103,13 +101,12 @@ py_test(
         "testdata/*",
     ]),
     deps = [
+        ":bh",
         ":engine",
         ":parser",
         ":py_generator",
-        ":testdata/other_bh_py",
-        ":bh",
-        # Transitive dependency of our generated code
         "//emb/network/serialize:bh_cobs",
+        "//nlb/buffham:testdata/other_bh_py",
     ],
 )
 
@@ -140,8 +137,8 @@ buffham(
     src = "testdata/other.bh",
     cc = True,
     py = True,
-    visibility = ["__pkg__"],
     tags = ["testdata"],
+    visibility = ["__pkg__"],
 )
 
 buffham(
@@ -149,9 +146,9 @@ buffham(
     src = "testdata/sample.bh",
     cc = True,
     py = True,
+    tags = ["testdata"],
     visibility = ["__pkg__"],
     deps = [":testdata/other_bh"],
-    tags = ["testdata"],
 )
 
 buffham_py_write(

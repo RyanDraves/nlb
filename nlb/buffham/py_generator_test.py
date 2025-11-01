@@ -11,6 +11,9 @@ from nlb.buffham import py_generator
 # Test generation by Bazel rules by importing this module
 from nlb.buffham.testdata import other_bh
 
+# Transitive dependency of our generated code
+# gazelle:include_dep //emb/network/serialize:bh_cobs
+
 
 class TestPyGenerator(unittest.TestCase):
     def setUp(self) -> None:

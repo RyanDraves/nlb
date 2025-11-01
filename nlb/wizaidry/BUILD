@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 
 # Visible for PyPI publishing
 package(default_visibility = ["//nlb:__pkg__"])
@@ -7,46 +6,50 @@ package(default_visibility = ["//nlb:__pkg__"])
 py_library(
     name = "audio_util",
     srcs = ["audio_util.py"],
+    visibility = ["//:__subpackages__"],
     deps = [
-        requirement("numpy"),
-        requirement("pyaudio"),
-        requirement("pydub"),
-        requirement("sounddevice"),
+        "@pip//numpy",
+        "@pip//pyaudio",
+        "@pip//pydub",
+        "@pip//sounddevice",
     ],
 )
 
 py_library(
     name = "text_handler",
     srcs = ["text_handler.py"],
+    visibility = ["//:__subpackages__"],
     deps = [
-        "//nlb/mcp:tool_manager",
         ":util",
+        "//nlb/mcp:tool_manager",
         "//nlb/util:console_utils",
-        requirement("openai"),
+        "@pip//inquirerpy",
+        "@pip//openai",
     ],
 )
-
 
 py_library(
     name = "util",
     srcs = ["util.py"],
+    visibility = ["//:__subpackages__"],
     deps = [
         "//nlb/util:introspection",
-        requirement("openai"),
+        "@pip//openai",
     ],
 )
 
 py_library(
     name = "voice_handler",
     srcs = ["voice_handler.py"],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":audio_util",
-        "//nlb/mcp:tool_manager",
         ":util",
+        "//nlb/mcp:tool_manager",
         "//nlb/util:console_utils",
-        requirement("openai"),
-        requirement("pynput"),
-        requirement("rich"),
-        requirement("sounddevice"),
+        "@pip//openai",
+        "@pip//pynput",
+        "@pip//rich",
+        "@pip//sounddevice",
     ],
 )

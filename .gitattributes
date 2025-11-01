@@ -2,6 +2,7 @@
 *_bh.pyi linguist-generated=true
 # Python tooling files
 requirements_lock.txt linguist-generated=true
+gazelle_python.yaml linguist-generated=true
 # pnpm files
 pnpm-lock.yaml linguist-generated=true
 # LFS files

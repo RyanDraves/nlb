@@ -10,10 +10,10 @@ py_library(
     srcs = ["client.py"],
     visibility = ["//visibility:public"],
     deps = [
-        ":robo24_bh_py",
         "//emb/project:client",
         "//emb/project/base:base_bh_py",
         "//emb/project/base:client",
+        "//emb/project/robo24:robo24_bh_py",
         "//nlb/buffham:bh",
     ],
 )
@@ -59,6 +59,7 @@ pico_project(
     ],
 )
 
+# gazelle:python_ignore_files host_test.py
 host_test(
     name = "host_test",
     srcs = ["host_test.py"],
@@ -73,9 +74,11 @@ host_test(
 py_binary(
     name = "shell",
     srcs = ["shell.py"],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":client",
-        ":robo24_bh_py",
         "//emb/project:shell",
+        "//emb/project/robo24:robo24_bh_py",
+        "@pip//rich_click",
     ],
 )

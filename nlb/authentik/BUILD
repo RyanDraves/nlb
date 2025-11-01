@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:python.bzl", "py_binary")
 
 py_library(
@@ -7,8 +6,8 @@ py_library(
     srcs = ["client.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("requests"),
         "//nlb/util:secrets",
+        "@pip//requests",
     ],
 )
 
@@ -17,9 +16,9 @@ py_binary(
     srcs = ["nlb_invite.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("inquirerpy"),
-        requirement("rich-click"),
         ":client",
         "//nlb/util:console_utils",
+        "@pip//inquirerpy",
+        "@pip//rich_click",
     ],
 )

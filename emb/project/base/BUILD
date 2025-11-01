@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write")
 load("//bzl/macros:emb.bzl", "host_test")
@@ -15,11 +14,11 @@ py_library(
     srcs = ["client.py"],
     visibility = ["//visibility:public"],
     deps = [
-        ":base_bh_py",
         "//emb/project:client",
+        "//emb/project/base:base_bh_py",
         "//emb/project/bootloader:bootloader_bh_py",
         "//nlb/buffham:bh",
-        requirement("rich"),
+        "@pip//rich",
     ],
 )
 
@@ -79,6 +78,8 @@ pico_project(
     ],
 )
 
+# Downstream macros make a binary out of this
+# gazelle:python_ignore_files flash.py
 py_library(
     name = "flash",
     srcs = ["flash.py"],
@@ -87,11 +88,12 @@ py_library(
         ":base_bh_py",
         ":client",
         "//emb/project:shell",
-        requirement("rich-click"),
-        requirement("IPython"),
+        "@pip//ipython",
+        "@pip//rich_click",
     ],
 )
 
+# gazelle:python_ignore_files host_test.py
 host_test(
     name = "host_test",
     srcs = ["host_test.py"],
@@ -107,10 +109,11 @@ host_test(
 py_binary(
     name = "shell",
     srcs = ["shell.py"],
+    visibility = ["//:__subpackages__"],
     deps = [
-        ":base_bh_py",
         ":client",
         "//emb/project:shell",
-        requirement("rich-click"),
+        "//emb/project/base:base_bh_py",
+        "@pip//rich_click",
     ],
 )
