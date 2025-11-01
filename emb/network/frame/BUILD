@@ -21,7 +21,8 @@ cc_unittest(
 )
 
 pybind_extension(
-    name = "cobs_lib",
+    # MUST be called `cobs` to produce `cobs.so` and be importable as `import cobs`
+    name = "cobs",
     srcs = ["bindings.cc"],
     deps = [
         ":cobs_cc",
@@ -39,6 +40,6 @@ py_test(
     name = "cobs_test",
     srcs = ["cobs_test.py"],
     deps = [
-        ":cobs_py",
+        "//emb/network/frame:cobs_py",
     ],
 )

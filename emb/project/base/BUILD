@@ -14,8 +14,8 @@ py_library(
     srcs = ["client.py"],
     visibility = ["//visibility:public"],
     deps = [
-        ":base_bh_py",
         "//emb/project:client",
+        "//emb/project/base:base_bh_py",
         "//emb/project/bootloader:bootloader_bh_py",
         "//nlb/buffham:bh",
         "@pip//rich",
@@ -111,9 +111,9 @@ py_binary(
     srcs = ["shell.py"],
     visibility = ["//:__subpackages__"],
     deps = [
-        ":base_bh_py",
         ":client",
         "//emb/project:shell",
+        "//emb/project/base:base_bh_py",
         "@pip//rich_click",
     ],
 )

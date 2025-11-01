@@ -122,7 +122,13 @@ gazelle_python_manifest(
 # gazelle:python_validate_import_statements false
 #
 # Generated libraries
-# gazelle:python_ignore_dependencies //emb/network/frame:cobs_py
+# gazelle:resolve py emb.network.frame.cobs //emb/network/frame:cobs_py
 #
-# Buffham dependences
-# gazelle:python_ignore_dependencies *_bh_py,
+# Buffham files
+# gazelle:resolve_regexp py emb.network.serialize.testdata.test_bh //emb/network/serialize:testdata/test_bh_py
+# gazelle:resolve_regexp py emb.network.transport.nus_bh //emb/network/transport:nus_bh_py
+# gazelle:resolve_regexp py emb.project.base.base_bh //emb/project/base:base_bh_py
+# gazelle:resolve_regexp py emb.project.bootloader.bootloader_bh //emb/project/bootloader:bootloader_bh_py
+# gazelle:resolve_regexp py emb.project.robo24.robo24_bh //emb/project/robo24:robo24_bh_py
+# gazelle:resolve_regexp py nlb.buffham.testdata.sample_bh //nlb/buffham:testdata/sample_bh_py
+# gazelle:resolve_regexp py nlb.buffham.testdata.other_bh //nlb/buffham:testdata/other_bh_py

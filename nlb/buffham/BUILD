@@ -105,7 +105,8 @@ py_test(
         ":engine",
         ":parser",
         ":py_generator",
-        ":testdata/other_bh_py",
+        "//emb/network/serialize:bh_cobs",
+        "//nlb/buffham:testdata/other_bh_py",
     ],
 )
 

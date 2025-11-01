@@ -9,7 +9,7 @@ py_library(
     srcs = ["ble.py"],
     visibility = ["//visibility:public"],
     deps = [
-        ":nus_bh_py",
+        "//emb/network/transport:nus_bh_py",
         "@pip//bleak",
     ],
 )

@@ -19,7 +19,7 @@ py_test(
     srcs = ["bh_cobs_test.py"],
     deps = [
         ":bh_cobs",
-        ":testdata/test_bh_py",
+        "//emb/network/serialize:testdata/test_bh_py",
     ],
 )
 

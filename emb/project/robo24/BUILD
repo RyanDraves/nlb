@@ -10,10 +10,10 @@ py_library(
     srcs = ["client.py"],
     visibility = ["//visibility:public"],
     deps = [
-        ":robo24_bh_py",
         "//emb/project:client",
         "//emb/project/base:base_bh_py",
         "//emb/project/base:client",
+        "//emb/project/robo24:robo24_bh_py",
         "//nlb/buffham:bh",
     ],
 )
@@ -77,8 +77,8 @@ py_binary(
     visibility = ["//:__subpackages__"],
     deps = [
         ":client",
-        ":robo24_bh_py",
         "//emb/project:shell",
+        "//emb/project/robo24:robo24_bh_py",
         "@pip//rich_click",
     ],
 )
