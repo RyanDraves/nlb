@@ -118,9 +118,6 @@ gazelle_python_manifest(
 #
 # gazelle:python_ignore_files services/authentik/invitation_group_add.py
 #
-# Easier alternative to figuring out how to manage Buffham Py libraries
-# gazelle:python_validate_import_statements false
-#
 # Generated libraries
 # gazelle:resolve py emb.network.frame.cobs //emb/network/frame:cobs_py
 #
