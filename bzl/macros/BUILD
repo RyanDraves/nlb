@@ -1,4 +1,5 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("//bzl/macros:python.bzl", "py_binary")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -11,8 +12,8 @@ bzl_library(
     name = "buffham",
     srcs = ["buffham.bzl"],
     deps = [
-        "@aspect_bazel_lib//lib:write_source_files",
         "@aspect_rules_py//py:defs",
+        "@bazel_lib//lib:write_source_files",
         "@rules_cc//cc:defs_bzl",
     ],
 )
@@ -21,7 +22,7 @@ bzl_library(
     name = "cc",
     srcs = ["cc.bzl"],
     deps = [
-        "@aspect_bazel_lib//lib:transitions",
+        "@bazel_lib//lib:transitions",
         "@bazel_skylib//rules:expand_template",
         "@rules_cc//cc:defs_bzl",
     ],
@@ -68,7 +69,7 @@ bzl_library(
 #     deps = [
 #         "//bzl/macros:emb",
 #         "//bzl/rules:pico",
-#         "@aspect_bazel_lib//lib:transitions",
+#         "@bazel_lib//lib:transitions",
 #         "@pico-sdk//bazel/toolchain:objcopy",
 #         "@rules_cc//cc:defs_bzl",
 #     ],
@@ -82,4 +83,11 @@ bzl_library(
         "@pip//:requirements.bzl",
         "@rules_python//python:pip_bzl",
     ],
+)
+
+py_binary(
+    name = "pytest_wrapper",
+    srcs = ["pytest_wrapper.py"],
+    visibility = ["//:__subpackages__"],
+    deps = ["@pip//pytest"],
 )

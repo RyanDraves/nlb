@@ -34,30 +34,6 @@ authlib==1.6.4 \
     --hash=sha256:104b0442a43061dc8bc23b133d1d06a2b0a9c2e3e33f34c4338929e816287649 \
     --hash=sha256:39313d2a2caac3ecf6d8f95fbebdfd30ae6ea6ae6a6db794d976405fdd9aa796
     # via fastmcp
-black==24.4.2 \
-    --hash=sha256:257d724c2c9b1660f353b36c802ccece186a30accc7742c176d29c146df6e474 \
-    --hash=sha256:37aae07b029fa0174d39daf02748b379399b909652a806e5708199bd93899da1 \
-    --hash=sha256:415e686e87dbbe6f4cd5ef0fbf764af7b89f9057b97c908742b6008cc554b9c0 \
-    --hash=sha256:48a85f2cb5e6799a9ef05347b476cce6c182d6c71ee36925a6c194d074336ef8 \
-    --hash=sha256:7768a0dbf16a39aa5e9a3ded568bb545c8c2727396d063bbaf847df05b08cd96 \
-    --hash=sha256:7e122b1c4fb252fd85df3ca93578732b4749d9be076593076ef4d07a0233c3e1 \
-    --hash=sha256:88c57dc656038f1ab9f92b3eb5335ee9b021412feaa46330d5eba4e51fe49b04 \
-    --hash=sha256:8e537d281831ad0e71007dcdcbe50a71470b978c453fa41ce77186bbe0ed6021 \
-    --hash=sha256:98e123f1d5cfd42f886624d84464f7756f60ff6eab89ae845210631714f6db94 \
-    --hash=sha256:accf49e151c8ed2c0cdc528691838afd217c50412534e876a19270fea1e28e2d \
-    --hash=sha256:b1530ae42e9d6d5b670a34db49a94115a64596bc77710b1d05e9801e62ca0a7c \
-    --hash=sha256:b9176b9832e84308818a99a561e90aa479e73c523b3f77afd07913380ae2eab7 \
-    --hash=sha256:bdde6f877a18f24844e381d45e9947a49e97933573ac9d4345399be37621e26c \
-    --hash=sha256:be8bef99eb46d5021bf053114442914baeb3649a89dc5f3a555c88737e5e98fc \
-    --hash=sha256:bf10f7310db693bb62692609b397e8d67257c55f949abde4c67f9cc574492cc7 \
-    --hash=sha256:c872b53057f000085da66a19c55d68f6f8ddcac2642392ad3a355878406fbd4d \
-    --hash=sha256:d36ed1124bb81b32f8614555b34cc4259c3fbc7eec17870e8ff8ded335b58d8c \
-    --hash=sha256:da33a1a5e49c4122ccdfd56cd021ff1ebc4a1ec4e2d01594fef9b6f267a9e741 \
-    --hash=sha256:dd1b5a14e417189db4c7b64a6540f31730713d173f0b63e55fabd52d61d8fdce \
-    --hash=sha256:e151054aa00bad1f4e1f04919542885f89f5f7d086b8a59e5000e6c616896ffb \
-    --hash=sha256:eaea3008c281f1038edb473c1aa8ed8143a5535ff18f978a318f10302b254063 \
-    --hash=sha256:ef703f83fc32e131e9bcc0a5094cfe85599e7109f896fe8bc96cc402f3eb4b6e
-    # via -r requirements.txt
 bleak==0.22.3 \
     --hash=sha256:1e62a9f5e0c184826e6c906e341d8aca53793e4596eeaf4e0b191e7aca5c461c \
     --hash=sha256:3149c3c19657e457727aa53d9d6aeb89658495822cd240afd8aeca4dd09c045c
@@ -238,7 +214,6 @@ click==8.1.7 \
     --hash=sha256:ae74fb96c20a0277a1d615f1e4d73c8414f5a98db8b799a7931d1582f3390c28 \
     --hash=sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de
     # via
-    #   black
     #   rich-click
     #   uvicorn
 colorama==0.4.6 \
@@ -1000,9 +975,7 @@ more-itertools==10.8.0 \
 mypy-extensions==1.0.0 \
     --hash=sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d \
     --hash=sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782
-    # via
-    #   black
-    #   typing-inspect
+    # via typing-inspect
 narwhals==1.26.0 \
     --hash=sha256:4af8bbdea9e45638bb9a981568a8dfa880e40eb7dcf740d19fd32aea79223c6f \
     --hash=sha256:b9d7605bf1d97a9d87783a69748c39150964e2a1ab0e5a6fef3e59e56772639e
@@ -1107,7 +1080,6 @@ packaging==24.1 \
     --hash=sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002 \
     --hash=sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124
     # via
-    #   black
     #   matplotlib
     #   plotly
     #   pytest
@@ -1167,10 +1139,6 @@ pathable==0.4.4 \
     --hash=sha256:5ae9e94793b6ef5a4cbe0a7ce9dbbefc1eec38df253763fd0aeeacf2762dbbc2 \
     --hash=sha256:6905a3cd17804edfac7875b5f6c9142a218c7caef78693c2dbbbfbac186d88b2
     # via jsonschema-path
-pathspec==0.12.1 \
-    --hash=sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08 \
-    --hash=sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712
-    # via black
 pexpect==4.9.0 \
     --hash=sha256:7236d1e080e4936be2dc3e326cec0af72acf9212a7e1d060210e70a47e253523 \
     --hash=sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f
@@ -1259,10 +1227,6 @@ pip==25.1.1 \
     --hash=sha256:2913a38a2abf4ea6b64ab507bd9e967f3b53dc1ede74b01b0931e1ce548751af \
     --hash=sha256:3de45d411d308d5054c2168185d8da7f9a2cd753dbac8acbfa88a8909ecd9077
     # via -r requirements.txt
-platformdirs==4.2.2 \
-    --hash=sha256:2d7a1657e36a80ea911db832a8a6ece5ee53d8de21edd5cc5879af6530b1bfee \
-    --hash=sha256:38b7b51f512eed9e84a22788b4bce1de17c0adb134d6becb09836e37d8654cd3
-    # via black
 plotly==6.0.0 \
     --hash=sha256:c4aad38b8c3d65e4a5e7dd308b084143b9025c2cc9d5317fc1f1d30958db87d3 \
     --hash=sha256:f708871c3a9349a68791ff943a5781b1ec04de7769ea69068adcd9202e57653a

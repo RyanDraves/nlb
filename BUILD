@@ -1,9 +1,10 @@
-load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
-load("@gazelle//:defs.bzl", "gazelle", "gazelle_binary")
+load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
 load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@pip//:requirements.bzl", "all_whl_requirements")
+load("@rules_python_gazelle_plugin//manifest:defs.bzl", "gazelle_python_manifest")
 load("@rules_python_gazelle_plugin//modules_mapping:def.bzl", "modules_mapping")
 load("@rules_uv//uv:pip.bzl", "pip_compile")
 load("@rules_uv//uv:venv.bzl", "create_venv")
@@ -66,6 +67,7 @@ write_source_files(
 gazelle_binary(
     name = "gazelle_multilang",
     languages = [
+        #182 use https://github.com/bazel-starters/py/blob/main/BUILD#L26
         "@rules_python_gazelle_plugin//python",
     ],
 )
@@ -108,3 +110,13 @@ gazelle_python_manifest(
     pip_repository_name = "pip",
     requirements = "//:requirements_lock.txt",
 )
+
+# More Gazelle Python directives
+#
+# gazelle:python_test_file_pattern *_test.py
+# gazelle:python_generation_mode file
+#
+# gazelle:python_ignore_files services/authentik/invitation_group_add.py
+#
+# Easier alternative to figuring out how to manage Buffham Py libraries
+# gazelle:python_validate_import_statements false
