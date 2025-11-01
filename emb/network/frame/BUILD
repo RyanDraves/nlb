@@ -21,7 +21,7 @@ cc_unittest(
 )
 
 pybind_extension(
-    name = "cobs",
+    name = "cobs_lib",
     srcs = ["bindings.cc"],
     deps = [
         ":cobs_cc",
@@ -29,7 +29,7 @@ pybind_extension(
 )
 
 py_library(
-    name = "cobs_lib",
+    name = "cobs_py",
     data = [":cobs.so"],
     imports = ["."],
     visibility = ["//visibility:public"],
@@ -39,6 +39,6 @@ py_test(
     name = "cobs_test",
     srcs = ["cobs_test.py"],
     deps = [
-        ":cobs_lib",
+        ":cobs_py",
     ],
 )

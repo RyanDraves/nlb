@@ -9,7 +9,7 @@ py_library(
     srcs = ["bh_cobs.py"],
     visibility = ["//visibility:public"],
     deps = [
-        "//emb/network/frame:cobs_lib",
+        "//emb/network/frame:cobs_py",
         "//nlb/buffham:bh",
     ],
 )

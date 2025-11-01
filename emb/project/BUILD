@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 
 py_library(
     name = "client",
@@ -18,7 +17,7 @@ py_library(
         ":client",
         "//emb/network/transport:tcp",
         "//nlb/buffham:bh",
-        requirement("portpicker"),
+        "@pip//portpicker",
     ],
 )
 
@@ -32,8 +31,9 @@ py_library(
         "//emb/network/transport:tcp",
         "//emb/network/transport:transporter",
         "//emb/network/transport:usb",
+        "//nlb/buffham:bh",
         "//nlb/util:click_utils",
-        requirement("rich-click"),
-        requirement("IPython"),
+        "@pip//ipython",
+        "@pip//rich_click",
     ],
 )

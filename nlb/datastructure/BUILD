@@ -5,8 +5,6 @@ py_library(
     name = "bidirectional_dict",
     srcs = ["bidirectional_dict.py"],
     visibility = ["//visibility:public"],
-    deps = [
-    ],
 )
 
 py_test(

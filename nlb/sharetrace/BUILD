@@ -1,14 +1,10 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:python.bzl", "py_binary")
 
 py_library(
     name = "__init__",
     srcs = ["__init__.py"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":st",
-    ],
 )
 
 py_library(
@@ -16,7 +12,7 @@ py_library(
     srcs = ["interface.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("marshmallow_dataclass"),
+        "@pip//marshmallow_dataclass",
     ],
 )
 
@@ -34,9 +30,9 @@ py_binary(
     srcs = ["sharetrace_demo.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("rich-click"),
         ":st",
         "//nlb/util:click_utils",
+        "@pip//rich_click",
     ],
 )
 
@@ -45,11 +41,11 @@ py_binary(
     srcs = ["sharetrace.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("inquirerpy"),
-        requirement("jinja2"),
-        requirement("pygments"),
-        requirement("rich-click"),
         ":interface",
         "//nlb/util:console_utils",
+        "@pip//inquirerpy",
+        "@pip//jinja2",
+        "@pip//pygments",
+        "@pip//rich_click",
     ],
 )

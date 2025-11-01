@@ -59,6 +59,7 @@ pico_project(
     ],
 )
 
+# gazelle:python_ignore_files host_test.py
 host_test(
     name = "host_test",
     srcs = ["host_test.py"],
@@ -73,9 +74,11 @@ host_test(
 py_binary(
     name = "shell",
     srcs = ["shell.py"],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":client",
         ":robo24_bh_py",
         "//emb/project:shell",
+        "@pip//rich_click",
     ],
 )

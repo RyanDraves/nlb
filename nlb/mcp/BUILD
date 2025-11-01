@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
 py_binary(
@@ -8,8 +7,8 @@ py_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":arduino",
-        requirement("fastmcp"),
-        requirement("rich-click"),
+        "@pip//fastmcp",
+        "@pip//rich_click",
     ],
 )
 
@@ -20,8 +19,8 @@ py_library(
     deps = [
         ":util",
         "//nlb/arduino:client",
-        requirement("pydantic"),
-        requirement("fastmcp"),
+        "@pip//fastmcp",
+        "@pip//pydantic",
     ],
 )
 
@@ -31,8 +30,8 @@ py_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":file_edit",
-        requirement("fastmcp"),
-        requirement("rich-click"),
+        "@pip//fastmcp",
+        "@pip//rich_click",
     ],
 )
 
@@ -41,7 +40,7 @@ py_test(
     srcs = ["file_edit_test.py"],
     deps = [
         ":file_edit",
-        requirement("fastmcp"),
+        "@pip//fastmcp",
     ],
 )
 
@@ -52,8 +51,8 @@ py_library(
     deps = [
         ":util",
         "//nlb/util:semantic_errors",
-        requirement("pydantic"),
-        requirement("fastmcp"),
+        "@pip//fastmcp",
+        "@pip//pydantic",
     ],
 )
 
@@ -61,12 +60,10 @@ py_library(
     name = "tool_manager",
     srcs = ["tool_manager.py"],
     visibility = ["//visibility:public"],
-    deps = [],
 )
 
 py_library(
     name = "util",
     srcs = ["util.py"],
     visibility = ["//visibility:public"],
-    deps = [],
 )

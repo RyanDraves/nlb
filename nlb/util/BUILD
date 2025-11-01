@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
 py_library(
@@ -7,7 +6,7 @@ py_library(
     srcs = ["click_utils.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("rich-click"),
+        "@pip//rich_click",
     ],
 )
 
@@ -16,7 +15,7 @@ py_library(
     srcs = ["console_utils.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("rich"),
+        "@pip//rich",
     ],
 )
 
@@ -24,7 +23,6 @@ py_library(
     name = "dataclass",
     srcs = ["dataclass.py"],
     visibility = ["//visibility:public"],
-    deps = [],
 )
 
 py_library(
@@ -32,8 +30,8 @@ py_library(
     srcs = ["dataframe.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("pandas"),
         ":dataclass",
+        "@pip//pandas",
     ],
 )
 
@@ -41,7 +39,7 @@ py_library(
     name = "exception",
     srcs = ["exception.py"],
     visibility = ["//visibility:public"],
-    deps = [requirement("IPython")],
+    deps = ["@pip//ipython"],
 )
 
 py_library(
@@ -62,7 +60,6 @@ py_library(
     name = "path_utils",
     srcs = ["path_utils.py"],
     visibility = ["//visibility:public"],
-    deps = [],
 )
 
 py_library(
@@ -70,7 +67,7 @@ py_library(
     srcs = ["prompt_utils.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("prompt_toolkit"),
+        "@pip//prompt_toolkit",
     ],
 )
 
@@ -78,7 +75,6 @@ py_library(
     name = "secrets",
     srcs = ["secrets.py"],
     visibility = ["//visibility:public"],
-    deps = [],
 )
 
 py_library(
@@ -86,7 +82,7 @@ py_library(
     srcs = ["semantic_errors.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("thefuzz"),
+        "@pip//thefuzz",
     ],
 )
 
@@ -115,8 +111,8 @@ py_binary(
     srcs = ["venv_completions.py"],
     visibility = ["//nlb:__pkg__"],
     deps = [
-        requirement("rich-click"),
-        requirement("inquirerpy"),
+        "@pip//inquirerpy",
+        "@pip//rich_click",
     ],
 )
 

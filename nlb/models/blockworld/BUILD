@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
 py_binary(
@@ -7,9 +6,6 @@ py_binary(
     srcs = ["blockworld.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("numpy"),
-        requirement("rich-click"),
-        requirement("openai"),
         ":closed_loop_llm",
         ":environment",
         ":heuristic",
@@ -25,6 +21,9 @@ py_binary(
         "//nlb/util:path_utils",
         "//nlb/util:secrets",
         "//nlb/util:timer",
+        "@pip//numpy",
+        "@pip//openai",
+        "@pip//rich_click",
     ],
 )
 
@@ -42,11 +41,11 @@ py_library(
     srcs = ["closed_loop_llm.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("openai"),
-        requirement("openai-agents"),
         ":environment",
         ":metrics",
         "//nlb/util:console_utils",
+        "@pip//openai",
+        "@pip//openai_agents",
     ],
 )
 
@@ -54,7 +53,10 @@ py_library(
     name = "environment",
     srcs = ["environment.py"],
     visibility = ["//visibility:public"],
-    deps = [requirement("numpy")],
+    deps = [
+        "//nlb/util:console_utils",
+        "@pip//numpy",
+    ],
 )
 
 py_library(
@@ -72,11 +74,11 @@ py_library(
     srcs = ["heuristic_llm.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("openai"),
-        requirement("openai-agents"),
         ":environment",
         ":metrics",
         "//nlb/util:console_utils",
+        "@pip//openai",
+        "@pip//openai_agents",
     ],
 )
 
@@ -84,10 +86,7 @@ py_test(
     name = "heuristic_loading_test",
     srcs = ["heuristic_loading_test.py"],
     data = [":heuristic_llm_sample_policy.txt"],
-    deps = [
-        ":environment",
-        "//nlb/util:console_utils",
-    ],
+    deps = [":environment"],
 )
 
 py_library(
@@ -95,8 +94,8 @@ py_library(
     srcs = ["mdp.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("numpy"),
         ":environment",
+        "@pip//numpy",
     ],
 )
 
@@ -105,14 +104,14 @@ py_library(
     srcs = ["mdp_llm.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("numpy"),
-        requirement("openai"),
-        requirement("openai-agents"),
         ":environment",
         ":mdp",
         ":metrics",
         "//nlb/util:console_utils",
         "//nlb/util:timeout",
+        "@pip//numpy",
+        "@pip//openai",
+        "@pip//openai_agents",
     ],
 )
 
@@ -133,7 +132,6 @@ py_library(
     name = "metrics",
     srcs = ["metrics.py"],
     visibility = ["//visibility:public"],
-    deps = [],
 )
 
 py_library(
@@ -141,31 +139,31 @@ py_library(
     srcs = ["open_loop_llm.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("openai"),
-        requirement("openai-agents"),
         ":environment",
         ":metrics",
         "//nlb/util:console_utils",
+        "@pip//openai",
+        "@pip//openai_agents",
     ],
 )
 
 py_binary(
     name = "plot",
     srcs = ["plot.py"],
-    visibility = ["//visibility:public"],
     data = [
         ":claw.png",
     ],
+    visibility = ["//visibility:public"],
     deps = [
-        requirement("imageio"),
-        requirement("matplotlib"),
-        requirement("numpy"),
-        requirement("pandas"),
-        requirement("pillow"),
-        requirement("rich-click"),
         ":environment",
         ":metrics",
         "//nlb/util:console_utils",
         "//nlb/util:path_utils",
+        "@pip//imageio",
+        "@pip//matplotlib",
+        "@pip//numpy",
+        "@pip//pandas",
+        "@pip//pillow",
+        "@pip//rich_click",
     ],
 )

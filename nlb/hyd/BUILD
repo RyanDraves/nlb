@@ -1,5 +1,4 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@pip//:requirements.bzl", "requirement")
 load("//bzl/macros:python.bzl", "py_test")
 
 py_library(
@@ -7,8 +6,8 @@ py_library(
     srcs = ["progress_bar.py"],
     visibility = ["//visibility:public"],
     deps = [
-        requirement("requests"),
-        requirement("rich"),
+        "@pip//requests",
+        "@pip//rich",
     ],
 )
 
@@ -17,6 +16,7 @@ py_test(
     srcs = ["progress_bar_test.py"],
     deps = [
         ":progress_bar",
-        requirement("responses"),
+        "@pip//requests",
+        "@pip//responses",
     ],
 )
