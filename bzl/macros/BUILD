@@ -88,6 +88,7 @@ bzl_library(
 py_binary(
     name = "pytest_wrapper",
     srcs = ["pytest_wrapper.py"],
+    add_completions = False,
     visibility = ["//:__subpackages__"],
     deps = ["@pip//pytest"],
 )

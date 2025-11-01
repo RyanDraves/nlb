@@ -150,6 +150,7 @@ provisions = [
 py_binary(
     name = "shell",
     srcs = ["shell.py"],
+    add_completions = False,
     visibility = ["//:__subpackages__"],
     deps = [
         "//emb/network/transport:usb",

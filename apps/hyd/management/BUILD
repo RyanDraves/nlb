@@ -21,6 +21,7 @@ py_library(
 py_binary(
     name = "db_manager",
     srcs = ["db_manager.py"],
+    add_completions = False,
     visibility = ["//:__subpackages__"],
     deps = [
         ":client",
