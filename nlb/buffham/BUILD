@@ -33,6 +33,7 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         ":parser",
+        ":schema_bh",
     ],
 )
 
@@ -57,6 +58,7 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         ":parser",
+        ":schema_bh",
         "//nlb/util:dataclass",
     ],
 )
@@ -67,6 +69,7 @@ py_test(
     deps = [
         ":engine",
         ":parser",
+        ":schema_bh",
     ],
 )
 
@@ -74,6 +77,7 @@ py_library(
     name = "parser",
     srcs = ["parser.py"],
     visibility = ["//visibility:public"],
+    deps = [":schema_bh"],
 )
 
 py_test(
@@ -82,6 +86,7 @@ py_test(
     data = glob(["testdata/*.bh"]),
     deps = [
         ":parser",
+        ":schema_bh",
     ],
 )
 
@@ -91,6 +96,7 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         ":parser",
+        ":schema_bh",
     ],
 )
 
@@ -108,6 +114,16 @@ py_test(
         "//emb/network/serialize:bh_cobs",
         "//nlb/buffham:testdata/other_bh_py",
     ],
+)
+
+# NOTE: `schema_bh` is manually generated to avoid a circular dependency
+# between the schema and the generator. To update it after changing `schema.bh`,
+# run:
+#   python nlb/buffham/buffham.py -i nlb/buffham/schema.bh -o nlb/buffham/schema_bh.py -l python
+py_library(
+    name = "schema_bh",
+    srcs = ["schema_bh.py"],
+    visibility = ["//visibility:public"],
 )
 
 py_library(

@@ -2,23 +2,24 @@ import logging
 import pathlib
 
 from nlb.buffham import parser
+from nlb.buffham import schema_bh
 
 T = ' ' * 4  # Indentation
 
 
 TYPE_MAP = {
-    parser.FieldType.UINT8_T: 'int',
-    parser.FieldType.UINT16_T: 'int',
-    parser.FieldType.UINT32_T: 'int',
-    parser.FieldType.UINT64_T: 'int',
-    parser.FieldType.INT8_T: 'int',
-    parser.FieldType.INT16_T: 'int',
-    parser.FieldType.INT32_T: 'int',
-    parser.FieldType.INT64_T: 'int',
-    parser.FieldType.FLOAT32: 'float',
-    parser.FieldType.FLOAT64: 'float',
-    parser.FieldType.STRING: 'str',
-    parser.FieldType.BYTES: 'bytes',
+    schema_bh.FieldType.UINT8_T: 'int',
+    schema_bh.FieldType.UINT16_T: 'int',
+    schema_bh.FieldType.UINT32_T: 'int',
+    schema_bh.FieldType.UINT64_T: 'int',
+    schema_bh.FieldType.INT8_T: 'int',
+    schema_bh.FieldType.INT16_T: 'int',
+    schema_bh.FieldType.INT32_T: 'int',
+    schema_bh.FieldType.INT64_T: 'int',
+    schema_bh.FieldType.FLOAT32: 'float',
+    schema_bh.FieldType.FLOAT64: 'float',
+    schema_bh.FieldType.STRING: 'str',
+    schema_bh.FieldType.BYTES: 'bytes',
 }
 
 
@@ -41,7 +42,7 @@ def _py_type(field: parser.Field, primary_namespace: str) -> str:
     if field.message:
         return _get_imported_name(field.message.get_relative_name(primary_namespace))
 
-    if field.pri_type is parser.FieldType.LIST:
+    if field.pri_type is schema_bh.FieldType.LIST:
         assert field.sub_type is not None
         return f'list[{TYPE_MAP[field.sub_type]}]'
 
@@ -76,12 +77,35 @@ def generate_constant(constant: parser.Constant) -> str:
     value = constant.value
     for ref, name in references.items():
         value = value.replace(f'{{{ref}}}', name)
-    if constant.type is parser.FieldType.STRING:
+    if constant.type is schema_bh.FieldType.STRING:
         value = f"'{value}'"
     definition += f'{constant.name.upper()} = {value}'
 
     if constant.inline_comment:
         definition += f'  #{constant.inline_comment}'
+
+    definition += '\n'
+
+    return definition
+
+
+def generate_enum(enum: parser.Enum) -> str:
+    """Generate a Python enum definition from an Enum."""
+    definition = '\n'
+
+    if enum.comments:
+        for comment in enum.comments:
+            definition += f'#{comment}\n'
+    definition += f'class {enum.name}(enum.Enum):\n'
+
+    for field in enum.fields:
+        if field.comments:
+            for comment in field.comments:
+                definition += f'{T}#{comment}\n'
+        definition += f'{T}{field.name} = {field.value}'
+        if field.inline_comment:
+            definition += f'  #{field.inline_comment}'
+        definition += '\n'
 
     definition += '\n'
 
@@ -126,13 +150,13 @@ def generate_message(
                 definition += (
                     f"\n{T}{T}buffer += struct.pack('<H', len(self.{field.name}))"
                 )
-                if field.pri_type is parser.FieldType.LIST:
+                if field.pri_type is schema_bh.FieldType.LIST:
                     definition += f"\n{T}{T}buffer += struct.pack(f'<{{len(self.{field.name})}}{field.format}', *self.{field.name})"
                 else:
                     definition += f'\n{T}{T}buffer += self.{field.name}'
-                    if field.pri_type is parser.FieldType.STRING:
+                    if field.pri_type is schema_bh.FieldType.STRING:
                         definition += '.encode()'
-            elif field.pri_type is parser.FieldType.MESSAGE:
+            elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 definition += f'\n{T}{T}buffer += self.{field.name}.serialize()'
             else:
                 definition += f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name})"
@@ -149,19 +173,22 @@ def generate_message(
         offset = 0
         offset_str = ''
         for field in message.fields:
-            if field.pri_type is parser.FieldType.LIST:
+            if field.pri_type is schema_bh.FieldType.LIST:
                 definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
                 offset += 2
                 definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'<{{{field.name}_size}}{field.format}', buffer, {offset}{offset_str}))"
                 offset_str += f' + {field.name}_size * {field.size}'
-            elif field.pri_type in (parser.FieldType.STRING, parser.FieldType.BYTES):
+            elif field.pri_type in (
+                schema_bh.FieldType.STRING,
+                schema_bh.FieldType.BYTES,
+            ):
                 definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
                 offset += 2
                 definition += f'\n{T}{T}{field.name} = buffer[{offset}{offset_str}:{offset}{offset_str} + {field.name}_size]'
-                if field.pri_type is parser.FieldType.STRING:
+                if field.pri_type is schema_bh.FieldType.STRING:
                     definition += '.decode()'
                 offset_str += f' + {field.name}_size * {field.size}'
-            elif field.pri_type is parser.FieldType.MESSAGE:
+            elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 assert field.message is not None
                 definition += f'\n{T}{T}{field.name}, {field.name}_size = {_get_imported_name(field.message.get_relative_name(primary_namespace))}.deserialize(buffer[{offset}{offset_str}:])'
                 offset_str += f' + {field.name}_size'
@@ -304,15 +331,23 @@ def generate_python(
     with outfile.open('w') as fp:
         fp.write('# @generated by Buffham')
 
+        sys_imports: list[str] = []
         if len(bh.messages):
             # Add imports
-            fp.write('\nimport dataclasses\n')
-            if len(bh.publishes):
-                fp.write('import enum\n')
+            sys_imports.append('import dataclasses')
+            if len(bh.publishes) or len(bh.enums):
+                sys_imports.append('import enum')
             if not stub:
-                fp.write('import struct\n')
+                sys_imports.append('import struct')
             import_type = ', Type' if len(bh.transactions) or len(bh.publishes) else ''
-            fp.write(f'from typing import Self{import_type}\n')
+            sys_imports.append(f'from typing import Self{import_type}')
+        if len(bh.enums):
+            if 'import enum' not in sys_imports:
+                sys_imports.append('import enum')
+        if sys_imports:
+            fp.write('\n')
+            for imp in sys_imports:
+                fp.write(f'{imp}\n')
 
         if len(bh.transactions):
             # Add imports
@@ -336,6 +371,10 @@ def generate_python(
             fp.write('\n')
         for constant in bh.constants:
             fp.write(generate_constant(constant))
+
+        # Generate enum definitions
+        for enum in bh.enums:
+            fp.write(generate_enum(enum))
 
         # Generate message definitions
         for message in bh.messages:

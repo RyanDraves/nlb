@@ -9,7 +9,7 @@ from nlb.buffham import parser
 from nlb.buffham import py_generator
 
 # Test generation by Bazel rules by importing this module
-from nlb.buffham.testdata import other_bh
+from nlb.buffham.testdata import other_bh  # type: ignore
 
 # Transitive dependency of our generated code
 # gazelle:include_dep //emb/network/serialize:bh_cobs

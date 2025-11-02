@@ -9,6 +9,13 @@ constant string constant_string = Hello, world!;  # constants can have inline co
 # Constants may reference other constants with {brackets}
 constant uint16_t composed_constant = 2 + {my_constant} + {nlb.buffham.testdata.other.other_constant};
 
+# Enums can be defined and are treated as uint8_t values
+enum SampleEnum {
+    A = 0;
+    # Comment on B
+    B = 1;  # Inline comment on B
+}
+
 # A message comment
 message Ping {
     # Add some comments here

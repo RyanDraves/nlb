@@ -1,22 +1,24 @@
+import logging
 import pathlib
 
 from nlb.buffham import parser
+from nlb.buffham import schema_bh
 
 T = ' ' * 4  # Indentation
 
 TYPE_MAP = {
-    parser.FieldType.UINT8_T: 'uint8_t',
-    parser.FieldType.UINT16_T: 'uint16_t',
-    parser.FieldType.UINT32_T: 'uint32_t',
-    parser.FieldType.UINT64_T: 'uint64_t',
-    parser.FieldType.INT8_T: 'int8_t',
-    parser.FieldType.INT16_T: 'int16_t',
-    parser.FieldType.INT32_T: 'int32_t',
-    parser.FieldType.INT64_T: 'int64_t',
-    parser.FieldType.FLOAT32: 'float',
-    parser.FieldType.FLOAT64: 'double',
-    parser.FieldType.STRING: 'std::string',
-    parser.FieldType.BYTES: 'std::vector<uint8_t>',
+    schema_bh.FieldType.UINT8_T: 'uint8_t',
+    schema_bh.FieldType.UINT16_T: 'uint16_t',
+    schema_bh.FieldType.UINT32_T: 'uint32_t',
+    schema_bh.FieldType.UINT64_T: 'uint64_t',
+    schema_bh.FieldType.INT8_T: 'int8_t',
+    schema_bh.FieldType.INT16_T: 'int16_t',
+    schema_bh.FieldType.INT32_T: 'int32_t',
+    schema_bh.FieldType.INT64_T: 'int64_t',
+    schema_bh.FieldType.FLOAT32: 'float',
+    schema_bh.FieldType.FLOAT64: 'double',
+    schema_bh.FieldType.STRING: 'std::string',
+    schema_bh.FieldType.BYTES: 'std::vector<uint8_t>',
 }
 
 
@@ -73,7 +75,7 @@ def _cpp_type(field: parser.Field, primary_namespace: str) -> str:
     if field.message:
         return _get_namespaced_name(field.message.get_relative_name(primary_namespace))
 
-    if field.pri_type is parser.FieldType.LIST:
+    if field.pri_type is schema_bh.FieldType.LIST:
         assert field.sub_type is not None
         return f'std::vector<{TYPE_MAP[field.sub_type]}>'
 
@@ -97,7 +99,7 @@ def generate_message(message: parser.Message, primary_namespace: str, hpp: bool)
                 definition += '\n' + _generate_comment(field.comments, T)
             definition += f'\n{T}{_cpp_type(field, primary_namespace)} {field.name};'
             if field.inline_comment:
-                definition += f'  // {field.inline_comment}'
+                definition += f'  //{field.inline_comment}'
         definition += '\n\n'
 
     # Add serializer method
@@ -120,7 +122,7 @@ def generate_message(message: parser.Message, primary_namespace: str, hpp: bool)
                 offset += 2
                 definition += f'\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, {field.name}.data(), {field.name}_size * {field.size});'
                 offset_str += f' + {field.name}_size * {field.size}'
-            elif field.pri_type is parser.FieldType.MESSAGE:
+            elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 definition += f'\n{tab}{T}auto {field.name}_buffer = {field.name}.serialize(buffer.subspan({offset}{offset_str}));'
                 offset_str += f' + {field.name}_buffer.size()'
             else:
@@ -152,7 +154,7 @@ def generate_message(message: parser.Message, primary_namespace: str, hpp: bool)
                 )
                 definition += f'\n{tab}{T}memcpy({message_name}.{field.name}.data(), buffer.data() + {offset}{offset_str}, {field.name}_size * {field.size});'
                 offset_str += f' + {field.name}_size * {field.size}'
-            elif field.pri_type is parser.FieldType.MESSAGE:
+            elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 definition += f'\n{tab}{T}auto {field.name}_buffer = buffer.subspan({offset}{offset_str});'
                 definition += f'\n{tab}{T}std::tie({message_name}.{field.name}, {field.name}_buffer) = {_cpp_type(field, primary_namespace)}::deserialize({field.name}_buffer);'
                 offset_str += f' + {field.name}_buffer.size()'
@@ -260,7 +262,7 @@ def generate_constant(constant: parser.Constant) -> str:
     for ref, name in references.items():
         value = value.replace(f'{{{ref}}}', name)
     extra_type = ''
-    if constant.type is parser.FieldType.STRING:
+    if constant.type is schema_bh.FieldType.STRING:
         value = f'"{value}"'
         # Gotta use string_view for constexpr strings
         extra_type = '_view'
@@ -270,6 +272,26 @@ def generate_constant(constant: parser.Constant) -> str:
         definition += f'  //{constant.inline_comment}'
 
     definition += '\n'
+
+    return definition
+
+
+def generate_enum(enum: parser.Enum) -> str:
+    """Generate a C++ enum definition from an Enum."""
+    definition = ''
+
+    if enum.comments:
+        definition += _generate_comment(enum.comments, '') + '\n'
+
+    definition += f'enum class {enum.name} : uint8_t {{\n'
+    for field in enum.fields:
+        if field.comments:
+            definition += _generate_comment(field.comments, T) + '\n'
+        definition += f'{T}{field.name} = {field.value},'
+        if field.inline_comment:
+            definition += f'  //{field.inline_comment}'
+        definition += '\n'
+    definition += '};\n\n'
 
     return definition
 
@@ -297,7 +319,7 @@ def generate_cpp(
                 '#include <tuple>\n'
                 '#include <vector>\n\n'
             )
-        elif parser.FieldType.STRING in [constant.type for constant in bh.constants]:
+        elif schema_bh.FieldType.STRING in [constant.type for constant in bh.constants]:
             fp.write('#include <string>\n\n')
 
         if len(bh.transactions) and hpp:
@@ -322,7 +344,12 @@ def generate_cpp(
             for constant in bh.constants:
                 fp.write(generate_constant(constant))
             if bh.constants:
-                fp.write('\n\n')
+                fp.write('\n')
+
+        # Generate enum definitions
+        if hpp:
+            for enum in bh.enums:
+                fp.write(generate_enum(enum))
 
         # Generate message definitions
         for message in bh.messages:
@@ -341,3 +368,6 @@ def generate_cpp(
             fp.write(generate_publishes(bh.publishes))
 
         fp.write(generate_end_namespace(bh.namespace.split('.')[:-1]))
+
+    logging.debug(f'{hpp=}')
+    logging.debug(outfile.read_text())

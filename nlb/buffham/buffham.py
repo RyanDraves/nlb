@@ -74,11 +74,11 @@ def main(
 
     match language:
         case Languages.PYTHON:
-            assert secondary_output is not None
             py_generator.generate_python(ctx, buffham.namespace, output, stub=False)
-            py_generator.generate_python(
-                ctx, buffham.namespace, secondary_output, stub=True
-            )
+            if secondary_output is not None:
+                py_generator.generate_python(
+                    ctx, buffham.namespace, secondary_output, stub=True
+                )
         case Languages.CPP:
             assert secondary_output is not None
             cpp_generator.generate_cpp(ctx, buffham.namespace, output, hpp=True)

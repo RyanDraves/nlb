@@ -3,6 +3,7 @@ import unittest
 
 from nlb.buffham import engine
 from nlb.buffham import parser
+from nlb.buffham import schema_bh
 
 
 @dataclasses.dataclass
@@ -35,33 +36,35 @@ class TestEngine(unittest.TestCase):
         'Ping',
         '',
         [
-            parser.Field('ping', parser.FieldType.UINT8_T, None),
+            parser.Field('ping', schema_bh.FieldType.UINT8_T, None),
         ],
     )
     FLASH_PAGE = parser.Message(
         'FlashPage',
         '',
         [
-            parser.Field('address', parser.FieldType.UINT32_T, None),
-            parser.Field('read_size', parser.FieldType.UINT32_T, None),
-            parser.Field('data', parser.FieldType.LIST, parser.FieldType.UINT32_T),
+            parser.Field('address', schema_bh.FieldType.UINT32_T, None),
+            parser.Field('read_size', schema_bh.FieldType.UINT32_T, None),
+            parser.Field(
+                'data', schema_bh.FieldType.LIST, schema_bh.FieldType.UINT32_T
+            ),
         ],
     )
     LOG_MESSAGE = parser.Message(
         'LogMessage',
         '',
         [
-            parser.Field('message', parser.FieldType.STRING, None),
+            parser.Field('message', schema_bh.FieldType.STRING, None),
         ],
     )
     NESTED_MESSAGE = parser.Message(
         'NestedMessage',
         '',
         [
-            parser.Field('flag', parser.FieldType.UINT8_T, None),
-            parser.Field('inner', parser.FieldType.MESSAGE, None, LOG_MESSAGE),
-            parser.Field('data', parser.FieldType.LIST, parser.FieldType.INT32_T),
-            parser.Field('nested', parser.FieldType.MESSAGE, None, PING),
+            parser.Field('flag', schema_bh.FieldType.UINT8_T, None),
+            parser.Field('inner', schema_bh.FieldType.MESSAGE, None, LOG_MESSAGE),
+            parser.Field('data', schema_bh.FieldType.LIST, schema_bh.FieldType.INT32_T),
+            parser.Field('nested', schema_bh.FieldType.MESSAGE, None, PING),
         ],
     )
 

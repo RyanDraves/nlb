@@ -24,6 +24,12 @@ constexpr std::string_view kConstantString = "Hello, world!";  // constants can 
 // Constants may reference other constants with {brackets}
 constexpr uint16_t kComposedConstant = 2 + kMyConstant + nlb::buffham::testdata::kOtherConstant;
 
+// Enums can be defined and are treated as uint8_t values
+enum class SampleEnum : uint8_t {
+    A = 0,
+    // Comment on B
+    B = 1,  // Inline comment on B
+};
 
 // A message comment
 struct Ping {
@@ -46,7 +52,7 @@ All of these belong to `FlashPage`
 struct FlashPage {
     uint32_t address;
     // Another field comment
-    std::vector<uint8_t> data;  //  What about some in-line comments for fields?
+    std::vector<uint8_t> data;  // What about some in-line comments for fields?
     // This comment belongs to `read_size`
     uint32_t read_size;
 

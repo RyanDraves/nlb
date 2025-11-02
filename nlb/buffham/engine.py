@@ -2,6 +2,7 @@ import struct
 from typing import Callable, Type
 
 from nlb.buffham import parser
+from nlb.buffham import schema_bh
 from nlb.util import dataclass
 
 
@@ -19,13 +20,13 @@ def generate_serializer(
                 # Write the size of the value as a uint16_t
                 buffer += struct.pack('<H', len(value))
 
-                if field.pri_type is parser.FieldType.LIST:
+                if field.pri_type is schema_bh.FieldType.LIST:
                     buffer += struct.pack(f'<{len(value)}{field.format}', *value)
                 else:
-                    if field.pri_type is parser.FieldType.STRING:
+                    if field.pri_type is schema_bh.FieldType.STRING:
                         value = value.encode()
                     buffer += value
-            elif field.pri_type is parser.FieldType.MESSAGE:
+            elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 assert field.message is not None
                 # Turtles all the way down
                 buffer += generate_serializer(field.message)(value)
@@ -51,18 +52,18 @@ def generate_deserializer[T: dataclass.DataclassLike](
                 size = struct.unpack_from('<H', buffer, offset)[0]
                 offset += 2
 
-                if field.pri_type is parser.FieldType.LIST:
+                if field.pri_type is schema_bh.FieldType.LIST:
                     values[field.name] = list(
                         struct.unpack_from(f'<{size}{field.format}', buffer, offset)
                     )
                     offset += size * struct.calcsize(field.format)
                 else:
                     value = buffer[offset : offset + size]
-                    if field.pri_type is parser.FieldType.STRING:
+                    if field.pri_type is schema_bh.FieldType.STRING:
                         value = value.decode()
                     values[field.name] = value
                     offset += size
-            elif field.pri_type is parser.FieldType.MESSAGE:
+            elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 assert field.message is not None
                 values[field.name], size = generate_deserializer(
                     field.message, clz.__dataclass_fields__[field.name].type

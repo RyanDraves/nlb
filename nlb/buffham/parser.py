@@ -1,8 +1,9 @@
 import dataclasses
-import enum
 import pathlib
 import re
 from typing import Generator
+
+from nlb.buffham import schema_bh
 
 # `[\w|\.]+` used to match namespaced names
 COMMENT_REGEX = re.compile(r'^\s*#(.*)$')
@@ -14,33 +15,17 @@ MESSAGE_START_REGEX = re.compile(r'^message (\w+) {')
 MESSAGE_END_REGEX = re.compile(r'^}')
 TRANSACTION_REGEX = re.compile(r'^transaction (\w+)\[([\w|\.]+), ([\w|\.]+)\]')
 PUBLISH_REGEX = re.compile(r'^publish (\w+)\[([\w|\.]+)\]')
-
-
-class FieldType(enum.Enum):
-    UINT8_T = enum.auto()
-    UINT16_T = enum.auto()
-    UINT32_T = enum.auto()
-    UINT64_T = enum.auto()
-    INT8_T = enum.auto()
-    INT16_T = enum.auto()
-    INT32_T = enum.auto()
-    INT64_T = enum.auto()
-    FLOAT32 = enum.auto()
-    FLOAT64 = enum.auto()
-    STRING = enum.auto()
-    BYTES = enum.auto()
-    # Some Haskell nerd is going to come along and present a beatiful argument
-    # on how terrible my design is, but alas, I do not care.
-    LIST = enum.auto()
-    MESSAGE = enum.auto()
+ENUM_START_REGEX = re.compile(r'^enum (\w+) {')
+ENUM_END_REGEX = re.compile(r'^}')
+ENUM_VALUE_REGEX = re.compile(r'^\s*(\w+)\s*=\s*(\d+);')
 
 
 @dataclasses.dataclass
 class Field:
     name: str
-    pri_type: FieldType
+    pri_type: schema_bh.FieldType
     # For lists
-    sub_type: FieldType | None = None
+    sub_type: schema_bh.FieldType | None = None
     # For messages
     message: 'Message | None' = None
     comments: list[str] = dataclasses.field(default_factory=list)
@@ -49,7 +34,11 @@ class Field:
     @property
     def iterable(self) -> bool:
         """Check if the field is iterable."""
-        return self.pri_type in (FieldType.LIST, FieldType.STRING, FieldType.BYTES)
+        return self.pri_type in (
+            schema_bh.FieldType.LIST,
+            schema_bh.FieldType.STRING,
+            schema_bh.FieldType.BYTES,
+        )
 
     @property
     def size(self) -> int:
@@ -59,18 +48,19 @@ class Field:
         and 1 for iterable fields like strings and bytes.
         """
         return {
-            FieldType.UINT8_T: 1,
-            FieldType.UINT16_T: 2,
-            FieldType.UINT32_T: 4,
-            FieldType.UINT64_T: 8,
-            FieldType.INT8_T: 1,
-            FieldType.INT16_T: 2,
-            FieldType.INT32_T: 4,
-            FieldType.INT64_T: 8,
-            FieldType.FLOAT32: 4,
-            FieldType.FLOAT64: 8,
-            FieldType.STRING: 1,
-            FieldType.BYTES: 1,
+            schema_bh.FieldType.UINT8_T: 1,
+            schema_bh.FieldType.UINT16_T: 2,
+            schema_bh.FieldType.UINT32_T: 4,
+            schema_bh.FieldType.UINT64_T: 8,
+            schema_bh.FieldType.INT8_T: 1,
+            schema_bh.FieldType.INT16_T: 2,
+            schema_bh.FieldType.INT32_T: 4,
+            schema_bh.FieldType.INT64_T: 8,
+            schema_bh.FieldType.FLOAT32: 4,
+            schema_bh.FieldType.FLOAT64: 8,
+            schema_bh.FieldType.STRING: 1,
+            schema_bh.FieldType.BYTES: 1,
+            schema_bh.FieldType.ENUM: 1,
         }[self.sub_type or self.pri_type]
 
     @property
@@ -82,16 +72,17 @@ class Field:
         as `struct` is not used to encode them.
         """
         return {
-            FieldType.UINT8_T: 'B',
-            FieldType.UINT16_T: 'H',
-            FieldType.UINT32_T: 'I',
-            FieldType.UINT64_T: 'Q',
-            FieldType.INT8_T: 'b',
-            FieldType.INT16_T: 'h',
-            FieldType.INT32_T: 'i',
-            FieldType.INT64_T: 'q',
-            FieldType.FLOAT32: 'f',
-            FieldType.FLOAT64: 'd',
+            schema_bh.FieldType.UINT8_T: 'B',
+            schema_bh.FieldType.UINT16_T: 'H',
+            schema_bh.FieldType.UINT32_T: 'I',
+            schema_bh.FieldType.UINT64_T: 'Q',
+            schema_bh.FieldType.INT8_T: 'b',
+            schema_bh.FieldType.INT16_T: 'h',
+            schema_bh.FieldType.INT32_T: 'i',
+            schema_bh.FieldType.INT64_T: 'q',
+            schema_bh.FieldType.FLOAT32: 'f',
+            schema_bh.FieldType.FLOAT64: 'd',
+            schema_bh.FieldType.ENUM: 'B',
         }[self.sub_type or self.pri_type]
 
 
@@ -171,11 +162,38 @@ class Publish:
 class Constant:
     name: str
     namespace: str
-    type: FieldType
+    type: schema_bh.FieldType
     value: str
     comments: list[str] = dataclasses.field(default_factory=list)
     inline_comment: str | None = None
     references: list[str] = dataclasses.field(default_factory=list)
+
+    @property
+    def full_name(self) -> str:
+        if not self.namespace:
+            return self.name
+        return f'{self.namespace}.{self.name}'
+
+    def get_relative_name(self, namespace: str) -> str:
+        if namespace == self.namespace:
+            return self.name
+        return self.full_name
+
+
+@dataclasses.dataclass
+class EnumField:
+    name: str
+    value: int
+    comments: list[str] = dataclasses.field(default_factory=list)
+    inline_comment: str | None = None
+
+
+@dataclasses.dataclass
+class Enum:
+    name: str
+    namespace: str
+    fields: list[EnumField]
+    comments: list[str] = dataclasses.field(default_factory=list)
 
     @property
     def full_name(self) -> str:
@@ -197,6 +215,7 @@ class Buffham:
     transactions: list[Transaction]
     publishes: list[Publish]
     constants: list[Constant]
+    enums: list[Enum]
 
     @property
     def namespace(self) -> str:
@@ -254,16 +273,16 @@ class Parser:
         pri_type = parts[0]
         name = parts[1]
 
-        if (pri_type_str := pri_type.upper()) in FieldType._member_names_:
+        if (pri_type_str := pri_type.upper()) in schema_bh.FieldType._member_names_:
             sub_type = None
-            pri_type = FieldType[pri_type_str]
+            pri_type = schema_bh.FieldType[pri_type_str]
             message = None
         elif pri_type.startswith('list['):
             try:
-                sub_type = FieldType[pri_type[5:-1].upper()]
+                sub_type = schema_bh.FieldType[pri_type[5:-1].upper()]
             except KeyError:
                 raise ValueError(f'Invalid list type {pri_type}')
-            pri_type = FieldType.LIST
+            pri_type = schema_bh.FieldType.LIST
             message = None
         else:
             if not (
@@ -276,10 +295,14 @@ class Parser:
             ):
                 raise ValueError(f'Invalid message name {pri_type}')
             sub_type = None
-            pri_type = FieldType.MESSAGE
+            pri_type = schema_bh.FieldType.MESSAGE
 
         # Ensure the sub_type is not iterable
-        if sub_type in (FieldType.LIST, FieldType.STRING, FieldType.BYTES):
+        if sub_type in (
+            schema_bh.FieldType.LIST,
+            schema_bh.FieldType.STRING,
+            schema_bh.FieldType.BYTES,
+        ):
             raise ValueError('Nested iterables are not supported')
 
         inline_comment_match = INLINE_COMMENT_REGEX.match(line)
@@ -395,16 +418,18 @@ class Parser:
             i for i, line in enumerate(lines) if MESSAGE_END_REGEX.match(line)
         ]
 
-        assert len(start_indices) == len(end_indices), 'Mismatched message brackets'
-
         # Pair the start and end indices and parse the message
         prev_end = -1
         messages = []
         comments = []
         comment_index = 0
-        for start, end in zip(start_indices, end_indices):
+        for start in start_indices:
             if start < prev_end:
                 raise ValueError('Nested message definitions are not supported')
+
+            end = next((e for e in end_indices if e > start), None)
+            if end is None:
+                raise ValueError('Mismatched message brackets')
 
             while comment_index < start:
                 if match := COMMENT_REGEX.match(lines[comment_index]):
@@ -489,11 +514,15 @@ class Parser:
         type_str, name, value = match.groups()
 
         try:
-            type_ = FieldType[type_str.upper()]
+            type_ = schema_bh.FieldType[type_str.upper()]
         except KeyError:
             raise ValueError(f'Invalid constant type {type_str}')
 
-        if type_ in (FieldType.LIST, FieldType.MESSAGE, FieldType.BYTES):
+        if type_ in (
+            schema_bh.FieldType.LIST,
+            schema_bh.FieldType.MESSAGE,
+            schema_bh.FieldType.BYTES,
+        ):
             raise ValueError(
                 'Constants cannot be messages or have language syntax ambiguity'
             )
@@ -531,6 +560,88 @@ class Parser:
 
         return constants
 
+    @staticmethod
+    def parse_enum_field(line: str, comments: list[str]) -> EnumField:
+        """Parse a single enum field from a line."""
+        match = ENUM_VALUE_REGEX.match(line)
+        if not match:
+            raise ValueError(f'Invalid enum value line: {line}')
+
+        value_name, value_num = match.groups()
+
+        inline_comment_match = INLINE_COMMENT_REGEX.match(line)
+        inline_comment = (
+            inline_comment_match.groups()[0] if inline_comment_match else None
+        )
+
+        return EnumField(value_name, int(value_num), comments, inline_comment)
+
+    @staticmethod
+    def parse_enum(
+        lines: list[str],
+        comments: list[str],
+    ) -> Enum:
+        """Parse an enum from a list of lines.
+
+        Enums are arranged as:
+        ```
+        enum [name] {
+        [value] (repeated)
+        }
+        ```
+        """
+        match = ENUM_START_REGEX.match(lines[0])
+        if not match:
+            raise ValueError(f'Invalid enum start line: {lines[0]}')
+
+        name = match.groups()[0]
+        fields = []
+        field_comments = []
+        for line in lines[1:-1]:
+            if comment_match := COMMENT_REGEX.match(line):
+                field_comments.append(comment_match.groups()[0])
+            else:
+                fields.append(Parser.parse_enum_field(line, field_comments))
+                field_comments = []
+
+        return Enum(name, '', fields, comments)
+
+    def parse_enum_lines(self, lines: list[str]) -> list[Enum]:
+        # Use regex to find all starting indices of enums
+        # (i.e. `enum [name] {`)
+        start_indices = [
+            i for i, line in enumerate(lines) if ENUM_START_REGEX.match(line)
+        ]
+
+        # Find the end of each enum
+        # (i.e. `}`)
+        end_indices = [i for i, line in enumerate(lines) if ENUM_END_REGEX.match(line)]
+
+        prev_end = -1
+        enums = []
+        comments = []
+        comment_index = 0
+        for start in start_indices:
+            if start < prev_end:
+                raise ValueError('Nested enum definitions are not supported')
+
+            end = next((e for e in end_indices if e > start), None)
+            if end is None:
+                raise ValueError('Mismatched enum brackets')
+
+            while comment_index < start:
+                if match := COMMENT_REGEX.match(lines[comment_index]):
+                    comments.append(match.groups()[0])
+                else:
+                    comments = []
+                comment_index += 1
+
+            enums.append(Parser.parse_enum(lines[start : end + 1], comments))
+
+            prev_end = end
+
+        return enums
+
     def parse_imports(self, lines: list[str], ctx: ParseContext) -> None:
         for line in lines:
             if match := IMPORT_REGEX.match(line):
@@ -567,9 +678,16 @@ class Parser:
         transactions = self.parse_transaction_lines(lines, messages, ctx)
         publishes = self.parse_publish_lines(lines, messages, ctx)
         constants = self.parse_constant_lines(lines, ctx)
+        enums = self.parse_enum_lines(lines)
 
         bh = Buffham(
-            file.stem, parent_namespace, messages, transactions, publishes, constants
+            file.stem,
+            parent_namespace,
+            messages,
+            transactions,
+            publishes,
+            constants,
+            enums,
         )
 
         # Insert namespace into messages, transactions, and constants.
@@ -581,6 +699,8 @@ class Parser:
             transaction.namespace = bh.namespace
         for constant in constants:
             constant.namespace = bh.namespace
+        for e in enums:
+            e.namespace = bh.namespace
 
         if bh.namespace in ctx.buffhams:
             raise ValueError(f'Duplicate Buffham namespace: {bh.namespace}')
