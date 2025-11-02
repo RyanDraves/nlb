@@ -39,8 +39,11 @@ def _get_imported_name(relative_name: str) -> str:
 
 def _py_type(field: parser.Field, primary_namespace: str) -> str:
     """Get the Python type hint for the field."""
-    if field.message:
-        return _get_imported_name(field.message.get_relative_name(primary_namespace))
+    if field.message is not None:
+        assert field.message_ns is not None
+        return _get_imported_name(
+            parser.relative_name(field.message, field.message_ns, primary_namespace)
+        )
 
     if field.pri_type is schema_bh.FieldType.LIST:
         assert field.sub_type is not None
@@ -190,7 +193,13 @@ def generate_message(
                 offset_str += f' + {field.name}_size * {field.size}'
             elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 assert field.message is not None
-                definition += f'\n{T}{T}{field.name}, {field.name}_size = {_get_imported_name(field.message.get_relative_name(primary_namespace))}.deserialize(buffer[{offset}{offset_str}:])'
+                assert field.message_ns is not None
+                msg = _get_imported_name(
+                    parser.relative_name(
+                        field.message, field.message_ns, primary_namespace
+                    )
+                )
+                definition += f'\n{T}{T}{field.name}, {field.name}_size = {msg}.deserialize(buffer[{offset}{offset_str}:])'
                 offset_str += f' + {field.name}_size'
             else:
                 definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0]"
@@ -291,15 +300,15 @@ def generate_transaction(
     if stub:
         definition += (
             f'{transaction.name.upper()}: bh.Transaction['
-            f'{_get_imported_name(transaction.receive.get_relative_name(primary_namespace))}, '
-            f'{_get_imported_name(transaction.send.get_relative_name(primary_namespace))}'
+            f'{_get_imported_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))}, '
+            f'{_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))}'
             f'] = ...\n'
         )
     else:
         definition += (
             f'{transaction.name.upper()} = bh.Transaction['
-            f'{_get_imported_name(transaction.receive.get_relative_name(primary_namespace))}, '
-            f'{_get_imported_name(transaction.send.get_relative_name(primary_namespace))}'
+            f'{_get_imported_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))}, '
+            f'{_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))}'
             f']({transaction.request_id})\n'
         )
 

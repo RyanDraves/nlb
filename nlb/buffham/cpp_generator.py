@@ -72,8 +72,11 @@ def _get_namespaced_name(relative_name: str) -> str:
 
 def _cpp_type(field: parser.Field, primary_namespace: str) -> str:
     """Get the C++ type for the field."""
-    if field.message:
-        return _get_namespaced_name(field.message.get_relative_name(primary_namespace))
+    if field.message is not None:
+        assert field.message_ns is not None
+        return _get_namespaced_name(
+            parser.relative_name(field.message, field.message_ns, primary_namespace)
+        )
 
     if field.pri_type is schema_bh.FieldType.LIST:
         assert field.sub_type is not None
@@ -189,7 +192,7 @@ def generate_project_class(
     )
     for transaction in transactions:
         definition += (
-            f'{T}{T}node.template register_handler<{_get_namespaced_name(transaction.receive.get_relative_name(primary_namespace))}, '
+            f'{T}{T}node.template register_handler<{_get_namespaced_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))}, '
             f'{transaction.send.name}>({transaction.request_id}, '
             f'std::bind(&{name}::{transaction.name}, this, std::placeholders::_1));\n'
         )
@@ -199,7 +202,7 @@ def generate_project_class(
     for transaction in transactions:
         if transaction.comments:
             definition += _generate_comment(transaction.comments, T) + '\n'
-        definition += f'{T}{_get_namespaced_name(transaction.send.get_relative_name(primary_namespace))} {transaction.name}(const {_get_namespaced_name(transaction.receive.get_relative_name(primary_namespace))} &{_to_snake_case(transaction.receive.name)});\n'
+        definition += f'{T}{_get_namespaced_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))} {transaction.name}(const {_get_namespaced_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))} &{_to_snake_case(transaction.receive.name)});\n'
 
     # Add a pIMPL struct
     definition += f'{T[::2]}private:\n'

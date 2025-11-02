@@ -15,12 +15,12 @@ def _expanded_constant(
     """
     reference_constants = {}
     for reference in constant.references:
-        reference_constant = next(
+        reference_constant, _ = next(
             filter(
-                lambda x: x.get_relative_name(bh.namespace) == reference,
-                ctx.iter_constants(bh.constants),
+                lambda x: parser.relative_name(x[0], x[1], bh.namespace) == reference,
+                ctx.iter_constants(),
             ),
-            None,
+            (None, None),
         )
         assert reference_constant is not None, f'Constant {reference} not found'
         reference_constants[reference] = _expanded_constant(ctx, bh, reference_constant)
@@ -53,9 +53,9 @@ def generate_template(
 
             for m in match:
                 # Find the value in the Buffham constants
-                constant = next(
-                    filter(lambda x: x.name == m, ctx.iter_constants(bh.constants)),
-                    None,
+                constant, _ = next(
+                    filter(lambda x: x[0].name == m, ctx.iter_constants()),
+                    (None, None),
                 )
 
                 if constant is None:

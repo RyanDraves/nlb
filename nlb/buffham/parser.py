@@ -1,9 +1,10 @@
 import dataclasses
 import pathlib
 import re
-from typing import Generator
+from typing import Callable, Generator, Protocol
 
 from nlb.buffham import schema_bh
+from nlb.util import dataclass
 
 # `[\w|\.]+` used to match namespaced names
 COMMENT_REGEX = re.compile(r'^\s*#(.*)$')
@@ -20,6 +21,11 @@ ENUM_END_REGEX = re.compile(r'^}')
 ENUM_VALUE_REGEX = re.compile(r'^\s*(\w+)\s*=\s*(\d+);')
 
 
+class NamedEntry(dataclass.DataclassLike, Protocol):
+    @property
+    def name(self) -> str: ...
+
+
 @dataclasses.dataclass
 class Field:
     name: str
@@ -28,6 +34,7 @@ class Field:
     sub_type: schema_bh.FieldType | None = None
     # For messages
     message: 'Message | None' = None
+    message_ns: str | None = None
     comments: list[str] = dataclasses.field(default_factory=list)
     inline_comment: str | None = None
 
@@ -89,95 +96,37 @@ class Field:
 @dataclasses.dataclass
 class Message:
     name: str
-    namespace: str
     fields: list[Field]
     comments: list[str] = dataclasses.field(default_factory=list)
-
-    @property
-    def size(self) -> int | None:
-        # XXX: Unused
-        size = 0
-        for f in self.fields:
-            if f.size is None:
-                return None
-
-            size += f.size
-
-        return size
-
-    @property
-    def full_name(self) -> str:
-        if not self.namespace:
-            return self.name
-        return f'{self.namespace}.{self.name}'
-
-    def get_relative_name(self, namespace: str) -> str:
-        if namespace == self.namespace:
-            return self.name
-        return self.full_name
 
 
 @dataclasses.dataclass
 class Transaction:
     name: str
-    namespace: str
     request_id: int
     receive: Message
+    receive_ns: str
     send: Message
+    send_ns: str
     comments: list[str] = dataclasses.field(default_factory=list)
-
-    @property
-    def full_name(self) -> str:
-        if not self.namespace:
-            return self.name
-        return f'{self.namespace}.{self.name}'
-
-    def get_relative_name(self, namespace: str) -> str:
-        if namespace == self.namespace:
-            return self.name
-        return self.full_name
 
 
 @dataclasses.dataclass
 class Publish:
     name: str
-    namespace: str
     request_id: int
     send: Message
     comments: list[str] = dataclasses.field(default_factory=list)
-
-    @property
-    def full_name(self) -> str:
-        if not self.namespace:
-            return self.name
-        return f'{self.namespace}.{self.name}'
-
-    def get_relative_name(self, namespace: str) -> str:
-        if namespace == self.namespace:
-            return self.name
-        return self.full_name
 
 
 @dataclasses.dataclass
 class Constant:
     name: str
-    namespace: str
     type: schema_bh.FieldType
     value: str
     comments: list[str] = dataclasses.field(default_factory=list)
     inline_comment: str | None = None
     references: list[str] = dataclasses.field(default_factory=list)
-
-    @property
-    def full_name(self) -> str:
-        if not self.namespace:
-            return self.name
-        return f'{self.namespace}.{self.name}'
-
-    def get_relative_name(self, namespace: str) -> str:
-        if namespace == self.namespace:
-            return self.name
-        return self.full_name
 
 
 @dataclasses.dataclass
@@ -191,31 +140,19 @@ class EnumField:
 @dataclasses.dataclass
 class Enum:
     name: str
-    namespace: str
     fields: list[EnumField]
     comments: list[str] = dataclasses.field(default_factory=list)
-
-    @property
-    def full_name(self) -> str:
-        if not self.namespace:
-            return self.name
-        return f'{self.namespace}.{self.name}'
-
-    def get_relative_name(self, namespace: str) -> str:
-        if namespace == self.namespace:
-            return self.name
-        return self.full_name
 
 
 @dataclasses.dataclass
 class Buffham:
     name: str
     parent_namespace: str
-    messages: list[Message]
-    transactions: list[Transaction]
-    publishes: list[Publish]
-    constants: list[Constant]
-    enums: list[Enum]
+    messages: list[Message] = dataclasses.field(default_factory=list)
+    transactions: list[Transaction] = dataclasses.field(default_factory=list)
+    publishes: list[Publish] = dataclasses.field(default_factory=list)
+    constants: list[Constant] = dataclasses.field(default_factory=list)
+    enums: list[Enum] = dataclasses.field(default_factory=list)
 
     @property
     def namespace(self) -> str:
@@ -228,26 +165,35 @@ class Buffham:
 class ParseContext:
     # Maps `[parent_namespace].[name]` to Buffhams
     buffhams: dict[str, Buffham]
+    # Current full namespace
+    cur_namespace: str = dataclasses.field(default='')
 
-    def iter_messages(
-        self, local_messages: list[Message]
-    ) -> Generator[Message, None, None]:
+    @property
+    def cur_buffham(self) -> Buffham:
+        """Get the current Buffham being parsed."""
+        return self.buffhams[self.cur_namespace]
+
+    def iter_messages(self) -> Generator[tuple[Message, str], None, None]:
         """Iterate over all messages in the context."""
-        for message in local_messages:
-            yield message
         for buffham in self.buffhams.values():
             for message in buffham.messages:
-                yield message
+                yield message, buffham.namespace
 
-    def iter_constants(
-        self, local_constants: list[Constant]
-    ) -> Generator[Constant, None, None]:
+    def iter_constants(self) -> Generator[tuple[Constant, str], None, None]:
         """Iterate over all constants in the context."""
-        for constant in local_constants:
-            yield constant
         for buffham in self.buffhams.values():
             for constant in buffham.constants:
-                yield constant
+                yield constant, buffham.namespace
+
+
+def full_name(entry: NamedEntry, namespace: str) -> str:
+    return f'{namespace}.{entry.name}'
+
+
+def relative_name(entry: NamedEntry, entry_namespace: str, cur_namespace: str) -> str:
+    if entry_namespace == cur_namespace:
+        return entry.name
+    return full_name(entry, entry_namespace)
 
 
 class Parser:
@@ -255,9 +201,7 @@ class Parser:
         self._request_id = 0
 
     @staticmethod
-    def parse_field(
-        line: str, messages: list[Message], comments: list[str], ctx: ParseContext
-    ) -> Field:
+    def parse_message_field(line: str, comments: list[str], ctx: ParseContext) -> Field:
         """Parse a field from a line.
 
         Fields are arranged as `[type] [name];`. Examples:
@@ -277,6 +221,7 @@ class Parser:
             sub_type = None
             pri_type = schema_bh.FieldType[pri_type_str]
             message = None
+            message_ns = None
         elif pri_type.startswith('list['):
             try:
                 sub_type = schema_bh.FieldType[pri_type[5:-1].upper()]
@@ -284,15 +229,16 @@ class Parser:
                 raise ValueError(f'Invalid list type {pri_type}')
             pri_type = schema_bh.FieldType.LIST
             message = None
+            message_ns = None
         else:
-            if not (
-                message := next(
-                    filter(
-                        lambda m: m.full_name == pri_type, ctx.iter_messages(messages)
-                    ),
-                    None,
-                )
-            ):
+            message, message_ns = next(
+                filter(
+                    lambda x: relative_name(x[0], x[1], ctx.cur_namespace) == pri_type,
+                    ctx.iter_messages(),
+                ),
+                (None, None),
+            )
+            if message is None:
                 raise ValueError(f'Invalid message name {pri_type}')
             sub_type = None
             pri_type = schema_bh.FieldType.MESSAGE
@@ -310,12 +256,13 @@ class Parser:
             inline_comment_match.groups()[0] if inline_comment_match else None
         )
 
-        return Field(name, pri_type, sub_type, message, comments, inline_comment)
+        return Field(
+            name, pri_type, sub_type, message, message_ns, comments, inline_comment
+        )
 
     @staticmethod
     def parse_message(
         lines: list[str],
-        messages: list[Message],
         comments: list[str],
         ctx: ParseContext,
     ) -> Message:
@@ -339,12 +286,12 @@ class Parser:
             if comment_match := COMMENT_REGEX.match(line):
                 field_comments.append(comment_match.groups()[0])
             else:
-                fields.append(Parser.parse_field(line, messages, field_comments, ctx))
+                fields.append(Parser.parse_message_field(line, field_comments, ctx))
                 field_comments = []
-        return Message(name, '', fields, comments)
+        return Message(name, fields, comments)
 
     def parse_transaction(
-        self, line: str, messages: list[Message], comments: list[str], ctx: ParseContext
+        self, line: str, comments: list[str], ctx: ParseContext
     ) -> Transaction:
         """Parse a transaction from a line.
 
@@ -360,11 +307,17 @@ class Parser:
 
         name, receive, send = match.groups()
         try:
-            receive = next(
-                filter(lambda m: m.full_name == receive, ctx.iter_messages(messages))
+            receive, receive_ns = next(
+                filter(
+                    lambda x: relative_name(x[0], x[1], ctx.cur_namespace) == receive,
+                    ctx.iter_messages(),
+                )
             )
-            send = next(
-                filter(lambda m: m.full_name == send, ctx.iter_messages(messages))
+            send, send_ns = next(
+                filter(
+                    lambda x: relative_name(x[0], x[1], ctx.cur_namespace) == send,
+                    ctx.iter_messages(),
+                )
             )
         except StopIteration:
             raise ValueError(
@@ -374,10 +327,12 @@ class Parser:
         request_id = self._request_id
         self._request_id += 1
 
-        return Transaction(name, '', request_id, receive, send, comments)
+        return Transaction(
+            name, request_id, receive, receive_ns, send, send_ns, comments
+        )
 
     def parse_publish(
-        self, line: str, messages: list[Message], comments: list[str], ctx: ParseContext
+        self, line: str, comments: list[str], ctx: ParseContext
     ) -> Publish:
         """Parse a publish from a line.
 
@@ -393,8 +348,11 @@ class Parser:
 
         name, send = match.groups()
         try:
-            send = next(
-                filter(lambda m: m.full_name == send, ctx.iter_messages(messages))
+            send, _ = next(
+                filter(
+                    lambda x: relative_name(x[0], x[1], ctx.cur_namespace) == send,
+                    ctx.iter_messages(),
+                )
             )
         except StopIteration:
             raise ValueError(f'Invalid message name(s) {send=} in transaction')
@@ -402,101 +360,10 @@ class Parser:
         request_id = self._request_id
         self._request_id += 1
 
-        return Publish(name, '', request_id, send, comments)
+        return Publish(name, request_id, send, comments)
 
     @staticmethod
-    def parse_message_lines(lines: list[str], ctx: ParseContext) -> list[Message]:
-        # Use regex to find all starting indices of messages
-        # (i.e. `message [name] {`)
-        start_indices = [
-            i for i, line in enumerate(lines) if MESSAGE_START_REGEX.match(line)
-        ]
-
-        # Find the end of each message
-        # (i.e. `}`)
-        end_indices = [
-            i for i, line in enumerate(lines) if MESSAGE_END_REGEX.match(line)
-        ]
-
-        # Pair the start and end indices and parse the message
-        prev_end = -1
-        messages = []
-        comments = []
-        comment_index = 0
-        for start in start_indices:
-            if start < prev_end:
-                raise ValueError('Nested message definitions are not supported')
-
-            end = next((e for e in end_indices if e > start), None)
-            if end is None:
-                raise ValueError('Mismatched message brackets')
-
-            while comment_index < start:
-                if match := COMMENT_REGEX.match(lines[comment_index]):
-                    comments.append(match.groups()[0])
-                else:
-                    # Clear out comments; no longer matches with the next message
-                    comments = []
-                comment_index += 1
-
-            messages.append(
-                Parser.parse_message(lines[start : end + 1], messages, comments, ctx)
-            )
-
-            prev_end = end
-
-        return messages
-
-    def parse_transaction_lines(
-        self, lines: list[str], messages: list[Message], ctx: ParseContext
-    ) -> list[Transaction]:
-        # Use regex to find all starting indices of transactions
-        # (i.e. `transaction [name][[receive], [send]]`)
-        indices = [i for i, line in enumerate(lines) if TRANSACTION_REGEX.match(line)]
-
-        transactions = []
-        comments = []
-        comment_index = 0
-        for i in indices:
-            while comment_index < i:
-                if match := COMMENT_REGEX.match(lines[comment_index]):
-                    comments.append(match.groups()[0])
-                else:
-                    comments = []
-                comment_index += 1
-
-            transactions.append(
-                self.parse_transaction(lines[i], messages, comments, ctx)
-            )
-
-        return transactions
-
-    def parse_publish_lines(
-        self, lines: list[str], messages: list[Message], ctx: ParseContext
-    ) -> list[Publish]:
-        # Use regex to find all starting indices of publishes
-        # (i.e. `transaction [name][[receive], [send]]`)
-        indices = [i for i, line in enumerate(lines) if PUBLISH_REGEX.match(line)]
-
-        publishes = []
-        comments = []
-        comment_index = 0
-        for i in indices:
-            while comment_index < i:
-                if match := COMMENT_REGEX.match(lines[comment_index]):
-                    comments.append(match.groups()[0])
-                else:
-                    comments = []
-                comment_index += 1
-
-            publishes.append(self.parse_publish(lines[i], messages, comments, ctx))
-
-        return publishes
-
-    @staticmethod
-    def parse_constant(
-        line: str, constants: list[Constant], comments: list[str], ctx: ParseContext
-    ) -> Constant:
+    def parse_constant(line: str, comments: list[str], ctx: ParseContext) -> Constant:
         """Parse a constant from a line.
 
         Constants are arranged as:
@@ -534,31 +401,13 @@ class Parser:
 
         # Find references to other constants
         references = []
-        for constant in ctx.iter_constants(constants):
-            if re.match(rf'.*{{{constant.full_name}}}', value):
-                references.append(constant.full_name)
+        for constant, ns in ctx.iter_constants():
+            if re.match(
+                rf'.*{{{relative_name(constant, ns, ctx.cur_namespace)}}}', value
+            ):
+                references.append(relative_name(constant, ns, ctx.cur_namespace))
 
-        return Constant(name, '', type_, value, comments, inline_comment, references)
-
-    def parse_constant_lines(
-        self, lines: list[str], ctx: ParseContext
-    ) -> list[Constant]:
-        indices = [i for i, line in enumerate(lines) if CONSTANT_REGEX.match(line)]
-
-        constants = []
-        comments = []
-        comment_index = 0
-        for i in indices:
-            while comment_index < i:
-                if match := COMMENT_REGEX.match(lines[comment_index]):
-                    comments.append(match.groups()[0])
-                else:
-                    comments = []
-                comment_index += 1
-
-            constants.append(self.parse_constant(lines[i], constants, comments, ctx))
-
-        return constants
+        return Constant(name, type_, value, comments, inline_comment, references)
 
     @staticmethod
     def parse_enum_field(line: str, comments: list[str]) -> EnumField:
@@ -580,6 +429,7 @@ class Parser:
     def parse_enum(
         lines: list[str],
         comments: list[str],
+        _ctx: ParseContext,
     ) -> Enum:
         """Parse an enum from a list of lines.
 
@@ -604,43 +454,71 @@ class Parser:
                 fields.append(Parser.parse_enum_field(line, field_comments))
                 field_comments = []
 
-        return Enum(name, '', fields, comments)
+        return Enum(name, fields, comments)
 
-    def parse_enum_lines(self, lines: list[str]) -> list[Enum]:
-        # Use regex to find all starting indices of enums
-        # (i.e. `enum [name] {`)
-        start_indices = [
-            i for i, line in enumerate(lines) if ENUM_START_REGEX.match(line)
-        ]
+    def parse_singleline_definition[T: NamedEntry](
+        self,
+        lines: list[str],
+        regex: re.Pattern,
+        parse_fn: Callable[[str, list[str], ParseContext], T],
+        ctx: ParseContext,
+        bh_entry: list[T],
+    ) -> None:
+        # Use regex to find all starting indices of definitions
+        # (i.e. `message [name] {`)
+        indices = [i for i, line in enumerate(lines) if regex.match(line)]
 
-        # Find the end of each enum
-        # (i.e. `}`)
-        end_indices = [i for i, line in enumerate(lines) if ENUM_END_REGEX.match(line)]
-
-        prev_end = -1
-        enums = []
         comments = []
         comment_index = 0
-        for start in start_indices:
-            if start < prev_end:
-                raise ValueError('Nested enum definitions are not supported')
-
-            end = next((e for e in end_indices if e > start), None)
-            if end is None:
-                raise ValueError('Mismatched enum brackets')
-
-            while comment_index < start:
+        for i in indices:
+            while comment_index < i:
                 if match := COMMENT_REGEX.match(lines[comment_index]):
                     comments.append(match.groups()[0])
                 else:
                     comments = []
                 comment_index += 1
 
-            enums.append(Parser.parse_enum(lines[start : end + 1], comments))
+            bh_entry.append(parse_fn(lines[i], comments, ctx))
+
+    def parse_multiline_definition[T: NamedEntry](
+        self,
+        lines: list[str],
+        start_regex: re.Pattern,
+        end_regex: re.Pattern,
+        parse_fn: Callable[[list[str], list[str], ParseContext], T],
+        ctx: ParseContext,
+        bh_entry: list[T],
+    ) -> None:
+        # Use regex to find all starting indices of definitions
+        # (i.e. `message [name] {`)
+        start_indices = [i for i, line in enumerate(lines) if start_regex.match(line)]
+
+        # Find the end of each definition
+        # (i.e. `}`)
+        end_indices = [i for i, line in enumerate(lines) if end_regex.match(line)]
+
+        prev_end = -1
+        comments = []
+        comment_index = 0
+        for start in start_indices:
+            if start < prev_end:
+                raise ValueError('Nested definitions are not supported')
+
+            end = next((e for e in end_indices if e > start), None)
+            if end is None:
+                raise ValueError('Mismatched brackets')
+
+            while comment_index < start:
+                if match := COMMENT_REGEX.match(lines[comment_index]):
+                    comments.append(match.groups()[0])
+                else:
+                    # Clear out comments; no longer matches with the next definition
+                    comments = []
+                comment_index += 1
+
+            bh_entry.append(parse_fn(lines[start : end + 1], comments, ctx))
 
             prev_end = end
-
-        return enums
 
     def parse_imports(self, lines: list[str], ctx: ParseContext) -> None:
         for line in lines:
@@ -668,42 +546,58 @@ class Parser:
             + 1,
         )
 
+        # Determine the namespace
         if parent_namespace is None:
             parent_namespace = '.'.join(file.parent.parts)
+        name = file.stem
+        namespace = f'{parent_namespace}.{name}' if parent_namespace else name
+        ctx.cur_namespace = namespace
+
+        # Insert a new Buffham into the context
+        bh = Buffham(name=file.stem, parent_namespace=parent_namespace)
+        if bh.namespace in ctx.buffhams:
+            raise ValueError(f'Duplicate Buffham namespace: {bh.namespace}')
+        ctx.buffhams[bh.namespace] = bh
 
         lines = file.read_text().splitlines()
 
         self.parse_imports(lines, ctx)
-        messages = self.parse_message_lines(lines, ctx)
-        transactions = self.parse_transaction_lines(lines, messages, ctx)
-        publishes = self.parse_publish_lines(lines, messages, ctx)
-        constants = self.parse_constant_lines(lines, ctx)
-        enums = self.parse_enum_lines(lines)
-
-        bh = Buffham(
-            file.stem,
-            parent_namespace,
-            messages,
-            transactions,
-            publishes,
-            constants,
-            enums,
+        self.parse_multiline_definition(
+            lines,
+            MESSAGE_START_REGEX,
+            MESSAGE_END_REGEX,
+            Parser.parse_message,
+            ctx,
+            bh.messages,
         )
-
-        # Insert namespace into messages, transactions, and constants.
-        # Deferring this allows not specifying the namespace in the Buffham file for
-        # local references.
-        for message in messages:
-            message.namespace = bh.namespace
-        for transaction in transactions:
-            transaction.namespace = bh.namespace
-        for constant in constants:
-            constant.namespace = bh.namespace
-        for e in enums:
-            e.namespace = bh.namespace
-
-        if bh.namespace in ctx.buffhams:
-            raise ValueError(f'Duplicate Buffham namespace: {bh.namespace}')
-        ctx.buffhams[bh.namespace] = bh
+        self.parse_singleline_definition(
+            lines,
+            TRANSACTION_REGEX,
+            self.parse_transaction,
+            ctx,
+            bh.transactions,
+        )
+        self.parse_singleline_definition(
+            lines,
+            PUBLISH_REGEX,
+            self.parse_publish,
+            ctx,
+            bh.publishes,
+        )
+        self.parse_singleline_definition(
+            lines,
+            CONSTANT_REGEX,
+            Parser.parse_constant,
+            ctx,
+            bh.constants,
+        )
+        self.parse_multiline_definition(
+            lines,
+            ENUM_START_REGEX,
+            ENUM_END_REGEX,
+            Parser.parse_enum,
+            ctx,
+            bh.enums,
+        )
 
         return bh

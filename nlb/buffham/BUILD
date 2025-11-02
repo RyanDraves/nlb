@@ -77,7 +77,10 @@ py_library(
     name = "parser",
     srcs = ["parser.py"],
     visibility = ["//visibility:public"],
-    deps = [":schema_bh"],
+    deps = [
+        ":schema_bh",
+        "//nlb/util:dataclass",
+    ],
 )
 
 py_test(

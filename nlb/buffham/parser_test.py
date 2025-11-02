@@ -7,24 +7,31 @@ from nlb.buffham import schema_bh
 
 class TestParserSimple(unittest.TestCase):
     def test_parse_field(self):
-        ctx = parser.ParseContext({})
+        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
+        ctx.cur_namespace = 'test'
 
         field = '    uint8_t foo;'
-        parsed = parser.Parser.parse_field(field, [], [], ctx)
+        parsed = parser.Parser.parse_message_field(field, [], ctx)
         self.assertEqual(parsed, parser.Field('foo', schema_bh.FieldType.UINT8_T, None))
 
         field = 'float64 bar;  # inline comment'
-        parsed = parser.Parser.parse_field(field, [], [], ctx)
+        parsed = parser.Parser.parse_message_field(field, [], ctx)
         self.assertEqual(
             parsed,
             parser.Field(
-                'bar', schema_bh.FieldType.FLOAT64, None, None, [], ' inline comment'
+                'bar',
+                schema_bh.FieldType.FLOAT64,
+                None,
+                None,
+                None,
+                [],
+                ' inline comment',
             ),
         )
 
         field = 'list[uint32_t] baz_2;'
-        parsed = parser.Parser.parse_field(
-            field, [], ['some other', 'read-in comments'], ctx
+        parsed = parser.Parser.parse_message_field(
+            field, ['some other', 'read-in comments'], ctx
         )
         self.assertEqual(
             parsed,
@@ -33,43 +40,48 @@ class TestParserSimple(unittest.TestCase):
                 schema_bh.FieldType.LIST,
                 schema_bh.FieldType.UINT32_T,
                 None,
+                None,
                 ['some other', 'read-in comments'],
             ),
         )
 
         field = 'list[list[uint32_t]] baz_3;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_field(field, [], [], ctx)
+            parser.Parser.parse_message_field(field, [], ctx)
 
         field = 'list[uint32_t baz_4;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_field(field, [], [], ctx)
+            parser.Parser.parse_message_field(field, [], ctx)
 
         field = 'MyMessage baz_5;'
-        my_message = parser.Message('MyMessage', '', [])
-        parsed = parser.Parser.parse_field(field, [my_message], [], ctx)
+        my_message = parser.Message('MyMessage', [])
+        ctx.cur_buffham.messages.append(my_message)
+        parsed = parser.Parser.parse_message_field(field, [], ctx)
         self.assertEqual(
             parsed,
-            parser.Field('baz_5', schema_bh.FieldType.MESSAGE, None, my_message),
+            parser.Field(
+                'baz_5', schema_bh.FieldType.MESSAGE, None, my_message, 'test'
+            ),
         )
 
         field = 'NonexistantMessage baz_6;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_field(field, [my_message], [], ctx)
+            parser.Parser.parse_message_field(field, [], ctx)
 
     def test_parse_message(self):
-        ctx = parser.ParseContext({})
+        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
+        ctx.cur_namespace = 'test'
 
         message = [
             'message Ping {',
             '    uint8_t ping;',
             '}',
         ]
-        parsed = parser.Parser.parse_message(message, [], [], ctx)
+        parsed = parser.Parser.parse_message(message, [], ctx)
         self.assertEqual(
             parsed,
             parser.Message(
-                'Ping', '', [parser.Field('ping', schema_bh.FieldType.UINT8_T, None)]
+                'Ping', [parser.Field('ping', schema_bh.FieldType.UINT8_T, None)]
             ),
         )
 
@@ -81,17 +93,17 @@ class TestParserSimple(unittest.TestCase):
             '    list[uint32_t] data;',
             '}  # inline comment',
         ]
-        parsed = parser.Parser.parse_message(message, [], [], ctx)
+        parsed = parser.Parser.parse_message(message, [], ctx)
         self.assertEqual(
             parsed,
             parser.Message(
                 'FlashPage',
-                '',
                 [
                     parser.Field('address', schema_bh.FieldType.UINT32_T, None),
                     parser.Field(
                         'read_size',
                         schema_bh.FieldType.UINT32_T,
+                        None,
                         None,
                         None,
                         [],
@@ -101,6 +113,7 @@ class TestParserSimple(unittest.TestCase):
                         'data',
                         schema_bh.FieldType.LIST,
                         schema_bh.FieldType.UINT32_T,
+                        None,
                         None,
                         [' out-of-line comment'],
                     ),
@@ -114,7 +127,7 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError):
-            parser.Parser.parse_message(message, [], [], ctx)
+            parser.Parser.parse_message(message, [], ctx)
 
         # Nested message
         message = [
@@ -122,14 +135,18 @@ class TestParserSimple(unittest.TestCase):
             '    Inner inner;',
             '}',
         ]
-        inner = parser.Message('Inner', '', [])
-        parsed = parser.Parser.parse_message(message, [inner], [], ctx)
+        inner = parser.Message('Inner', [])
+        ctx.cur_buffham.messages.append(inner)
+        parsed = parser.Parser.parse_message(message, [], ctx)
         self.assertEqual(
             parsed,
             parser.Message(
                 'Outer',
-                '',
-                [parser.Field('inner', schema_bh.FieldType.MESSAGE, None, inner)],
+                [
+                    parser.Field(
+                        'inner', schema_bh.FieldType.MESSAGE, None, inner, 'test'
+                    )
+                ],
             ),
         )
 
@@ -139,134 +156,134 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError):
-            parser.Parser.parse_message(message, [inner], [], ctx)
+            parser.Parser.parse_message(message, [], ctx)
 
     def test_parse_transaction(self):
         p = parser.Parser()
-        ctx = parser.ParseContext({})
+        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
+        ctx.cur_namespace = 'test'
 
         transaction = 'transaction ping[Ping, LogMessage];'
         receive = parser.Message(
-            'Ping', '', [parser.Field('ping', schema_bh.FieldType.UINT8_T, None)]
+            'Ping', [parser.Field('ping', schema_bh.FieldType.UINT8_T, None)]
         )
         send = parser.Message(
             'LogMessage',
-            '',
             [parser.Field('message', schema_bh.FieldType.STRING, None)],
         )
-        messages = [receive, send]
-        parsed = p.parse_transaction(transaction, messages, ['some other comment'], ctx)
+        ctx.cur_buffham.messages.extend([receive, send])
+        parsed = p.parse_transaction(transaction, ['some other comment'], ctx)
         self.assertEqual(
             parsed,
             parser.Transaction(
                 'ping',
-                '',
                 0,
                 receive,
+                'test',
                 send,
+                'test',
                 ['some other comment'],
             ),
         )
 
         transaction = 'transaction flash_page[Ping, Ping];  # inline comment'
-        messages = [receive, receive]
-        parsed = p.parse_transaction(transaction, messages, [], ctx)
+        parsed = p.parse_transaction(transaction, [], ctx)
         self.assertEqual(
             parsed,
             parser.Transaction(
                 'flash_page',
-                '',
                 1,
                 receive,
+                'test',
                 receive,
+                'test',
                 comments=[],  # In-line transaction comments are ignored
             ),
         )
 
         transaction = 'transaction flash_page[Ping, InvalidMessage];'
         with self.assertRaises(ValueError):
-            p.parse_transaction(transaction, messages, [], ctx)
+            p.parse_transaction(transaction, [], ctx)
 
         transaction = 'transaction flash_page[Ping, Ping'
         with self.assertRaises(ValueError):
-            p.parse_transaction(transaction, messages, [], ctx)
+            p.parse_transaction(transaction, [], ctx)
 
     def test_parse_publish(self):
         p = parser.Parser()
-        ctx = parser.ParseContext({})
+        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
+        ctx.cur_namespace = 'test'
 
         publish = 'publish log[LogMessage];'
-        send = parser.Message(
+        log_msg = parser.Message(
             'LogMessage',
-            '',
             [parser.Field('message', schema_bh.FieldType.STRING, None)],
         )
-        messages = [send]
-        parsed = p.parse_publish(publish, messages, ['some other comment'], ctx)
+        ctx.cur_buffham.messages.append(log_msg)
+        parsed = p.parse_publish(publish, ['some other comment'], ctx)
         self.assertEqual(
             parsed,
             parser.Publish(
                 'log',
-                '',
                 0,
-                send,
+                log_msg,
                 ['some other comment'],
             ),
         )
 
         publish = 'publish ping_pong[Ping];  # inline comment'
-        send = parser.Message(
-            'Ping', '', [parser.Field('pong', schema_bh.FieldType.UINT8_T, None)]
+        ping = parser.Message(
+            'Ping', [parser.Field('pong', schema_bh.FieldType.UINT8_T, None)]
         )
-        messages = [send]
-        parsed = p.parse_publish(publish, messages, [], ctx)
+        ctx.cur_buffham.messages.append(ping)
+        parsed = p.parse_publish(publish, [], ctx)
         self.assertEqual(
             parsed,
             parser.Publish(
                 'ping_pong',
-                '',
                 1,
-                send,
+                ping,
                 comments=[],  # In-line publish comments are ignored
             ),
         )
 
         publish = 'publish noise[InvalidMessage];'
         with self.assertRaises(ValueError):
-            p.parse_publish(publish, messages, [], ctx)
+            p.parse_publish(publish, [], ctx)
 
         publish = 'publish noise[Ping'
         with self.assertRaises(ValueError):
-            p.parse_publish(publish, messages, [], ctx)
+            p.parse_publish(publish, [], ctx)
 
     def test_parse_constant(self):
         p = parser.Parser()
-        ctx = parser.ParseContext({})
+        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
+        ctx.cur_namespace = 'test'
 
         constant = 'constant uint8_t foo = 0x01;'
-        parsed = p.parse_constant(constant, [], [], ctx)
+        parsed = p.parse_constant(constant, [], ctx)
         self.assertEqual(
             parsed,
-            parser.Constant('foo', '', schema_bh.FieldType.UINT8_T, '0x01'),
+            parser.Constant('foo', schema_bh.FieldType.UINT8_T, '0x01'),
         )
 
         constant = 'constant uint32_t bar = 0x12345678;  # inline comment'
-        parsed = p.parse_constant(constant, [], [], ctx)
+        parsed = p.parse_constant(constant, [], ctx)
         bar = parser.Constant(
-            'bar', '', schema_bh.FieldType.UINT32_T, '0x12345678', [], ' inline comment'
+            'bar', schema_bh.FieldType.UINT32_T, '0x12345678', [], ' inline comment'
         )
+        ctx.cur_buffham.constants.append(bar)
         self.assertEqual(
             parsed,
             bar,
         )
 
         constant = 'constant uint32_t baz = 0x1 + {bar};'
-        parsed = p.parse_constant(constant, [bar], ['some other comment'], ctx)
+        parsed = p.parse_constant(constant, ['some other comment'], ctx)
         self.assertEqual(
             parsed,
             parser.Constant(
                 'baz',
-                '',
                 schema_bh.FieldType.UINT32_T,
                 '0x1 + {bar}',
                 ['some other comment'],
@@ -277,9 +294,12 @@ class TestParserSimple(unittest.TestCase):
 
         constant = 'constant uint32_t baz = 0x12345678  # missing semicolon'
         with self.assertRaises(ValueError):
-            p.parse_constant(constant, [], [], ctx)
+            p.parse_constant(constant, [], ctx)
 
     def test_parse_enum(self):
+        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
+        ctx.cur_namespace = 'test'
+
         enum_lines = [
             'enum SampleEnum {',
             '    A = 0;  # inline on A',
@@ -288,12 +308,11 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         comments = [' Enum comment line 1', ' Enum comment line 2']
-        parsed = parser.Parser.parse_enum(enum_lines, comments)
+        parsed = parser.Parser.parse_enum(enum_lines, comments, ctx)
         self.assertEqual(
             parsed,
             parser.Enum(
                 'SampleEnum',
-                '',
                 [
                     parser.EnumField('A', 0, [], ' inline on A'),
                     parser.EnumField('B', 1, [' Comment on B']),
@@ -309,7 +328,7 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError):
-            parser.Parser.parse_enum(enum_lines, [])
+            parser.Parser.parse_enum(enum_lines, [], ctx)
 
 
 class TestParserSample(unittest.TestCase):
@@ -336,7 +355,6 @@ class TestParserSample(unittest.TestCase):
 
         sample_enum = parser.Enum(
             'SampleEnum',
-            'sample',
             [
                 parser.EnumField('A', 0),
                 parser.EnumField('B', 1, [' Comment on B'], ' Inline comment on B'),
@@ -346,11 +364,11 @@ class TestParserSample(unittest.TestCase):
 
         ping = parser.Message(
             'Ping',
-            'sample',
             [
                 parser.Field(
                     'ping',
                     schema_bh.FieldType.UINT8_T,
+                    None,
                     None,
                     None,
                     [' Add some comments here'],
@@ -360,7 +378,6 @@ class TestParserSample(unittest.TestCase):
         )
         flash_page = parser.Message(
             'FlashPage',
-            'sample',
             [
                 parser.Field('address', schema_bh.FieldType.UINT32_T, None),
                 parser.Field(
@@ -368,12 +385,14 @@ class TestParserSample(unittest.TestCase):
                     schema_bh.FieldType.LIST,
                     schema_bh.FieldType.UINT8_T,
                     None,
+                    None,
                     [' Another field comment'],
                     ' What about some in-line comments for fields?',
                 ),
                 parser.Field(
                     'read_size',
                     schema_bh.FieldType.UINT32_T,
+                    None,
                     None,
                     None,
                     [' This comment belongs to `read_size`'],
@@ -390,21 +409,25 @@ class TestParserSample(unittest.TestCase):
         )
         log_message = parser.Message(
             'LogMessage',
-            'sample',
             [parser.Field('message', schema_bh.FieldType.STRING, None)],
         )
         nested_message = parser.Message(
             'NestedMessage',
-            'sample',
             [
                 parser.Field('flag', schema_bh.FieldType.UINT8_T, None),
-                parser.Field('message', schema_bh.FieldType.MESSAGE, None, log_message),
+                parser.Field(
+                    'message', schema_bh.FieldType.MESSAGE, None, log_message, 'sample'
+                ),
                 parser.Field(
                     'numbers', schema_bh.FieldType.LIST, schema_bh.FieldType.INT32_T
                 ),
-                parser.Field('pong', schema_bh.FieldType.MESSAGE, None, ping),
+                parser.Field('pong', schema_bh.FieldType.MESSAGE, None, ping, 'sample'),
                 parser.Field(
-                    'other_pong', schema_bh.FieldType.MESSAGE, None, other.messages[0]
+                    'other_pong',
+                    schema_bh.FieldType.MESSAGE,
+                    None,
+                    other.messages[0],
+                    'nlb.buffham.testdata.other',
                 ),
             ],
         )
@@ -425,17 +448,30 @@ class TestParserSample(unittest.TestCase):
             parsed.transactions,
             [
                 # Request IDs offset by 1 from `other`'s transactions
-                parser.Transaction('ping', 'sample', 1, other.messages[0], log_message),
+                parser.Transaction(
+                    'ping',
+                    1,
+                    other.messages[0],
+                    'nlb.buffham.testdata.other',
+                    log_message,
+                    'sample',
+                ),
                 parser.Transaction(
                     'flash_page',
-                    'sample',
                     2,
                     flash_page,
+                    'sample',
                     flash_page,
+                    'sample',
                     [' Transaction comment'],
                 ),
                 parser.Transaction(
-                    'read_flash_page', 'sample', 3, flash_page, flash_page
+                    'read_flash_page',
+                    3,
+                    flash_page,
+                    'sample',
+                    flash_page,
+                    'sample',
                 ),
             ],
         )
@@ -445,14 +481,12 @@ class TestParserSample(unittest.TestCase):
             [
                 parser.Constant(
                     'my_constant',
-                    'sample',
                     schema_bh.FieldType.UINT8_T,
                     '4',
                     [' This is a constant in the global scope'],
                 ),
                 parser.Constant(
                     'constant_string',
-                    'sample',
                     schema_bh.FieldType.STRING,
                     'Hello, world!',
                     [
@@ -462,12 +496,11 @@ class TestParserSample(unittest.TestCase):
                 ),
                 parser.Constant(
                     'composed_constant',
-                    'sample',
                     schema_bh.FieldType.UINT16_T,
                     '2 + {my_constant} + {nlb.buffham.testdata.other.other_constant}',
                     [' Constants may reference other constants with {brackets}'],
                     None,
-                    ['my_constant', 'nlb.buffham.testdata.other.other_constant'],
+                    ['nlb.buffham.testdata.other.other_constant', 'my_constant'],
                 ),
             ],
         )
