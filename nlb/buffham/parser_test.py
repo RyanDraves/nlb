@@ -7,15 +7,15 @@ from nlb.buffham import schema_bh
 
 class TestParserSimple(unittest.TestCase):
     def test_parse_field(self):
-        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
-        ctx.cur_namespace = 'test'
+        p = parser.Parser({'test': parser.Buffham('test', '')})
+        p.cur_namespace = 'test'
 
         field = '    uint8_t foo;'
-        parsed = parser.Parser.parse_message_field(field, [], ctx)
+        parsed = p.parse_message_field(field, [])
         self.assertEqual(parsed, parser.Field('foo', schema_bh.FieldType.UINT8_T, None))
 
         field = 'float64 bar;  # inline comment'
-        parsed = parser.Parser.parse_message_field(field, [], ctx)
+        parsed = p.parse_message_field(field, [])
         self.assertEqual(
             parsed,
             parser.Field(
@@ -30,9 +30,7 @@ class TestParserSimple(unittest.TestCase):
         )
 
         field = 'list[uint32_t] baz_2;'
-        parsed = parser.Parser.parse_message_field(
-            field, ['some other', 'read-in comments'], ctx
-        )
+        parsed = p.parse_message_field(field, ['some other', 'read-in comments'])
         self.assertEqual(
             parsed,
             parser.Field(
@@ -47,16 +45,16 @@ class TestParserSimple(unittest.TestCase):
 
         field = 'list[list[uint32_t]] baz_3;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_message_field(field, [], ctx)
+            p.parse_message_field(field, [])
 
         field = 'list[uint32_t baz_4;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_message_field(field, [], ctx)
+            p.parse_message_field(field, [])
 
         field = 'MyMessage baz_5;'
         my_message = parser.Message('MyMessage', [])
-        ctx.cur_buffham.messages.append(my_message)
-        parsed = parser.Parser.parse_message_field(field, [], ctx)
+        p.cur_buffham.messages.append(my_message)
+        parsed = p.parse_message_field(field, [])
         self.assertEqual(
             parsed,
             parser.Field(
@@ -66,18 +64,18 @@ class TestParserSimple(unittest.TestCase):
 
         field = 'NonexistantMessage baz_6;'
         with self.assertRaises(ValueError):
-            parser.Parser.parse_message_field(field, [], ctx)
+            p.parse_message_field(field, [])
 
     def test_parse_message(self):
-        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
-        ctx.cur_namespace = 'test'
+        p = parser.Parser({'test': parser.Buffham('test', '')})
+        p.cur_namespace = 'test'
 
         message = [
             'message Ping {',
             '    uint8_t ping;',
             '}',
         ]
-        parsed = parser.Parser.parse_message(message, [], ctx)
+        parsed = p.parse_message(message, [])
         self.assertEqual(
             parsed,
             parser.Message(
@@ -93,7 +91,7 @@ class TestParserSimple(unittest.TestCase):
             '    list[uint32_t] data;',
             '}  # inline comment',
         ]
-        parsed = parser.Parser.parse_message(message, [], ctx)
+        parsed = p.parse_message(message, [])
         self.assertEqual(
             parsed,
             parser.Message(
@@ -127,7 +125,7 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError):
-            parser.Parser.parse_message(message, [], ctx)
+            p.parse_message(message, [])
 
         # Nested message
         message = [
@@ -136,8 +134,8 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         inner = parser.Message('Inner', [])
-        ctx.cur_buffham.messages.append(inner)
-        parsed = parser.Parser.parse_message(message, [], ctx)
+        p.cur_buffham.messages.append(inner)
+        parsed = p.parse_message(message, [])
         self.assertEqual(
             parsed,
             parser.Message(
@@ -156,12 +154,11 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError):
-            parser.Parser.parse_message(message, [], ctx)
+            p.parse_message(message, [])
 
     def test_parse_transaction(self):
-        p = parser.Parser()
-        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
-        ctx.cur_namespace = 'test'
+        p = parser.Parser({'test': parser.Buffham('test', '')})
+        p.cur_namespace = 'test'
 
         transaction = 'transaction ping[Ping, LogMessage];'
         receive = parser.Message(
@@ -171,8 +168,8 @@ class TestParserSimple(unittest.TestCase):
             'LogMessage',
             [parser.Field('message', schema_bh.FieldType.STRING, None)],
         )
-        ctx.cur_buffham.messages.extend([receive, send])
-        parsed = p.parse_transaction(transaction, ['some other comment'], ctx)
+        p.cur_buffham.messages.extend([receive, send])
+        parsed = p.parse_transaction(transaction, ['some other comment'])
         self.assertEqual(
             parsed,
             parser.Transaction(
@@ -187,7 +184,7 @@ class TestParserSimple(unittest.TestCase):
         )
 
         transaction = 'transaction flash_page[Ping, Ping];  # inline comment'
-        parsed = p.parse_transaction(transaction, [], ctx)
+        parsed = p.parse_transaction(transaction, [])
         self.assertEqual(
             parsed,
             parser.Transaction(
@@ -203,24 +200,23 @@ class TestParserSimple(unittest.TestCase):
 
         transaction = 'transaction flash_page[Ping, InvalidMessage];'
         with self.assertRaises(ValueError):
-            p.parse_transaction(transaction, [], ctx)
+            p.parse_transaction(transaction, [])
 
         transaction = 'transaction flash_page[Ping, Ping'
         with self.assertRaises(ValueError):
-            p.parse_transaction(transaction, [], ctx)
+            p.parse_transaction(transaction, [])
 
     def test_parse_publish(self):
-        p = parser.Parser()
-        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
-        ctx.cur_namespace = 'test'
+        p = parser.Parser({'test': parser.Buffham('test', '')})
+        p.cur_namespace = 'test'
 
         publish = 'publish log[LogMessage];'
         log_msg = parser.Message(
             'LogMessage',
             [parser.Field('message', schema_bh.FieldType.STRING, None)],
         )
-        ctx.cur_buffham.messages.append(log_msg)
-        parsed = p.parse_publish(publish, ['some other comment'], ctx)
+        p.cur_buffham.messages.append(log_msg)
+        parsed = p.parse_publish(publish, ['some other comment'])
         self.assertEqual(
             parsed,
             parser.Publish(
@@ -235,8 +231,8 @@ class TestParserSimple(unittest.TestCase):
         ping = parser.Message(
             'Ping', [parser.Field('pong', schema_bh.FieldType.UINT8_T, None)]
         )
-        ctx.cur_buffham.messages.append(ping)
-        parsed = p.parse_publish(publish, [], ctx)
+        p.cur_buffham.messages.append(ping)
+        parsed = p.parse_publish(publish, [])
         self.assertEqual(
             parsed,
             parser.Publish(
@@ -249,37 +245,36 @@ class TestParserSimple(unittest.TestCase):
 
         publish = 'publish noise[InvalidMessage];'
         with self.assertRaises(ValueError):
-            p.parse_publish(publish, [], ctx)
+            p.parse_publish(publish, [])
 
         publish = 'publish noise[Ping'
         with self.assertRaises(ValueError):
-            p.parse_publish(publish, [], ctx)
+            p.parse_publish(publish, [])
 
     def test_parse_constant(self):
-        p = parser.Parser()
-        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
-        ctx.cur_namespace = 'test'
+        p = parser.Parser({'test': parser.Buffham('test', '')})
+        p.cur_namespace = 'test'
 
         constant = 'constant uint8_t foo = 0x01;'
-        parsed = p.parse_constant(constant, [], ctx)
+        parsed = p.parse_constant(constant, [])
         self.assertEqual(
             parsed,
             parser.Constant('foo', schema_bh.FieldType.UINT8_T, '0x01'),
         )
 
         constant = 'constant uint32_t bar = 0x12345678;  # inline comment'
-        parsed = p.parse_constant(constant, [], ctx)
+        parsed = p.parse_constant(constant, [])
         bar = parser.Constant(
             'bar', schema_bh.FieldType.UINT32_T, '0x12345678', [], ' inline comment'
         )
-        ctx.cur_buffham.constants.append(bar)
+        p.cur_buffham.constants.append(bar)
         self.assertEqual(
             parsed,
             bar,
         )
 
         constant = 'constant uint32_t baz = 0x1 + {bar};'
-        parsed = p.parse_constant(constant, ['some other comment'], ctx)
+        parsed = p.parse_constant(constant, ['some other comment'])
         self.assertEqual(
             parsed,
             parser.Constant(
@@ -294,11 +289,11 @@ class TestParserSimple(unittest.TestCase):
 
         constant = 'constant uint32_t baz = 0x12345678  # missing semicolon'
         with self.assertRaises(ValueError):
-            p.parse_constant(constant, [], ctx)
+            p.parse_constant(constant, [])
 
     def test_parse_enum(self):
-        ctx = parser.ParseContext({'test': parser.Buffham('test', '')})
-        ctx.cur_namespace = 'test'
+        p = parser.Parser({'test': parser.Buffham('test', '')})
+        p.cur_namespace = 'test'
 
         enum_lines = [
             'enum SampleEnum {',
@@ -308,7 +303,7 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         comments = [' Enum comment line 1', ' Enum comment line 2']
-        parsed = parser.Parser.parse_enum(enum_lines, comments, ctx)
+        parsed = p.parse_enum(enum_lines, comments)
         self.assertEqual(
             parsed,
             parser.Enum(
@@ -328,7 +323,7 @@ class TestParserSimple(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError):
-            parser.Parser.parse_enum(enum_lines, [], ctx)
+            p.parse_enum(enum_lines, [])
 
 
 class TestParserSample(unittest.TestCase):
@@ -343,15 +338,12 @@ class TestParserSample(unittest.TestCase):
 
         other = p.parse_file(
             self.other_file,
-            parser.ParseContext({}),
             parent_namespace='nlb.buffham.testdata',
         )
         # Quickly inspect the parsed `other` object
         self.assertEqual(len(other.constants), 1)
         self.assertEqual(len(other.messages), 1)
         self.assertEqual(len(other.transactions), 1)
-
-        ctx = parser.ParseContext({'nlb.buffham.testdata.other': other})
 
         sample_enum = parser.Enum(
             'SampleEnum',
@@ -432,7 +424,7 @@ class TestParserSample(unittest.TestCase):
             ],
         )
 
-        parsed = p.parse_file(self.sample_file, ctx, parent_namespace='')
+        parsed = p.parse_file(self.sample_file, parent_namespace='')
 
         self.assertListEqual(
             parsed.messages,

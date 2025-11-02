@@ -300,7 +300,7 @@ def generate_enum(enum: parser.Enum) -> str:
 
 
 def generate_cpp(
-    ctx: parser.ParseContext, primary_namespace: str, outfile: pathlib.Path, hpp: bool
+    ctx: parser.Parser, primary_namespace: str, outfile: pathlib.Path, hpp: bool
 ) -> None:
     bh = ctx.buffhams[primary_namespace]
 

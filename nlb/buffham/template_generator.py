@@ -7,7 +7,7 @@ TEMPLATE_PATTERN = re.compile(r'\{\{ ([\w|\.]+) \}\}')
 
 
 def _expanded_constant(
-    ctx: parser.ParseContext, bh: parser.Buffham, constant: parser.Constant
+    ctx: parser.Parser, bh: parser.Buffham, constant: parser.Constant
 ) -> str:
     """Expand a constant to its value.
 
@@ -33,7 +33,7 @@ def _expanded_constant(
 
 
 def generate_template(
-    ctx: parser.ParseContext,
+    ctx: parser.Parser,
     primary_namespace: str,
     outfile: pathlib.Path,
     template_file: pathlib.Path,

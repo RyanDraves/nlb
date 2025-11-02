@@ -233,7 +233,7 @@ def generate_registry(
 
 
 def generate_serializer(
-    name: str, ctx: parser.ParseContext, primary_namespace: str, stub: bool
+    name: str, ctx: parser.Parser, primary_namespace: str, stub: bool
 ) -> str:
     """Generate a serializer with a defined registry for transactions."""
 
@@ -333,7 +333,7 @@ def generate_publishes(publishes: list[parser.Publish]) -> str:
 
 
 def generate_python(
-    ctx: parser.ParseContext, primary_namespace: str, outfile: pathlib.Path, stub: bool
+    ctx: parser.Parser, primary_namespace: str, outfile: pathlib.Path, stub: bool
 ) -> None:
     bh = ctx.buffhams[primary_namespace]
 
