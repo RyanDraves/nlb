@@ -24,18 +24,15 @@ class TestPyGenerator(unittest.TestCase):
         self.golden_file = testdata_dir / 'sample_bh.py.golden'
         self.golden_stub_file = testdata_dir / 'sample_bh.pyi.golden'
 
-        self.other_bh = parser.Parser().parse_file(
+        self.ctx = parser.Parser()
+        self.other_bh = self.ctx.parse_file(
             self.other_file,
-            parser.ParseContext({}),
             parent_namespace='nlb.buffham.testdata',
         )
-        self.ctx = parser.ParseContext({'nlb.buffham.testdata.other': self.other_bh})
 
     def test_generate_python(self):
         with tempfile.TemporaryDirectory() as tempdir:
-            buffham = parser.Parser().parse_file(
-                self.sample_file, self.ctx, parent_namespace=''
-            )
+            buffham = self.ctx.parse_file(self.sample_file, parent_namespace='')
 
             outfile = pathlib.Path(tempdir) / 'sample_bh.py'
             py_generator.generate_python(
@@ -74,7 +71,9 @@ class TestPyGenerator(unittest.TestCase):
             self.assertEqual(size, len(buffer))
 
             # Test serialization & deserialization of `LogMessage`
-            log_message = sample_bh.LogMessage('Hello, world!')
+            log_message = sample_bh.LogMessage(
+                'Hello, world!', sample_bh.Verbosity.MEDIUM, other_bh.MyEnum.B
+            )
             log_message_message = next(
                 filter(lambda m: m.name == 'LogMessage', buffham.messages)
             )
@@ -131,7 +130,7 @@ class TestPyGenerator(unittest.TestCase):
             self.assertListEqual(generated.splitlines(), golden.splitlines())
 
     def test_generate_python_stub(self):
-        buffham = parser.Parser().parse_file(self.sample_file, self.ctx)
+        buffham = self.ctx.parse_file(self.sample_file)
 
         with tempfile.TemporaryDirectory() as tempdir:
             outfile = pathlib.Path(tempdir) / 'sample_bh.pyi'

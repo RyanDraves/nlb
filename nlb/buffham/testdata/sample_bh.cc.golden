@@ -48,7 +48,9 @@ std::span<uint8_t> LogMessage::serialize(std::span<uint8_t> buffer) const {
     uint16_t message_size = message.size();
     memcpy(buffer.data() + 0, &message_size, 2);
     memcpy(buffer.data() + 2, message.data(), message_size * 1);
-    return buffer.subspan(0, 2 + message_size * 1);
+    memcpy(buffer.data() + 2 + message_size * 1, &verbosity, 1);
+    memcpy(buffer.data() + 3 + message_size * 1, &my_enum, 1);
+    return buffer.subspan(0, 4 + message_size * 1);
 }
 
 std::pair<LogMessage, std::span<const uint8_t> > LogMessage::deserialize(std::span<const uint8_t> buffer) {
@@ -57,7 +59,9 @@ std::pair<LogMessage, std::span<const uint8_t> > LogMessage::deserialize(std::sp
     memcpy(&message_size, buffer.data() + 0, 2);
     log_message.message.resize(message_size);
     memcpy(log_message.message.data(), buffer.data() + 2, message_size * 1);
-    return {log_message, buffer.subspan(0, 2 + message_size * 1)};
+    memcpy(&log_message.verbosity, buffer.data() + 2 + message_size * 1, 1);
+    memcpy(&log_message.my_enum, buffer.data() + 3 + message_size * 1, 1);
+    return {log_message, buffer.subspan(0, 4 + message_size * 1)};
 }
 
 std::span<uint8_t> NestedMessage::serialize(std::span<uint8_t> buffer) const {

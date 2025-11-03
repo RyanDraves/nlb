@@ -16,6 +16,14 @@ CONSTANT_STRING = 'Hello, world!'  # constants can have inline comments
 # Constants may reference other constants with {brackets}
 COMPOSED_CONSTANT = 2 + MY_CONSTANT + other_bh.OTHER_CONSTANT
 
+# Enums can be defined and are treated as uint8_t values
+class Verbosity(enum.Enum):
+    LOW = 0
+    # Comment on MEDIUM
+    MEDIUM = 1  # Inline comment on MEDIUM
+    HIGH = 2
+
+
 @dataclasses.dataclass
 class Ping:
     """A message comment"""
@@ -50,6 +58,8 @@ class FlashPage:
 @dataclasses.dataclass
 class LogMessage:
     message: str
+    verbosity: Verbosity
+    my_enum: other_bh.MyEnum
 
     def serialize(self) -> bytes: ...
     @classmethod
@@ -86,8 +96,8 @@ class SampleNode[
 PING: bh.Transaction[other_bh.Pong, LogMessage] = ...
 # Transaction comment
 FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...
-READ_FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...
+READ_FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...  # In-line transaction comment
 
 class PublishIds(enum.Enum):
     # Publish comment
-    LOG_MESSAGE = 4
+    LOG_MESSAGE = 4  # In-line publish comment

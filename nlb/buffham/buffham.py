@@ -65,31 +65,25 @@ def main(
     language: Languages,
 ):
     p = parser.Parser()
-    ctx = parser.ParseContext({})
 
     for d in dep:
-        p.parse_file(d, ctx)
+        p.parse_file(d)
 
-    buffham = p.parse_file(input, ctx)
+    p.parse_file(input)
+    ns = p.cur_namespace
 
     match language:
         case Languages.PYTHON:
-            assert secondary_output is not None
-            py_generator.generate_python(ctx, buffham.namespace, output, stub=False)
-            py_generator.generate_python(
-                ctx, buffham.namespace, secondary_output, stub=True
-            )
+            py_generator.generate_python(p, ns, output, stub=False)
+            if secondary_output is not None:
+                py_generator.generate_python(p, ns, secondary_output, stub=True)
         case Languages.CPP:
             assert secondary_output is not None
-            cpp_generator.generate_cpp(ctx, buffham.namespace, output, hpp=True)
-            cpp_generator.generate_cpp(
-                ctx, buffham.namespace, secondary_output, hpp=False
-            )
+            cpp_generator.generate_cpp(p, ns, output, hpp=True)
+            cpp_generator.generate_cpp(p, ns, secondary_output, hpp=False)
         case Languages.TEMPLATE:
             assert template_file is not None
-            template_generator.generate_template(
-                ctx, buffham.namespace, output, template_file
-            )
+            template_generator.generate_template(p, ns, output, template_file)
         case _:
             raise ValueError(f'Unsupported language: {language}')
 

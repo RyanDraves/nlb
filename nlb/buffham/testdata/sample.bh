@@ -9,6 +9,14 @@ constant string constant_string = Hello, world!;  # constants can have inline co
 # Constants may reference other constants with {brackets}
 constant uint16_t composed_constant = 2 + {my_constant} + {nlb.buffham.testdata.other.other_constant};
 
+# Enums can be defined and are treated as uint8_t values
+enum Verbosity {
+    LOW = 0;
+    # Comment on MEDIUM
+    MEDIUM = 1;  # Inline comment on MEDIUM
+    HIGH = 2;
+}
+
 # A message comment
 message Ping {
     # Add some comments here
@@ -34,6 +42,8 @@ message FlashPage {
 
 message LogMessage {  # In-line message comments are ignored
     string message;
+    Verbosity verbosity;
+    nlb.buffham.testdata.other.MyEnum my_enum;
 }  # This in-line comment is also ignored
 
 message NestedMessage {
@@ -47,7 +57,7 @@ message NestedMessage {
 transaction ping[nlb.buffham.testdata.other.Pong, LogMessage];
 # Transaction comment
 transaction flash_page[FlashPage, FlashPage];
-transaction read_flash_page[FlashPage, FlashPage];  # In-line transaction comments are ignored
+transaction read_flash_page[FlashPage, FlashPage];  # In-line transaction comment
 
 # Publish comment
-publish log_message[LogMessage];  # In-line publish comments are ignored
+publish log_message[LogMessage];  # In-line publish comment

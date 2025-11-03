@@ -2,23 +2,24 @@ import logging
 import pathlib
 
 from nlb.buffham import parser
+from nlb.buffham import schema_bh
 
 T = ' ' * 4  # Indentation
 
 
 TYPE_MAP = {
-    parser.FieldType.UINT8_T: 'int',
-    parser.FieldType.UINT16_T: 'int',
-    parser.FieldType.UINT32_T: 'int',
-    parser.FieldType.UINT64_T: 'int',
-    parser.FieldType.INT8_T: 'int',
-    parser.FieldType.INT16_T: 'int',
-    parser.FieldType.INT32_T: 'int',
-    parser.FieldType.INT64_T: 'int',
-    parser.FieldType.FLOAT32: 'float',
-    parser.FieldType.FLOAT64: 'float',
-    parser.FieldType.STRING: 'str',
-    parser.FieldType.BYTES: 'bytes',
+    schema_bh.FieldType.UINT8_T: 'int',
+    schema_bh.FieldType.UINT16_T: 'int',
+    schema_bh.FieldType.UINT32_T: 'int',
+    schema_bh.FieldType.UINT64_T: 'int',
+    schema_bh.FieldType.INT8_T: 'int',
+    schema_bh.FieldType.INT16_T: 'int',
+    schema_bh.FieldType.INT32_T: 'int',
+    schema_bh.FieldType.INT64_T: 'int',
+    schema_bh.FieldType.FLOAT32: 'float',
+    schema_bh.FieldType.FLOAT64: 'float',
+    schema_bh.FieldType.STRING: 'str',
+    schema_bh.FieldType.BYTES: 'bytes',
 }
 
 
@@ -38,10 +39,19 @@ def _get_imported_name(relative_name: str) -> str:
 
 def _py_type(field: parser.Field, primary_namespace: str) -> str:
     """Get the Python type hint for the field."""
-    if field.message:
-        return _get_imported_name(field.message.get_relative_name(primary_namespace))
+    if field.message is not None:
+        assert field.message_ns is not None
+        return _get_imported_name(
+            parser.relative_name(field.message, field.message_ns, primary_namespace)
+        )
 
-    if field.pri_type is parser.FieldType.LIST:
+    if field.enum is not None:
+        assert field.enum_ns is not None
+        return _get_imported_name(
+            parser.relative_name(field.enum, field.enum_ns, primary_namespace)
+        )
+
+    if field.pri_type is schema_bh.FieldType.LIST:
         assert field.sub_type is not None
         return f'list[{TYPE_MAP[field.sub_type]}]'
 
@@ -76,12 +86,35 @@ def generate_constant(constant: parser.Constant) -> str:
     value = constant.value
     for ref, name in references.items():
         value = value.replace(f'{{{ref}}}', name)
-    if constant.type is parser.FieldType.STRING:
+    if constant.type is schema_bh.FieldType.STRING:
         value = f"'{value}'"
     definition += f'{constant.name.upper()} = {value}'
 
     if constant.inline_comment:
         definition += f'  #{constant.inline_comment}'
+
+    definition += '\n'
+
+    return definition
+
+
+def generate_enum(enum: parser.Enum) -> str:
+    """Generate a Python enum definition from an Enum."""
+    definition = '\n'
+
+    if enum.comments:
+        for comment in enum.comments:
+            definition += f'#{comment}\n'
+    definition += f'class {enum.name}(enum.Enum):\n'
+
+    for field in enum.fields:
+        if field.comments:
+            for comment in field.comments:
+                definition += f'{T}#{comment}\n'
+        definition += f'{T}{field.name} = {field.value}'
+        if field.inline_comment:
+            definition += f'  #{field.inline_comment}'
+        definition += '\n'
 
     definition += '\n'
 
@@ -126,14 +159,16 @@ def generate_message(
                 definition += (
                     f"\n{T}{T}buffer += struct.pack('<H', len(self.{field.name}))"
                 )
-                if field.pri_type is parser.FieldType.LIST:
+                if field.pri_type is schema_bh.FieldType.LIST:
                     definition += f"\n{T}{T}buffer += struct.pack(f'<{{len(self.{field.name})}}{field.format}', *self.{field.name})"
                 else:
                     definition += f'\n{T}{T}buffer += self.{field.name}'
-                    if field.pri_type is parser.FieldType.STRING:
+                    if field.pri_type is schema_bh.FieldType.STRING:
                         definition += '.encode()'
-            elif field.pri_type is parser.FieldType.MESSAGE:
+            elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 definition += f'\n{T}{T}buffer += self.{field.name}.serialize()'
+            elif field.pri_type is schema_bh.FieldType.ENUM:
+                definition += f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name}.value)"
             else:
                 definition += f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name})"
         definition += f'\n{T}{T}return buffer\n'
@@ -149,22 +184,33 @@ def generate_message(
         offset = 0
         offset_str = ''
         for field in message.fields:
-            if field.pri_type is parser.FieldType.LIST:
+            if field.pri_type is schema_bh.FieldType.LIST:
                 definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
                 offset += 2
                 definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'<{{{field.name}_size}}{field.format}', buffer, {offset}{offset_str}))"
                 offset_str += f' + {field.name}_size * {field.size}'
-            elif field.pri_type in (parser.FieldType.STRING, parser.FieldType.BYTES):
+            elif field.pri_type in (
+                schema_bh.FieldType.STRING,
+                schema_bh.FieldType.BYTES,
+            ):
                 definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
                 offset += 2
                 definition += f'\n{T}{T}{field.name} = buffer[{offset}{offset_str}:{offset}{offset_str} + {field.name}_size]'
-                if field.pri_type is parser.FieldType.STRING:
+                if field.pri_type is schema_bh.FieldType.STRING:
                     definition += '.decode()'
                 offset_str += f' + {field.name}_size * {field.size}'
-            elif field.pri_type is parser.FieldType.MESSAGE:
+            elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 assert field.message is not None
-                definition += f'\n{T}{T}{field.name}, {field.name}_size = {_get_imported_name(field.message.get_relative_name(primary_namespace))}.deserialize(buffer[{offset}{offset_str}:])'
+                assert field.message_ns is not None
+                msg = _py_type(field, primary_namespace)
+                definition += f'\n{T}{T}{field.name}, {field.name}_size = {msg}.deserialize(buffer[{offset}{offset_str}:])'
                 offset_str += f' + {field.name}_size'
+            elif field.pri_type is schema_bh.FieldType.ENUM:
+                assert field.enum is not None
+                assert field.enum_ns is not None
+                enum_type = _py_type(field, primary_namespace)
+                definition += f"\n{T}{T}{field.name} = {enum_type}(struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0])"
+                offset += field.size
             else:
                 definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0]"
                 offset += field.size
@@ -177,7 +223,10 @@ def generate_message(
 
 
 def generate_registry(
-    transactions: list[parser.Transaction], publishes: list[parser.Publish], stub: bool
+    transactions: list[parser.Transaction],
+    publishes: list[parser.Publish],
+    primary_namespace: str,
+    stub: bool,
 ) -> str:
     """Generate a registry for transactions."""
 
@@ -188,16 +237,16 @@ def generate_registry(
     else:
         definition += ' = {\n'
         for transaction in transactions:
-            definition += f'{T}{transaction.request_id}: {transaction.send.name},\n'
+            definition += f'{T}{transaction.request_id}: {_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))},\n'
         for publish in publishes:
-            definition += f'{T}{publish.request_id}: {publish.send.name},\n'
+            definition += f'{T}{publish.request_id}: {_get_imported_name(parser.relative_name(publish.send, publish.send_ns, primary_namespace))},\n'
         definition += '}\n\n'
 
     return definition
 
 
 def generate_serializer(
-    name: str, ctx: parser.ParseContext, primary_namespace: str, stub: bool
+    name: str, ctx: parser.Parser, primary_namespace: str, stub: bool
 ) -> str:
     """Generate a serializer with a defined registry for transactions."""
 
@@ -264,17 +313,23 @@ def generate_transaction(
     if stub:
         definition += (
             f'{transaction.name.upper()}: bh.Transaction['
-            f'{_get_imported_name(transaction.receive.get_relative_name(primary_namespace))}, '
-            f'{_get_imported_name(transaction.send.get_relative_name(primary_namespace))}'
-            f'] = ...\n'
+            f'{_get_imported_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))}, '
+            f'{_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))}'
+            f'] = ...'
         )
+        if transaction.inline_comment:
+            definition += f'  #{transaction.inline_comment}'
+        definition += '\n'
     else:
         definition += (
             f'{transaction.name.upper()} = bh.Transaction['
-            f'{_get_imported_name(transaction.receive.get_relative_name(primary_namespace))}, '
-            f'{_get_imported_name(transaction.send.get_relative_name(primary_namespace))}'
-            f']({transaction.request_id})\n'
+            f'{_get_imported_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))}, '
+            f'{_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))}'
+            f']({transaction.request_id})'
         )
+        if transaction.inline_comment:
+            definition += f'  #{transaction.inline_comment}'
+        definition += '\n'
 
     return definition
 
@@ -291,28 +346,39 @@ def generate_publishes(publishes: list[parser.Publish]) -> str:
         for comment in publish.comments:
             definition += f'{T}#{comment}\n'
 
-        definition += f'{T}{publish.name.upper()} = {publish.request_id}\n'
+        definition += f'{T}{publish.name.upper()} = {publish.request_id}'
+        if publish.inline_comment:
+            definition += f'  #{publish.inline_comment}'
+        definition += '\n'
 
     return definition
 
 
 def generate_python(
-    ctx: parser.ParseContext, primary_namespace: str, outfile: pathlib.Path, stub: bool
+    ctx: parser.Parser, primary_namespace: str, outfile: pathlib.Path, stub: bool
 ) -> None:
     bh = ctx.buffhams[primary_namespace]
 
     with outfile.open('w') as fp:
         fp.write('# @generated by Buffham')
 
+        sys_imports: list[str] = []
         if len(bh.messages):
             # Add imports
-            fp.write('\nimport dataclasses\n')
-            if len(bh.publishes):
-                fp.write('import enum\n')
+            sys_imports.append('import dataclasses')
+            if len(bh.publishes) or len(bh.enums):
+                sys_imports.append('import enum')
             if not stub:
-                fp.write('import struct\n')
+                sys_imports.append('import struct')
             import_type = ', Type' if len(bh.transactions) or len(bh.publishes) else ''
-            fp.write(f'from typing import Self{import_type}\n')
+            sys_imports.append(f'from typing import Self{import_type}')
+        if len(bh.enums):
+            if 'import enum' not in sys_imports:
+                sys_imports.append('import enum')
+        if sys_imports:
+            fp.write('\n')
+            for imp in sys_imports:
+                fp.write(f'{imp}\n')
 
         if len(bh.transactions):
             # Add imports
@@ -337,13 +403,21 @@ def generate_python(
         for constant in bh.constants:
             fp.write(generate_constant(constant))
 
+        # Generate enum definitions
+        for enum in bh.enums:
+            fp.write(generate_enum(enum))
+
         # Generate message definitions
         for message in bh.messages:
             fp.write(generate_message(message, stub, primary_namespace))
 
         # Generate registry
         if len(bh.transactions) or len(bh.publishes):
-            fp.write(generate_registry(bh.transactions, bh.publishes, stub))
+            fp.write(
+                generate_registry(
+                    bh.transactions, bh.publishes, primary_namespace, stub
+                )
+            )
 
         # Generate transaction definitions
         if len(bh.transactions):

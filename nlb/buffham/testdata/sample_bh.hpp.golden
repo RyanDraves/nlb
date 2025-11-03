@@ -24,6 +24,13 @@ constexpr std::string_view kConstantString = "Hello, world!";  // constants can 
 // Constants may reference other constants with {brackets}
 constexpr uint16_t kComposedConstant = 2 + kMyConstant + nlb::buffham::testdata::kOtherConstant;
 
+// Enums can be defined and are treated as uint8_t values
+enum class Verbosity : uint8_t {
+    LOW = 0,
+    // Comment on MEDIUM
+    MEDIUM = 1,  // Inline comment on MEDIUM
+    HIGH = 2,
+};
 
 // A message comment
 struct Ping {
@@ -46,7 +53,7 @@ All of these belong to `FlashPage`
 struct FlashPage {
     uint32_t address;
     // Another field comment
-    std::vector<uint8_t> data;  //  What about some in-line comments for fields?
+    std::vector<uint8_t> data;  // What about some in-line comments for fields?
     // This comment belongs to `read_size`
     uint32_t read_size;
 
@@ -57,6 +64,8 @@ struct FlashPage {
 
 struct LogMessage {
     std::string message;
+    Verbosity verbosity;
+    nlb::buffham::testdata::MyEnum my_enum;
 
     std::span<uint8_t> serialize(std::span<uint8_t> buffer) const;
 
@@ -93,7 +102,7 @@ class Sample {
     LogMessage ping(const nlb::buffham::testdata::Pong &pong);
     // Transaction comment
     FlashPage flash_page(const FlashPage &flash_page);
-    FlashPage read_flash_page(const FlashPage &flash_page);
+    FlashPage read_flash_page(const FlashPage &flash_page);  // In-line transaction comment
   private:
     struct SampleImpl;
     SampleImpl *impl_;
@@ -101,7 +110,7 @@ class Sample {
 
 enum PublishIds : uint8_t {
     // Publish comment
-    LOG_MESSAGE = 4,
+    LOG_MESSAGE = 4,  // In-line publish comment
 };
 
 }  // namespace nlb
