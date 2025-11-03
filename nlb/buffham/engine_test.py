@@ -1,9 +1,16 @@
 import dataclasses
+import enum
 import unittest
 
 from nlb.buffham import engine
 from nlb.buffham import parser
 from nlb.buffham import schema_bh
+
+
+class Verbosity(enum.Enum):
+    LOW = 0
+    MEDIUM = 1
+    HIGH = 2
 
 
 @dataclasses.dataclass
@@ -21,6 +28,7 @@ class FlashPage:
 @dataclasses.dataclass
 class LogMessage:
     message: str
+    verbosity: Verbosity
 
 
 @dataclasses.dataclass
@@ -52,6 +60,7 @@ class TestEngine(unittest.TestCase):
         'LogMessage',
         [
             parser.Field('message', schema_bh.FieldType.STRING, None),
+            parser.Field('verbosity', schema_bh.FieldType.ENUM, None),
         ],
     )
     NESTED_MESSAGE = parser.Message(
@@ -83,23 +92,23 @@ class TestEngine(unittest.TestCase):
 
         message = self.LOG_MESSAGE
         serializer = engine.generate_serializer(message)
-        instance = LogMessage('Hello, World!')
+        instance = LogMessage('Hello, World!', Verbosity.MEDIUM)
         self.assertEqual(
             serializer(instance),
             # We're ok with not having a null byte since
             # the length is encoded
-            b'\x0d\x00Hello, World!',
+            b'\x0d\x00Hello, World!\x01',
         )
 
     def test_generate_nested_serializer(self):
         message = self.NESTED_MESSAGE
         serializer = engine.generate_serializer(message)
         instance = NestedMessage(
-            0x42, LogMessage('Hello, World!'), [-1, -2, -3], Ping(42)
+            0x42, LogMessage('Hello, World!', Verbosity.LOW), [-1, -2, -3], Ping(42)
         )
         self.assertEqual(
             serializer(instance),
-            b'B\r\x00Hello, World!\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*',
+            b'B\r\x00Hello, World!\x00\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*',
         )
 
     def test_generate_deserializer(self):
@@ -121,18 +130,23 @@ class TestEngine(unittest.TestCase):
 
         message = self.LOG_MESSAGE
         deserializer = engine.generate_deserializer(message, LogMessage)
-        buffer = b'\x0d\x00Hello, World!'
+        buffer = b'\x0d\x00Hello, World!\x02'
         msg, size = deserializer(buffer)
-        self.assertEqual(msg, LogMessage('Hello, World!'))
+        self.assertEqual(msg, LogMessage('Hello, World!', Verbosity.HIGH))
         self.assertEqual(size, len(buffer))
 
     def test_generate_nested_deserializer(self):
         message = self.NESTED_MESSAGE
         deserializer = engine.generate_deserializer(message, NestedMessage)
-        buffer = b'B\r\x00Hello, World!\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*'
+        buffer = b'B\r\x00Hello, World!\x02\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*'
         msg, size = deserializer(buffer)
         self.assertEqual(
             msg,
-            NestedMessage(0x42, LogMessage('Hello, World!'), [-1, -2, -3], Ping(42)),
+            NestedMessage(
+                0x42,
+                LogMessage('Hello, World!', Verbosity.HIGH),
+                [-1, -2, -3],
+                Ping(42),
+            ),
         )
         self.assertEqual(size, len(buffer))

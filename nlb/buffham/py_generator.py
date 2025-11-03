@@ -45,6 +45,12 @@ def _py_type(field: parser.Field, primary_namespace: str) -> str:
             parser.relative_name(field.message, field.message_ns, primary_namespace)
         )
 
+    if field.enum is not None:
+        assert field.enum_ns is not None
+        return _get_imported_name(
+            parser.relative_name(field.enum, field.enum_ns, primary_namespace)
+        )
+
     if field.pri_type is schema_bh.FieldType.LIST:
         assert field.sub_type is not None
         return f'list[{TYPE_MAP[field.sub_type]}]'
@@ -161,6 +167,8 @@ def generate_message(
                         definition += '.encode()'
             elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 definition += f'\n{T}{T}buffer += self.{field.name}.serialize()'
+            elif field.pri_type is schema_bh.FieldType.ENUM:
+                definition += f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name}.value)"
             else:
                 definition += f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name})"
         definition += f'\n{T}{T}return buffer\n'
@@ -201,6 +209,14 @@ def generate_message(
                 )
                 definition += f'\n{T}{T}{field.name}, {field.name}_size = {msg}.deserialize(buffer[{offset}{offset_str}:])'
                 offset_str += f' + {field.name}_size'
+            elif field.pri_type is schema_bh.FieldType.ENUM:
+                assert field.enum is not None
+                assert field.enum_ns is not None
+                enum_type = _get_imported_name(
+                    parser.relative_name(field.enum, field.enum_ns, primary_namespace)
+                )
+                definition += f"\n{T}{T}{field.name} = {enum_type}(struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0])"
+                offset += field.size
             else:
                 definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0]"
                 offset += field.size

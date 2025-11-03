@@ -2,6 +2,11 @@
 
 constant uint8_t other_constant = 2;
 
+enum MyEnum {
+    A = 0;
+    B = 1;
+}
+
 message Pong {
     uint8_t pong;
 }

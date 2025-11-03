@@ -26,6 +26,8 @@ class TestParserSimple(unittest.TestCase):
                 None,
                 None,
                 None,
+                None,
+                None,
                 [],
                 ' inline comment',
             ),
@@ -39,6 +41,8 @@ class TestParserSimple(unittest.TestCase):
                 'baz_2',
                 schema_bh.FieldType.LIST,
                 schema_bh.FieldType.UINT32_T,
+                None,
+                None,
                 None,
                 None,
                 ['some other', 'read-in comments'],
@@ -103,6 +107,8 @@ class TestParserSimple(unittest.TestCase):
                         None,
                         None,
                         None,
+                        None,
+                        None,
                         [],
                         ' inline comment',
                     ),
@@ -110,6 +116,8 @@ class TestParserSimple(unittest.TestCase):
                         'data',
                         schema_bh.FieldType.LIST,
                         schema_bh.FieldType.UINT32_T,
+                        None,
+                        None,
                         None,
                         None,
                         [' out-of-line comment'],
@@ -332,11 +340,14 @@ class TestParserSample(unittest.TestCase):
         self.assertEqual(len(other.messages), 1)
         self.assertEqual(len(other.transactions), 1)
 
-        sample_enum = parser.Enum(
-            'SampleEnum',
+        verbosity_enum = parser.Enum(
+            'Verbosity',
             [
-                parser.EnumField('A', 0),
-                parser.EnumField('B', 1, [' Comment on B'], ' Inline comment on B'),
+                parser.EnumField('LOW', 0),
+                parser.EnumField(
+                    'MEDIUM', 1, [' Comment on MEDIUM'], ' Inline comment on MEDIUM'
+                ),
+                parser.EnumField('HIGH', 2),
             ],
             [' Enums can be defined and are treated as uint8_t values'],
         )
@@ -347,6 +358,8 @@ class TestParserSample(unittest.TestCase):
                 parser.Field(
                     'ping',
                     schema_bh.FieldType.UINT8_T,
+                    None,
+                    None,
                     None,
                     None,
                     None,
@@ -365,12 +378,16 @@ class TestParserSample(unittest.TestCase):
                     schema_bh.FieldType.UINT8_T,
                     None,
                     None,
+                    None,
+                    None,
                     [' Another field comment'],
                     ' What about some in-line comments for fields?',
                 ),
                 parser.Field(
                     'read_size',
                     schema_bh.FieldType.UINT32_T,
+                    None,
+                    None,
                     None,
                     None,
                     None,
@@ -388,7 +405,27 @@ class TestParserSample(unittest.TestCase):
         )
         log_message = parser.Message(
             'LogMessage',
-            [parser.Field('message', schema_bh.FieldType.STRING, None)],
+            [
+                parser.Field('message', schema_bh.FieldType.STRING, None),
+                parser.Field(
+                    'verbosity',
+                    schema_bh.FieldType.ENUM,
+                    None,
+                    None,
+                    None,
+                    verbosity_enum,
+                    'sample',
+                ),
+                parser.Field(
+                    'my_enum',
+                    schema_bh.FieldType.ENUM,
+                    None,
+                    None,
+                    None,
+                    other.enums[0],
+                    'nlb.buffham.testdata.other',
+                ),
+            ],
         )
         nested_message = parser.Message(
             'NestedMessage',
@@ -487,6 +524,6 @@ class TestParserSample(unittest.TestCase):
         self.assertListEqual(
             parsed.enums,
             [
-                sample_enum,
+                verbosity_enum,
             ],
         )

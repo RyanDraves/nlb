@@ -71,7 +71,9 @@ class TestPyGenerator(unittest.TestCase):
             self.assertEqual(size, len(buffer))
 
             # Test serialization & deserialization of `LogMessage`
-            log_message = sample_bh.LogMessage('Hello, world!')
+            log_message = sample_bh.LogMessage(
+                'Hello, world!', sample_bh.Verbosity.MEDIUM, other_bh.MyEnum.B
+            )
             log_message_message = next(
                 filter(lambda m: m.name == 'LogMessage', buffham.messages)
             )

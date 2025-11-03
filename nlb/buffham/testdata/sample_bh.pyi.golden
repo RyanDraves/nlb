@@ -17,10 +17,11 @@ CONSTANT_STRING = 'Hello, world!'  # constants can have inline comments
 COMPOSED_CONSTANT = 2 + MY_CONSTANT + other_bh.OTHER_CONSTANT
 
 # Enums can be defined and are treated as uint8_t values
-class SampleEnum(enum.Enum):
-    A = 0
-    # Comment on B
-    B = 1  # Inline comment on B
+class Verbosity(enum.Enum):
+    LOW = 0
+    # Comment on MEDIUM
+    MEDIUM = 1  # Inline comment on MEDIUM
+    HIGH = 2
 
 
 @dataclasses.dataclass
@@ -57,6 +58,8 @@ class FlashPage:
 @dataclasses.dataclass
 class LogMessage:
     message: str
+    verbosity: Verbosity
+    my_enum: other_bh.MyEnum
 
     def serialize(self) -> bytes: ...
     @classmethod

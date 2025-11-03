@@ -30,6 +30,8 @@ def generate_serializer(
                 assert field.message is not None
                 # Turtles all the way down
                 buffer += generate_serializer(field.message)(value)
+            elif field.pri_type is schema_bh.FieldType.ENUM:
+                buffer += struct.pack(f'<{field.format}', value.value)
             else:
                 buffer += struct.pack(f'<{field.format}', value)
 
@@ -65,10 +67,15 @@ def generate_deserializer[T: dataclass.DataclassLike](
                     offset += size
             elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 assert field.message is not None
+                # Turtles all the way up
                 values[field.name], size = generate_deserializer(
                     field.message, clz.__dataclass_fields__[field.name].type
                 )(buffer[offset:])
                 offset += size
+            elif field.pri_type is schema_bh.FieldType.ENUM:
+                value = struct.unpack_from(f'<{field.format}', buffer, offset)[0]
+                values[field.name] = clz.__dataclass_fields__[field.name].type(value)
+                offset += struct.calcsize(field.format)
             else:
                 values[field.name] = struct.unpack_from(
                     f'<{field.format}', buffer, offset

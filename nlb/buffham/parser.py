@@ -35,6 +35,9 @@ class Field:
     # For messages
     message: 'Message | None' = None
     message_ns: str | None = None
+    # For enums
+    enum: 'Enum | None' = None
+    enum_ns: str | None = None
     comments: list[str] = dataclasses.field(default_factory=list)
     inline_comment: str | None = None
 
@@ -193,6 +196,12 @@ class Parser:
             for message in buffham.messages:
                 yield message, buffham.namespace
 
+    def iter_enums(self) -> Generator[tuple[Enum, str], None, None]:
+        """Iterate over all enums in the context."""
+        for buffham in self.buffhams.values():
+            for enum in buffham.enums:
+                yield enum, buffham.namespace
+
     def iter_constants(self) -> Generator[tuple[Constant, str], None, None]:
         """Iterate over all constants in the context."""
         for buffham in self.buffhams.values():
@@ -220,6 +229,8 @@ class Parser:
             pri_type = schema_bh.FieldType[pri_type_str]
             message = None
             message_ns = None
+            enum = None
+            enum_ns = None
         elif pri_type.startswith('list['):
             try:
                 sub_type = schema_bh.FieldType[pri_type[5:-1].upper()]
@@ -228,6 +239,8 @@ class Parser:
             pri_type = schema_bh.FieldType.LIST
             message = None
             message_ns = None
+            enum = None
+            enum_ns = None
         else:
             message, message_ns = next(
                 filter(
@@ -236,10 +249,22 @@ class Parser:
                 ),
                 (None, None),
             )
-            if message is None:
-                raise ValueError(f'Invalid message name {pri_type}')
+            enum, enum_ns = next(
+                filter(
+                    lambda x: relative_name(x[0], x[1], self.cur_namespace) == pri_type,
+                    self.iter_enums(),
+                ),
+                (None, None),
+            )
+            if message is None and enum is None:
+                raise ValueError(f'Invalid field type {pri_type}')
+            if message is not None and enum is not None:
+                raise ValueError(f'Field type {pri_type} is both a message and an enum')
             sub_type = None
-            pri_type = schema_bh.FieldType.MESSAGE
+            if message is not None:
+                pri_type = schema_bh.FieldType.MESSAGE
+            else:
+                pri_type = schema_bh.FieldType.ENUM
 
         # Ensure the sub_type is not iterable
         if sub_type in (
@@ -255,7 +280,15 @@ class Parser:
         )
 
         return Field(
-            name, pri_type, sub_type, message, message_ns, comments, inline_comment
+            name,
+            pri_type,
+            sub_type,
+            message,
+            message_ns,
+            enum,
+            enum_ns,
+            comments,
+            inline_comment,
         )
 
     def parse_message(
@@ -536,6 +569,14 @@ class Parser:
         lines = file.read_text().splitlines()
 
         self.parse_imports(lines)
+        # Enums must be parsed before messages
+        self.parse_multiline_definition(
+            lines,
+            ENUM_START_REGEX,
+            ENUM_END_REGEX,
+            self.parse_enum,
+            bh.enums,
+        )
         self.parse_multiline_definition(
             lines,
             MESSAGE_START_REGEX,
@@ -560,13 +601,6 @@ class Parser:
             CONSTANT_REGEX,
             self.parse_constant,
             bh.constants,
-        )
-        self.parse_multiline_definition(
-            lines,
-            ENUM_START_REGEX,
-            ENUM_END_REGEX,
-            self.parse_enum,
-            bh.enums,
         )
 
         return bh

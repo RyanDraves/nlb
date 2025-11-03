@@ -18,10 +18,11 @@ CONSTANT_STRING = 'Hello, world!'  # constants can have inline comments
 COMPOSED_CONSTANT = 2 + MY_CONSTANT + other_bh.OTHER_CONSTANT
 
 # Enums can be defined and are treated as uint8_t values
-class SampleEnum(enum.Enum):
-    A = 0
-    # Comment on B
-    B = 1  # Inline comment on B
+class Verbosity(enum.Enum):
+    LOW = 0
+    # Comment on MEDIUM
+    MEDIUM = 1  # Inline comment on MEDIUM
+    HIGH = 2
 
 
 @dataclasses.dataclass
@@ -82,20 +83,28 @@ class FlashPage:
 @dataclasses.dataclass
 class LogMessage:
     message: str
+    verbosity: Verbosity
+    my_enum: other_bh.MyEnum
 
     def serialize(self) -> bytes:
         buffer = bytes()
         buffer += struct.pack('<H', len(self.message))
         buffer += self.message.encode()
+        buffer += struct.pack('<B', self.verbosity.value)
+        buffer += struct.pack('<B', self.my_enum.value)
         return buffer
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
         message_size = struct.unpack_from('<H', buffer, 0)[0]
         message = buffer[2:2 + message_size].decode()
+        verbosity = Verbosity(struct.unpack_from('<B', buffer, 2 + message_size * 1)[0])
+        my_enum = other_bh.MyEnum(struct.unpack_from('<B', buffer, 3 + message_size * 1)[0])
         return cls(
             message=message,
-        ), 2 + message_size * 1
+            verbosity=verbosity,
+            my_enum=my_enum,
+        ), 4 + message_size * 1
 
 @dataclasses.dataclass
 class NestedMessage:
