@@ -241,6 +241,7 @@ class TestParserSimple(unittest.TestCase):
                 'log',
                 0,
                 log_msg,
+                'test',
                 ['some other comment'],
             ),
         )
@@ -263,6 +264,7 @@ class TestParserSimple(unittest.TestCase):
                 'ping_pong',
                 1,
                 ping,
+                'test',
                 comments=[],  # In-line publish comments are ignored
             ),
         )
@@ -509,6 +511,19 @@ class TestParserSample(unittest.TestCase):
                     'sample',
                     flash_page,
                     'sample',
+                ),
+            ],
+        )
+
+        self.assertListEqual(
+            parsed.publishes,
+            [
+                parser.Publish(
+                    'log_message',
+                    4,
+                    log_message,
+                    'sample',
+                    [' Publish comment'],
                 ),
             ],
         )

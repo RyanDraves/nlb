@@ -119,6 +119,7 @@ class Publish:
     name: str
     request_id: int
     send: Message
+    send_ns: str
     comments: list[str] = dataclasses.field(default_factory=list)
 
 
@@ -374,7 +375,7 @@ class Parser:
 
         name, send = match.groups()
         try:
-            send, _ = next(
+            send, send_ns = next(
                 filter(
                     lambda x: relative_name(x[0], x[1], self.cur_namespace) == send,
                     self.iter_messages(),
@@ -386,7 +387,7 @@ class Parser:
         request_id = self.request_id
         self.request_id += 1
 
-        return Publish(name, request_id, send, comments)
+        return Publish(name, request_id, send, send_ns, comments)
 
     def parse_constant(self, line: str, comments: list[str]) -> Constant:
         """Parse a constant from a line.

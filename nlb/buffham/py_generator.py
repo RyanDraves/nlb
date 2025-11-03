@@ -202,19 +202,13 @@ def generate_message(
             elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 assert field.message is not None
                 assert field.message_ns is not None
-                msg = _get_imported_name(
-                    parser.relative_name(
-                        field.message, field.message_ns, primary_namespace
-                    )
-                )
+                msg = _py_type(field, primary_namespace)
                 definition += f'\n{T}{T}{field.name}, {field.name}_size = {msg}.deserialize(buffer[{offset}{offset_str}:])'
                 offset_str += f' + {field.name}_size'
             elif field.pri_type is schema_bh.FieldType.ENUM:
                 assert field.enum is not None
                 assert field.enum_ns is not None
-                enum_type = _get_imported_name(
-                    parser.relative_name(field.enum, field.enum_ns, primary_namespace)
-                )
+                enum_type = _py_type(field, primary_namespace)
                 definition += f"\n{T}{T}{field.name} = {enum_type}(struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0])"
                 offset += field.size
             else:
@@ -229,7 +223,10 @@ def generate_message(
 
 
 def generate_registry(
-    transactions: list[parser.Transaction], publishes: list[parser.Publish], stub: bool
+    transactions: list[parser.Transaction],
+    publishes: list[parser.Publish],
+    primary_namespace: str,
+    stub: bool,
 ) -> str:
     """Generate a registry for transactions."""
 
@@ -240,9 +237,9 @@ def generate_registry(
     else:
         definition += ' = {\n'
         for transaction in transactions:
-            definition += f'{T}{transaction.request_id}: {transaction.send.name},\n'
+            definition += f'{T}{transaction.request_id}: {_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))},\n'
         for publish in publishes:
-            definition += f'{T}{publish.request_id}: {publish.send.name},\n'
+            definition += f'{T}{publish.request_id}: {_get_imported_name(parser.relative_name(publish.send, publish.send_ns, primary_namespace))},\n'
         definition += '}\n\n'
 
     return definition
@@ -407,7 +404,11 @@ def generate_python(
 
         # Generate registry
         if len(bh.transactions) or len(bh.publishes):
-            fp.write(generate_registry(bh.transactions, bh.publishes, stub))
+            fp.write(
+                generate_registry(
+                    bh.transactions, bh.publishes, primary_namespace, stub
+                )
+            )
 
         # Generate transaction definitions
         if len(bh.transactions):
