@@ -78,6 +78,12 @@ def _cpp_type(field: parser.Field, primary_namespace: str) -> str:
             parser.relative_name(field.message, field.message_ns, primary_namespace)
         )
 
+    if field.enum is not None:
+        assert field.enum_ns is not None
+        return _get_namespaced_name(
+            parser.relative_name(field.enum, field.enum_ns, primary_namespace)
+        )
+
     if field.pri_type is schema_bh.FieldType.LIST:
         assert field.sub_type is not None
         return f'std::vector<{TYPE_MAP[field.sub_type]}>'
@@ -128,6 +134,10 @@ def generate_message(message: parser.Message, primary_namespace: str, hpp: bool)
             elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 definition += f'\n{tab}{T}auto {field.name}_buffer = {field.name}.serialize(buffer.subspan({offset}{offset_str}));'
                 offset_str += f' + {field.name}_buffer.size()'
+            elif field.pri_type is schema_bh.FieldType.ENUM:
+                # Enums can be treated like their underlying uint8_t type
+                definition += f'\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, &{field.name}, {field.size});'
+                offset += field.size
             else:
                 definition += f'\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, &{field.name}, {field.size});'
                 offset += field.size
@@ -161,6 +171,10 @@ def generate_message(message: parser.Message, primary_namespace: str, hpp: bool)
                 definition += f'\n{tab}{T}auto {field.name}_buffer = buffer.subspan({offset}{offset_str});'
                 definition += f'\n{tab}{T}std::tie({message_name}.{field.name}, {field.name}_buffer) = {_cpp_type(field, primary_namespace)}::deserialize({field.name}_buffer);'
                 offset_str += f' + {field.name}_buffer.size()'
+            elif field.pri_type is schema_bh.FieldType.ENUM:
+                # Enums can be treated like their underlying uint8_t type
+                definition += f'\n{tab}{T}memcpy(&{message_name}.{field.name}, buffer.data() + {offset}{offset_str}, {field.size});'
+                offset += field.size
             else:
                 definition += f'\n{tab}{T}memcpy(&{message_name}.{field.name}, buffer.data() + {offset}{offset_str}, {field.size});'
                 offset += field.size

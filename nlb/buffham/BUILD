@@ -160,6 +160,10 @@ buffham(
     visibility = ["__pkg__"],
 )
 
+buffham_py_write(
+    name = "testdata/other_bh_py_write",
+)
+
 buffham(
     name = "testdata/sample_bh",
     src = "testdata/sample.bh",

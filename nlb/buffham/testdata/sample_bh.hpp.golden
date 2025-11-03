@@ -25,10 +25,11 @@ constexpr std::string_view kConstantString = "Hello, world!";  // constants can 
 constexpr uint16_t kComposedConstant = 2 + kMyConstant + nlb::buffham::testdata::kOtherConstant;
 
 // Enums can be defined and are treated as uint8_t values
-enum class SampleEnum : uint8_t {
-    A = 0,
-    // Comment on B
-    B = 1,  // Inline comment on B
+enum class Verbosity : uint8_t {
+    LOW = 0,
+    // Comment on MEDIUM
+    MEDIUM = 1,  // Inline comment on MEDIUM
+    HIGH = 2,
 };
 
 // A message comment
@@ -63,6 +64,8 @@ struct FlashPage {
 
 struct LogMessage {
     std::string message;
+    Verbosity verbosity;
+    nlb::buffham::testdata::MyEnum my_enum;
 
     std::span<uint8_t> serialize(std::span<uint8_t> buffer) const;
 
