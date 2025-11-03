@@ -216,7 +216,10 @@ def generate_project_class(
     for transaction in transactions:
         if transaction.comments:
             definition += _generate_comment(transaction.comments, T) + '\n'
-        definition += f'{T}{_get_namespaced_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))} {transaction.name}(const {_get_namespaced_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))} &{_to_snake_case(transaction.receive.name)});\n'
+        definition += f'{T}{_get_namespaced_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))} {transaction.name}(const {_get_namespaced_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))} &{_to_snake_case(transaction.receive.name)});'
+        if transaction.inline_comment:
+            definition += f'  //{transaction.inline_comment}'
+        definition += '\n'
 
     # Add a pIMPL struct
     definition += f'{T[::2]}private:\n'
@@ -239,7 +242,10 @@ def generate_publishes(publishes: list[parser.Publish]) -> str:
     for publish in publishes:
         if publish.comments:
             definition += _generate_comment(publish.comments, T) + '\n'
-        definition += f'{T}{publish.name.upper()} = {publish.request_id},\n'
+        definition += f'{T}{publish.name.upper()} = {publish.request_id},'
+        if publish.inline_comment:
+            definition += f'  //{publish.inline_comment}'
+        definition += '\n'
     definition += '};\n\n'
 
     return definition

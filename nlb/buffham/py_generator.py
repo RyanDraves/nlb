@@ -315,15 +315,21 @@ def generate_transaction(
             f'{transaction.name.upper()}: bh.Transaction['
             f'{_get_imported_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))}, '
             f'{_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))}'
-            f'] = ...\n'
+            f'] = ...'
         )
+        if transaction.inline_comment:
+            definition += f'  #{transaction.inline_comment}'
+        definition += '\n'
     else:
         definition += (
             f'{transaction.name.upper()} = bh.Transaction['
             f'{_get_imported_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))}, '
             f'{_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))}'
-            f']({transaction.request_id})\n'
+            f']({transaction.request_id})'
         )
+        if transaction.inline_comment:
+            definition += f'  #{transaction.inline_comment}'
+        definition += '\n'
 
     return definition
 
@@ -340,7 +346,10 @@ def generate_publishes(publishes: list[parser.Publish]) -> str:
         for comment in publish.comments:
             definition += f'{T}#{comment}\n'
 
-        definition += f'{T}{publish.name.upper()} = {publish.request_id}\n'
+        definition += f'{T}{publish.name.upper()} = {publish.request_id}'
+        if publish.inline_comment:
+            definition += f'  #{publish.inline_comment}'
+        definition += '\n'
 
     return definition
 

@@ -210,7 +210,8 @@ class TestParserSimple(unittest.TestCase):
                 'test',
                 receive,
                 'test',
-                comments=[],  # In-line transaction comments are ignored
+                comments=[],
+                inline_comment=' inline comment',
             ),
         )
 
@@ -265,7 +266,8 @@ class TestParserSimple(unittest.TestCase):
                 1,
                 ping,
                 'test',
-                comments=[],  # In-line publish comments are ignored
+                comments=[],
+                inline_comment=' inline comment',
             ),
         )
 
@@ -511,6 +513,8 @@ class TestParserSample(unittest.TestCase):
                     'sample',
                     flash_page,
                     'sample',
+                    [],
+                    ' In-line transaction comment',
                 ),
             ],
         )
@@ -524,6 +528,7 @@ class TestParserSample(unittest.TestCase):
                     log_message,
                     'sample',
                     [' Publish comment'],
+                    ' In-line publish comment',
                 ),
             ],
         )

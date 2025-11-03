@@ -96,8 +96,8 @@ class SampleNode[
 PING: bh.Transaction[other_bh.Pong, LogMessage] = ...
 # Transaction comment
 FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...
-READ_FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...
+READ_FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...  # In-line transaction comment
 
 class PublishIds(enum.Enum):
     # Publish comment
-    LOG_MESSAGE = 4
+    LOG_MESSAGE = 4  # In-line publish comment

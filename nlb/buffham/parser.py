@@ -112,6 +112,7 @@ class Transaction:
     send: Message
     send_ns: str
     comments: list[str] = dataclasses.field(default_factory=list)
+    inline_comment: str | None = None
 
 
 @dataclasses.dataclass
@@ -121,6 +122,7 @@ class Publish:
     send: Message
     send_ns: str
     comments: list[str] = dataclasses.field(default_factory=list)
+    inline_comment: str | None = None
 
 
 @dataclasses.dataclass
@@ -356,8 +358,20 @@ class Parser:
         request_id = self.request_id
         self.request_id += 1
 
+        inline_comment_match = INLINE_COMMENT_REGEX.match(line)
+        inline_comment = (
+            inline_comment_match.groups()[0] if inline_comment_match else None
+        )
+
         return Transaction(
-            name, request_id, receive, receive_ns, send, send_ns, comments
+            name,
+            request_id,
+            receive,
+            receive_ns,
+            send,
+            send_ns,
+            comments,
+            inline_comment,
         )
 
     def parse_publish(self, line: str, comments: list[str]) -> Publish:
@@ -387,7 +401,12 @@ class Parser:
         request_id = self.request_id
         self.request_id += 1
 
-        return Publish(name, request_id, send, send_ns, comments)
+        inline_comment_match = INLINE_COMMENT_REGEX.match(line)
+        inline_comment = (
+            inline_comment_match.groups()[0] if inline_comment_match else None
+        )
+
+        return Publish(name, request_id, send, send_ns, comments, inline_comment)
 
     def parse_constant(self, line: str, comments: list[str]) -> Constant:
         """Parse a constant from a line.

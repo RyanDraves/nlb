@@ -6,7 +6,6 @@ from typing import Self, Type
 from emb.network.serialize import bh_cobs
 from emb.network.transport import transporter
 from nlb.buffham import bh
-
 from nlb.buffham.testdata import other_bh
 
 # This is a constant in the global scope
@@ -96,8 +95,8 @@ class SampleNode[
 PING: bh.Transaction[other_bh.Pong, LogMessage] = ...
 # Transaction comment
 FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...
-READ_FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...
+READ_FLASH_PAGE: bh.Transaction[FlashPage, FlashPage] = ...  # In-line transaction comment
 
 class PublishIds(enum.Enum):
     # Publish comment
-    LOG_MESSAGE = 4
+    LOG_MESSAGE = 4  # In-line publish comment
