@@ -14,7 +14,13 @@ class TestParserSimple(unittest.TestCase):
     def test_parse_field(self):
         field = '    uint8_t foo;'
         parsed = self.ctx.parse_message_field(field, [])
-        self.assertEqual(parsed, parser.Field('foo', schema_bh.FieldType.UINT8_T, None))
+        self.assertEqual(
+            parsed,
+            parser.Field(
+                'foo',
+                schema_bh.FieldType.UINT8_T,
+            ),
+        )
 
         field = 'float64 bar;  # inline comment'
         parsed = self.ctx.parse_message_field(field, [])
@@ -23,13 +29,7 @@ class TestParserSimple(unittest.TestCase):
             parser.Field(
                 'bar',
                 schema_bh.FieldType.FLOAT64,
-                None,
-                None,
-                None,
-                None,
-                None,
-                [],
-                ' inline comment',
+                inline_comment=' inline comment',
             ),
         )
 
@@ -41,11 +41,7 @@ class TestParserSimple(unittest.TestCase):
                 'baz_2',
                 schema_bh.FieldType.LIST,
                 schema_bh.FieldType.UINT32_T,
-                None,
-                None,
-                None,
-                None,
-                ['some other', 'read-in comments'],
+                comments=['some other', 'read-in comments'],
             ),
         )
 
@@ -64,7 +60,10 @@ class TestParserSimple(unittest.TestCase):
         self.assertEqual(
             parsed,
             parser.Field(
-                'baz_5', schema_bh.FieldType.MESSAGE, None, my_message, 'test'
+                'baz_5',
+                schema_bh.FieldType.MESSAGE,
+                message=my_message,
+                message_ns='test',
             ),
         )
 
@@ -82,7 +81,13 @@ class TestParserSimple(unittest.TestCase):
         self.assertEqual(
             parsed,
             parser.Message(
-                'Ping', [parser.Field('ping', schema_bh.FieldType.UINT8_T, None)]
+                'Ping',
+                [
+                    parser.Field(
+                        'ping',
+                        schema_bh.FieldType.UINT8_T,
+                    )
+                ],
             ),
         )
 
@@ -100,27 +105,20 @@ class TestParserSimple(unittest.TestCase):
             parser.Message(
                 'FlashPage',
                 [
-                    parser.Field('address', schema_bh.FieldType.UINT32_T, None),
+                    parser.Field(
+                        'address',
+                        schema_bh.FieldType.UINT32_T,
+                    ),
                     parser.Field(
                         'read_size',
                         schema_bh.FieldType.UINT32_T,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        [],
-                        ' inline comment',
+                        inline_comment=' inline comment',
                     ),
                     parser.Field(
                         'data',
                         schema_bh.FieldType.LIST,
                         schema_bh.FieldType.UINT32_T,
-                        None,
-                        None,
-                        None,
-                        None,
-                        [' out-of-line comment'],
+                        comments=[' out-of-line comment'],
                     ),
                 ],
             ),
@@ -149,7 +147,10 @@ class TestParserSimple(unittest.TestCase):
                 'Outer',
                 [
                     parser.Field(
-                        'inner', schema_bh.FieldType.MESSAGE, None, inner, 'test'
+                        'inner',
+                        schema_bh.FieldType.MESSAGE,
+                        message=inner,
+                        message_ns='test',
                     )
                 ],
             ),
@@ -166,11 +167,22 @@ class TestParserSimple(unittest.TestCase):
     def test_parse_transaction(self):
         transaction = 'transaction ping[Ping, LogMessage];'
         receive = parser.Message(
-            'Ping', [parser.Field('ping', schema_bh.FieldType.UINT8_T, None)]
+            'Ping',
+            [
+                parser.Field(
+                    'ping',
+                    schema_bh.FieldType.UINT8_T,
+                )
+            ],
         )
         send = parser.Message(
             'LogMessage',
-            [parser.Field('message', schema_bh.FieldType.STRING, None)],
+            [
+                parser.Field(
+                    'message',
+                    schema_bh.FieldType.STRING,
+                )
+            ],
         )
         self.ctx.cur_buffham.messages.extend([receive, send])
         parsed = self.ctx.parse_transaction(transaction, ['some other comment'])
@@ -214,7 +226,12 @@ class TestParserSimple(unittest.TestCase):
         publish = 'publish log[LogMessage];'
         log_msg = parser.Message(
             'LogMessage',
-            [parser.Field('message', schema_bh.FieldType.STRING, None)],
+            [
+                parser.Field(
+                    'message',
+                    schema_bh.FieldType.STRING,
+                )
+            ],
         )
         self.ctx.cur_buffham.messages.append(log_msg)
         parsed = self.ctx.parse_publish(publish, ['some other comment'])
@@ -230,7 +247,13 @@ class TestParserSimple(unittest.TestCase):
 
         publish = 'publish ping_pong[Ping];  # inline comment'
         ping = parser.Message(
-            'Ping', [parser.Field('pong', schema_bh.FieldType.UINT8_T, None)]
+            'Ping',
+            [
+                parser.Field(
+                    'pong',
+                    schema_bh.FieldType.UINT8_T,
+                )
+            ],
         )
         self.ctx.cur_buffham.messages.append(ping)
         parsed = self.ctx.parse_publish(publish, [])
@@ -358,12 +381,7 @@ class TestParserSample(unittest.TestCase):
                 parser.Field(
                     'ping',
                     schema_bh.FieldType.UINT8_T,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    [' Add some comments here'],
+                    comments=[' Add some comments here'],
                 )
             ],
             [' A message comment'],
@@ -371,27 +389,21 @@ class TestParserSample(unittest.TestCase):
         flash_page = parser.Message(
             'FlashPage',
             [
-                parser.Field('address', schema_bh.FieldType.UINT32_T, None),
+                parser.Field(
+                    'address',
+                    schema_bh.FieldType.UINT32_T,
+                ),
                 parser.Field(
                     'data',
                     schema_bh.FieldType.LIST,
                     schema_bh.FieldType.UINT8_T,
-                    None,
-                    None,
-                    None,
-                    None,
-                    [' Another field comment'],
-                    ' What about some in-line comments for fields?',
+                    comments=[' Another field comment'],
+                    inline_comment=' What about some in-line comments for fields?',
                 ),
                 parser.Field(
                     'read_size',
                     schema_bh.FieldType.UINT32_T,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    [' This comment belongs to `read_size`'],
+                    comments=[' This comment belongs to `read_size`'],
                 ),
             ],
             [
@@ -406,44 +418,53 @@ class TestParserSample(unittest.TestCase):
         log_message = parser.Message(
             'LogMessage',
             [
-                parser.Field('message', schema_bh.FieldType.STRING, None),
+                parser.Field(
+                    'message',
+                    schema_bh.FieldType.STRING,
+                ),
                 parser.Field(
                     'verbosity',
                     schema_bh.FieldType.ENUM,
-                    None,
-                    None,
-                    None,
-                    verbosity_enum,
-                    'sample',
+                    enum=verbosity_enum,
+                    enum_ns='sample',
                 ),
                 parser.Field(
                     'my_enum',
                     schema_bh.FieldType.ENUM,
-                    None,
-                    None,
-                    None,
-                    other.enums[0],
-                    'nlb.buffham.testdata.other',
+                    enum=other.enums[0],
+                    enum_ns='nlb.buffham.testdata.other',
                 ),
             ],
         )
         nested_message = parser.Message(
             'NestedMessage',
             [
-                parser.Field('flag', schema_bh.FieldType.UINT8_T, None),
                 parser.Field(
-                    'message', schema_bh.FieldType.MESSAGE, None, log_message, 'sample'
+                    'flag',
+                    schema_bh.FieldType.UINT8_T,
                 ),
                 parser.Field(
-                    'numbers', schema_bh.FieldType.LIST, schema_bh.FieldType.INT32_T
+                    'message',
+                    schema_bh.FieldType.MESSAGE,
+                    message=log_message,
+                    message_ns='sample',
                 ),
-                parser.Field('pong', schema_bh.FieldType.MESSAGE, None, ping, 'sample'),
+                parser.Field(
+                    'numbers',
+                    schema_bh.FieldType.LIST,
+                    schema_bh.FieldType.INT32_T,
+                ),
+                parser.Field(
+                    'pong',
+                    schema_bh.FieldType.MESSAGE,
+                    message=ping,
+                    message_ns='sample',
+                ),
                 parser.Field(
                     'other_pong',
                     schema_bh.FieldType.MESSAGE,
-                    None,
-                    other.messages[0],
-                    'nlb.buffham.testdata.other',
+                    message=other.messages[0],
+                    message_ns='nlb.buffham.testdata.other',
                 ),
             ],
         )
