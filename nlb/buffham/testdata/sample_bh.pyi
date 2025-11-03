@@ -6,6 +6,7 @@ from typing import Self, Type
 from emb.network.serialize import bh_cobs
 from emb.network.transport import transporter
 from nlb.buffham import bh
+
 from nlb.buffham.testdata import other_bh
 
 # This is a constant in the global scope
