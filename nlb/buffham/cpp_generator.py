@@ -72,23 +72,20 @@ def _get_namespaced_name(relative_name: str) -> str:
 
 def _cpp_type(field: parser.Field, primary_namespace: str) -> str:
     """Get the C++ type for the field."""
-    if field.message is not None:
-        assert field.message_ns is not None
-        return _get_namespaced_name(
-            parser.relative_name(field.message, field.message_ns, primary_namespace)
+    if field.obj_name is not None:
+        type_str = _get_namespaced_name(
+            parser.relative_name(field.obj_name, primary_namespace)
         )
-
-    if field.enum is not None:
-        assert field.enum_ns is not None
-        return _get_namespaced_name(
-            parser.relative_name(field.enum, field.enum_ns, primary_namespace)
-        )
-
-    if field.pri_type is schema_bh.FieldType.LIST:
+    elif field.pri_type is schema_bh.FieldType.LIST:
         assert field.sub_type is not None
-        return f'std::vector<{TYPE_MAP[field.sub_type]}>'
+        type_str = f'std::vector<{TYPE_MAP[field.sub_type]}>'
+    else:
+        type_str = TYPE_MAP[field.pri_type]
 
-    return TYPE_MAP[field.pri_type]
+    if field.optional:
+        type_str = f'std::optional<{type_str}>'
+
+    return type_str
 
 
 def generate_message(message: parser.Message, primary_namespace: str, hpp: bool) -> str:
@@ -111,6 +108,9 @@ def generate_message(message: parser.Message, primary_namespace: str, hpp: bool)
                 definition += f'  //{field.inline_comment}'
         definition += '\n\n'
 
+    num_optional_fields = sum(1 for f in message.fields if f.optional)
+    num_optional_bytes = (num_optional_fields + 7) // 8
+
     # Add serializer method
     definition += (
         f'{tab}std::span<uint8_t> {ns}serialize(std::span<uint8_t> buffer) const'
@@ -122,25 +122,79 @@ def generate_message(message: parser.Message, primary_namespace: str, hpp: bool)
         definition += ' {'
         offset = 0
         offset_str = ''
+
+        if num_optional_fields > 0:
+            assert num_optional_bytes == 1, (
+                'Only added uint8_t support so far for optional bitfields'
+            )
+            definition += f'\n{tab}{T}uint8_t optional_bitfield = 0;'
+            optional_idx = 0
+            for field in message.fields:
+                if field.optional:
+                    definition += f'\n{tab}{T}optional_bitfield |= {field.name}.has_value() ? (1 << {optional_idx}) : 0;'
+                    optional_idx += 1
+            definition += f'\n{tab}{T}memcpy(buffer.data(), &optional_bitfield, {num_optional_bytes});'
+            offset += num_optional_bytes
+
         for field in message.fields:
+            optional_value = '.value()' if field.optional else ''
+            access = '->' if field.optional else '.'
+
             if field.iterable:
+                # Get size
+                size_expression = f'{field.name}.size()'
+                if field.optional:
+                    size_expression = (
+                        f'{field.name}.has_value() ? {field.name}->size() : 0'
+                    )
                 definition += (
-                    f'\n{tab}{T}uint16_t {field.name}_size = {field.name}.size();'
-                    f'\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, &{field.name}_size, 2);'
+                    f'\n{tab}{T}uint16_t {field.name}_size = {size_expression};'
                 )
-                offset += 2
-                definition += f'\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, {field.name}.data(), {field.name}_size * {field.size});'
+
+                # Write size
+                size_read_expression = f'memcpy(buffer.data() + {offset}{offset_str}, &{field.name}_size, 2)'
+                if field.optional:
+                    size_read_expression = (
+                        f'{field.name}.has_value() ? {size_read_expression} : 0'
+                    )
+                    offset_str += f' + 2 * {field.name}.has_value()'
+                else:
+                    offset += 2
+                definition += f'\n{tab}{T}{size_read_expression};'
+
+                # Write data
+                data_expression = f'memcpy(buffer.data() + {offset}{offset_str}, {field.name}{access}data(), {field.name}_size * {field.size})'
+                if field.optional:
+                    data_expression = (
+                        f'{field.name}.has_value() ? {data_expression} : 0'
+                    )
+                definition += f'\n{tab}{T}{data_expression};'
                 offset_str += f' + {field.name}_size * {field.size}'
             elif field.pri_type is schema_bh.FieldType.MESSAGE:
-                definition += f'\n{tab}{T}auto {field.name}_buffer = {field.name}.serialize(buffer.subspan({offset}{offset_str}));'
+                expression = (
+                    f'{field.name}.serialize(buffer.subspan({offset}{offset_str}))'
+                )
+                if field.optional:
+                    expression = f'{field.name}.has_value() ? {expression} : std::span<uint8_t>{{}}'
+                definition += f'\n{tab}{T}auto {field.name}_buffer = {expression};'
                 offset_str += f' + {field.name}_buffer.size()'
             elif field.pri_type is schema_bh.FieldType.ENUM:
                 # Enums can be treated like their underlying uint8_t type
-                definition += f'\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, &{field.name}, {field.size});'
-                offset += field.size
+                expression = f'memcpy(buffer.data() + {offset}{offset_str}, &{field.name}{optional_value}, {field.size})'
+                if field.optional:
+                    expression = f'{field.name}.has_value() ? {expression} : 0'
+                    offset_str += f' + {field.size} * {field.name}.has_value()'
+                else:
+                    offset += field.size
+                definition += f'\n{tab}{T}{expression};'
             else:
-                definition += f'\n{tab}{T}memcpy(buffer.data() + {offset}{offset_str}, &{field.name}, {field.size});'
-                offset += field.size
+                expression = f'memcpy(buffer.data() + {offset}{offset_str}, &{field.name}{optional_value}, {field.size})'
+                if field.optional:
+                    expression = f'{field.name}.has_value() ? {expression} : 0'
+                    offset_str += f' + {field.size} * {field.name}.has_value()'
+                else:
+                    offset += field.size
+                definition += f'\n{tab}{T}{expression};'
         definition += f'\n{tab}{T}return buffer.subspan(0, {offset}{offset_str});\n'
         definition += f'{tab}}}\n\n'
 
@@ -153,31 +207,79 @@ def generate_message(message: parser.Message, primary_namespace: str, hpp: bool)
         definition += ' {'
         offset = 0
         offset_str = ''
+
+        if num_optional_fields > 0:
+            assert num_optional_bytes == 1, (
+                'Only added uint8_t support so far for optional bitfields'
+            )
+            definition += f'\n{tab}{T}uint8_t optional_bitfield;'
+            definition += f'\n{tab}{T}memcpy(&optional_bitfield, buffer.data(), {num_optional_bytes});'
+            offset += num_optional_bytes
+
         message_name = _to_snake_case(message.name)
         definition += f'\n{tab}{T}{message.name} {message_name};'
+        optional_idx = 0
         for field in message.fields:
+            optional_value = '.emplace()' if field.optional else ''
+            access = '->' if field.optional else '.'
+
             if field.iterable:
-                definition += (
-                    f'\n{tab}{T}uint16_t {field.name}_size;'
-                    f'\n{tab}{T}memcpy(&{field.name}_size, buffer.data() + {offset}{offset_str}, 2);'
+                # Get size
+                definition += f'\n{tab}{T}uint16_t {field.name}_size = 0;'
+                expression = f'memcpy(&{field.name}_size, buffer.data() + {offset}{offset_str}, 2)'
+                if field.optional:
+                    expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
+                    offset_str += f' + 2 * {message_name}.{field.name}.has_value()'
+                else:
+                    offset += 2
+                definition += f'\n{tab}{T}{expression};'
+
+                # Resize data
+                resize_expression = (
+                    f'{message_name}.{field.name}.resize({field.name}_size)'
                 )
-                offset += 2
-                definition += (
-                    f'\n{tab}{T}{message_name}.{field.name}.resize({field.name}_size);'
-                )
-                definition += f'\n{tab}{T}memcpy({message_name}.{field.name}.data(), buffer.data() + {offset}{offset_str}, {field.name}_size * {field.size});'
+                if field.optional:
+                    resize_expression = f'(optional_bitfield & (1 << {optional_idx})) ? {resize_expression} : 0'
+                definition += f'\n{tab}{T}{resize_expression};'
+
+                # Read data
+                read_expression = f'memcpy({message_name}.{field.name}{access}data(), buffer.data() + {offset}{offset_str}, {field.name}_size * {field.size})'
+                if field.optional:
+                    read_expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
+                definition += f'\n{tab}{T}{read_expression};'
                 offset_str += f' + {field.name}_size * {field.size}'
             elif field.pri_type is schema_bh.FieldType.MESSAGE:
                 definition += f'\n{tab}{T}auto {field.name}_buffer = buffer.subspan({offset}{offset_str});'
-                definition += f'\n{tab}{T}std::tie({message_name}.{field.name}, {field.name}_buffer) = {_cpp_type(field, primary_namespace)}::deserialize({field.name}_buffer);'
+                expression = f'{_cpp_type(field, primary_namespace)}::deserialize({field.name}_buffer)'
+                if field.optional:
+                    # Return a pair of nullopt and an empty buffer
+                    expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : std::make_pair(std::nullopt, buffer.subspan(0, 0))'
+                definition += f'\n{tab}{T}std::tie({message_name}.{field.name}, {field.name}_buffer) = {expression};'
                 offset_str += f' + {field.name}_buffer.size()'
             elif field.pri_type is schema_bh.FieldType.ENUM:
                 # Enums can be treated like their underlying uint8_t type
-                definition += f'\n{tab}{T}memcpy(&{message_name}.{field.name}, buffer.data() + {offset}{offset_str}, {field.size});'
-                offset += field.size
+                expression = f'memcpy(&{message_name}.{field.name}{optional_value}, buffer.data() + {offset}{offset_str}, {field.size})'
+                if field.optional:
+                    expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
+                    offset_str += (
+                        f' + {field.size} * {message_name}.{field.name}.has_value()'
+                    )
+                else:
+                    offset += field.size
+                definition += f'\n{tab}{T}{expression};'
             else:
-                definition += f'\n{tab}{T}memcpy(&{message_name}.{field.name}, buffer.data() + {offset}{offset_str}, {field.size});'
-                offset += field.size
+                expression = f'memcpy(&{message_name}.{field.name}{optional_value}, buffer.data() + {offset}{offset_str}, {field.size})'
+                if field.optional:
+                    expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
+                    offset_str += (
+                        f' + {field.size} * {message_name}.{field.name}.has_value()'
+                    )
+                else:
+                    offset += field.size
+                definition += f'\n{tab}{T}{expression};'
+
+            if field.optional:
+                optional_idx += 1
 
         definition += f'\n{tab}{T}return {{{message_name}, buffer.subspan(0, {offset}{offset_str})}};\n'
         definition += f'{tab}}}\n'
@@ -206,8 +308,8 @@ def generate_project_class(
     )
     for transaction in transactions:
         definition += (
-            f'{T}{T}node.template register_handler<{_get_namespaced_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))}, '
-            f'{transaction.send.name}>({transaction.request_id}, '
+            f'{T}{T}node.template register_handler<{_get_namespaced_name(parser.relative_name(transaction.receive_name, primary_namespace))}, '
+            f'{_get_namespaced_name(parser.relative_name(transaction.send_name, primary_namespace))}>({transaction.request_id}, '
             f'std::bind(&{name}::{transaction.name}, this, std::placeholders::_1));\n'
         )
     definition += f'{T}}}\n\n'
@@ -216,7 +318,7 @@ def generate_project_class(
     for transaction in transactions:
         if transaction.comments:
             definition += _generate_comment(transaction.comments, T) + '\n'
-        definition += f'{T}{_get_namespaced_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))} {transaction.name}(const {_get_namespaced_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))} &{_to_snake_case(transaction.receive.name)});'
+        definition += f'{T}{_get_namespaced_name(parser.relative_name(transaction.send_name, primary_namespace))} {transaction.name}(const {_get_namespaced_name(parser.relative_name(transaction.receive_name, primary_namespace))} &{_to_snake_case(transaction.receive_name.name)});'
         if transaction.inline_comment:
             definition += f'  //{transaction.inline_comment}'
         definition += '\n'
@@ -337,6 +439,7 @@ def generate_cpp(
             fp.write(
                 '#include <cinttypes>\n'
                 '#include <cstring>\n'
+                '#include <optional>\n'
                 '#include <span>\n'
                 '#include <string>\n'
                 '#include <tuple>\n'

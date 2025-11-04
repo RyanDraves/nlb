@@ -1,6 +1,7 @@
 import dataclasses
 import enum
 import unittest
+from typing import Optional, Union
 
 from nlb.buffham import engine
 from nlb.buffham import parser
@@ -21,8 +22,8 @@ class Ping:
 @dataclasses.dataclass
 class FlashPage:
     address: int
-    read_size: int
     data: list[int]
+    read_size: int | None
 
 
 @dataclasses.dataclass
@@ -33,49 +34,126 @@ class LogMessage:
 
 @dataclasses.dataclass
 class NestedMessage:
-    flag: int
+    flag: int | None
     inner: LogMessage
     data: list[int]
-    nested: Ping
+    nested: Ping | None
+
+
+@dataclasses.dataclass
+class OptionalTest:
+    a: int
+    b: int | None
+    c: Ping
+    d: Union[Ping, None]
+    e: float
+    f: Optional[float]
 
 
 class TestEngine(unittest.TestCase):
     PING = parser.Message(
         'Ping',
         [
-            parser.Field('ping', schema_bh.FieldType.UINT8_T, None),
+            parser.Field(
+                'ping',
+                schema_bh.FieldType.UINT8_T,
+            ),
         ],
     )
     FLASH_PAGE = parser.Message(
         'FlashPage',
         [
-            parser.Field('address', schema_bh.FieldType.UINT32_T, None),
-            parser.Field('read_size', schema_bh.FieldType.UINT32_T, None),
+            parser.Field(
+                'address',
+                schema_bh.FieldType.UINT32_T,
+            ),
             parser.Field(
                 'data', schema_bh.FieldType.LIST, schema_bh.FieldType.UINT32_T
+            ),
+            parser.Field(
+                'read_size',
+                schema_bh.FieldType.UINT32_T,
+                optional=True,
             ),
         ],
     )
     LOG_MESSAGE = parser.Message(
         'LogMessage',
         [
-            parser.Field('message', schema_bh.FieldType.STRING, None),
-            parser.Field('verbosity', schema_bh.FieldType.ENUM, None),
+            parser.Field(
+                'message',
+                schema_bh.FieldType.STRING,
+            ),
+            parser.Field(
+                'verbosity',
+                schema_bh.FieldType.ENUM,
+            ),
         ],
     )
     NESTED_MESSAGE = parser.Message(
         'NestedMessage',
         [
-            parser.Field('flag', schema_bh.FieldType.UINT8_T, None),
-            parser.Field('inner', schema_bh.FieldType.MESSAGE, None, LOG_MESSAGE),
-            parser.Field('data', schema_bh.FieldType.LIST, schema_bh.FieldType.INT32_T),
-            parser.Field('nested', schema_bh.FieldType.MESSAGE, None, PING),
+            parser.Field(
+                'flag',
+                schema_bh.FieldType.UINT8_T,
+                optional=True,
+            ),
+            parser.Field(
+                'inner',
+                schema_bh.FieldType.MESSAGE,
+                obj_name=parser.Name(LOG_MESSAGE.name, ''),
+            ),
+            parser.Field(
+                'data',
+                schema_bh.FieldType.LIST,
+                schema_bh.FieldType.INT32_T,
+            ),
+            parser.Field(
+                'nested',
+                schema_bh.FieldType.MESSAGE,
+                optional=True,
+                obj_name=parser.Name(PING.name, ''),
+            ),
         ],
     )
 
+    def setUp(self) -> None:
+        self.message_registry = {
+            ('', self.PING.name): self.PING,
+            ('', self.FLASH_PAGE.name): self.FLASH_PAGE,
+            ('', self.LOG_MESSAGE.name): self.LOG_MESSAGE,
+            ('', self.NESTED_MESSAGE.name): self.NESTED_MESSAGE,
+        }
+
+    def test_split_optional(self):
+        self.assertEqual(
+            engine.split_optional(OptionalTest.__dataclass_fields__['a'].type),
+            (int, False),
+        )
+        self.assertEqual(
+            engine.split_optional(OptionalTest.__dataclass_fields__['b'].type),
+            (int, True),
+        )
+        self.assertEqual(
+            engine.split_optional(OptionalTest.__dataclass_fields__['c'].type),
+            (Ping, False),
+        )
+        self.assertEqual(
+            engine.split_optional(OptionalTest.__dataclass_fields__['d'].type),
+            (Ping, True),
+        )
+        self.assertEqual(
+            engine.split_optional(OptionalTest.__dataclass_fields__['e'].type),
+            (float, False),
+        )
+        self.assertEqual(
+            engine.split_optional(OptionalTest.__dataclass_fields__['f'].type),
+            (float, True),
+        )
+
     def test_generate_serializer(self):
         message = self.PING
-        serializer = engine.generate_serializer(message)
+        serializer = engine.generate_serializer(message, self.message_registry)
         instance = Ping(42)
         self.assertEqual(
             serializer(instance),
@@ -83,15 +161,15 @@ class TestEngine(unittest.TestCase):
         )
 
         message = self.FLASH_PAGE
-        serializer = engine.generate_serializer(message)
-        instance = FlashPage(0x1234, 0x5678, [0x9ABC, 0xDEF0])
+        serializer = engine.generate_serializer(message, self.message_registry)
+        instance = FlashPage(0x1234, [0x9ABC, 0xDEF0], 0x5678)
         self.assertEqual(
             serializer(instance),
-            b'\x34\x12\x00\x00\x78\x56\x00\x00\x02\x00\xbc\x9a\x00\x00\xf0\xde\x00\x00',
+            b'\x01\x34\x12\x00\x00\x02\x00\xbc\x9a\x00\x00\xf0\xde\x00\x00\x78\x56\x00\x00',
         )
 
         message = self.LOG_MESSAGE
-        serializer = engine.generate_serializer(message)
+        serializer = engine.generate_serializer(message, self.message_registry)
         instance = LogMessage('Hello, World!', Verbosity.MEDIUM)
         self.assertEqual(
             serializer(instance),
@@ -102,34 +180,38 @@ class TestEngine(unittest.TestCase):
 
     def test_generate_nested_serializer(self):
         message = self.NESTED_MESSAGE
-        serializer = engine.generate_serializer(message)
+        serializer = engine.generate_serializer(message, self.message_registry)
         instance = NestedMessage(
             0x42, LogMessage('Hello, World!', Verbosity.LOW), [-1, -2, -3], Ping(42)
         )
         self.assertEqual(
             serializer(instance),
-            b'B\r\x00Hello, World!\x00\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*',
+            b'\x03B\r\x00Hello, World!\x00\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*',
         )
 
     def test_generate_deserializer(self):
         message = self.PING
-        deserializer = engine.generate_deserializer(message, Ping)
+        deserializer = engine.generate_deserializer(
+            message, self.message_registry, Ping
+        )
         buffer = int(42).to_bytes(length=1, byteorder='little', signed=False)
         msg, size = deserializer(buffer)
         self.assertEqual(msg, Ping(42))
         self.assertEqual(size, len(buffer))
 
         message = self.FLASH_PAGE
-        deserializer = engine.generate_deserializer(message, FlashPage)
-        buffer = (
-            b'\x34\x12\x00\x00\x78\x56\x00\x00\x02\x00\xbc\x9a\x00\x00\xf0\xde\x00\x00'
+        deserializer = engine.generate_deserializer(
+            message, self.message_registry, FlashPage
         )
+        buffer = b'\x01\x34\x12\x00\x00\x02\x00\xbc\x9a\x00\x00\xf0\xde\x00\x00\x78\x56\x00\x00'
         msg, size = deserializer(buffer)
-        self.assertEqual(msg, FlashPage(0x1234, 0x5678, [0x9ABC, 0xDEF0]))
+        self.assertEqual(msg, FlashPage(0x1234, [0x9ABC, 0xDEF0], 0x5678))
         self.assertEqual(size, len(buffer))
 
         message = self.LOG_MESSAGE
-        deserializer = engine.generate_deserializer(message, LogMessage)
+        deserializer = engine.generate_deserializer(
+            message, self.message_registry, LogMessage
+        )
         buffer = b'\x0d\x00Hello, World!\x02'
         msg, size = deserializer(buffer)
         self.assertEqual(msg, LogMessage('Hello, World!', Verbosity.HIGH))
@@ -137,8 +219,10 @@ class TestEngine(unittest.TestCase):
 
     def test_generate_nested_deserializer(self):
         message = self.NESTED_MESSAGE
-        deserializer = engine.generate_deserializer(message, NestedMessage)
-        buffer = b'B\r\x00Hello, World!\x02\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*'
+        deserializer = engine.generate_deserializer(
+            message, self.message_registry, NestedMessage
+        )
+        buffer = b'\x03B\r\x00Hello, World!\x02\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*'
         msg, size = deserializer(buffer)
         self.assertEqual(
             msg,

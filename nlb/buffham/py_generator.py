@@ -39,23 +39,20 @@ def _get_imported_name(relative_name: str) -> str:
 
 def _py_type(field: parser.Field, primary_namespace: str) -> str:
     """Get the Python type hint for the field."""
-    if field.message is not None:
-        assert field.message_ns is not None
-        return _get_imported_name(
-            parser.relative_name(field.message, field.message_ns, primary_namespace)
+    if field.obj_name is not None:
+        type_str = _get_imported_name(
+            parser.relative_name(field.obj_name, primary_namespace)
         )
-
-    if field.enum is not None:
-        assert field.enum_ns is not None
-        return _get_imported_name(
-            parser.relative_name(field.enum, field.enum_ns, primary_namespace)
-        )
-
-    if field.pri_type is schema_bh.FieldType.LIST:
+    elif field.pri_type is schema_bh.FieldType.LIST:
         assert field.sub_type is not None
-        return f'list[{TYPE_MAP[field.sub_type]}]'
+        type_str = f'list[{TYPE_MAP[field.sub_type]}]'
+    else:
+        type_str = TYPE_MAP[field.pri_type]
 
-    return TYPE_MAP[field.pri_type]
+    if field.optional:
+        type_str += ' | None'
+
+    return type_str
 
 
 def _get_constant_name(reference: str) -> str:
@@ -148,12 +145,26 @@ def generate_message(
         if field.inline_comment:
             definition += f'  #{field.inline_comment}'
 
+    num_optional_fields = sum(1 for f in message.fields if f.optional)
+    num_optional_bytes = (num_optional_fields + 7) // 8
+
     # Add serializer method
     definition += f'\n\n{T}def serialize(self) -> bytes:'
     if stub:
         definition += ' ...\n'
     else:
         definition += f'\n{T}{T}buffer = bytes()'
+
+        if num_optional_fields > 0:
+            definition += f'\n{T}{T}optional_bitfield = 0'
+            optional_idx = 0
+            for field in message.fields:
+                if not field.optional:
+                    continue
+                definition += f'\n{T}{T}optional_bitfield |= (1 << {optional_idx}) if self.{field.name} is not None else 0'
+                optional_idx += 1
+            definition += f"\n{T}{T}buffer += optional_bitfield.to_bytes(length={num_optional_bytes}, byteorder='little', signed=False)"
+
         for field in message.fields:
             if field.iterable:
                 definition += (
@@ -171,6 +182,10 @@ def generate_message(
                 definition += f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name}.value)"
             else:
                 definition += f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name})"
+
+            if field.optional:
+                definition += f' if self.{field.name} is not None else bytes()'
+
         definition += f'\n{T}{T}return buffer\n'
 
     # Add deserializer method
@@ -181,8 +196,13 @@ def generate_message(
     if stub:
         definition += ' ...\n'
     else:
-        offset = 0
+        if num_optional_fields > 0:
+            definition += f"\n{T}{T}optional_bitfield = int.from_bytes(buffer[:{num_optional_bytes}], byteorder='little', signed=False)"
+
+        offset = num_optional_bytes
         offset_str = ''
+
+        optional_idx = 0
         for field in message.fields:
             if field.pri_type is schema_bh.FieldType.LIST:
                 definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
@@ -194,26 +214,48 @@ def generate_message(
                 schema_bh.FieldType.BYTES,
             ):
                 definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
-                offset += 2
+                if field.optional:
+                    definition += (
+                        f' if optional_bitfield & (1 << {optional_idx}) else 0'
+                    )
+                    offset_str += f' + 2 * ({field.name} is not None)'
+                else:
+                    offset += 2
                 definition += f'\n{T}{T}{field.name} = buffer[{offset}{offset_str}:{offset}{offset_str} + {field.name}_size]'
                 if field.pri_type is schema_bh.FieldType.STRING:
                     definition += '.decode()'
                 offset_str += f' + {field.name}_size * {field.size}'
             elif field.pri_type is schema_bh.FieldType.MESSAGE:
-                assert field.message is not None
-                assert field.message_ns is not None
                 msg = _py_type(field, primary_namespace)
                 definition += f'\n{T}{T}{field.name}, {field.name}_size = {msg}.deserialize(buffer[{offset}{offset_str}:])'
+                if field.optional:
+                    definition += (
+                        f' if optional_bitfield & (1 << {optional_idx}) else (None, 0)'
+                    )
                 offset_str += f' + {field.name}_size'
             elif field.pri_type is schema_bh.FieldType.ENUM:
-                assert field.enum is not None
-                assert field.enum_ns is not None
                 enum_type = _py_type(field, primary_namespace)
                 definition += f"\n{T}{T}{field.name} = {enum_type}(struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0])"
-                offset += field.size
+                if field.optional:
+                    definition += (
+                        f' if optional_bitfield & (1 << {optional_idx}) else None'
+                    )
+                    offset_str += f' + {field.size} * ({field.name} is not None)'
+                else:
+                    offset += field.size
             else:
                 definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0]"
-                offset += field.size
+                if field.optional:
+                    definition += (
+                        f' if optional_bitfield & (1 << {optional_idx}) else None'
+                    )
+                    offset_str += f' + {field.size} * ({field.name} is not None)'
+                else:
+                    offset += field.size
+
+            if field.optional:
+                optional_idx += 1
+
         definition += f'\n{T}{T}return cls('
         for field in message.fields:
             definition += f'\n{T}{T}{T}{field.name}={field.name},'
@@ -237,9 +279,9 @@ def generate_registry(
     else:
         definition += ' = {\n'
         for transaction in transactions:
-            definition += f'{T}{transaction.request_id}: {_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))},\n'
+            definition += f'{T}{transaction.request_id}: {_get_imported_name(parser.relative_name(transaction.send_name, primary_namespace))},\n'
         for publish in publishes:
-            definition += f'{T}{publish.request_id}: {_get_imported_name(parser.relative_name(publish.send, publish.send_ns, primary_namespace))},\n'
+            definition += f'{T}{publish.request_id}: {_get_imported_name(parser.relative_name(publish.send_name, primary_namespace))},\n'
         definition += '}\n\n'
 
     return definition
@@ -313,8 +355,8 @@ def generate_transaction(
     if stub:
         definition += (
             f'{transaction.name.upper()}: bh.Transaction['
-            f'{_get_imported_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))}, '
-            f'{_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))}'
+            f'{_get_imported_name(parser.relative_name(transaction.receive_name, primary_namespace))}, '
+            f'{_get_imported_name(parser.relative_name(transaction.send_name, primary_namespace))}'
             f'] = ...'
         )
         if transaction.inline_comment:
@@ -323,8 +365,8 @@ def generate_transaction(
     else:
         definition += (
             f'{transaction.name.upper()} = bh.Transaction['
-            f'{_get_imported_name(parser.relative_name(transaction.receive, transaction.receive_ns, primary_namespace))}, '
-            f'{_get_imported_name(parser.relative_name(transaction.send, transaction.send_ns, primary_namespace))}'
+            f'{_get_imported_name(parser.relative_name(transaction.receive_name, primary_namespace))}, '
+            f'{_get_imported_name(parser.relative_name(transaction.send_name, primary_namespace))}'
             f']({transaction.request_id})'
         )
         if transaction.inline_comment:

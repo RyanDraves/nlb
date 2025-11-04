@@ -49,7 +49,7 @@ class FlashPage:
     # Another field comment
     data: list[int]  # What about some in-line comments for fields?
     # This comment belongs to `read_size`
-    read_size: int
+    read_size: int | None  # Fields can be marked optional
 
     def serialize(self) -> bytes: ...
     @classmethod
@@ -67,7 +67,7 @@ class LogMessage:
 
 @dataclasses.dataclass
 class NestedMessage:
-    flag: int
+    flag: int | None
     message: LogMessage
     numbers: list[int]
     pong: Ping
