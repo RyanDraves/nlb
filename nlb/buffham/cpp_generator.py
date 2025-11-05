@@ -127,13 +127,13 @@ def _generate_serializer(
                 f'memcpy(buffer.data() + offset, &{field.name}_size, 2)'
             )
             if field.optional:
-                size_read_expression = (
-                    f'{field.name}.has_value() ? {size_read_expression} : 0'
+                definition += (
+                    f'\n{T}{field.name}.has_value() ? {size_read_expression} : 0;'
                 )
                 definition += f'\n{T}offset += 2 * {field.name}.has_value();'
             else:
+                definition += f'\n{T}{size_read_expression};'
                 definition += f'\n{T}offset += 2;'
-            definition += f'\n{T}{size_read_expression};'
 
             if field.sub_type in (
                 schema_bh.FieldType.STRING,
@@ -221,15 +221,13 @@ def _generate_deserializer(
             definition += f'\n{T}uint16_t {field.name}_size;'
             expression = f'memcpy(&{field.name}_size, buffer.data() + offset, 2)'
             if field.optional:
-                expression = (
-                    f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
-                )
+                definition += f'\n{T}(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0;'
                 definition += (
                     f'\n{T}offset += 2 * {message_name}.{field.name}.has_value();'
                 )
             else:
+                definition += f'\n{T}{expression};'
                 definition += f'\n{T}offset += 2;'
-            definition += f'\n{T}{expression};'
 
             # Resize data
             resize_expression = f'{message_name}.{field.name}.resize({field.name}_size)'

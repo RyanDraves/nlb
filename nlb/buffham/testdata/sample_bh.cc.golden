@@ -38,8 +38,8 @@ std::span<uint8_t> FlashPage::serialize(std::span<uint8_t> buffer) const {
     memcpy(buffer.data() + offset, &address, 4);
     offset += 4;
     uint16_t data_size = data.size();
-    offset += 2;
     memcpy(buffer.data() + offset, &data_size, 2);
+    offset += 2;
     memcpy(buffer.data() + offset, data.data(), data_size * 1);
     offset += data_size * 1;
     read_size.has_value() ? memcpy(buffer.data() + offset, &read_size.value(), 4) : 0;
@@ -56,8 +56,8 @@ std::pair<FlashPage, std::span<const uint8_t> > FlashPage::deserialize(std::span
     memcpy(&flash_page.address, buffer.data() + offset, 4);
     offset += 4;
     uint16_t data_size;
-    offset += 2;
     memcpy(&data_size, buffer.data() + offset, 2);
+    offset += 2;
     flash_page.data.resize(data_size);
     memcpy(flash_page.data.data(), buffer.data() + offset, data_size * 1);
     offset += data_size * 1;
@@ -69,8 +69,8 @@ std::pair<FlashPage, std::span<const uint8_t> > FlashPage::deserialize(std::span
 std::span<uint8_t> LogMessage::serialize(std::span<uint8_t> buffer) const {
     uint16_t offset = 0;
     uint16_t message_size = message.size();
-    offset += 2;
     memcpy(buffer.data() + offset, &message_size, 2);
+    offset += 2;
     memcpy(buffer.data() + offset, message.data(), message_size * 1);
     offset += message_size * 1;
     memcpy(buffer.data() + offset, &verbosity, 1);
@@ -84,8 +84,8 @@ std::pair<LogMessage, std::span<const uint8_t> > LogMessage::deserialize(std::sp
     uint16_t offset = 0;
     LogMessage log_message;
     uint16_t message_size;
-    offset += 2;
     memcpy(&message_size, buffer.data() + offset, 2);
+    offset += 2;
     log_message.message.resize(message_size);
     memcpy(log_message.message.data(), buffer.data() + offset, message_size * 1);
     offset += message_size * 1;
@@ -107,8 +107,8 @@ std::span<uint8_t> NestedMessage::serialize(std::span<uint8_t> buffer) const {
     auto message_buffer = message.serialize(buffer.subspan(offset));
     offset += message_buffer.size();
     uint16_t numbers_size = numbers.size();
-    offset += 2;
     memcpy(buffer.data() + offset, &numbers_size, 2);
+    offset += 2;
     memcpy(buffer.data() + offset, numbers.data(), numbers_size * 4);
     offset += numbers_size * 4;
     auto pong_buffer = pong.serialize(buffer.subspan(offset));
@@ -130,8 +130,8 @@ std::pair<NestedMessage, std::span<const uint8_t> > NestedMessage::deserialize(s
     std::tie(nested_message.message, message_buffer) = LogMessage::deserialize(message_buffer);
     offset += message_buffer.size();
     uint16_t numbers_size;
-    offset += 2;
     memcpy(&numbers_size, buffer.data() + offset, 2);
+    offset += 2;
     nested_message.numbers.resize(numbers_size);
     memcpy(nested_message.numbers.data(), buffer.data() + offset, numbers_size * 4);
     offset += numbers_size * 4;
@@ -147,8 +147,8 @@ std::pair<NestedMessage, std::span<const uint8_t> > NestedMessage::deserialize(s
 std::span<uint8_t> StringLists::serialize(std::span<uint8_t> buffer) const {
     uint16_t offset = 0;
     uint16_t messages_size = messages.size();
-    offset += 2;
     memcpy(buffer.data() + offset, &messages_size, 2);
+    offset += 2;
     for (const auto &item : messages) {
         uint16_t item_size = item.size();
         memcpy(buffer.data() + offset, &item_size, 2);
@@ -157,8 +157,8 @@ std::span<uint8_t> StringLists::serialize(std::span<uint8_t> buffer) const {
         offset += item_size;
     }
     uint16_t buffers_size = buffers.size();
-    offset += 2;
     memcpy(buffer.data() + offset, &buffers_size, 2);
+    offset += 2;
     for (const auto &item : buffers) {
         uint16_t item_size = item.size();
         memcpy(buffer.data() + offset, &item_size, 2);
@@ -173,8 +173,8 @@ std::pair<StringLists, std::span<const uint8_t> > StringLists::deserialize(std::
     uint16_t offset = 0;
     StringLists string_lists;
     uint16_t messages_size;
-    offset += 2;
     memcpy(&messages_size, buffer.data() + offset, 2);
+    offset += 2;
     string_lists.messages.resize(messages_size);
     for (auto &item : string_lists.messages) {
         uint16_t item_size;
@@ -185,8 +185,8 @@ std::pair<StringLists, std::span<const uint8_t> > StringLists::deserialize(std::
         offset += item_size;
     }
     uint16_t buffers_size;
-    offset += 2;
     memcpy(&buffers_size, buffer.data() + offset, 2);
+    offset += 2;
     string_lists.buffers.resize(buffers_size);
     for (auto &item : string_lists.buffers) {
         uint16_t item_size;
