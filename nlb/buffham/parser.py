@@ -266,8 +266,8 @@ class Parser:
                 obj_name = enum_name
                 pri_type = schema_bh.FieldType.ENUM
 
-        # Ensure the sub_type is not a list
-        if sub_type is schema_bh.FieldType.LIST:
+        # Ensure the sub_type is not a list or message
+        if sub_type in (schema_bh.FieldType.LIST, schema_bh.FieldType.MESSAGE):
             raise ValueError('Nested iterables are not supported')
 
         inline_comment_match = INLINE_COMMENT_REGEX.match(line)

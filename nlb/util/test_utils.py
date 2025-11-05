@@ -4,7 +4,7 @@ import unittest
 
 def assertTextEqual(
     test: unittest.TestCase, actual: str, expected: str, msg: str | None = None
-):
+) -> None:
     """Assert two text strings are equal with a colorful unified diff on failure."""
     if actual == expected:
         return
@@ -28,6 +28,7 @@ def assertTextEqual(
 
     colored_diff = []
     for line in diff:
+        line = line.rstrip()
         if line.startswith('+++') or line.startswith('---'):
             colored_diff.append(f'{CYAN}{line}{RESET}')
         elif line.startswith('+'):
