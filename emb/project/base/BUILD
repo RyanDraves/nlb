@@ -109,7 +109,7 @@ host_test(
 py_binary(
     name = "shell",
     srcs = ["shell.py"],
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         ":client",
         "//emb/project:shell",

@@ -50,6 +50,7 @@ py_test(
         "TEST_HPP": "testdata/sample_bh.hpp",
         "TEST_CC": "testdata/sample_bh.cc",
     },
+    deps = ["//nlb/util:test_utils"],
 )
 
 py_library(
@@ -116,6 +117,7 @@ py_test(
         ":py_generator",
         "//emb/network/serialize:bh_cobs",
         "//nlb/buffham:testdata/other_bh_py",
+        "//nlb/util:test_utils",
     ],
 )
 

@@ -1,4 +1,3 @@
-import logging
 import pathlib
 
 from nlb.buffham import parser
@@ -141,7 +140,17 @@ def _generate_serializer(
         if field.iterable:
             definition += f"\n{T}{T}buffer += struct.pack('<H', len(self.{field.name}))"
             if field.pri_type is schema_bh.FieldType.LIST:
-                definition += f"\n{T}{T}buffer += struct.pack(f'<{{len(self.{field.name})}}{field.format}', *self.{field.name})"
+                if field.sub_type in (
+                    schema_bh.FieldType.STRING,
+                    schema_bh.FieldType.BYTES,
+                ):
+                    definition += f'\n{T}{T}for item in self.{field.name}:'
+                    definition += f"\n{T}{T}{T}buffer += struct.pack('<H', len(item))"
+                    definition += f'\n{T}{T}{T}buffer += item'
+                    if field.sub_type is schema_bh.FieldType.STRING:
+                        definition += '.encode()'
+                else:
+                    definition += f"\n{T}{T}buffer += struct.pack(f'<{{len(self.{field.name})}}{field.format}', *self.{field.name})"
             else:
                 definition += f'\n{T}{T}buffer += self.{field.name}'
                 if field.pri_type is schema_bh.FieldType.STRING:
@@ -181,9 +190,25 @@ def _generate_deserializer(
     for field in message.fields:
         if field.pri_type is schema_bh.FieldType.LIST:
             definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
-            offset += 2
-            definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'<{{{field.name}_size}}{field.format}', buffer, {offset}{offset_str}))"
-            offset_str += f' + {field.name}_size * {field.size}'
+            if field.sub_type in (
+                schema_bh.FieldType.STRING,
+                schema_bh.FieldType.BYTES,
+            ):
+                definition += f'\n{T}{T}{field.name}_bytes = 2'
+                offset_str += f' + {field.name}_bytes'
+                definition += f'\n{T}{T}{field.name} = []'
+                definition += f'\n{T}{T}for _ in range({field.name}_size):'
+                definition += f"\n{T}{T}{T}item_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
+                definition += f'\n{T}{T}{T}{field.name}_bytes += 2'
+                definition += f'\n{T}{T}{T}{field.name}.append(buffer[{offset}{offset_str}:{offset}{offset_str} + item_size]'
+                if field.sub_type is schema_bh.FieldType.STRING:
+                    definition += '.decode()'
+                definition += ')'
+                definition += f'\n{T}{T}{T}{field.name}_bytes += item_size'
+            else:
+                offset += 2
+                definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'<{{{field.name}_size}}{field.format}', buffer, {offset}{offset_str}))"
+                offset_str += f' + {field.name}_size * {field.size}'
         elif field.pri_type in (
             schema_bh.FieldType.STRING,
             schema_bh.FieldType.BYTES,
@@ -498,6 +523,3 @@ def generate_python(
 
         # Generate publish definitions
         fp.write(generate_publishes(bh.publishes))
-
-    logging.debug(f'{stub=}')
-    logging.debug(outfile.read_text())

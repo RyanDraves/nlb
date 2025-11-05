@@ -54,6 +54,12 @@ message NestedMessage {
     nlb.buffham.testdata.other.Pong other_pong;
 }
 
+# Lists can be composed of variable-length strings and bytes
+message StringLists {
+    list[string] messages;
+    list[bytes] buffers;
+}
+
 transaction ping[nlb.buffham.testdata.other.Pong, LogMessage];
 # Transaction comment
 transaction flash_page[FlashPage, FlashPage];

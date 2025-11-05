@@ -12,6 +12,7 @@ class TestParserSimple(unittest.TestCase):
         )
 
     def test_parse_field(self):
+        # Simple field
         field = '    uint8_t foo;'
         parsed = self.ctx.parse_message_field(field, [])
         self.assertEqual(
@@ -22,6 +23,7 @@ class TestParserSimple(unittest.TestCase):
             ),
         )
 
+        # Field with inline comment
         field = 'float64 bar;  # inline comment'
         parsed = self.ctx.parse_message_field(field, [])
         self.assertEqual(
@@ -33,6 +35,7 @@ class TestParserSimple(unittest.TestCase):
             ),
         )
 
+        # List field
         field = 'list[uint32_t] baz_2;'
         parsed = self.ctx.parse_message_field(field, ['some other', 'read-in comments'])
         self.assertEqual(
@@ -45,6 +48,19 @@ class TestParserSimple(unittest.TestCase):
             ),
         )
 
+        # List of strings
+        field = 'list[string] string_list;'
+        parsed = self.ctx.parse_message_field(field, [])
+        self.assertEqual(
+            parsed,
+            parser.Field(
+                'string_list',
+                schema_bh.FieldType.LIST,
+                schema_bh.FieldType.STRING,
+            ),
+        )
+
+        # Optional field
         field = 'optional list[uint8_t] optional_field;  # optional field'
         parsed = self.ctx.parse_message_field(field, [])
         self.assertEqual(
@@ -58,14 +74,17 @@ class TestParserSimple(unittest.TestCase):
             ),
         )
 
+        # Invalid list-of-lists
         field = 'list[list[uint32_t]] baz_3;'
         with self.assertRaises(ValueError):
             self.ctx.parse_message_field(field, [])
 
+        # Malformed list
         field = 'list[uint32_t baz_4;'
         with self.assertRaises(ValueError):
             self.ctx.parse_message_field(field, [])
 
+        # Message field
         field = 'MyMessage baz_5;'
         my_message = parser.Message('MyMessage', [])
         self.ctx.cur_buffham.messages.append(my_message)
@@ -79,6 +98,7 @@ class TestParserSimple(unittest.TestCase):
             ),
         )
 
+        # Non-existent message field
         field = 'NonexistantMessage baz_6;'
         with self.assertRaises(ValueError):
             self.ctx.parse_message_field(field, [])
@@ -479,6 +499,22 @@ class TestParserSample(unittest.TestCase):
                 ),
             ],
         )
+        string_lists = parser.Message(
+            'StringLists',
+            [
+                parser.Field(
+                    'messages',
+                    schema_bh.FieldType.LIST,
+                    schema_bh.FieldType.STRING,
+                ),
+                parser.Field(
+                    'buffers',
+                    schema_bh.FieldType.LIST,
+                    schema_bh.FieldType.BYTES,
+                ),
+            ],
+            comments=[' Lists can be composed of variable-length strings and bytes'],
+        )
 
         parsed = self.ctx.parse_file(self.sample_file, parent_namespace='')
 
@@ -489,6 +525,7 @@ class TestParserSample(unittest.TestCase):
                 flash_page,
                 log_message,
                 nested_message,
+                string_lists,
             ],
         )
 

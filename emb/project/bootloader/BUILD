@@ -151,7 +151,7 @@ py_binary(
     name = "shell",
     srcs = ["shell.py"],
     add_completions = False,
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         "//emb/network/transport:usb",
         "//emb/project/base:base_bh_py",

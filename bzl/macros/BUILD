@@ -89,6 +89,6 @@ py_binary(
     name = "pytest_wrapper",
     srcs = ["pytest_wrapper.py"],
     add_completions = False,
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = ["@pip//pytest"],
 )

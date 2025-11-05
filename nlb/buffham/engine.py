@@ -70,7 +70,17 @@ def generate_serializer(
                 buffer += struct.pack('<H', len(value))
 
                 if field.pri_type is schema_bh.FieldType.LIST:
-                    buffer += struct.pack(f'<{len(value)}{field.format}', *value)
+                    if field.sub_type in (
+                        schema_bh.FieldType.STRING,
+                        schema_bh.FieldType.BYTES,
+                    ):
+                        for item in value:
+                            buffer += struct.pack('<H', len(item))
+                            if field.sub_type is schema_bh.FieldType.STRING:
+                                item = item.encode()
+                            buffer += item
+                    else:
+                        buffer += struct.pack(f'<{len(value)}{field.format}', *value)
                 else:
                     if field.pri_type is schema_bh.FieldType.STRING:
                         value = value.encode()
@@ -127,10 +137,24 @@ def generate_deserializer[T: dataclass.DataclassLike](
                 offset += 2
 
                 if field.pri_type is schema_bh.FieldType.LIST:
-                    values[field.name] = list(
-                        struct.unpack_from(f'<{size}{field.format}', buffer, offset)
-                    )
-                    offset += size * struct.calcsize(field.format)
+                    if field.sub_type in (
+                        schema_bh.FieldType.STRING,
+                        schema_bh.FieldType.BYTES,
+                    ):
+                        values[field.name] = []
+                        for _ in range(size):
+                            item_size = struct.unpack_from('<H', buffer, offset)[0]
+                            offset += 2
+                            item = buffer[offset : offset + item_size]
+                            offset += item_size
+                            if field.sub_type is schema_bh.FieldType.STRING:
+                                item = item.decode()
+                            values[field.name].append(item)
+                    else:
+                        values[field.name] = list(
+                            struct.unpack_from(f'<{size}{field.format}', buffer, offset)
+                        )
+                        offset += size * struct.calcsize(field.format)
                 else:
                     value = buffer[offset : offset + size]
                     if field.pri_type is schema_bh.FieldType.STRING:

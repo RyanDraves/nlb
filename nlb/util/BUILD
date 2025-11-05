@@ -129,3 +129,9 @@ py_library(
     srcs = ["version.py"],
     visibility = ["//visibility:public"],
 )
+
+py_library(
+    name = "test_utils",
+    srcs = ["test_utils.py"],
+    visibility = ["//visibility:public"],
+)
