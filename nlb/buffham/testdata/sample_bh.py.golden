@@ -39,10 +39,12 @@ class Ping:
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
-        ping = struct.unpack_from('<B', buffer, 0)[0]
+        offset = 0
+        ping = struct.unpack_from('<B', buffer, offset)[0]
+        offset += 1
         return cls(
             ping=ping,
-        ), 1
+        ), offset
 
 @dataclasses.dataclass
 class FlashPage:
@@ -73,16 +75,22 @@ class FlashPage:
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        offset = 0
         optional_bitfield = int.from_bytes(buffer[:1], byteorder='little', signed=False)
-        address = struct.unpack_from('<I', buffer, 1)[0]
-        data_size = struct.unpack_from('<H', buffer, 5)[0]
-        data = list(struct.unpack_from(f'<{data_size}B', buffer, 7))
-        read_size = struct.unpack_from('<I', buffer, 7 + data_size * 1)[0] if optional_bitfield & (1 << 0) else None
+        offset += 1
+        address = struct.unpack_from('<I', buffer, offset)[0]
+        offset += 4
+        data_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        data = list(struct.unpack_from(f'<{data_size}B', buffer, offset))
+        offset += data_size * 1
+        read_size = struct.unpack_from('<I', buffer, offset)[0] if optional_bitfield & (1 << 0) else None
+        offset += 4 * (read_size is not None)
         return cls(
             address=address,
             data=data,
             read_size=read_size,
-        ), 7 + data_size * 1 + 4 * (read_size is not None)
+        ), offset
 
 @dataclasses.dataclass
 class LogMessage:
@@ -100,15 +108,20 @@ class LogMessage:
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
-        message_size = struct.unpack_from('<H', buffer, 0)[0]
-        message = buffer[2:2 + message_size].decode()
-        verbosity = Verbosity(struct.unpack_from('<B', buffer, 2 + message_size * 1)[0])
-        my_enum = other_bh.MyEnum(struct.unpack_from('<B', buffer, 3 + message_size * 1)[0])
+        offset = 0
+        message_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        message = buffer[offset:offset + message_size].decode()
+        offset += message_size
+        verbosity = Verbosity(struct.unpack_from('<B', buffer, offset)[0])
+        offset += 1
+        my_enum = other_bh.MyEnum(struct.unpack_from('<B', buffer, offset)[0])
+        offset += 1
         return cls(
             message=message,
             verbosity=verbosity,
             my_enum=my_enum,
-        ), 4 + message_size * 1
+        ), offset
 
 @dataclasses.dataclass
 class NestedMessage:
@@ -133,20 +146,28 @@ class NestedMessage:
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        offset = 0
         optional_bitfield = int.from_bytes(buffer[:1], byteorder='little', signed=False)
-        flag = struct.unpack_from('<B', buffer, 1)[0] if optional_bitfield & (1 << 0) else None
-        message, message_size = LogMessage.deserialize(buffer[1 + 1 * (flag is not None):])
-        numbers_size = struct.unpack_from('<H', buffer, 1 + 1 * (flag is not None) + message_size)[0]
-        numbers = list(struct.unpack_from(f'<{numbers_size}i', buffer, 3 + 1 * (flag is not None) + message_size))
-        pong, pong_size = Ping.deserialize(buffer[3 + 1 * (flag is not None) + message_size + numbers_size * 4:])
-        other_pong, other_pong_size = other_bh.Pong.deserialize(buffer[3 + 1 * (flag is not None) + message_size + numbers_size * 4 + pong_size:])
+        offset += 1
+        flag = struct.unpack_from('<B', buffer, offset)[0] if optional_bitfield & (1 << 0) else None
+        offset += 1 * (flag is not None)
+        message, message_size = LogMessage.deserialize(buffer[offset:])
+        offset += message_size
+        numbers_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        numbers = list(struct.unpack_from(f'<{numbers_size}i', buffer, offset))
+        offset += numbers_size * 4
+        pong, pong_size = Ping.deserialize(buffer[offset:])
+        offset += pong_size
+        other_pong, other_pong_size = other_bh.Pong.deserialize(buffer[offset:])
+        offset += other_pong_size
         return cls(
             flag=flag,
             message=message,
             numbers=numbers,
             pong=pong,
             other_pong=other_pong,
-        ), 3 + 1 * (flag is not None) + message_size + numbers_size * 4 + pong_size + other_pong_size
+        ), offset
 
 @dataclasses.dataclass
 class StringLists:
@@ -169,26 +190,27 @@ class StringLists:
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
-        messages_size = struct.unpack_from('<H', buffer, 0)[0]
-        messages_bytes = 2
+        offset = 0
+        messages_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
         messages = []
         for _ in range(messages_size):
-            item_size = struct.unpack_from('<H', buffer, 0 + messages_bytes)[0]
-            messages_bytes += 2
-            messages.append(buffer[0 + messages_bytes:0 + messages_bytes + item_size].decode())
-            messages_bytes += item_size
-        buffers_size = struct.unpack_from('<H', buffer, 0 + messages_bytes)[0]
-        buffers_bytes = 2
+            item_size = struct.unpack_from('<H', buffer, offset)[0]
+            offset += 2
+            messages.append(buffer[offset:offset + item_size].decode())
+            offset += item_size
+        buffers_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
         buffers = []
         for _ in range(buffers_size):
-            item_size = struct.unpack_from('<H', buffer, 0 + messages_bytes + buffers_bytes)[0]
-            buffers_bytes += 2
-            buffers.append(buffer[0 + messages_bytes + buffers_bytes:0 + messages_bytes + buffers_bytes + item_size])
-            buffers_bytes += item_size
+            item_size = struct.unpack_from('<H', buffer, offset)[0]
+            offset += 2
+            buffers.append(buffer[offset:offset + item_size])
+            offset += item_size
         return cls(
             messages=messages,
             buffers=buffers,
-        ), 0 + messages_bytes + buffers_bytes
+        ), offset
 
 REGISTRY: dict[int, Type[bh.BuffhamLike]] = {
     1: LogMessage,
