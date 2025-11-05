@@ -11,7 +11,7 @@ COMMENT_REGEX = re.compile(r'^\s*#(.*)$')
 INLINE_COMMENT_REGEX = re.compile(r'.*#(.*)')
 CONSTANT_REGEX = re.compile(r'^constant (\w+) (\w+) = (.+);')
 IMPORT_REGEX = re.compile(r'^import ([\w|\.]+);')
-FIELD_REGEX = re.compile(r'^\s*([\w|\[|\]|\.]+)\s+(\w+);')
+FIELD_REGEX = re.compile(r'^\s*(optional)?\s*([\w|\[|\]|\.]+)\s+(\w+);')
 MESSAGE_START_REGEX = re.compile(r'^message (\w+) {')
 MESSAGE_END_REGEX = re.compile(r'^}')
 TRANSACTION_REGEX = re.compile(r'^transaction (\w+)\[([\w|\.]+), ([\w|\.]+)\]')
@@ -27,17 +27,20 @@ class NamedEntry(dataclass.DataclassLike, Protocol):
 
 
 @dataclasses.dataclass
+class Name:
+    name: str
+    namespace: str
+
+
+@dataclasses.dataclass
 class Field:
     name: str
     pri_type: schema_bh.FieldType
     # For lists
     sub_type: schema_bh.FieldType | None = None
-    # For messages
-    message: 'Message | None' = None
-    message_ns: str | None = None
-    # For enums
-    enum: 'Enum | None' = None
-    enum_ns: str | None = None
+    optional: bool = False
+    # For messages / enum
+    obj_name: Name | None = None
     comments: list[str] = dataclasses.field(default_factory=list)
     inline_comment: str | None = None
 
@@ -107,10 +110,8 @@ class Message:
 class Transaction:
     name: str
     request_id: int
-    receive: Message
-    receive_ns: str
-    send: Message
-    send_ns: str
+    receive_name: Name
+    send_name: Name
     comments: list[str] = dataclasses.field(default_factory=list)
     inline_comment: str | None = None
 
@@ -119,8 +120,7 @@ class Transaction:
 class Publish:
     name: str
     request_id: int
-    send: Message
-    send_ns: str
+    send_name: Name
     comments: list[str] = dataclasses.field(default_factory=list)
     inline_comment: str | None = None
 
@@ -167,16 +167,16 @@ class Buffham:
         return f'{self.parent_namespace}.{self.name}'
 
 
-def full_name(entry: NamedEntry, namespace: str) -> str:
+def full_name(entry_name: Name) -> str:
     """Get the full name of the entry."""
-    return f'{namespace}.{entry.name}'
+    return f'{entry_name.namespace}.{entry_name.name}'
 
 
-def relative_name(entry: NamedEntry, entry_namespace: str, cur_namespace: str) -> str:
+def relative_name(entry_name: Name, cur_namespace: str) -> str:
     """Get the relative name of the entry from the current namespace."""
-    if entry_namespace == cur_namespace:
-        return entry.name
-    return full_name(entry, entry_namespace)
+    if entry_name.namespace == cur_namespace:
+        return entry_name.name
+    return full_name(entry_name)
 
 
 @dataclasses.dataclass
@@ -193,23 +193,23 @@ class Parser:
         """Get the current Buffham being parsed."""
         return self.buffhams[self.cur_namespace]
 
-    def iter_messages(self) -> Generator[tuple[Message, str], None, None]:
+    def iter_messages(self) -> Generator[tuple[Message, Name], None, None]:
         """Iterate over all messages in the context."""
         for buffham in self.buffhams.values():
             for message in buffham.messages:
-                yield message, buffham.namespace
+                yield message, Name(message.name, buffham.namespace)
 
-    def iter_enums(self) -> Generator[tuple[Enum, str], None, None]:
+    def iter_enums(self) -> Generator[tuple[Enum, Name], None, None]:
         """Iterate over all enums in the context."""
         for buffham in self.buffhams.values():
             for enum in buffham.enums:
-                yield enum, buffham.namespace
+                yield enum, Name(enum.name, buffham.namespace)
 
-    def iter_constants(self) -> Generator[tuple[Constant, str], None, None]:
+    def iter_constants(self) -> Generator[tuple[Constant, Name], None, None]:
         """Iterate over all constants in the context."""
         for buffham in self.buffhams.values():
             for constant in buffham.constants:
-                yield constant, buffham.namespace
+                yield constant, Name(constant.name, buffham.namespace)
 
     def parse_message_field(self, line: str, comments: list[str]) -> Field:
         """Parse a field from a line.
@@ -224,37 +224,32 @@ class Parser:
             raise ValueError(f'Invalid field line: {line}')
         parts = match.groups()
 
-        pri_type = parts[0]
-        name = parts[1]
+        optional = parts[0] is not None
+        pri_type = parts[1]
+        name = parts[2]
 
         if (pri_type_str := pri_type.upper()) in schema_bh.FieldType._member_names_:
             sub_type = None
             pri_type = schema_bh.FieldType[pri_type_str]
-            message = None
-            message_ns = None
-            enum = None
-            enum_ns = None
+            obj_name = None
         elif pri_type.startswith('list['):
             try:
                 sub_type = schema_bh.FieldType[pri_type[5:-1].upper()]
             except KeyError:
                 raise ValueError(f'Invalid list type {pri_type}')
             pri_type = schema_bh.FieldType.LIST
-            message = None
-            message_ns = None
-            enum = None
-            enum_ns = None
+            obj_name = None
         else:
-            message, message_ns = next(
+            message, message_name = next(
                 filter(
-                    lambda x: relative_name(x[0], x[1], self.cur_namespace) == pri_type,
+                    lambda x: relative_name(x[1], self.cur_namespace) == pri_type,
                     self.iter_messages(),
                 ),
                 (None, None),
             )
-            enum, enum_ns = next(
+            enum, enum_name = next(
                 filter(
-                    lambda x: relative_name(x[0], x[1], self.cur_namespace) == pri_type,
+                    lambda x: relative_name(x[1], self.cur_namespace) == pri_type,
                     self.iter_enums(),
                 ),
                 (None, None),
@@ -265,8 +260,10 @@ class Parser:
                 raise ValueError(f'Field type {pri_type} is both a message and an enum')
             sub_type = None
             if message is not None:
+                obj_name = message_name
                 pri_type = schema_bh.FieldType.MESSAGE
             else:
+                obj_name = enum_name
                 pri_type = schema_bh.FieldType.ENUM
 
         # Ensure the sub_type is not iterable
@@ -286,10 +283,8 @@ class Parser:
             name,
             pri_type,
             sub_type,
-            message,
-            message_ns,
-            enum,
-            enum_ns,
+            optional,
+            obj_name,
             comments,
             inline_comment,
         )
@@ -338,15 +333,15 @@ class Parser:
 
         name, receive, send = match.groups()
         try:
-            receive, receive_ns = next(
+            receive, receive_name = next(
                 filter(
-                    lambda x: relative_name(x[0], x[1], self.cur_namespace) == receive,
+                    lambda x: relative_name(x[1], self.cur_namespace) == receive,
                     self.iter_messages(),
                 )
             )
-            send, send_ns = next(
+            send, send_name = next(
                 filter(
-                    lambda x: relative_name(x[0], x[1], self.cur_namespace) == send,
+                    lambda x: relative_name(x[1], self.cur_namespace) == send,
                     self.iter_messages(),
                 )
             )
@@ -366,10 +361,8 @@ class Parser:
         return Transaction(
             name,
             request_id,
-            receive,
-            receive_ns,
-            send,
-            send_ns,
+            receive_name,
+            send_name,
             comments,
             inline_comment,
         )
@@ -389,9 +382,9 @@ class Parser:
 
         name, send = match.groups()
         try:
-            send, send_ns = next(
+            send, send_name = next(
                 filter(
-                    lambda x: relative_name(x[0], x[1], self.cur_namespace) == send,
+                    lambda x: relative_name(x[1], self.cur_namespace) == send,
                     self.iter_messages(),
                 )
             )
@@ -406,7 +399,7 @@ class Parser:
             inline_comment_match.groups()[0] if inline_comment_match else None
         )
 
-        return Publish(name, request_id, send, send_ns, comments, inline_comment)
+        return Publish(name, request_id, send_name, comments, inline_comment)
 
     def parse_constant(self, line: str, comments: list[str]) -> Constant:
         """Parse a constant from a line.
@@ -446,11 +439,11 @@ class Parser:
 
         # Find references to other constants
         references = []
-        for constant, ns in self.iter_constants():
+        for _, constant_name in self.iter_constants():
             if re.match(
-                rf'.*{{{relative_name(constant, ns, self.cur_namespace)}}}', value
+                rf'.*{{{relative_name(constant_name, self.cur_namespace)}}}', value
             ):
-                references.append(relative_name(constant, ns, self.cur_namespace))
+                references.append(relative_name(constant_name, self.cur_namespace))
 
         return Constant(name, type_, value, comments, inline_comment, references)
 

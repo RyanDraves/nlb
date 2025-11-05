@@ -37,7 +37,7 @@ message FlashPage {
     # Another field comment
     list[uint8_t] data;  # What about some in-line comments for fields?
     # This comment belongs to `read_size`
-    uint32_t read_size;
+    optional uint32_t read_size;  # Fields can be marked optional
 }
 
 message LogMessage {  # In-line message comments are ignored
@@ -47,7 +47,7 @@ message LogMessage {  # In-line message comments are ignored
 }  # This in-line comment is also ignored
 
 message NestedMessage {
-    uint8_t flag;
+    optional uint8_t flag;
     LogMessage message;
     list[int32_t] numbers;
     Ping pong;

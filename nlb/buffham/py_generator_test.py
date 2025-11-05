@@ -33,6 +33,9 @@ class TestPyGenerator(unittest.TestCase):
     def test_generate_python(self):
         with tempfile.TemporaryDirectory() as tempdir:
             buffham = self.ctx.parse_file(self.sample_file, parent_namespace='')
+            message_registry = {('sample', m.name): m for m in buffham.messages}
+            for m in self.other_bh.messages:
+                message_registry[('nlb.buffham.testdata.other', m.name)] = m
 
             outfile = pathlib.Path(tempdir) / 'sample_bh.py'
             py_generator.generate_python(
@@ -51,7 +54,7 @@ class TestPyGenerator(unittest.TestCase):
 
             # Test serialization & deserialization of `Ping`
             ping_message = next(filter(lambda m: m.name == 'Ping', buffham.messages))
-            serializer = engine.generate_serializer(ping_message)
+            serializer = engine.generate_serializer(ping_message, message_registry)
             buffer = ping.serialize()
             msg, size = sample_bh.Ping.deserialize(buffer)
             self.assertEqual(buffer, serializer(ping))
@@ -63,7 +66,9 @@ class TestPyGenerator(unittest.TestCase):
             flash_page_message = next(
                 filter(lambda m: m.name == 'FlashPage', buffham.messages)
             )
-            serializer = engine.generate_serializer(flash_page_message)
+            serializer = engine.generate_serializer(
+                flash_page_message, message_registry
+            )
             buffer = flash_page.serialize()
             msg, size = sample_bh.FlashPage.deserialize(buffer)
             self.assertEqual(buffer, serializer(flash_page))
@@ -77,7 +82,9 @@ class TestPyGenerator(unittest.TestCase):
             log_message_message = next(
                 filter(lambda m: m.name == 'LogMessage', buffham.messages)
             )
-            serializer = engine.generate_serializer(log_message_message)
+            serializer = engine.generate_serializer(
+                log_message_message, message_registry
+            )
             buffer = log_message.serialize()
             msg, size = sample_bh.LogMessage.deserialize(buffer)
             self.assertEqual(buffer, serializer(log_message))
@@ -91,7 +98,9 @@ class TestPyGenerator(unittest.TestCase):
             nested_message_message = next(
                 filter(lambda m: m.name == 'NestedMessage', buffham.messages)
             )
-            serializer = engine.generate_serializer(nested_message_message)
+            serializer = engine.generate_serializer(
+                nested_message_message, message_registry
+            )
             buffer = nested_message.serialize()
             msg, size = sample_bh.NestedMessage.deserialize(buffer)
             self.assertEqual(buffer, serializer(nested_message))

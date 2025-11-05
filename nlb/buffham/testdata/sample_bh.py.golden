@@ -58,27 +58,31 @@ class FlashPage:
     # Another field comment
     data: list[int]  # What about some in-line comments for fields?
     # This comment belongs to `read_size`
-    read_size: int
+    read_size: int | None  # Fields can be marked optional
 
     def serialize(self) -> bytes:
         buffer = bytes()
+        optional_bitfield = 0
+        optional_bitfield |= (1 << 0) if self.read_size is not None else 0
+        buffer += optional_bitfield.to_bytes(length=1, byteorder='little', signed=False)
         buffer += struct.pack('<I', self.address)
         buffer += struct.pack('<H', len(self.data))
         buffer += struct.pack(f'<{len(self.data)}B', *self.data)
-        buffer += struct.pack('<I', self.read_size)
+        buffer += struct.pack('<I', self.read_size) if self.read_size is not None else bytes()
         return buffer
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
-        address = struct.unpack_from('<I', buffer, 0)[0]
-        data_size = struct.unpack_from('<H', buffer, 4)[0]
-        data = list(struct.unpack_from(f'<{data_size}B', buffer, 6))
-        read_size = struct.unpack_from('<I', buffer, 6 + data_size * 1)[0]
+        optional_bitfield = int.from_bytes(buffer[:1], byteorder='little', signed=False)
+        address = struct.unpack_from('<I', buffer, 1)[0]
+        data_size = struct.unpack_from('<H', buffer, 5)[0]
+        data = list(struct.unpack_from(f'<{data_size}B', buffer, 7))
+        read_size = struct.unpack_from('<I', buffer, 7 + data_size * 1)[0] if optional_bitfield & (1 << 0) else None
         return cls(
             address=address,
             data=data,
             read_size=read_size,
-        ), 10 + data_size * 1
+        ), 7 + data_size * 1 + 4 * (read_size is not None)
 
 @dataclasses.dataclass
 class LogMessage:
@@ -108,7 +112,7 @@ class LogMessage:
 
 @dataclasses.dataclass
 class NestedMessage:
-    flag: int
+    flag: int | None
     message: LogMessage
     numbers: list[int]
     pong: Ping
@@ -116,7 +120,10 @@ class NestedMessage:
 
     def serialize(self) -> bytes:
         buffer = bytes()
-        buffer += struct.pack('<B', self.flag)
+        optional_bitfield = 0
+        optional_bitfield |= (1 << 0) if self.flag is not None else 0
+        buffer += optional_bitfield.to_bytes(length=1, byteorder='little', signed=False)
+        buffer += struct.pack('<B', self.flag) if self.flag is not None else bytes()
         buffer += self.message.serialize()
         buffer += struct.pack('<H', len(self.numbers))
         buffer += struct.pack(f'<{len(self.numbers)}i', *self.numbers)
@@ -126,19 +133,20 @@ class NestedMessage:
 
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
-        flag = struct.unpack_from('<B', buffer, 0)[0]
-        message, message_size = LogMessage.deserialize(buffer[1:])
-        numbers_size = struct.unpack_from('<H', buffer, 1 + message_size)[0]
-        numbers = list(struct.unpack_from(f'<{numbers_size}i', buffer, 3 + message_size))
-        pong, pong_size = Ping.deserialize(buffer[3 + message_size + numbers_size * 4:])
-        other_pong, other_pong_size = other_bh.Pong.deserialize(buffer[3 + message_size + numbers_size * 4 + pong_size:])
+        optional_bitfield = int.from_bytes(buffer[:1], byteorder='little', signed=False)
+        flag = struct.unpack_from('<B', buffer, 1)[0] if optional_bitfield & (1 << 0) else None
+        message, message_size = LogMessage.deserialize(buffer[1 + 1 * (flag is not None):])
+        numbers_size = struct.unpack_from('<H', buffer, 1 + 1 * (flag is not None) + message_size)[0]
+        numbers = list(struct.unpack_from(f'<{numbers_size}i', buffer, 3 + 1 * (flag is not None) + message_size))
+        pong, pong_size = Ping.deserialize(buffer[3 + 1 * (flag is not None) + message_size + numbers_size * 4:])
+        other_pong, other_pong_size = other_bh.Pong.deserialize(buffer[3 + 1 * (flag is not None) + message_size + numbers_size * 4 + pong_size:])
         return cls(
             flag=flag,
             message=message,
             numbers=numbers,
             pong=pong,
             other_pong=other_pong,
-        ), 3 + message_size + numbers_size * 4 + pong_size + other_pong_size
+        ), 3 + 1 * (flag is not None) + message_size + numbers_size * 4 + pong_size + other_pong_size
 
 REGISTRY: dict[int, Type[bh.BuffhamLike]] = {
     1: LogMessage,

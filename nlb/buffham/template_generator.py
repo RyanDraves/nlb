@@ -17,7 +17,7 @@ def _expanded_constant(
     for reference in constant.references:
         reference_constant, _ = next(
             filter(
-                lambda x: parser.relative_name(x[0], x[1], bh.namespace) == reference,
+                lambda x: parser.relative_name(x[1], bh.namespace) == reference,
                 ctx.iter_constants(),
             ),
             (None, None),
