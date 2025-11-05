@@ -77,6 +77,17 @@ class NestedMessage:
     @classmethod
     def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
 
+@dataclasses.dataclass
+class StringLists:
+    """Lists can be composed of variable-length strings and bytes"""
+
+    messages: list[str]
+    buffers: list[bytes]
+
+    def serialize(self) -> bytes: ...
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]: ...
+
 REGISTRY: dict[int, Type[bh.BuffhamLike]] = ...
 
 class SampleSerializer(bh_cobs.BhCobs):

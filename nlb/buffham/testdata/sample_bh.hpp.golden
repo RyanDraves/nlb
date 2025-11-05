@@ -85,6 +85,16 @@ struct NestedMessage {
     static std::pair<NestedMessage, std::span<const uint8_t> > deserialize(std::span<const uint8_t> buffer);
 };
 
+// Lists can be composed of variable-length strings and bytes
+struct StringLists {
+    std::vector<std::string> messages;
+    std::vector<std::vector<uint8_t>> buffers;
+
+    std::span<uint8_t> serialize(std::span<uint8_t> buffer) const;
+
+    static std::pair<StringLists, std::span<const uint8_t> > deserialize(std::span<const uint8_t> buffer);
+};
+
 class Sample {
   public:
     Sample();

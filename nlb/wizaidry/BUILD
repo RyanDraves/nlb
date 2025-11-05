@@ -6,7 +6,7 @@ package(default_visibility = ["//nlb:__pkg__"])
 py_library(
     name = "audio_util",
     srcs = ["audio_util.py"],
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         "@pip//numpy",
         "@pip//pyaudio",
@@ -18,7 +18,7 @@ py_library(
 py_library(
     name = "text_handler",
     srcs = ["text_handler.py"],
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         ":util",
         "//nlb/mcp:tool_manager",
@@ -31,7 +31,7 @@ py_library(
 py_library(
     name = "util",
     srcs = ["util.py"],
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         "//nlb/util:introspection",
         "@pip//openai",
@@ -41,7 +41,7 @@ py_library(
 py_library(
     name = "voice_handler",
     srcs = ["voice_handler.py"],
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         ":audio_util",
         ":util",

@@ -10,6 +10,7 @@ from nlb.buffham import py_generator
 
 # Test generation by Bazel rules by importing this module
 from nlb.buffham.testdata import other_bh
+from nlb.util import test_utils
 
 # Transitive dependency of our generated code
 # gazelle:include_dep //emb/network/serialize:bh_cobs
@@ -107,6 +108,22 @@ class TestPyGenerator(unittest.TestCase):
             self.assertEqual(msg, nested_message)
             self.assertEqual(size, len(buffer))
 
+            # Test serialization & deserialization of `StringLists`
+            string_lists = sample_bh.StringLists(
+                ['hello', 'world'], [b'\x01\x02\x03', b'\x04\x05']
+            )
+            string_lists_message = next(
+                filter(lambda m: m.name == 'StringLists', buffham.messages)
+            )
+            serializer = engine.generate_serializer(
+                string_lists_message, message_registry
+            )
+            buffer = string_lists.serialize()
+            msg, size = sample_bh.StringLists.deserialize(buffer)
+            self.assertEqual(buffer, serializer(string_lists))
+            self.assertEqual(msg, string_lists)
+            self.assertEqual(size, len(buffer))
+
             # Test that our transactions are generated
             self.assertEqual(
                 sample_bh.PING,
@@ -136,7 +153,7 @@ class TestPyGenerator(unittest.TestCase):
             # Check the our file matches the golden file
             golden = self.golden_file.read_text()
             generated = outfile.read_text()
-            self.assertListEqual(generated.splitlines(), golden.splitlines())
+            test_utils.assertTextEqual(self, generated, golden)
 
     def test_generate_python_stub(self):
         buffham = self.ctx.parse_file(self.sample_file)
@@ -150,4 +167,4 @@ class TestPyGenerator(unittest.TestCase):
             # Check that the generated file matches the golden file
             golden = self.golden_stub_file.read_text()
             generated = outfile.read_text()
-            self.assertListEqual(generated.splitlines(), golden.splitlines())
+            test_utils.assertTextEqual(self, generated, golden)

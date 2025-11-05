@@ -2,6 +2,8 @@ import os
 import pathlib
 import unittest
 
+from nlb.util import test_utils
+
 
 class TestCppGenerator(unittest.TestCase):
     def setUp(self) -> None:
@@ -17,10 +19,10 @@ class TestCppGenerator(unittest.TestCase):
         # Check that the generated file matches the golden file
         golden = self.golden_hpp.read_text()
         generated = self.other_hpp.read_text()
-        self.assertListEqual(generated.splitlines(), golden.splitlines())
+        test_utils.assertTextEqual(self, generated, golden)
 
     def test_generate_cc(self):
         # Check that the generated file matches the golden file
         golden = self.golden_cc.read_text()
         generated = self.other_cc.read_text()
-        self.assertListEqual(generated.splitlines(), golden.splitlines())
+        test_utils.assertTextEqual(self, generated, golden)

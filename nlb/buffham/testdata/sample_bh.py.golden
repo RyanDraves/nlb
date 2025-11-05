@@ -148,6 +148,48 @@ class NestedMessage:
             other_pong=other_pong,
         ), 3 + 1 * (flag is not None) + message_size + numbers_size * 4 + pong_size + other_pong_size
 
+@dataclasses.dataclass
+class StringLists:
+    """Lists can be composed of variable-length strings and bytes"""
+
+    messages: list[str]
+    buffers: list[bytes]
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += struct.pack('<H', len(self.messages))
+        for item in self.messages:
+            buffer += struct.pack('<H', len(item))
+            buffer += item.encode()
+        buffer += struct.pack('<H', len(self.buffers))
+        for item in self.buffers:
+            buffer += struct.pack('<H', len(item))
+            buffer += item
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        messages_size = struct.unpack_from('<H', buffer, 0)[0]
+        messages_bytes = 2
+        messages = []
+        for _ in range(messages_size):
+            item_size = struct.unpack_from('<H', buffer, 0 + messages_bytes)[0]
+            messages_bytes += 2
+            messages.append(buffer[0 + messages_bytes:0 + messages_bytes + item_size].decode())
+            messages_bytes += item_size
+        buffers_size = struct.unpack_from('<H', buffer, 0 + messages_bytes)[0]
+        buffers_bytes = 2
+        buffers = []
+        for _ in range(buffers_size):
+            item_size = struct.unpack_from('<H', buffer, 0 + messages_bytes + buffers_bytes)[0]
+            buffers_bytes += 2
+            buffers.append(buffer[0 + messages_bytes + buffers_bytes:0 + messages_bytes + buffers_bytes + item_size])
+            buffers_bytes += item_size
+        return cls(
+            messages=messages,
+            buffers=buffers,
+        ), 0 + messages_bytes + buffers_bytes
+
 REGISTRY: dict[int, Type[bh.BuffhamLike]] = {
     1: LogMessage,
     2: FlashPage,

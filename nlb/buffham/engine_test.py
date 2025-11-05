@@ -41,6 +41,12 @@ class NestedMessage:
 
 
 @dataclasses.dataclass
+class StringLists:
+    messages: list[str]
+    buffers: list[bytes]
+
+
+@dataclasses.dataclass
 class OptionalTest:
     a: int
     b: int | None
@@ -116,6 +122,21 @@ class TestEngine(unittest.TestCase):
             ),
         ],
     )
+    STRING_LISTS = parser.Message(
+        'StringLists',
+        [
+            parser.Field(
+                'messages',
+                schema_bh.FieldType.LIST,
+                schema_bh.FieldType.STRING,
+            ),
+            parser.Field(
+                'buffers',
+                schema_bh.FieldType.LIST,
+                schema_bh.FieldType.BYTES,
+            ),
+        ],
+    )
 
     def setUp(self) -> None:
         self.message_registry = {
@@ -123,6 +144,7 @@ class TestEngine(unittest.TestCase):
             ('', self.FLASH_PAGE.name): self.FLASH_PAGE,
             ('', self.LOG_MESSAGE.name): self.LOG_MESSAGE,
             ('', self.NESTED_MESSAGE.name): self.NESTED_MESSAGE,
+            ('', self.STRING_LISTS.name): self.STRING_LISTS,
         }
 
     def test_split_optional(self):
@@ -189,6 +211,18 @@ class TestEngine(unittest.TestCase):
             b'\x03B\r\x00Hello, World!\x00\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*',
         )
 
+    def test_generate_string_lists_serializer(self):
+        message = self.STRING_LISTS
+        serializer = engine.generate_serializer(message, self.message_registry)
+        instance = StringLists(
+            messages=['hello', 'world'],
+            buffers=[b'\x01\x02\x03', b'\x04\x05'],
+        )
+        self.assertEqual(
+            serializer(instance),
+            b'\x02\x00\x05\x00hello\x05\x00world\x02\x00\x03\x00\x01\x02\x03\x02\x00\x04\x05',
+        )
+
     def test_generate_deserializer(self):
         message = self.PING
         deserializer = engine.generate_deserializer(
@@ -231,6 +265,22 @@ class TestEngine(unittest.TestCase):
                 LogMessage('Hello, World!', Verbosity.HIGH),
                 [-1, -2, -3],
                 Ping(42),
+            ),
+        )
+        self.assertEqual(size, len(buffer))
+
+    def test_generate_string_lists_deserializer(self):
+        message = self.STRING_LISTS
+        deserializer = engine.generate_deserializer(
+            message, self.message_registry, StringLists
+        )
+        buffer = b'\x02\x00\x05\x00hello\x05\x00world\x02\x00\x03\x00\x01\x02\x03\x02\x00\x04\x05'
+        msg, size = deserializer(buffer)
+        self.assertEqual(
+            msg,
+            StringLists(
+                messages=['hello', 'world'],
+                buffers=[b'\x01\x02\x03', b'\x04\x05'],
             ),
         )
         self.assertEqual(size, len(buffer))

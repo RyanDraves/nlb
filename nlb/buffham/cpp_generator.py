@@ -1,4 +1,3 @@
-import logging
 import pathlib
 
 from nlb.buffham import parser
@@ -137,12 +136,29 @@ def _generate_serializer(
                 offset += 2
             definition += f'\n{T}{size_read_expression};'
 
-            # Write data
-            data_expression = f'memcpy(buffer.data() + {offset}{offset_str}, {field.name}{access}data(), {field.name}_size * {field.size})'
-            if field.optional:
-                data_expression = f'{field.name}.has_value() ? {data_expression} : 0'
-            definition += f'\n{T}{data_expression};'
-            offset_str += f' + {field.name}_size * {field.size}'
+            if field.sub_type in (
+                schema_bh.FieldType.STRING,
+                schema_bh.FieldType.BYTES,
+            ):
+                # Write each item with length prefix
+                definition += f'\n{T}uint16_t {field.name}_bytes = 0;'
+                offset_str += f' + {field.name}_bytes'
+                definition += f'\n{T}for (const auto &item : {field.name}) {{'
+                definition += f'\n{T}{T}uint16_t item_size = item.size();'
+                definition += f'\n{T}{T}memcpy(buffer.data() + {offset}{offset_str}, &item_size, 2);'
+                definition += f'\n{T}{T}{field.name}_bytes += 2;'
+                definition += f'\n{T}{T}memcpy(buffer.data() + {offset}{offset_str}, item.data(), item_size);'
+                definition += f'\n{T}{T}{field.name}_bytes += item_size;'
+                definition += f'\n{T}}}'
+            else:
+                # Write data
+                data_expression = f'memcpy(buffer.data() + {offset}{offset_str}, {field.name}{access}data(), {field.name}_size * {field.size})'
+                if field.optional:
+                    data_expression = (
+                        f'{field.name}.has_value() ? {data_expression} : 0'
+                    )
+                definition += f'\n{T}{data_expression};'
+                offset_str += f' + {field.name}_size * {field.size}'
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
             expression = f'{field.name}.serialize(buffer.subspan({offset}{offset_str}))'
             if field.optional:
@@ -204,7 +220,7 @@ def _generate_deserializer(
 
         if field.iterable:
             # Get size
-            definition += f'\n{T}uint16_t {field.name}_size = 0;'
+            definition += f'\n{T}uint16_t {field.name}_size;'
             expression = (
                 f'memcpy(&{field.name}_size, buffer.data() + {offset}{offset_str}, 2)'
             )
@@ -223,14 +239,28 @@ def _generate_deserializer(
                 resize_expression = f'(optional_bitfield & (1 << {optional_idx})) ? {resize_expression} : 0'
             definition += f'\n{T}{resize_expression};'
 
-            # Read data
-            read_expression = f'memcpy({message_name}.{field.name}{access}data(), buffer.data() + {offset}{offset_str}, {field.name}_size * {field.size})'
-            if field.optional:
-                read_expression = (
-                    f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
-                )
-            definition += f'\n{T}{read_expression};'
-            offset_str += f' + {field.name}_size * {field.size}'
+            if field.sub_type in (
+                schema_bh.FieldType.STRING,
+                schema_bh.FieldType.BYTES,
+            ):
+                # Read each item with length prefix
+                definition += f'\n{T}uint16_t {field.name}_bytes = 0;'
+                offset_str += f' + {field.name}_bytes'
+                definition += f'\n{T}for (auto &item : {message_name}.{field.name}) {{'
+                definition += f'\n{T}{T}uint16_t item_size;'
+                definition += f'\n{T}{T}memcpy(&item_size, buffer.data() + {offset}{offset_str}, 2);'
+                definition += f'\n{T}{T}{field.name}_bytes += 2;'
+                definition += f'\n{T}{T}item.resize(item_size);'
+                definition += f'\n{T}{T}memcpy(item.data(), buffer.data() + {offset}{offset_str}, item_size);'
+                definition += f'\n{T}{T}{field.name}_bytes += item_size;'
+                definition += f'\n{T}}}'
+            else:
+                # Read data
+                read_expression = f'memcpy({message_name}.{field.name}{access}data(), buffer.data() + {offset}{offset_str}, {field.name}_size * {field.size})'
+                if field.optional:
+                    read_expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
+                definition += f'\n{T}{read_expression};'
+                offset_str += f' + {field.name}_size * {field.size}'
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
             definition += (
                 f'\n{T}auto {field.name}_buffer = buffer.subspan({offset}{offset_str});'
@@ -539,6 +569,3 @@ def generate_cpp(
             fp.write(generate_publishes(bh.publishes))
 
         fp.write(generate_end_namespace(bh.namespace.split('.')[:-1]))
-
-    logging.debug(f'{hpp=}')
-    logging.debug(outfile.read_text())
