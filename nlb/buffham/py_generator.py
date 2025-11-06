@@ -37,9 +37,7 @@ def _get_imported_name(relative_name: str) -> str:
     return relative_name
 
 
-def _py_type(
-    field: schema_bh.Field, primary_namespace: str, add_optional: bool = True
-) -> str:
+def _py_type(field: schema_bh.Field, primary_namespace: str, add_optional: bool) -> str:
     """Get the Python type hint for the field."""
     if field.obj_name is not None:
         type_str = _get_imported_name(
@@ -309,7 +307,7 @@ def generate_message(
         if field.comments:
             for comment in field.comments:
                 definition += f'\n{T}#{comment}'
-        definition += f'\n{T}{field.name}: {_py_type(field, primary_namespace)}'
+        definition += f'\n{T}{field.name}: {_py_type(field, primary_namespace, add_optional=True)}'
         if field.inline_comment:
             definition += f'  #{field.inline_comment}'
 

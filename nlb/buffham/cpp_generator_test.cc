@@ -102,7 +102,7 @@ TEST(SampleBhTest, TestNestedMessageSerialization) {
     testdata::Pong other_pong{43};
 
     testdata::NestedMessage nested_message{
-        0x42, log_message, {-1, -2}, ping, other_pong};
+        true, log_message, {-1, -2}, ping, other_pong};
 
     // Serialize
     std::array<uint8_t, 512> buffer{};
