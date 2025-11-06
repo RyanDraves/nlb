@@ -66,37 +66,6 @@ class NamedEntry(dataclass.DataclassLike, Protocol):
     def name(self) -> str: ...
 
 
-# @dataclasses.dataclass
-# class Message:
-#     name: str
-#     fields: list[schema_bh.Field]
-#     comments: list[str] = dataclasses.field(default_factory=list)
-
-
-# @dataclasses.dataclass
-# class Enum:
-#     name: str
-#     fields: list[schema_bh.EnumField]
-#     comments: list[str] = dataclasses.field(default_factory=list)
-
-
-# @dataclasses.dataclass
-# class Buffham:
-#     name: str
-#     parent_namespace: str
-#     messages: list[Message] = dataclasses.field(default_factory=list)
-#     transactions: list[schema_bh.Transaction] = dataclasses.field(default_factory=list)
-#     publishes: list[schema_bh.Publish] = dataclasses.field(default_factory=list)
-#     constants: list[schema_bh.Constant] = dataclasses.field(default_factory=list)
-#     enums: list[Enum] = dataclasses.field(default_factory=list)
-
-#     @property
-#     def namespace(self) -> str:
-#         if not self.parent_namespace:
-#             return self.name
-#         return f'{self.parent_namespace}.{self.name}'
-
-
 def full_name(entry_name: schema_bh.Name) -> str:
     """Get the full name of the entry."""
     if not entry_name.namespace:

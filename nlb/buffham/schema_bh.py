@@ -85,8 +85,6 @@ class Field:
             buffer += item.encode()
         buffer += struct.pack('<H', len(self.inline_comment)) if self.inline_comment is not None else bytes()
         buffer += self.inline_comment.encode() if self.inline_comment is not None else bytes()
-        print()
-        print(f'Serialize field {self.name=} {self.pri_type=} {self.sub_type=} {self.is_optional=} {self.obj_name=} {self.comments=} {self.inline_comment=} {len(buffer)=}')
         return buffer
 
     @classmethod
@@ -98,15 +96,13 @@ class Field:
         offset += 2
         name = buffer[offset:offset + name_size].decode()
         offset += name_size
-        print()
-        print(f'Deserialize field {optional_bitfield=} {name=} {name_size=} {offset=}')
         pri_type = FieldType(struct.unpack_from('<B', buffer, offset)[0])
         offset += 1
-        sub_type = FieldType(struct.unpack_from('<B', buffer, offset)[0]) if optional_bitfield & (1 << 0) else None
+        sub_type = FieldType(struct.unpack_from('<B', buffer, offset)[0]) if (optional_bitfield >> 0) & 1 else None
         offset += 1 * (sub_type is not None)
         is_optional = struct.unpack_from('<B', buffer, offset)[0]
         offset += 1
-        obj_name, obj_name_size = Name.deserialize(buffer[offset:]) if optional_bitfield & (1 << 1) else (None, 0)
+        obj_name, obj_name_size = Name.deserialize(buffer[offset:]) if (optional_bitfield >> 1) & 1 else (None, 0)
         offset += obj_name_size
         comments_size = struct.unpack_from('<H', buffer, offset)[0]
         offset += 2
@@ -116,13 +112,10 @@ class Field:
             offset += 2
             comments.append(buffer[offset:offset + item_size].decode())
             offset += item_size
-        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if optional_bitfield & (1 << 2) else 0
+        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if (optional_bitfield >> 2) & 1 else 0
         offset += 2 * ((optional_bitfield >> 2) & 1)
-        print(2 * ((optional_bitfield >> 2) & 1))
-        inline_comment = buffer[offset:offset + inline_comment_size].decode() if optional_bitfield & (1 << 2) else None
+        inline_comment = buffer[offset:offset + inline_comment_size].decode() if (optional_bitfield >> 2) & 1 else None
         offset += inline_comment_size
-        print()
-        print(f'Deserialize field {pri_type=} {sub_type=} {is_optional=} {obj_name=} {comments=} {inline_comment=} {offset=}')
         return cls(
             name=name,
             pri_type=pri_type,
@@ -150,8 +143,6 @@ class Message:
         for item in self.comments:
             buffer += struct.pack('<H', len(item))
             buffer += item.encode()
-        print()
-        print(f'Serialize message {self.name=} {self.comments=} {len(buffer)=}')
         return buffer
 
     @classmethod
@@ -176,8 +167,6 @@ class Message:
             offset += 2
             comments.append(buffer[offset:offset + item_size].decode())
             offset += item_size
-        print()
-        print(f'Deserialize message {name=} {comments=} {offset=}')
         return cls(
             name=name,
             fields=fields,
@@ -227,9 +216,9 @@ class EnumField:
             offset += 2
             comments.append(buffer[offset:offset + item_size].decode())
             offset += item_size
-        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if optional_bitfield & (1 << 0) else 0
-        offset += 2 * (optional_bitfield & (1 << 0))
-        inline_comment = buffer[offset:offset + inline_comment_size].decode() if optional_bitfield & (1 << 0) else None
+        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if (optional_bitfield >> 0) & 1 else 0
+        offset += 2 * ((optional_bitfield >> 0) & 1)
+        inline_comment = buffer[offset:offset + inline_comment_size].decode() if (optional_bitfield >> 0) & 1 else None
         offset += inline_comment_size
         return cls(
             name=name,
@@ -336,9 +325,9 @@ class Transaction:
             offset += 2
             comments.append(buffer[offset:offset + item_size].decode())
             offset += item_size
-        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if optional_bitfield & (1 << 0) else 0
-        offset += 2 * (optional_bitfield & (1 << 0))
-        inline_comment = buffer[offset:offset + inline_comment_size].decode() if optional_bitfield & (1 << 0) else None
+        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if (optional_bitfield >> 0) & 1 else 0
+        offset += 2 * ((optional_bitfield >> 0) & 1)
+        inline_comment = buffer[offset:offset + inline_comment_size].decode() if (optional_bitfield >> 0) & 1 else None
         offset += inline_comment_size
         return cls(
             name=name,
@@ -396,9 +385,9 @@ class Publish:
             offset += 2
             comments.append(buffer[offset:offset + item_size].decode())
             offset += item_size
-        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if optional_bitfield & (1 << 0) else 0
-        offset += 2 * (optional_bitfield & (1 << 0))
-        inline_comment = buffer[offset:offset + inline_comment_size].decode() if optional_bitfield & (1 << 0) else None
+        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if (optional_bitfield >> 0) & 1 else 0
+        offset += 2 * ((optional_bitfield >> 0) & 1)
+        inline_comment = buffer[offset:offset + inline_comment_size].decode() if (optional_bitfield >> 0) & 1 else None
         offset += inline_comment_size
         return cls(
             name=name,
@@ -462,9 +451,9 @@ class Constant:
             offset += 2
             comments.append(buffer[offset:offset + item_size].decode())
             offset += item_size
-        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if optional_bitfield & (1 << 0) else 0
-        offset += 2 * (optional_bitfield & (1 << 0))
-        inline_comment = buffer[offset:offset + inline_comment_size].decode() if optional_bitfield & (1 << 0) else None
+        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if (optional_bitfield >> 0) & 1 else 0
+        offset += 2 * ((optional_bitfield >> 0) & 1)
+        inline_comment = buffer[offset:offset + inline_comment_size].decode() if (optional_bitfield >> 0) & 1 else None
         offset += inline_comment_size
         references_size = struct.unpack_from('<H', buffer, offset)[0]
         offset += 2
