@@ -70,7 +70,7 @@ def main(
         p.parse_file(d)
 
     p.parse_file(input)
-    ns = p.cur_namespace
+    ns = parser.full_name(p.cur_namespace)
 
     match language:
         case Languages.PYTHON:

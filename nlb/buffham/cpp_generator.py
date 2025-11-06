@@ -70,15 +70,29 @@ def _get_namespaced_name(relative_name: str) -> str:
     return '::'.join(split[:-2] + split[-1:])
 
 
-def _cpp_type(field: schema_bh.Field, primary_namespace: str) -> str:
+def _cpp_type(
+    field: schema_bh.Field, primary_namespace: str, *, just_object: bool = False
+) -> str:
     """Get the C++ type for the field."""
-    if field.obj_name is not None:
+    if just_object and field.obj_name is not None:
+        return _get_namespaced_name(
+            parser.relative_name(field.obj_name, primary_namespace)
+        )
+
+    if field.pri_type is schema_bh.FieldType.LIST:
+        assert field.sub_type is not None
+        if field.sub_type is schema_bh.FieldType.MESSAGE:
+            assert field.obj_name is not None
+            sub_type_str = _get_namespaced_name(
+                parser.relative_name(field.obj_name, primary_namespace)
+            )
+        else:
+            sub_type_str = TYPE_MAP[field.sub_type]
+        type_str = f'std::vector<{sub_type_str}>'
+    elif field.obj_name is not None:
         type_str = _get_namespaced_name(
             parser.relative_name(field.obj_name, primary_namespace)
         )
-    elif field.pri_type is schema_bh.FieldType.LIST:
-        assert field.sub_type is not None
-        type_str = f'std::vector<{TYPE_MAP[field.sub_type]}>'
     else:
         type_str = TYPE_MAP[field.pri_type]
 
@@ -89,7 +103,7 @@ def _cpp_type(field: schema_bh.Field, primary_namespace: str) -> str:
 
 
 def _generate_serializer(
-    message: parser.Message,
+    message: schema_bh.Message,
     num_optional_fields: int,
     num_optional_bytes: int,
     definition: str,
@@ -151,6 +165,12 @@ def _generate_serializer(
                 )
                 definition += f'\n{T}{T}offset += item_size;'
                 definition += f'\n{T}}}'
+            elif field.sub_type is schema_bh.FieldType.MESSAGE:
+                # Write each item as a nested message
+                definition += f'\n{T}for (const auto &item : {field.name}) {{'
+                definition += f'\n{T}{T}auto item_buffer = item.serialize(buffer.subspan(offset));'
+                definition += f'\n{T}{T}offset += item_buffer.size();'
+                definition += f'\n{T}}}'
             else:
                 # Write data
                 data_expression = f'memcpy(buffer.data() + offset, {field.name}{access}data(), {field.name}_size * {field_size})'
@@ -192,7 +212,7 @@ def _generate_serializer(
 
 
 def _generate_deserializer(
-    message: parser.Message,
+    message: schema_bh.Message,
     num_optional_fields: int,
     num_optional_bytes: int,
     primary_namespace: str,
@@ -224,7 +244,7 @@ def _generate_deserializer(
             definition += f'\n{T}uint16_t {field.name}_size;'
             expression = f'memcpy(&{field.name}_size, buffer.data() + offset, 2)'
             if field.is_optional:
-                definition += f'\n{T}(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0;'
+                definition += f'\n{T}((optional_bitfield >> {optional_idx}) & 1) ? {expression} : 0;'
                 definition += (
                     f'\n{T}offset += 2 * {message_name}.{field.name}.has_value();'
                 )
@@ -235,7 +255,7 @@ def _generate_deserializer(
             # Resize data
             resize_expression = f'{message_name}.{field.name}.resize({field.name}_size)'
             if field.is_optional:
-                resize_expression = f'(optional_bitfield & (1 << {optional_idx})) ? {resize_expression} : 0'
+                resize_expression = f'((optional_bitfield >> {optional_idx}) & 1) ? {resize_expression} : 0'
             definition += f'\n{T}{resize_expression};'
 
             if field.sub_type in (
@@ -253,26 +273,33 @@ def _generate_deserializer(
                 )
                 definition += f'\n{T}{T}offset += item_size;'
                 definition += f'\n{T}}}'
+            elif field.sub_type is schema_bh.FieldType.MESSAGE:
+                # Read each item as a nested message
+                definition += f'\n{T}for (auto &item : {message_name}.{field.name}) {{'
+                definition += f'\n{T}{T}auto item_buffer = buffer.subspan(offset);'
+                definition += f'\n{T}{T}std::tie(item, item_buffer) = {_cpp_type(field, primary_namespace, just_object=True)}::deserialize(item_buffer);'
+                definition += f'\n{T}{T}offset += item_buffer.size();'
+                definition += f'\n{T}}}'
             else:
                 # Read data
                 read_expression = f'memcpy({message_name}.{field.name}{access}data(), buffer.data() + offset, {field.name}_size * {field_size})'
                 if field.is_optional:
-                    read_expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
+                    read_expression = f'((optional_bitfield >> {optional_idx}) & 1) ? {expression} : 0'
                 definition += f'\n{T}{read_expression};'
                 definition += f'\n{T}offset += {field.name}_size * {field_size};'
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
             definition += f'\n{T}auto {field.name}_buffer = buffer.subspan(offset);'
-            expression = f'{_cpp_type(field, primary_namespace)}::deserialize({field.name}_buffer)'
+            expression = f'{_cpp_type(field, primary_namespace, just_object=True)}::deserialize({field.name}_buffer)'
             if field.is_optional:
                 # Return a pair of nullopt and an empty buffer
-                expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : std::make_pair(std::nullopt, buffer.subspan(0, 0))'
+                expression = f'((optional_bitfield >> {optional_idx}) & 1) ? {expression} : std::make_pair(std::nullopt, buffer.subspan(0, 0))'
             definition += f'\n{T}std::tie({message_name}.{field.name}, {field.name}_buffer) = {expression};'
             definition += f'\n{T}offset += {field.name}_buffer.size();'
         elif field.pri_type is schema_bh.FieldType.ENUM:
             # Enums can be treated like their underlying uint8_t type
             expression = f'memcpy(&{message_name}.{field.name}{optional_value}, buffer.data() + offset, {field_size})'
             if field.is_optional:
-                definition += f'\n{T}(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0;'
+                definition += f'\n{T}((optional_bitfield >> {optional_idx}) & 1) ? {expression} : 0;'
                 definition += f'\n{T}offset += {field_size} * {message_name}.{field.name}.has_value();'
             else:
                 definition += f'\n{T}{expression};'
@@ -280,7 +307,7 @@ def _generate_deserializer(
         else:
             expression = f'memcpy(&{message_name}.{field.name}{optional_value}, buffer.data() + offset, {field_size})'
             if field.is_optional:
-                definition += f'\n{T}(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0;'
+                definition += f'\n{T}((optional_bitfield >> {optional_idx}) & 1) ? {expression} : 0;'
                 definition += f'\n{T}offset += {field_size} * {message_name}.{field.name}.has_value();'
             else:
                 definition += f'\n{T}{expression};'
@@ -295,7 +322,9 @@ def _generate_deserializer(
     return definition
 
 
-def generate_message(message: parser.Message, primary_namespace: str, hpp: bool) -> str:
+def generate_message(
+    message: schema_bh.Message, primary_namespace: str, hpp: bool
+) -> str:
     """Generate a struct definition from a Message."""
     definition = ''
     ns = '' if hpp else f'{message.name}::'
@@ -463,7 +492,7 @@ def generate_constant(constant: schema_bh.Constant) -> str:
     return definition
 
 
-def generate_enum(enum: parser.Enum) -> str:
+def generate_enum(enum: schema_bh.Enum) -> str:
     """Generate a C++ enum definition from an Enum."""
     definition = ''
 
@@ -525,7 +554,7 @@ def generate_cpp(
                     fp.write(f'#include "{namespace.replace(".", "/")}_bh.hpp"\n')
             fp.write('\n')
 
-        fp.write(generate_namespace(bh.namespace.split('.')[:-1]))
+        fp.write(generate_namespace(parser.full_name(bh.name).split('.')[:-1]))
 
         # Generate constant definitions
         if hpp:
@@ -547,7 +576,7 @@ def generate_cpp(
         if len(bh.transactions) and hpp:
             fp.write(
                 generate_project_class(
-                    bh.name.title(), bh.transactions, primary_namespace
+                    bh.name.name.title(), bh.transactions, primary_namespace
                 )
             )
 
@@ -555,4 +584,4 @@ def generate_cpp(
         if hpp:
             fp.write(generate_publishes(bh.publishes))
 
-        fp.write(generate_end_namespace(bh.namespace.split('.')[:-1]))
+        fp.write(generate_end_namespace(parser.full_name(bh.name).split('.')[:-1]))

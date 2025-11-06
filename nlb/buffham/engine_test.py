@@ -4,7 +4,6 @@ import unittest
 from typing import Optional, Union
 
 from nlb.buffham import engine
-from nlb.buffham import parser
 from nlb.buffham import schema_bh
 
 
@@ -36,6 +35,7 @@ class LogMessage:
 class NestedMessage:
     flag: bool | None
     inner: LogMessage
+    messages: list[LogMessage]
     data: list[int]
     nested: Ping | None
 
@@ -57,7 +57,7 @@ class OptionalTest:
 
 
 class TestEngine(unittest.TestCase):
-    PING = parser.Message(
+    PING = schema_bh.Message(
         'Ping',
         [
             schema_bh.Field(
@@ -70,8 +70,9 @@ class TestEngine(unittest.TestCase):
                 None,
             ),
         ],
+        [],
     )
-    FLASH_PAGE = parser.Message(
+    FLASH_PAGE = schema_bh.Message(
         'FlashPage',
         [
             schema_bh.Field(
@@ -102,8 +103,9 @@ class TestEngine(unittest.TestCase):
                 None,
             ),
         ],
+        [],
     )
-    LOG_MESSAGE = parser.Message(
+    LOG_MESSAGE = schema_bh.Message(
         'LogMessage',
         [
             schema_bh.Field(
@@ -125,8 +127,9 @@ class TestEngine(unittest.TestCase):
                 None,
             ),
         ],
+        [],
     )
-    NESTED_MESSAGE = parser.Message(
+    NESTED_MESSAGE = schema_bh.Message(
         'NestedMessage',
         [
             schema_bh.Field(
@@ -142,6 +145,15 @@ class TestEngine(unittest.TestCase):
                 'inner',
                 schema_bh.FieldType.MESSAGE,
                 None,
+                False,
+                schema_bh.Name(LOG_MESSAGE.name, ''),
+                [],
+                None,
+            ),
+            schema_bh.Field(
+                'messages',
+                schema_bh.FieldType.LIST,
+                schema_bh.FieldType.MESSAGE,
                 False,
                 schema_bh.Name(LOG_MESSAGE.name, ''),
                 [],
@@ -166,8 +178,9 @@ class TestEngine(unittest.TestCase):
                 None,
             ),
         ],
+        [],
     )
-    STRING_LISTS = parser.Message(
+    STRING_LISTS = schema_bh.Message(
         'StringLists',
         [
             schema_bh.Field(
@@ -189,6 +202,7 @@ class TestEngine(unittest.TestCase):
                 None,
             ),
         ],
+        [],
     )
 
     def setUp(self) -> None:
@@ -256,12 +270,13 @@ class TestEngine(unittest.TestCase):
     def test_generate_nested_serializer(self):
         message = self.NESTED_MESSAGE
         serializer = engine.generate_serializer(message, self.message_registry)
+        log_message = LogMessage('Hello, World!', Verbosity.LOW)
         instance = NestedMessage(
-            True, LogMessage('Hello, World!', Verbosity.LOW), [-1, -2, -3], Ping(42)
+            True, log_message, [log_message, log_message], [-1, -2, -3], Ping(42)
         )
         self.assertEqual(
             serializer(instance),
-            b'\x03\x01\r\x00Hello, World!\x00\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*',
+            b'\x03\x01\r\x00Hello, World!\x00\x02\x00\r\x00Hello, World!\x00\r\x00Hello, World!\x00\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*',
         )
 
     def test_generate_string_lists_serializer(self):
@@ -309,13 +324,15 @@ class TestEngine(unittest.TestCase):
         deserializer = engine.generate_deserializer(
             message, self.message_registry, NestedMessage
         )
-        buffer = b'\x03\x01\r\x00Hello, World!\x02\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*'
+        buffer = b'\x03\x01\r\x00Hello, World!\x02\x02\x00\r\x00Hello, World!\x02\r\x00Hello, World!\x02\x03\x00\xff\xff\xff\xff\xfe\xff\xff\xff\xfd\xff\xff\xff*'
         msg, size = deserializer(buffer)
+        log_message = LogMessage('Hello, World!', Verbosity.HIGH)
         self.assertEqual(
             msg,
             NestedMessage(
                 True,
-                LogMessage('Hello, World!', Verbosity.HIGH),
+                log_message,
+                [log_message, log_message],
                 [-1, -2, -3],
                 Ping(42),
             ),

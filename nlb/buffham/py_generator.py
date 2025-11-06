@@ -37,19 +37,33 @@ def _get_imported_name(relative_name: str) -> str:
     return relative_name
 
 
-def _py_type(field: schema_bh.Field, primary_namespace: str, add_optional: bool) -> str:
+def _py_type(
+    field: schema_bh.Field, primary_namespace: str, *, just_object: bool = False
+) -> str:
     """Get the Python type hint for the field."""
-    if field.obj_name is not None:
+    if just_object and field.obj_name is not None:
+        return _get_imported_name(
+            parser.relative_name(field.obj_name, primary_namespace)
+        )
+
+    if field.pri_type is schema_bh.FieldType.LIST:
+        assert field.sub_type is not None
+        if field.sub_type is schema_bh.FieldType.MESSAGE:
+            assert field.obj_name is not None
+            sub_type_str = _get_imported_name(
+                parser.relative_name(field.obj_name, primary_namespace)
+            )
+        else:
+            sub_type_str = TYPE_MAP[field.sub_type]
+        type_str = f'list[{sub_type_str}]'
+    elif field.obj_name is not None:
         type_str = _get_imported_name(
             parser.relative_name(field.obj_name, primary_namespace)
         )
-    elif field.pri_type is schema_bh.FieldType.LIST:
-        assert field.sub_type is not None
-        type_str = f'list[{TYPE_MAP[field.sub_type]}]'
     else:
         type_str = TYPE_MAP[field.pri_type]
 
-    if field.is_optional and add_optional:
+    if field.is_optional:
         type_str += ' | None'
 
     return type_str
@@ -95,7 +109,7 @@ def generate_constant(constant: schema_bh.Constant) -> str:
     return definition
 
 
-def generate_enum(enum: parser.Enum) -> str:
+def generate_enum(enum: schema_bh.Enum) -> str:
     """Generate a Python enum definition from an Enum."""
     definition = '\n'
 
@@ -119,7 +133,7 @@ def generate_enum(enum: parser.Enum) -> str:
 
 
 def _generate_serializer(
-    message: parser.Message,
+    message: schema_bh.Message,
     num_optional_fields: int,
     num_optional_bytes: int,
     definition: str,
@@ -151,12 +165,18 @@ def _generate_serializer(
                 if field.sub_type in (
                     schema_bh.FieldType.STRING,
                     schema_bh.FieldType.BYTES,
+                    schema_bh.FieldType.MESSAGE,
                 ):
                     definition += f'\n{T}{T}for item in self.{field.name}:'
-                    definition += f"\n{T}{T}{T}buffer += struct.pack('<H', len(item))"
-                    definition += f'\n{T}{T}{T}buffer += item'
-                    if field.sub_type is schema_bh.FieldType.STRING:
-                        definition += '.encode()'
+                    if field.sub_type is schema_bh.FieldType.MESSAGE:
+                        definition += f'\n{T}{T}{T}buffer += item.serialize()'
+                    else:
+                        definition += (
+                            f"\n{T}{T}{T}buffer += struct.pack('<H', len(item))"
+                        )
+                        definition += f'\n{T}{T}{T}buffer += item'
+                        if field.sub_type is schema_bh.FieldType.STRING:
+                            definition += '.encode()'
                 else:
                     definition += f"\n{T}{T}buffer += struct.pack(f'<{{len(self.{field.name})}}{field_format}', *self.{field.name})"
             else:
@@ -182,7 +202,7 @@ def _generate_serializer(
 
 
 def _generate_deserializer(
-    message: parser.Message,
+    message: schema_bh.Message,
     num_optional_fields: int,
     num_optional_bytes: int,
     primary_namespace: str,
@@ -204,19 +224,24 @@ def _generate_deserializer(
             if field.sub_type in (
                 schema_bh.FieldType.STRING,
                 schema_bh.FieldType.BYTES,
+                schema_bh.FieldType.MESSAGE,
             ):
                 definition += f'\n{T}{T}offset += 2'
                 definition += f'\n{T}{T}{field.name} = []'
                 definition += f'\n{T}{T}for _ in range({field.name}_size):'
-                definition += f"\n{T}{T}{T}item_size = struct.unpack_from('<H', buffer, offset)[0]"
-                definition += f'\n{T}{T}{T}offset += 2'
-                definition += (
-                    f'\n{T}{T}{T}{field.name}.append(buffer[offset:offset + item_size]'
-                )
-                if field.sub_type is schema_bh.FieldType.STRING:
-                    definition += '.decode()'
-                definition += ')'
-                definition += f'\n{T}{T}{T}offset += item_size'
+                if field.sub_type is schema_bh.FieldType.MESSAGE:
+                    msg = _py_type(field, primary_namespace, just_object=True)
+                    definition += f'\n{T}{T}{T}item, item_size = {msg}.deserialize(buffer[offset:])'
+                    definition += f'\n{T}{T}{T}{field.name}.append(item)'
+                    definition += f'\n{T}{T}{T}offset += item_size'
+                else:
+                    definition += f"\n{T}{T}{T}item_size = struct.unpack_from('<H', buffer, offset)[0]"
+                    definition += f'\n{T}{T}{T}offset += 2'
+                    definition += f'\n{T}{T}{T}{field.name}.append(buffer[offset:offset + item_size]'
+                    if field.sub_type is schema_bh.FieldType.STRING:
+                        definition += '.decode()'
+                    definition += ')'
+                    definition += f'\n{T}{T}{T}offset += item_size'
             else:
                 definition += f'\n{T}{T}offset += 2'
                 definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'<{{{field.name}_size}}{field_format}', buffer, offset))"
@@ -228,9 +253,9 @@ def _generate_deserializer(
             # Read size
             definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, offset)[0]"
             if field.is_optional:
-                definition += f' if optional_bitfield & (1 << {optional_idx}) else 0'
+                definition += f' if (optional_bitfield >> {optional_idx}) & 1 else 0'
                 definition += (
-                    f'\n{T}{T}offset += 2 * (optional_bitfield & (1 << {optional_idx}))'
+                    f'\n{T}{T}offset += 2 * ((optional_bitfield >> {optional_idx}) & 1)'
                 )
             else:
                 definition += f'\n{T}{T}offset += 2'
@@ -242,21 +267,21 @@ def _generate_deserializer(
             if field.pri_type is schema_bh.FieldType.STRING:
                 definition += '.decode()'
             if field.is_optional:
-                definition += f' if optional_bitfield & (1 << {optional_idx}) else None'
+                definition += f' if (optional_bitfield >> {optional_idx}) & 1 else None'
             definition += f'\n{T}{T}offset += {field.name}_size'
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
-            msg = _py_type(field, primary_namespace, add_optional=False)
+            msg = _py_type(field, primary_namespace, just_object=True)
             definition += f'\n{T}{T}{field.name}, {field.name}_size = {msg}.deserialize(buffer[offset:])'
             if field.is_optional:
                 definition += (
-                    f' if optional_bitfield & (1 << {optional_idx}) else (None, 0)'
+                    f' if (optional_bitfield >> {optional_idx}) & 1 else (None, 0)'
                 )
             definition += f'\n{T}{T}offset += {field.name}_size'
         elif field.pri_type is schema_bh.FieldType.ENUM:
-            enum_type = _py_type(field, primary_namespace, add_optional=False)
+            enum_type = _py_type(field, primary_namespace, just_object=True)
             definition += f"\n{T}{T}{field.name} = {enum_type}(struct.unpack_from('<{field_format}', buffer, offset)[0])"
             if field.is_optional:
-                definition += f' if optional_bitfield & (1 << {optional_idx}) else None'
+                definition += f' if (optional_bitfield >> {optional_idx}) & 1 else None'
                 definition += (
                     f'\n{T}{T}offset += {field_size} * ({field.name} is not None)'
                 )
@@ -265,7 +290,7 @@ def _generate_deserializer(
         else:
             definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field_format}', buffer, offset)[0]"
             if field.is_optional:
-                definition += f' if optional_bitfield & (1 << {optional_idx}) else None'
+                definition += f' if (optional_bitfield >> {optional_idx}) & 1 else None'
                 definition += (
                     f'\n{T}{T}offset += {field_size} * ({field.name} is not None)'
                 )
@@ -284,7 +309,7 @@ def _generate_deserializer(
 
 
 def generate_message(
-    message: parser.Message, stub: bool, primary_namespace: str
+    message: schema_bh.Message, stub: bool, primary_namespace: str
 ) -> str:
     """Generate a Python dataclass definition from a Message."""
 
@@ -307,7 +332,7 @@ def generate_message(
         if field.comments:
             for comment in field.comments:
                 definition += f'\n{T}#{comment}'
-        definition += f'\n{T}{field.name}: {_py_type(field, primary_namespace, add_optional=True)}'
+        definition += f'\n{T}{field.name}: {_py_type(field, primary_namespace)}'
         if field.inline_comment:
             definition += f'  #{field.inline_comment}'
 
@@ -384,9 +409,9 @@ def generate_serializer(
             definition += '\n'
         else:
             for bh in ctx.buffhams.values():
-                if bh.namespace == primary_namespace:
+                if parser.full_name(bh.name) == primary_namespace:
                     continue
-                definition += f' | {bh.name}_bh.REGISTRY'
+                definition += f' | {bh.name.name}_bh.REGISTRY'
             definition += '\n'
 
         definition += f'{T}{T}super().__init__(registry)\n\n'
@@ -541,8 +566,10 @@ def generate_python(
 
         # Generate transaction definitions
         if len(bh.transactions):
-            fp.write(generate_serializer(bh.name.title(), ctx, primary_namespace, stub))
-            fp.write(generate_node(bh.name.title(), stub))
+            fp.write(
+                generate_serializer(bh.name.name.title(), ctx, primary_namespace, stub)
+            )
+            fp.write(generate_node(bh.name.name.title(), stub))
         for transaction in bh.transactions:
             fp.write(generate_transaction(transaction, stub, primary_namespace))
 

@@ -66,39 +66,10 @@ class NamedEntry(dataclass.DataclassLike, Protocol):
     def name(self) -> str: ...
 
 
-@dataclasses.dataclass
-class Message:
-    name: str
-    fields: list[schema_bh.Field]
-    comments: list[str] = dataclasses.field(default_factory=list)
-
-
-@dataclasses.dataclass
-class Enum:
-    name: str
-    fields: list[schema_bh.EnumField]
-    comments: list[str] = dataclasses.field(default_factory=list)
-
-
-@dataclasses.dataclass
-class Buffham:
-    name: str
-    parent_namespace: str
-    messages: list[Message] = dataclasses.field(default_factory=list)
-    transactions: list[schema_bh.Transaction] = dataclasses.field(default_factory=list)
-    publishes: list[schema_bh.Publish] = dataclasses.field(default_factory=list)
-    constants: list[schema_bh.Constant] = dataclasses.field(default_factory=list)
-    enums: list[Enum] = dataclasses.field(default_factory=list)
-
-    @property
-    def namespace(self) -> str:
-        if not self.parent_namespace:
-            return self.name
-        return f'{self.parent_namespace}.{self.name}'
-
-
 def full_name(entry_name: schema_bh.Name) -> str:
     """Get the full name of the entry."""
+    if not entry_name.namespace:
+        return entry_name.name
     return f'{entry_name.namespace}.{entry_name.name}'
 
 
@@ -121,28 +92,39 @@ def is_field_iterable(field: schema_bh.Field) -> bool:
 @dataclasses.dataclass
 class Parser:
     # Maps `[parent_namespace].[name]` to Buffhams
-    buffhams: dict[str, Buffham] = dataclasses.field(default_factory=dict)
+    buffhams: dict[str, schema_bh.Buffham] = dataclasses.field(default_factory=dict)
     # Internal request ID counter
     request_id: int = dataclasses.field(default=0)
     # Current full namespace
-    cur_namespace: str = dataclasses.field(default='')
+    cur_namespace: schema_bh.Name = dataclasses.field(
+        default_factory=lambda: schema_bh.Name('', '')
+    )
 
     @property
-    def cur_buffham(self) -> Buffham:
+    def cur_buffham(self) -> schema_bh.Buffham:
         """Get the current Buffham being parsed."""
-        return self.buffhams[self.cur_namespace]
+        return self.buffhams[full_name(self.cur_namespace)]
 
-    def iter_messages(self) -> Generator[tuple[Message, schema_bh.Name], None, None]:
+    @property
+    def cur_namespace_str(self) -> str:
+        """Get the current namespace as a string."""
+        return full_name(self.cur_namespace)
+
+    def iter_messages(
+        self,
+    ) -> Generator[tuple[schema_bh.Message, schema_bh.Name], None, None]:
         """Iterate over all messages in the context."""
         for buffham in self.buffhams.values():
             for message in buffham.messages:
-                yield message, schema_bh.Name(message.name, buffham.namespace)
+                yield message, schema_bh.Name(message.name, full_name(buffham.name))
 
-    def iter_enums(self) -> Generator[tuple[Enum, schema_bh.Name], None, None]:
+    def iter_enums(
+        self,
+    ) -> Generator[tuple[schema_bh.Enum, schema_bh.Name], None, None]:
         """Iterate over all enums in the context."""
         for buffham in self.buffhams.values():
             for enum in buffham.enums:
-                yield enum, schema_bh.Name(enum.name, buffham.namespace)
+                yield enum, schema_bh.Name(enum.name, full_name(buffham.name))
 
     def iter_constants(
         self,
@@ -150,7 +132,7 @@ class Parser:
         """Iterate over all constants in the context."""
         for buffham in self.buffhams.values():
             for constant in buffham.constants:
-                yield constant, schema_bh.Name(constant.name, buffham.namespace)
+                yield constant, schema_bh.Name(constant.name, full_name(buffham.name))
 
     def parse_message_field(self, line: str, comments: list[str]) -> schema_bh.Field:
         """Parse a field from a line.
@@ -174,23 +156,35 @@ class Parser:
             pri_type = schema_bh.FieldType[pri_type_str]
             obj_name = None
         elif pri_type.startswith('list['):
-            try:
-                sub_type = schema_bh.FieldType[pri_type[5:-1].upper()]
-            except KeyError:
-                raise ValueError(f'Invalid list type {pri_type}')
+            sub_type_str = pri_type[5:-1]
+            message, message_name = next(
+                filter(
+                    lambda x: relative_name(x[1], self.cur_namespace_str)
+                    == sub_type_str,
+                    self.iter_messages(),
+                ),
+                (None, None),
+            )
+            if message is not None:
+                sub_type = schema_bh.FieldType.MESSAGE
+                obj_name = message_name
+            elif sub_type_str.upper() in schema_bh.FieldType._member_names_:
+                sub_type = schema_bh.FieldType[sub_type_str.upper()]
+                obj_name = None
+            else:
+                raise ValueError(f'Invalid sub-field type {sub_type_str}')
             pri_type = schema_bh.FieldType.LIST
-            obj_name = None
         else:
             message, message_name = next(
                 filter(
-                    lambda x: relative_name(x[1], self.cur_namespace) == pri_type,
+                    lambda x: relative_name(x[1], self.cur_namespace_str) == pri_type,
                     self.iter_messages(),
                 ),
                 (None, None),
             )
             enum, enum_name = next(
                 filter(
-                    lambda x: relative_name(x[1], self.cur_namespace) == pri_type,
+                    lambda x: relative_name(x[1], self.cur_namespace_str) == pri_type,
                     self.iter_enums(),
                 ),
                 (None, None),
@@ -207,8 +201,8 @@ class Parser:
                 obj_name = enum_name
                 pri_type = schema_bh.FieldType.ENUM
 
-        # Ensure the sub_type is not a list or message
-        if sub_type in (schema_bh.FieldType.LIST, schema_bh.FieldType.MESSAGE):
+        # Ensure the sub_type is not a list
+        if sub_type is schema_bh.FieldType.LIST:
             raise ValueError('Nested iterables are not supported')
 
         inline_comment_match = INLINE_COMMENT_REGEX.match(line)
@@ -230,7 +224,7 @@ class Parser:
         self,
         lines: list[str],
         comments: list[str],
-    ) -> Message:
+    ) -> schema_bh.Message:
         """Parse a message from a list of lines.
 
         Messages are arranged as:
@@ -253,7 +247,7 @@ class Parser:
             else:
                 fields.append(self.parse_message_field(line, field_comments))
                 field_comments = []
-        return Message(name, fields, comments)
+        return schema_bh.Message(name, fields, comments)
 
     def parse_transaction(
         self, line: str, comments: list[str]
@@ -274,13 +268,13 @@ class Parser:
         try:
             receive, receive_name = next(
                 filter(
-                    lambda x: relative_name(x[1], self.cur_namespace) == receive,
+                    lambda x: relative_name(x[1], self.cur_namespace_str) == receive,
                     self.iter_messages(),
                 )
             )
             send, send_name = next(
                 filter(
-                    lambda x: relative_name(x[1], self.cur_namespace) == send,
+                    lambda x: relative_name(x[1], self.cur_namespace_str) == send,
                     self.iter_messages(),
                 )
             )
@@ -323,7 +317,7 @@ class Parser:
         try:
             send, send_name = next(
                 filter(
-                    lambda x: relative_name(x[1], self.cur_namespace) == send,
+                    lambda x: relative_name(x[1], self.cur_namespace_str) == send,
                     self.iter_messages(),
                 )
             )
@@ -380,9 +374,9 @@ class Parser:
         references = []
         for _, constant_name in self.iter_constants():
             if re.match(
-                rf'.*{{{relative_name(constant_name, self.cur_namespace)}}}', value
+                rf'.*{{{relative_name(constant_name, self.cur_namespace_str)}}}', value
             ):
-                references.append(relative_name(constant_name, self.cur_namespace))
+                references.append(relative_name(constant_name, self.cur_namespace_str))
 
         return schema_bh.Constant(
             name, type_, value, comments, inline_comment, references
@@ -407,7 +401,7 @@ class Parser:
         self,
         lines: list[str],
         comments: list[str],
-    ) -> Enum:
+    ) -> schema_bh.Enum:
         """Parse an enum from a list of lines.
 
         Enums are arranged as:
@@ -431,7 +425,7 @@ class Parser:
                 fields.append(self.parse_enum_field(line, field_comments))
                 field_comments = []
 
-        return Enum(name, fields, comments)
+        return schema_bh.Enum(name, fields, comments)
 
     def parse_singleline_definition[T: NamedEntry](
         self,
@@ -506,19 +500,18 @@ class Parser:
 
     def parse_file(
         self, file: pathlib.Path, parent_namespace: str | None = None
-    ) -> Buffham:
+    ) -> schema_bh.Buffham:
         # Determine the namespace
         if parent_namespace is None:
             parent_namespace = '.'.join(file.parent.parts)
-        name = file.stem
-        namespace = f'{parent_namespace}.{name}' if parent_namespace else name
-        self.cur_namespace = namespace
+        name = schema_bh.Name(file.stem, parent_namespace)
+        self.cur_namespace = name
 
         # Insert a new Buffham into the context
-        bh = Buffham(name=file.stem, parent_namespace=parent_namespace)
-        if bh.namespace in self.buffhams:
-            raise ValueError(f'Duplicate Buffham namespace: {bh.namespace}')
-        self.buffhams[bh.namespace] = bh
+        bh = schema_bh.Buffham(name, [], [], [], [], [])
+        if full_name(bh.name) in self.buffhams:
+            raise ValueError(f'Duplicate Buffham namespace: {bh.name}')
+        self.buffhams[full_name(bh.name)] = bh
 
         lines = file.read_text().splitlines()
 

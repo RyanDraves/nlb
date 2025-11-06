@@ -7,8 +7,10 @@ from nlb.buffham import schema_bh
 
 class TestParserSimple(unittest.TestCase):
     def setUp(self) -> None:
+        name = schema_bh.Name('test', '')
         self.ctx = parser.Parser(
-            {'test': parser.Buffham('test', '')}, cur_namespace='test'
+            {parser.full_name(name): schema_bh.Buffham(name, [], [], [], [], [])},
+            cur_namespace=name,
         )
 
     def test_parse_field(self):
@@ -76,6 +78,24 @@ class TestParserSimple(unittest.TestCase):
             ),
         )
 
+        # List of messages
+        message = schema_bh.Message('MyMessage', [], [])
+        self.ctx.cur_buffham.messages.append(message)
+        field = 'list[MyMessage] message_list;'
+        parsed = self.ctx.parse_message_field(field, [])
+        self.assertEqual(
+            parsed,
+            schema_bh.Field(
+                'message_list',
+                schema_bh.FieldType.LIST,
+                schema_bh.FieldType.MESSAGE,
+                False,
+                schema_bh.Name(message.name, 'test'),
+                [],
+                None,
+            ),
+        )
+
         # Optional field
         field = 'optional list[uint8_t] optional_field;  # optional field'
         parsed = self.ctx.parse_message_field(field, [])
@@ -104,7 +124,7 @@ class TestParserSimple(unittest.TestCase):
 
         # Message field
         field = 'MyMessage baz_5;'
-        my_message = parser.Message('MyMessage', [])
+        my_message = schema_bh.Message('MyMessage', [], [])
         self.ctx.cur_buffham.messages.append(my_message)
         parsed = self.ctx.parse_message_field(field, [])
         self.assertEqual(
@@ -134,7 +154,7 @@ class TestParserSimple(unittest.TestCase):
         parsed = self.ctx.parse_message(message, [])
         self.assertEqual(
             parsed,
-            parser.Message(
+            schema_bh.Message(
                 'Ping',
                 [
                     schema_bh.Field(
@@ -147,6 +167,7 @@ class TestParserSimple(unittest.TestCase):
                         None,
                     )
                 ],
+                [],
             ),
         )
 
@@ -161,7 +182,7 @@ class TestParserSimple(unittest.TestCase):
         parsed = self.ctx.parse_message(message, [])
         self.assertEqual(
             parsed,
-            parser.Message(
+            schema_bh.Message(
                 'FlashPage',
                 [
                     schema_bh.Field(
@@ -192,6 +213,7 @@ class TestParserSimple(unittest.TestCase):
                         None,
                     ),
                 ],
+                [],
             ),
         )
 
@@ -209,12 +231,12 @@ class TestParserSimple(unittest.TestCase):
             '    Inner inner;',
             '}',
         ]
-        inner = parser.Message('Inner', [])
+        inner = schema_bh.Message('Inner', [], [])
         self.ctx.cur_buffham.messages.append(inner)
         parsed = self.ctx.parse_message(message, [])
         self.assertEqual(
             parsed,
-            parser.Message(
+            schema_bh.Message(
                 'Outer',
                 [
                     schema_bh.Field(
@@ -227,6 +249,7 @@ class TestParserSimple(unittest.TestCase):
                         None,
                     )
                 ],
+                [],
             ),
         )
 
@@ -240,7 +263,7 @@ class TestParserSimple(unittest.TestCase):
 
     def test_parse_transaction(self):
         transaction = 'transaction ping[Ping, LogMessage];'
-        receive = parser.Message(
+        receive = schema_bh.Message(
             'Ping',
             [
                 schema_bh.Field(
@@ -253,8 +276,9 @@ class TestParserSimple(unittest.TestCase):
                     None,
                 )
             ],
+            [],
         )
-        send = parser.Message(
+        send = schema_bh.Message(
             'LogMessage',
             [
                 schema_bh.Field(
@@ -267,6 +291,7 @@ class TestParserSimple(unittest.TestCase):
                     None,
                 )
             ],
+            [],
         )
         self.ctx.cur_buffham.messages.extend([receive, send])
         parsed = self.ctx.parse_transaction(transaction, ['some other comment'])
@@ -306,7 +331,7 @@ class TestParserSimple(unittest.TestCase):
 
     def test_parse_publish(self):
         publish = 'publish log[LogMessage];'
-        log_msg = parser.Message(
+        log_msg = schema_bh.Message(
             'LogMessage',
             [
                 schema_bh.Field(
@@ -319,6 +344,7 @@ class TestParserSimple(unittest.TestCase):
                     None,
                 )
             ],
+            [],
         )
         self.ctx.cur_buffham.messages.append(log_msg)
         parsed = self.ctx.parse_publish(publish, ['some other comment'])
@@ -334,7 +360,7 @@ class TestParserSimple(unittest.TestCase):
         )
 
         publish = 'publish ping_pong[Ping];  # inline comment'
-        ping = parser.Message(
+        ping = schema_bh.Message(
             'Ping',
             [
                 schema_bh.Field(
@@ -347,6 +373,7 @@ class TestParserSimple(unittest.TestCase):
                     None,
                 )
             ],
+            [],
         )
         self.ctx.cur_buffham.messages.append(ping)
         parsed = self.ctx.parse_publish(publish, [])
@@ -430,7 +457,7 @@ class TestParserSimple(unittest.TestCase):
         parsed = self.ctx.parse_enum(enum_lines, comments)
         self.assertEqual(
             parsed,
-            parser.Enum(
+            schema_bh.Enum(
                 'SampleEnum',
                 [
                     schema_bh.EnumField('A', 0, [], ' inline on A'),
@@ -469,7 +496,7 @@ class TestParserSample(unittest.TestCase):
         self.assertEqual(len(other.messages), 1)
         self.assertEqual(len(other.transactions), 1)
 
-        verbosity_enum = parser.Enum(
+        verbosity_enum = schema_bh.Enum(
             'Verbosity',
             [
                 schema_bh.EnumField('LOW', 0, [], None),
@@ -481,7 +508,7 @@ class TestParserSample(unittest.TestCase):
             [' Enums can be defined and are treated as uint8_t values'],
         )
 
-        ping = parser.Message(
+        ping = schema_bh.Message(
             'Ping',
             [
                 schema_bh.Field(
@@ -496,7 +523,7 @@ class TestParserSample(unittest.TestCase):
             ],
             [' A message comment'],
         )
-        flash_page = parser.Message(
+        flash_page = schema_bh.Message(
             'FlashPage',
             [
                 schema_bh.Field(
@@ -536,7 +563,7 @@ class TestParserSample(unittest.TestCase):
                 '',
             ],
         )
-        log_message = parser.Message(
+        log_message = schema_bh.Message(
             'LogMessage',
             [
                 schema_bh.Field(
@@ -567,8 +594,9 @@ class TestParserSample(unittest.TestCase):
                     None,
                 ),
             ],
+            [],
         )
-        nested_message = parser.Message(
+        nested_message = schema_bh.Message(
             'NestedMessage',
             [
                 schema_bh.Field(
@@ -584,6 +612,15 @@ class TestParserSample(unittest.TestCase):
                     'message',
                     schema_bh.FieldType.MESSAGE,
                     None,
+                    False,
+                    schema_bh.Name(log_message.name, 'sample'),
+                    [],
+                    None,
+                ),
+                schema_bh.Field(
+                    'messages',
+                    schema_bh.FieldType.LIST,
+                    schema_bh.FieldType.MESSAGE,
                     False,
                     schema_bh.Name(log_message.name, 'sample'),
                     [],
@@ -619,8 +656,9 @@ class TestParserSample(unittest.TestCase):
                     None,
                 ),
             ],
+            [],
         )
-        string_lists = parser.Message(
+        string_lists = schema_bh.Message(
             'StringLists',
             [
                 schema_bh.Field(

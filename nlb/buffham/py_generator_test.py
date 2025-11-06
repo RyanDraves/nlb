@@ -7,6 +7,7 @@ from nlb.buffham import bh
 from nlb.buffham import engine
 from nlb.buffham import parser
 from nlb.buffham import py_generator
+from nlb.buffham import schema_bh
 
 # Test generation by Bazel rules by importing this module
 from nlb.buffham.testdata import other_bh
@@ -30,17 +31,31 @@ class TestPyGenerator(unittest.TestCase):
             self.other_file,
             parent_namespace='nlb.buffham.testdata',
         )
+        self.sample_bh = self.ctx.parse_file(
+            self.sample_file, parent_namespace='nlb.buffham.testdata'
+        )
+
+    def test_schema_serialization(self):
+        buffham = self.sample_bh
+
+        # Verify that serializing and deserializing the schema works
+        serialized_schema = buffham.serialize()
+        deserialized_bh, _ = schema_bh.Buffham.deserialize(serialized_schema)
+        self.assertEqual(buffham, deserialized_bh)
 
     def test_generate_python(self):
+        buffham = self.sample_bh
+
         with tempfile.TemporaryDirectory() as tempdir:
-            buffham = self.ctx.parse_file(self.sample_file, parent_namespace='')
-            message_registry = {('sample', m.name): m for m in buffham.messages}
+            message_registry = {
+                ('nlb.buffham.testdata.sample', m.name): m for m in buffham.messages
+            }
             for m in self.other_bh.messages:
                 message_registry[('nlb.buffham.testdata.other', m.name)] = m
 
             outfile = pathlib.Path(tempdir) / 'sample_bh.py'
             py_generator.generate_python(
-                self.ctx, buffham.namespace, outfile, stub=False
+                self.ctx, parser.full_name(buffham.name), outfile, stub=False
             )
 
             spec = util.spec_from_file_location('sample_bh', outfile)
@@ -94,7 +109,12 @@ class TestPyGenerator(unittest.TestCase):
 
             # Test serialization & deserialization of `NestedMessage`
             nested_message = sample_bh.NestedMessage(
-                False, log_message, [-0x1, -0x2], ping, other_bh.Pong(0x43)
+                False,
+                log_message,
+                [log_message, log_message],
+                [-0x1, -0x2],
+                ping,
+                other_bh.Pong(0x43),
             )
             nested_message_message = next(
                 filter(lambda m: m.name == 'NestedMessage', buffham.messages)
@@ -156,12 +176,12 @@ class TestPyGenerator(unittest.TestCase):
             test_utils.assertTextEqual(self, generated, golden)
 
     def test_generate_python_stub(self):
-        buffham = self.ctx.parse_file(self.sample_file)
+        buffham = self.sample_bh
 
         with tempfile.TemporaryDirectory() as tempdir:
             outfile = pathlib.Path(tempdir) / 'sample_bh.pyi'
             py_generator.generate_python(
-                self.ctx, buffham.namespace, outfile, stub=True
+                self.ctx, parser.full_name(buffham.name), outfile, stub=True
             )
 
             # Check that the generated file matches the golden file
