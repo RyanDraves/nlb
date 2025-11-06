@@ -180,72 +180,79 @@ def _generate_deserializer(
     primary_namespace: str,
     definition: str,
 ) -> str:
+    definition += f'\n{T}{T}offset = 0'
+
     if num_optional_fields > 0:
         definition += f"\n{T}{T}optional_bitfield = int.from_bytes(buffer[:{num_optional_bytes}], byteorder='little', signed=False)"
-
-    offset = num_optional_bytes
-    offset_str = ''
+        definition += f'\n{T}{T}offset += {num_optional_bytes}'
 
     optional_idx = 0
     for field in message.fields:
         if field.pri_type is schema_bh.FieldType.LIST:
-            definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
+            definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, offset)[0]"
             if field.sub_type in (
                 schema_bh.FieldType.STRING,
                 schema_bh.FieldType.BYTES,
             ):
-                definition += f'\n{T}{T}{field.name}_bytes = 2'
-                offset_str += f' + {field.name}_bytes'
+                definition += f'\n{T}{T}offset += 2'
                 definition += f'\n{T}{T}{field.name} = []'
                 definition += f'\n{T}{T}for _ in range({field.name}_size):'
-                definition += f"\n{T}{T}{T}item_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
-                definition += f'\n{T}{T}{T}{field.name}_bytes += 2'
-                definition += f'\n{T}{T}{T}{field.name}.append(buffer[{offset}{offset_str}:{offset}{offset_str} + item_size]'
+                definition += f"\n{T}{T}{T}item_size = struct.unpack_from('<H', buffer, offset)[0]"
+                definition += f'\n{T}{T}{T}offset += 2'
+                definition += (
+                    f'\n{T}{T}{T}{field.name}.append(buffer[offset:offset + item_size]'
+                )
                 if field.sub_type is schema_bh.FieldType.STRING:
                     definition += '.decode()'
                 definition += ')'
-                definition += f'\n{T}{T}{T}{field.name}_bytes += item_size'
+                definition += f'\n{T}{T}{T}offset += item_size'
             else:
-                offset += 2
-                definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'<{{{field.name}_size}}{field.format}', buffer, {offset}{offset_str}))"
-                offset_str += f' + {field.name}_size * {field.size}'
+                definition += f'\n{T}{T}offset += 2'
+                definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'<{{{field.name}_size}}{field.format}', buffer, offset))"
+                definition += f'\n{T}{T}offset += {field.name}_size * {field.size}'
         elif field.pri_type in (
             schema_bh.FieldType.STRING,
             schema_bh.FieldType.BYTES,
         ):
-            definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, {offset}{offset_str})[0]"
+            definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, offset)[0]"
             if field.optional:
                 definition += f' if optional_bitfield & (1 << {optional_idx}) else 0'
-                offset_str += f' + 2 * ({field.name} is not None)'
+                definition += f'\n{T}{T}offset += 2 * ({field.name} is not None)'
             else:
-                offset += 2
-            definition += f'\n{T}{T}{field.name} = buffer[{offset}{offset_str}:{offset}{offset_str} + {field.name}_size]'
+                definition += f'\n{T}{T}offset += 2'
+            definition += (
+                f'\n{T}{T}{field.name} = buffer[offset:offset + {field.name}_size]'
+            )
             if field.pri_type is schema_bh.FieldType.STRING:
                 definition += '.decode()'
-            offset_str += f' + {field.name}_size * {field.size}'
+            definition += f'\n{T}{T}offset += {field.name}_size'
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
             msg = _py_type(field, primary_namespace)
-            definition += f'\n{T}{T}{field.name}, {field.name}_size = {msg}.deserialize(buffer[{offset}{offset_str}:])'
+            definition += f'\n{T}{T}{field.name}, {field.name}_size = {msg}.deserialize(buffer[offset:])'
             if field.optional:
                 definition += (
                     f' if optional_bitfield & (1 << {optional_idx}) else (None, 0)'
                 )
-            offset_str += f' + {field.name}_size'
+            definition += f'\n{T}{T}offset += {field.name}_size'
         elif field.pri_type is schema_bh.FieldType.ENUM:
             enum_type = _py_type(field, primary_namespace)
-            definition += f"\n{T}{T}{field.name} = {enum_type}(struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0])"
+            definition += f"\n{T}{T}{field.name} = {enum_type}(struct.unpack_from('<{field.format}', buffer, offset)[0])"
             if field.optional:
                 definition += f' if optional_bitfield & (1 << {optional_idx}) else None'
-                offset_str += f' + {field.size} * ({field.name} is not None)'
+                definition += (
+                    f'\n{T}{T}offset += {field.size} * ({field.name} is not None)'
+                )
             else:
-                offset += field.size
+                definition += f'\n{T}{T}offset += {field.size}'
         else:
-            definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field.format}', buffer, {offset}{offset_str})[0]"
+            definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field.format}', buffer, offset)[0]"
             if field.optional:
                 definition += f' if optional_bitfield & (1 << {optional_idx}) else None'
-                offset_str += f' + {field.size} * ({field.name} is not None)'
+                definition += (
+                    f'\n{T}{T}offset += {field.size} * ({field.name} is not None)'
+                )
             else:
-                offset += field.size
+                definition += f'\n{T}{T}offset += {field.size}'
 
         if field.optional:
             optional_idx += 1
@@ -253,7 +260,7 @@ def _generate_deserializer(
     definition += f'\n{T}{T}return cls('
     for field in message.fields:
         definition += f'\n{T}{T}{T}{field.name}={field.name},'
-    definition += f'\n{T}{T}), {offset}{offset_str}\n'
+    definition += f'\n{T}{T}), offset\n'
 
     return definition
 

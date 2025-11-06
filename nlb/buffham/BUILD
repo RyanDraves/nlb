@@ -1,5 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
+load("//bzl/macros:cc.bzl", "cc_unittest")
 load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
 py_library(
@@ -51,6 +52,15 @@ py_test(
         "TEST_CC": "testdata/sample_bh.cc",
     },
     deps = ["//nlb/util:test_utils"],
+)
+
+cc_unittest(
+    name = "cpp_generator_test_cc",
+    srcs = ["cpp_generator_test.cc"],
+    deps = [
+        ":testdata/other_bh_cc",
+        ":testdata/sample_bh_cc",
+    ],
 )
 
 py_library(

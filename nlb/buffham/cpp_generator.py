@@ -94,8 +94,7 @@ def _generate_serializer(
     definition: str,
 ) -> str:
     definition += ' {'
-    offset = 0
-    offset_str = ''
+    definition += f'\n{T}uint16_t offset = 0;'
 
     if num_optional_fields > 0:
         assert num_optional_bytes == 1, (
@@ -110,7 +109,7 @@ def _generate_serializer(
         definition += (
             f'\n{T}memcpy(buffer.data(), &optional_bitfield, {num_optional_bytes});'
         )
-        offset += num_optional_bytes
+        definition += f'\n{T}offset += {num_optional_bytes};'
 
     for field in message.fields:
         optional_value = '.value()' if field.optional else ''
@@ -125,66 +124,66 @@ def _generate_serializer(
 
             # Write size
             size_read_expression = (
-                f'memcpy(buffer.data() + {offset}{offset_str}, &{field.name}_size, 2)'
+                f'memcpy(buffer.data() + offset, &{field.name}_size, 2)'
             )
             if field.optional:
-                size_read_expression = (
-                    f'{field.name}.has_value() ? {size_read_expression} : 0'
+                definition += (
+                    f'\n{T}{field.name}.has_value() ? {size_read_expression} : 0;'
                 )
-                offset_str += f' + 2 * {field.name}.has_value()'
+                definition += f'\n{T}offset += 2 * {field.name}.has_value();'
             else:
-                offset += 2
-            definition += f'\n{T}{size_read_expression};'
+                definition += f'\n{T}{size_read_expression};'
+                definition += f'\n{T}offset += 2;'
 
             if field.sub_type in (
                 schema_bh.FieldType.STRING,
                 schema_bh.FieldType.BYTES,
             ):
                 # Write each item with length prefix
-                definition += f'\n{T}uint16_t {field.name}_bytes = 0;'
-                offset_str += f' + {field.name}_bytes'
                 definition += f'\n{T}for (const auto &item : {field.name}) {{'
                 definition += f'\n{T}{T}uint16_t item_size = item.size();'
-                definition += f'\n{T}{T}memcpy(buffer.data() + {offset}{offset_str}, &item_size, 2);'
-                definition += f'\n{T}{T}{field.name}_bytes += 2;'
-                definition += f'\n{T}{T}memcpy(buffer.data() + {offset}{offset_str}, item.data(), item_size);'
-                definition += f'\n{T}{T}{field.name}_bytes += item_size;'
+                definition += f'\n{T}{T}memcpy(buffer.data() + offset, &item_size, 2);'
+                definition += f'\n{T}{T}offset += 2;'
+                definition += (
+                    f'\n{T}{T}memcpy(buffer.data() + offset, item.data(), item_size);'
+                )
+                definition += f'\n{T}{T}offset += item_size;'
                 definition += f'\n{T}}}'
             else:
                 # Write data
-                data_expression = f'memcpy(buffer.data() + {offset}{offset_str}, {field.name}{access}data(), {field.name}_size * {field.size})'
+                data_expression = f'memcpy(buffer.data() + offset, {field.name}{access}data(), {field.name}_size * {field.size})'
                 if field.optional:
                     data_expression = (
                         f'{field.name}.has_value() ? {data_expression} : 0'
                     )
                 definition += f'\n{T}{data_expression};'
-                offset_str += f' + {field.name}_size * {field.size}'
+                definition += f'\n{T}offset += {field.name}_size * {field.size};'
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
-            expression = f'{field.name}.serialize(buffer.subspan({offset}{offset_str}))'
+            expression = f'{field.name}.serialize(buffer.subspan(offset))'
             if field.optional:
                 expression = (
                     f'{field.name}.has_value() ? {expression} : std::span<uint8_t>{{}}'
                 )
             definition += f'\n{T}auto {field.name}_buffer = {expression};'
-            offset_str += f' + {field.name}_buffer.size()'
+            definition += f'\n{T}offset += {field.name}_buffer.size();'
         elif field.pri_type is schema_bh.FieldType.ENUM:
             # Enums can be treated like their underlying uint8_t type
-            expression = f'memcpy(buffer.data() + {offset}{offset_str}, &{field.name}{optional_value}, {field.size})'
+            expression = f'memcpy(buffer.data() + offset, &{field.name}{optional_value}, {field.size})'
             if field.optional:
-                expression = f'{field.name}.has_value() ? {expression} : 0'
-                offset_str += f' + {field.size} * {field.name}.has_value()'
+                definition += f'\n{T}{field.name}.has_value() ? {expression} : 0;'
+                definition += f'\n{T}offset += {field.size} * {field.name}.has_value();'
             else:
-                offset += field.size
-            definition += f'\n{T}{expression};'
+                definition += f'\n{T}{expression};'
+                definition += f'\n{T}offset += {field.size};'
         else:
-            expression = f'memcpy(buffer.data() + {offset}{offset_str}, &{field.name}{optional_value}, {field.size})'
+            expression = f'memcpy(buffer.data() + offset, &{field.name}{optional_value}, {field.size})'
             if field.optional:
-                expression = f'{field.name}.has_value() ? {expression} : 0'
-                offset_str += f' + {field.size} * {field.name}.has_value()'
+                definition += f'\n{T}{field.name}.has_value() ? {expression} : 0;'
+                definition += f'\n{T}offset += {field.size} * {field.name}.has_value();'
             else:
-                offset += field.size
-            definition += f'\n{T}{expression};'
-    definition += f'\n{T}return buffer.subspan(0, {offset}{offset_str});\n'
+                definition += f'\n{T}{expression};'
+                definition += f'\n{T}offset += {field.size};'
+    definition += f'\n{T}return buffer.subspan(0, offset);\n'
     definition += '}\n\n'
 
     return definition
@@ -198,8 +197,7 @@ def _generate_deserializer(
     definition: str,
 ) -> str:
     definition += ' {'
-    offset = 0
-    offset_str = ''
+    definition += f'\n{T}uint16_t offset = 0;'
 
     if num_optional_fields > 0:
         assert num_optional_bytes == 1, (
@@ -209,7 +207,7 @@ def _generate_deserializer(
         definition += (
             f'\n{T}memcpy(&optional_bitfield, buffer.data(), {num_optional_bytes});'
         )
-        offset += num_optional_bytes
+        definition += f'\n{T}offset += {num_optional_bytes};'
 
     message_name = _to_snake_case(message.name)
     definition += f'\n{T}{message.name} {message_name};'
@@ -221,17 +219,15 @@ def _generate_deserializer(
         if field.iterable:
             # Get size
             definition += f'\n{T}uint16_t {field.name}_size;'
-            expression = (
-                f'memcpy(&{field.name}_size, buffer.data() + {offset}{offset_str}, 2)'
-            )
+            expression = f'memcpy(&{field.name}_size, buffer.data() + offset, 2)'
             if field.optional:
-                expression = (
-                    f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
+                definition += f'\n{T}(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0;'
+                definition += (
+                    f'\n{T}offset += 2 * {message_name}.{field.name}.has_value();'
                 )
-                offset_str += f' + 2 * {message_name}.{field.name}.has_value()'
             else:
-                offset += 2
-            definition += f'\n{T}{expression};'
+                definition += f'\n{T}{expression};'
+                definition += f'\n{T}offset += 2;'
 
             # Resize data
             resize_expression = f'{message_name}.{field.name}.resize({field.name}_size)'
@@ -244,65 +240,53 @@ def _generate_deserializer(
                 schema_bh.FieldType.BYTES,
             ):
                 # Read each item with length prefix
-                definition += f'\n{T}uint16_t {field.name}_bytes = 0;'
-                offset_str += f' + {field.name}_bytes'
                 definition += f'\n{T}for (auto &item : {message_name}.{field.name}) {{'
                 definition += f'\n{T}{T}uint16_t item_size;'
-                definition += f'\n{T}{T}memcpy(&item_size, buffer.data() + {offset}{offset_str}, 2);'
-                definition += f'\n{T}{T}{field.name}_bytes += 2;'
+                definition += f'\n{T}{T}memcpy(&item_size, buffer.data() + offset, 2);'
+                definition += f'\n{T}{T}offset += 2;'
                 definition += f'\n{T}{T}item.resize(item_size);'
-                definition += f'\n{T}{T}memcpy(item.data(), buffer.data() + {offset}{offset_str}, item_size);'
-                definition += f'\n{T}{T}{field.name}_bytes += item_size;'
+                definition += (
+                    f'\n{T}{T}memcpy(item.data(), buffer.data() + offset, item_size);'
+                )
+                definition += f'\n{T}{T}offset += item_size;'
                 definition += f'\n{T}}}'
             else:
                 # Read data
-                read_expression = f'memcpy({message_name}.{field.name}{access}data(), buffer.data() + {offset}{offset_str}, {field.name}_size * {field.size})'
+                read_expression = f'memcpy({message_name}.{field.name}{access}data(), buffer.data() + offset, {field.name}_size * {field.size})'
                 if field.optional:
                     read_expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
                 definition += f'\n{T}{read_expression};'
-                offset_str += f' + {field.name}_size * {field.size}'
+                definition += f'\n{T}offset += {field.name}_size * {field.size};'
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
-            definition += (
-                f'\n{T}auto {field.name}_buffer = buffer.subspan({offset}{offset_str});'
-            )
+            definition += f'\n{T}auto {field.name}_buffer = buffer.subspan(offset);'
             expression = f'{_cpp_type(field, primary_namespace)}::deserialize({field.name}_buffer)'
             if field.optional:
                 # Return a pair of nullopt and an empty buffer
                 expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : std::make_pair(std::nullopt, buffer.subspan(0, 0))'
             definition += f'\n{T}std::tie({message_name}.{field.name}, {field.name}_buffer) = {expression};'
-            offset_str += f' + {field.name}_buffer.size()'
+            definition += f'\n{T}offset += {field.name}_buffer.size();'
         elif field.pri_type is schema_bh.FieldType.ENUM:
             # Enums can be treated like their underlying uint8_t type
-            expression = f'memcpy(&{message_name}.{field.name}{optional_value}, buffer.data() + {offset}{offset_str}, {field.size})'
+            expression = f'memcpy(&{message_name}.{field.name}{optional_value}, buffer.data() + offset, {field.size})'
             if field.optional:
-                expression = (
-                    f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
-                )
-                offset_str += (
-                    f' + {field.size} * {message_name}.{field.name}.has_value()'
-                )
+                definition += f'\n{T}(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0;'
+                definition += f'\n{T}offset += {field.size} * {message_name}.{field.name}.has_value();'
             else:
-                offset += field.size
-            definition += f'\n{T}{expression};'
+                definition += f'\n{T}{expression};'
+                definition += f'\n{T}offset += {field.size};'
         else:
-            expression = f'memcpy(&{message_name}.{field.name}{optional_value}, buffer.data() + {offset}{offset_str}, {field.size})'
+            expression = f'memcpy(&{message_name}.{field.name}{optional_value}, buffer.data() + offset, {field.size})'
             if field.optional:
-                expression = (
-                    f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0'
-                )
-                offset_str += (
-                    f' + {field.size} * {message_name}.{field.name}.has_value()'
-                )
+                definition += f'\n{T}(optional_bitfield & (1 << {optional_idx})) ? {expression} : 0;'
+                definition += f'\n{T}offset += {field.size} * {message_name}.{field.name}.has_value();'
             else:
-                offset += field.size
-            definition += f'\n{T}{expression};'
+                definition += f'\n{T}{expression};'
+                definition += f'\n{T}offset += {field.size};'
 
         if field.optional:
             optional_idx += 1
 
-    definition += (
-        f'\n{T}return {{{message_name}, buffer.subspan(0, {offset}{offset_str})}};\n'
-    )
+    definition += f'\n{T}return {{{message_name}, buffer.subspan(0, offset)}};\n'
     definition += '}\n'
 
     return definition

@@ -15,144 +15,188 @@ namespace buffham {
 namespace testdata {
 
 std::span<uint8_t> Ping::serialize(std::span<uint8_t> buffer) const {
-    memcpy(buffer.data() + 0, &ping, 1);
-    return buffer.subspan(0, 1);
+    uint16_t offset = 0;
+    memcpy(buffer.data() + offset, &ping, 1);
+    offset += 1;
+    return buffer.subspan(0, offset);
 }
 
 std::pair<Ping, std::span<const uint8_t> > Ping::deserialize(std::span<const uint8_t> buffer) {
+    uint16_t offset = 0;
     Ping ping;
-    memcpy(&ping.ping, buffer.data() + 0, 1);
-    return {ping, buffer.subspan(0, 1)};
+    memcpy(&ping.ping, buffer.data() + offset, 1);
+    offset += 1;
+    return {ping, buffer.subspan(0, offset)};
 }
 
 std::span<uint8_t> FlashPage::serialize(std::span<uint8_t> buffer) const {
+    uint16_t offset = 0;
     uint8_t optional_bitfield = 0;
     optional_bitfield |= read_size.has_value() ? (1 << 0) : 0;
     memcpy(buffer.data(), &optional_bitfield, 1);
-    memcpy(buffer.data() + 1, &address, 4);
+    offset += 1;
+    memcpy(buffer.data() + offset, &address, 4);
+    offset += 4;
     uint16_t data_size = data.size();
-    memcpy(buffer.data() + 5, &data_size, 2);
-    memcpy(buffer.data() + 7, data.data(), data_size * 1);
-    read_size.has_value() ? memcpy(buffer.data() + 7 + data_size * 1, &read_size.value(), 4) : 0;
-    return buffer.subspan(0, 7 + data_size * 1 + 4 * read_size.has_value());
+    memcpy(buffer.data() + offset, &data_size, 2);
+    offset += 2;
+    memcpy(buffer.data() + offset, data.data(), data_size * 1);
+    offset += data_size * 1;
+    read_size.has_value() ? memcpy(buffer.data() + offset, &read_size.value(), 4) : 0;
+    offset += 4 * read_size.has_value();
+    return buffer.subspan(0, offset);
 }
 
 std::pair<FlashPage, std::span<const uint8_t> > FlashPage::deserialize(std::span<const uint8_t> buffer) {
+    uint16_t offset = 0;
     uint8_t optional_bitfield;
     memcpy(&optional_bitfield, buffer.data(), 1);
+    offset += 1;
     FlashPage flash_page;
-    memcpy(&flash_page.address, buffer.data() + 1, 4);
+    memcpy(&flash_page.address, buffer.data() + offset, 4);
+    offset += 4;
     uint16_t data_size;
-    memcpy(&data_size, buffer.data() + 5, 2);
+    memcpy(&data_size, buffer.data() + offset, 2);
+    offset += 2;
     flash_page.data.resize(data_size);
-    memcpy(flash_page.data.data(), buffer.data() + 7, data_size * 1);
-    (optional_bitfield & (1 << 0)) ? memcpy(&flash_page.read_size.emplace(), buffer.data() + 7 + data_size * 1, 4) : 0;
-    return {flash_page, buffer.subspan(0, 7 + data_size * 1 + 4 * flash_page.read_size.has_value())};
+    memcpy(flash_page.data.data(), buffer.data() + offset, data_size * 1);
+    offset += data_size * 1;
+    (optional_bitfield & (1 << 0)) ? memcpy(&flash_page.read_size.emplace(), buffer.data() + offset, 4) : 0;
+    offset += 4 * flash_page.read_size.has_value();
+    return {flash_page, buffer.subspan(0, offset)};
 }
 
 std::span<uint8_t> LogMessage::serialize(std::span<uint8_t> buffer) const {
+    uint16_t offset = 0;
     uint16_t message_size = message.size();
-    memcpy(buffer.data() + 0, &message_size, 2);
-    memcpy(buffer.data() + 2, message.data(), message_size * 1);
-    memcpy(buffer.data() + 2 + message_size * 1, &verbosity, 1);
-    memcpy(buffer.data() + 3 + message_size * 1, &my_enum, 1);
-    return buffer.subspan(0, 4 + message_size * 1);
+    memcpy(buffer.data() + offset, &message_size, 2);
+    offset += 2;
+    memcpy(buffer.data() + offset, message.data(), message_size * 1);
+    offset += message_size * 1;
+    memcpy(buffer.data() + offset, &verbosity, 1);
+    offset += 1;
+    memcpy(buffer.data() + offset, &my_enum, 1);
+    offset += 1;
+    return buffer.subspan(0, offset);
 }
 
 std::pair<LogMessage, std::span<const uint8_t> > LogMessage::deserialize(std::span<const uint8_t> buffer) {
+    uint16_t offset = 0;
     LogMessage log_message;
     uint16_t message_size;
-    memcpy(&message_size, buffer.data() + 0, 2);
+    memcpy(&message_size, buffer.data() + offset, 2);
+    offset += 2;
     log_message.message.resize(message_size);
-    memcpy(log_message.message.data(), buffer.data() + 2, message_size * 1);
-    memcpy(&log_message.verbosity, buffer.data() + 2 + message_size * 1, 1);
-    memcpy(&log_message.my_enum, buffer.data() + 3 + message_size * 1, 1);
-    return {log_message, buffer.subspan(0, 4 + message_size * 1)};
+    memcpy(log_message.message.data(), buffer.data() + offset, message_size * 1);
+    offset += message_size * 1;
+    memcpy(&log_message.verbosity, buffer.data() + offset, 1);
+    offset += 1;
+    memcpy(&log_message.my_enum, buffer.data() + offset, 1);
+    offset += 1;
+    return {log_message, buffer.subspan(0, offset)};
 }
 
 std::span<uint8_t> NestedMessage::serialize(std::span<uint8_t> buffer) const {
+    uint16_t offset = 0;
     uint8_t optional_bitfield = 0;
     optional_bitfield |= flag.has_value() ? (1 << 0) : 0;
     memcpy(buffer.data(), &optional_bitfield, 1);
-    flag.has_value() ? memcpy(buffer.data() + 1, &flag.value(), 1) : 0;
-    auto message_buffer = message.serialize(buffer.subspan(1 + 1 * flag.has_value()));
+    offset += 1;
+    flag.has_value() ? memcpy(buffer.data() + offset, &flag.value(), 1) : 0;
+    offset += 1 * flag.has_value();
+    auto message_buffer = message.serialize(buffer.subspan(offset));
+    offset += message_buffer.size();
     uint16_t numbers_size = numbers.size();
-    memcpy(buffer.data() + 1 + 1 * flag.has_value() + message_buffer.size(), &numbers_size, 2);
-    memcpy(buffer.data() + 3 + 1 * flag.has_value() + message_buffer.size(), numbers.data(), numbers_size * 4);
-    auto pong_buffer = pong.serialize(buffer.subspan(3 + 1 * flag.has_value() + message_buffer.size() + numbers_size * 4));
-    auto other_pong_buffer = other_pong.serialize(buffer.subspan(3 + 1 * flag.has_value() + message_buffer.size() + numbers_size * 4 + pong_buffer.size()));
-    return buffer.subspan(0, 3 + 1 * flag.has_value() + message_buffer.size() + numbers_size * 4 + pong_buffer.size() + other_pong_buffer.size());
+    memcpy(buffer.data() + offset, &numbers_size, 2);
+    offset += 2;
+    memcpy(buffer.data() + offset, numbers.data(), numbers_size * 4);
+    offset += numbers_size * 4;
+    auto pong_buffer = pong.serialize(buffer.subspan(offset));
+    offset += pong_buffer.size();
+    auto other_pong_buffer = other_pong.serialize(buffer.subspan(offset));
+    offset += other_pong_buffer.size();
+    return buffer.subspan(0, offset);
 }
 
 std::pair<NestedMessage, std::span<const uint8_t> > NestedMessage::deserialize(std::span<const uint8_t> buffer) {
+    uint16_t offset = 0;
     uint8_t optional_bitfield;
     memcpy(&optional_bitfield, buffer.data(), 1);
+    offset += 1;
     NestedMessage nested_message;
-    (optional_bitfield & (1 << 0)) ? memcpy(&nested_message.flag.emplace(), buffer.data() + 1, 1) : 0;
-    auto message_buffer = buffer.subspan(1 + 1 * nested_message.flag.has_value());
+    (optional_bitfield & (1 << 0)) ? memcpy(&nested_message.flag.emplace(), buffer.data() + offset, 1) : 0;
+    offset += 1 * nested_message.flag.has_value();
+    auto message_buffer = buffer.subspan(offset);
     std::tie(nested_message.message, message_buffer) = LogMessage::deserialize(message_buffer);
+    offset += message_buffer.size();
     uint16_t numbers_size;
-    memcpy(&numbers_size, buffer.data() + 1 + 1 * nested_message.flag.has_value() + message_buffer.size(), 2);
+    memcpy(&numbers_size, buffer.data() + offset, 2);
+    offset += 2;
     nested_message.numbers.resize(numbers_size);
-    memcpy(nested_message.numbers.data(), buffer.data() + 3 + 1 * nested_message.flag.has_value() + message_buffer.size(), numbers_size * 4);
-    auto pong_buffer = buffer.subspan(3 + 1 * nested_message.flag.has_value() + message_buffer.size() + numbers_size * 4);
+    memcpy(nested_message.numbers.data(), buffer.data() + offset, numbers_size * 4);
+    offset += numbers_size * 4;
+    auto pong_buffer = buffer.subspan(offset);
     std::tie(nested_message.pong, pong_buffer) = Ping::deserialize(pong_buffer);
-    auto other_pong_buffer = buffer.subspan(3 + 1 * nested_message.flag.has_value() + message_buffer.size() + numbers_size * 4 + pong_buffer.size());
+    offset += pong_buffer.size();
+    auto other_pong_buffer = buffer.subspan(offset);
     std::tie(nested_message.other_pong, other_pong_buffer) = nlb::buffham::testdata::Pong::deserialize(other_pong_buffer);
-    return {nested_message, buffer.subspan(0, 3 + 1 * nested_message.flag.has_value() + message_buffer.size() + numbers_size * 4 + pong_buffer.size() + other_pong_buffer.size())};
+    offset += other_pong_buffer.size();
+    return {nested_message, buffer.subspan(0, offset)};
 }
 
 std::span<uint8_t> StringLists::serialize(std::span<uint8_t> buffer) const {
+    uint16_t offset = 0;
     uint16_t messages_size = messages.size();
-    memcpy(buffer.data() + 0, &messages_size, 2);
-    uint16_t messages_bytes = 0;
+    memcpy(buffer.data() + offset, &messages_size, 2);
+    offset += 2;
     for (const auto &item : messages) {
         uint16_t item_size = item.size();
-        memcpy(buffer.data() + 2 + messages_bytes, &item_size, 2);
-        messages_bytes += 2;
-        memcpy(buffer.data() + 2 + messages_bytes, item.data(), item_size);
-        messages_bytes += item_size;
+        memcpy(buffer.data() + offset, &item_size, 2);
+        offset += 2;
+        memcpy(buffer.data() + offset, item.data(), item_size);
+        offset += item_size;
     }
     uint16_t buffers_size = buffers.size();
-    memcpy(buffer.data() + 2 + messages_bytes, &buffers_size, 2);
-    uint16_t buffers_bytes = 0;
+    memcpy(buffer.data() + offset, &buffers_size, 2);
+    offset += 2;
     for (const auto &item : buffers) {
         uint16_t item_size = item.size();
-        memcpy(buffer.data() + 4 + messages_bytes + buffers_bytes, &item_size, 2);
-        buffers_bytes += 2;
-        memcpy(buffer.data() + 4 + messages_bytes + buffers_bytes, item.data(), item_size);
-        buffers_bytes += item_size;
+        memcpy(buffer.data() + offset, &item_size, 2);
+        offset += 2;
+        memcpy(buffer.data() + offset, item.data(), item_size);
+        offset += item_size;
     }
-    return buffer.subspan(0, 4 + messages_bytes + buffers_bytes);
+    return buffer.subspan(0, offset);
 }
 
 std::pair<StringLists, std::span<const uint8_t> > StringLists::deserialize(std::span<const uint8_t> buffer) {
+    uint16_t offset = 0;
     StringLists string_lists;
     uint16_t messages_size;
-    memcpy(&messages_size, buffer.data() + 0, 2);
+    memcpy(&messages_size, buffer.data() + offset, 2);
+    offset += 2;
     string_lists.messages.resize(messages_size);
-    uint16_t messages_bytes = 0;
     for (auto &item : string_lists.messages) {
         uint16_t item_size;
-        memcpy(&item_size, buffer.data() + 2 + messages_bytes, 2);
-        messages_bytes += 2;
+        memcpy(&item_size, buffer.data() + offset, 2);
+        offset += 2;
         item.resize(item_size);
-        memcpy(item.data(), buffer.data() + 2 + messages_bytes, item_size);
-        messages_bytes += item_size;
+        memcpy(item.data(), buffer.data() + offset, item_size);
+        offset += item_size;
     }
     uint16_t buffers_size;
-    memcpy(&buffers_size, buffer.data() + 2 + messages_bytes, 2);
+    memcpy(&buffers_size, buffer.data() + offset, 2);
+    offset += 2;
     string_lists.buffers.resize(buffers_size);
-    uint16_t buffers_bytes = 0;
     for (auto &item : string_lists.buffers) {
         uint16_t item_size;
-        memcpy(&item_size, buffer.data() + 4 + messages_bytes + buffers_bytes, 2);
-        buffers_bytes += 2;
+        memcpy(&item_size, buffer.data() + offset, 2);
+        offset += 2;
         item.resize(item_size);
-        memcpy(item.data(), buffer.data() + 4 + messages_bytes + buffers_bytes, item_size);
-        buffers_bytes += item_size;
+        memcpy(item.data(), buffer.data() + offset, item_size);
+        offset += item_size;
     }
-    return {string_lists, buffer.subspan(0, 4 + messages_bytes + buffers_bytes)};
+    return {string_lists, buffer.subspan(0, offset)};
 }
 
 }  // namespace nlb
