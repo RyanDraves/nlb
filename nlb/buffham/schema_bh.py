@@ -55,6 +55,78 @@ class Name:
         ), offset
 
 @dataclasses.dataclass
+class Field:
+    name: str
+    pri_type: FieldType
+    # For lists
+    sub_type: FieldType | None
+    is_optional: bool
+    # For messages / enum
+    obj_name: Name | None
+    comments: list[str]
+    inline_comment: str | None
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        optional_bitfield = 0
+        optional_bitfield |= (1 << 0) if self.sub_type is not None else 0
+        optional_bitfield |= (1 << 1) if self.obj_name is not None else 0
+        optional_bitfield |= (1 << 2) if self.inline_comment is not None else 0
+        buffer += optional_bitfield.to_bytes(length=1, byteorder='little', signed=False)
+        buffer += struct.pack('<H', len(self.name))
+        buffer += self.name.encode()
+        buffer += struct.pack('<B', self.pri_type.value)
+        buffer += struct.pack('<B', self.sub_type.value) if self.sub_type is not None else bytes()
+        buffer += struct.pack('<B', self.is_optional)
+        buffer += self.obj_name.serialize() if self.obj_name is not None else bytes()
+        buffer += struct.pack('<H', len(self.comments))
+        for item in self.comments:
+            buffer += struct.pack('<H', len(item))
+            buffer += item.encode()
+        buffer += struct.pack('<H', len(self.inline_comment)) if self.inline_comment is not None else bytes()
+        buffer += self.inline_comment.encode() if self.inline_comment is not None else bytes()
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        offset = 0
+        optional_bitfield = int.from_bytes(buffer[:1], byteorder='little', signed=False)
+        offset += 1
+        name_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        name = buffer[offset:offset + name_size].decode()
+        offset += name_size
+        pri_type = FieldType(struct.unpack_from('<B', buffer, offset)[0])
+        offset += 1
+        sub_type = FieldType(struct.unpack_from('<B', buffer, offset)[0]) if optional_bitfield & (1 << 0) else None
+        offset += 1 * (sub_type is not None)
+        is_optional = struct.unpack_from('<B', buffer, offset)[0]
+        offset += 1
+        obj_name, obj_name_size = Name.deserialize(buffer[offset:]) if optional_bitfield & (1 << 1) else (None, 0)
+        offset += obj_name_size
+        comments_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        comments = []
+        for _ in range(comments_size):
+            item_size = struct.unpack_from('<H', buffer, offset)[0]
+            offset += 2
+            comments.append(buffer[offset:offset + item_size].decode())
+            offset += item_size
+        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if optional_bitfield & (1 << 2) else 0
+        offset += 2 * (optional_bitfield & (1 << 2))
+        inline_comment = buffer[offset:offset + inline_comment_size].decode() if optional_bitfield & (1 << 2) else None
+        offset += inline_comment_size
+        return cls(
+            name=name,
+            pri_type=pri_type,
+            sub_type=sub_type,
+            is_optional=is_optional,
+            obj_name=obj_name,
+            comments=comments,
+            inline_comment=inline_comment,
+        ), offset
+
+@dataclasses.dataclass
 class EnumField:
     name: str
     # Assume enums have <=256 values
@@ -106,4 +178,202 @@ class EnumField:
             value=value,
             comments=comments,
             inline_comment=inline_comment,
+        ), offset
+
+@dataclasses.dataclass
+class Transaction:
+    name: str
+    # Reasonable size limit on number of transactions/publishes
+    request_id: int
+    receive_name: Name
+    send_name: Name
+    comments: list[str]
+    inline_comment: str | None
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        optional_bitfield = 0
+        optional_bitfield |= (1 << 0) if self.inline_comment is not None else 0
+        buffer += optional_bitfield.to_bytes(length=1, byteorder='little', signed=False)
+        buffer += struct.pack('<H', len(self.name))
+        buffer += self.name.encode()
+        buffer += struct.pack('<H', self.request_id)
+        buffer += self.receive_name.serialize()
+        buffer += self.send_name.serialize()
+        buffer += struct.pack('<H', len(self.comments))
+        for item in self.comments:
+            buffer += struct.pack('<H', len(item))
+            buffer += item.encode()
+        buffer += struct.pack('<H', len(self.inline_comment)) if self.inline_comment is not None else bytes()
+        buffer += self.inline_comment.encode() if self.inline_comment is not None else bytes()
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        offset = 0
+        optional_bitfield = int.from_bytes(buffer[:1], byteorder='little', signed=False)
+        offset += 1
+        name_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        name = buffer[offset:offset + name_size].decode()
+        offset += name_size
+        request_id = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        receive_name, receive_name_size = Name.deserialize(buffer[offset:])
+        offset += receive_name_size
+        send_name, send_name_size = Name.deserialize(buffer[offset:])
+        offset += send_name_size
+        comments_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        comments = []
+        for _ in range(comments_size):
+            item_size = struct.unpack_from('<H', buffer, offset)[0]
+            offset += 2
+            comments.append(buffer[offset:offset + item_size].decode())
+            offset += item_size
+        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if optional_bitfield & (1 << 0) else 0
+        offset += 2 * (optional_bitfield & (1 << 0))
+        inline_comment = buffer[offset:offset + inline_comment_size].decode() if optional_bitfield & (1 << 0) else None
+        offset += inline_comment_size
+        return cls(
+            name=name,
+            request_id=request_id,
+            receive_name=receive_name,
+            send_name=send_name,
+            comments=comments,
+            inline_comment=inline_comment,
+        ), offset
+
+@dataclasses.dataclass
+class Publish:
+    name: str
+    # Reasonable size limit on number of transactions/publishes
+    request_id: int
+    send_name: Name
+    comments: list[str]
+    inline_comment: str | None
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        optional_bitfield = 0
+        optional_bitfield |= (1 << 0) if self.inline_comment is not None else 0
+        buffer += optional_bitfield.to_bytes(length=1, byteorder='little', signed=False)
+        buffer += struct.pack('<H', len(self.name))
+        buffer += self.name.encode()
+        buffer += struct.pack('<H', self.request_id)
+        buffer += self.send_name.serialize()
+        buffer += struct.pack('<H', len(self.comments))
+        for item in self.comments:
+            buffer += struct.pack('<H', len(item))
+            buffer += item.encode()
+        buffer += struct.pack('<H', len(self.inline_comment)) if self.inline_comment is not None else bytes()
+        buffer += self.inline_comment.encode() if self.inline_comment is not None else bytes()
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        offset = 0
+        optional_bitfield = int.from_bytes(buffer[:1], byteorder='little', signed=False)
+        offset += 1
+        name_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        name = buffer[offset:offset + name_size].decode()
+        offset += name_size
+        request_id = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        send_name, send_name_size = Name.deserialize(buffer[offset:])
+        offset += send_name_size
+        comments_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        comments = []
+        for _ in range(comments_size):
+            item_size = struct.unpack_from('<H', buffer, offset)[0]
+            offset += 2
+            comments.append(buffer[offset:offset + item_size].decode())
+            offset += item_size
+        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if optional_bitfield & (1 << 0) else 0
+        offset += 2 * (optional_bitfield & (1 << 0))
+        inline_comment = buffer[offset:offset + inline_comment_size].decode() if optional_bitfield & (1 << 0) else None
+        offset += inline_comment_size
+        return cls(
+            name=name,
+            request_id=request_id,
+            send_name=send_name,
+            comments=comments,
+            inline_comment=inline_comment,
+        ), offset
+
+@dataclasses.dataclass
+class Constant:
+    name: str
+    type: FieldType
+    value: str
+    comments: list[str]
+    inline_comment: str | None
+    references: list[str]
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        optional_bitfield = 0
+        optional_bitfield |= (1 << 0) if self.inline_comment is not None else 0
+        buffer += optional_bitfield.to_bytes(length=1, byteorder='little', signed=False)
+        buffer += struct.pack('<H', len(self.name))
+        buffer += self.name.encode()
+        buffer += struct.pack('<B', self.type.value)
+        buffer += struct.pack('<H', len(self.value))
+        buffer += self.value.encode()
+        buffer += struct.pack('<H', len(self.comments))
+        for item in self.comments:
+            buffer += struct.pack('<H', len(item))
+            buffer += item.encode()
+        buffer += struct.pack('<H', len(self.inline_comment)) if self.inline_comment is not None else bytes()
+        buffer += self.inline_comment.encode() if self.inline_comment is not None else bytes()
+        buffer += struct.pack('<H', len(self.references))
+        for item in self.references:
+            buffer += struct.pack('<H', len(item))
+            buffer += item.encode()
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        offset = 0
+        optional_bitfield = int.from_bytes(buffer[:1], byteorder='little', signed=False)
+        offset += 1
+        name_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        name = buffer[offset:offset + name_size].decode()
+        offset += name_size
+        type = FieldType(struct.unpack_from('<B', buffer, offset)[0])
+        offset += 1
+        value_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        value = buffer[offset:offset + value_size].decode()
+        offset += value_size
+        comments_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        comments = []
+        for _ in range(comments_size):
+            item_size = struct.unpack_from('<H', buffer, offset)[0]
+            offset += 2
+            comments.append(buffer[offset:offset + item_size].decode())
+            offset += item_size
+        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if optional_bitfield & (1 << 0) else 0
+        offset += 2 * (optional_bitfield & (1 << 0))
+        inline_comment = buffer[offset:offset + inline_comment_size].decode() if optional_bitfield & (1 << 0) else None
+        offset += inline_comment_size
+        references_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        references = []
+        for _ in range(references_size):
+            item_size = struct.unpack_from('<H', buffer, offset)[0]
+            offset += 2
+            references.append(buffer[offset:offset + item_size].decode())
+            offset += item_size
+        return cls(
+            name=name,
+            type=type,
+            value=value,
+            comments=comments,
+            inline_comment=inline_comment,
+            references=references,
         ), offset

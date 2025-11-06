@@ -23,7 +23,6 @@ class Verbosity(enum.Enum):
     MEDIUM = 1  # Inline comment on MEDIUM
     HIGH = 2
 
-
 @dataclasses.dataclass
 class Ping:
     """A message comment"""

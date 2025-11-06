@@ -2,12 +2,13 @@ import pathlib
 import re
 
 from nlb.buffham import parser
+from nlb.buffham import schema_bh
 
 TEMPLATE_PATTERN = re.compile(r'\{\{ ([\w|\.]+) \}\}')
 
 
 def _expanded_constant(
-    ctx: parser.Parser, bh: parser.Buffham, constant: parser.Constant
+    ctx: parser.Parser, bh: parser.Buffham, constant: schema_bh.Constant
 ) -> str:
     """Expand a constant to its value.
 

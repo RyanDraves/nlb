@@ -41,7 +41,7 @@ def generate_serializer(
     message: parser.Message, message_registry: dict[tuple[str, str], parser.Message]
 ) -> Callable[[dataclass.DataclassLike], bytes]:
     """Generic serializer generator for a message schema."""
-    num_optional_fields = sum(1 for f in message.fields if f.optional)
+    num_optional_fields = sum(1 for f in message.fields if f.is_optional)
     num_optional_bytes = (num_optional_fields + 7) // 8
 
     def serializer(instance: dataclass.DataclassLike) -> bytes:
@@ -52,7 +52,7 @@ def generate_serializer(
             bitfield = 0
             optional_idx = 0
             for field in message.fields:
-                if field.optional:
+                if field.is_optional:
                     value = getattr(instance, field.name)
                     if value is not None:
                         bitfield |= 1 << optional_idx
@@ -61,11 +61,12 @@ def generate_serializer(
 
         for field in message.fields:
             value = getattr(instance, field.name)
+            field_format = parser.FORMAT_MAP[field.sub_type or field.pri_type]
 
-            if field.optional and value is None:
+            if field.is_optional and value is None:
                 continue
 
-            if field.iterable:
+            if parser.is_field_iterable(field):
                 # Write the size of the value as a uint16_t
                 buffer += struct.pack('<H', len(value))
 
@@ -80,7 +81,7 @@ def generate_serializer(
                                 item = item.encode()
                             buffer += item
                     else:
-                        buffer += struct.pack(f'<{len(value)}{field.format}', *value)
+                        buffer += struct.pack(f'<{len(value)}{field_format}', *value)
                 else:
                     if field.pri_type is schema_bh.FieldType.STRING:
                         value = value.encode()
@@ -93,9 +94,9 @@ def generate_serializer(
                 # Turtles all the way down
                 buffer += generate_serializer(nested_message, message_registry)(value)
             elif field.pri_type is schema_bh.FieldType.ENUM:
-                buffer += struct.pack(f'<{field.format}', value.value)
+                buffer += struct.pack(f'<{field_format}', value.value)
             else:
-                buffer += struct.pack(f'<{field.format}', value)
+                buffer += struct.pack(f'<{field_format}', value)
 
         return buffer
 
@@ -108,7 +109,7 @@ def generate_deserializer[T: dataclass.DataclassLike](
     clz: Type[T],
 ) -> Callable[[bytes], tuple[T, int]]:
     """Generic deserializer generator for a message schema."""
-    num_optional_fields = sum(1 for f in message.fields if f.optional)
+    num_optional_fields = sum(1 for f in message.fields if f.is_optional)
     num_optional_bytes = (num_optional_fields + 7) // 8
 
     def deserializer(buffer: bytes) -> tuple[T, int]:
@@ -126,13 +127,15 @@ def generate_deserializer[T: dataclass.DataclassLike](
 
         optional_idx = 0
         for field in message.fields:
-            if field.optional:
+            field_format = parser.FORMAT_MAP[field.sub_type or field.pri_type]
+
+            if field.is_optional:
                 if not optional_bitfield & (1 << optional_idx):
                     values[field.name] = None
                     continue
                 optional_idx += 1
 
-            if field.iterable:
+            if parser.is_field_iterable(field):
                 size = struct.unpack_from('<H', buffer, offset)[0]
                 offset += 2
 
@@ -152,9 +155,9 @@ def generate_deserializer[T: dataclass.DataclassLike](
                             values[field.name].append(item)
                     else:
                         values[field.name] = list(
-                            struct.unpack_from(f'<{size}{field.format}', buffer, offset)
+                            struct.unpack_from(f'<{size}{field_format}', buffer, offset)
                         )
-                        offset += size * struct.calcsize(field.format)
+                        offset += size * struct.calcsize(field_format)
                 else:
                     value = buffer[offset : offset + size]
                     if field.pri_type is schema_bh.FieldType.STRING:
@@ -176,14 +179,14 @@ def generate_deserializer[T: dataclass.DataclassLike](
                 offset += size
             elif field.pri_type is schema_bh.FieldType.ENUM:
                 enum_clz, _ = split_optional(clz.__dataclass_fields__[field.name].type)
-                value = struct.unpack_from(f'<{field.format}', buffer, offset)[0]
+                value = struct.unpack_from(f'<{field_format}', buffer, offset)[0]
                 values[field.name] = enum_clz(value)
-                offset += struct.calcsize(field.format)
+                offset += struct.calcsize(field_format)
             else:
                 values[field.name] = struct.unpack_from(
-                    f'<{field.format}', buffer, offset
+                    f'<{field_format}', buffer, offset
                 )[0]
-                offset += struct.calcsize(field.format)
+                offset += struct.calcsize(field_format)
 
         return clz(**values), offset
 

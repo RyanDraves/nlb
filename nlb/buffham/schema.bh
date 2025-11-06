@@ -24,10 +24,50 @@ message Name {
     string namespace;
 }
 
+message Field {
+    string name;
+    FieldType pri_type;
+    # For lists
+    optional FieldType sub_type;
+    bool is_optional;
+    # For messages / enum
+    optional Name obj_name;
+    list[string] comments;
+    optional string inline_comment;
+}
+
 message EnumField {
     string name;
     # Assume enums have <=256 values
     uint8_t value;
     list[string] comments;
     optional string inline_comment;
+}
+
+message Transaction {
+    string name;
+    # Reasonable size limit on number of transactions/publishes
+    uint16_t request_id;
+    Name receive_name;
+    Name send_name;
+    list[string] comments;
+    optional string inline_comment;
+}
+
+message Publish {
+    string name;
+    # Reasonable size limit on number of transactions/publishes
+    uint16_t request_id;
+    Name send_name;
+    list[string] comments;
+    optional string inline_comment;
+}
+
+message Constant {
+    string name;
+    FieldType type;
+    string value;
+    list[string] comments;
+    optional string inline_comment;
+    list[string] references;
 }

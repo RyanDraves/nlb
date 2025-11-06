@@ -37,7 +37,9 @@ def _get_imported_name(relative_name: str) -> str:
     return relative_name
 
 
-def _py_type(field: parser.Field, primary_namespace: str) -> str:
+def _py_type(
+    field: schema_bh.Field, primary_namespace: str, add_optional: bool = True
+) -> str:
     """Get the Python type hint for the field."""
     if field.obj_name is not None:
         type_str = _get_imported_name(
@@ -49,7 +51,7 @@ def _py_type(field: parser.Field, primary_namespace: str) -> str:
     else:
         type_str = TYPE_MAP[field.pri_type]
 
-    if field.optional:
+    if field.is_optional and add_optional:
         type_str += ' | None'
 
     return type_str
@@ -72,7 +74,7 @@ def _get_constant_name(reference: str) -> str:
     return reference.upper()
 
 
-def generate_constant(constant: parser.Constant) -> str:
+def generate_constant(constant: schema_bh.Constant) -> str:
     """Generate a Python constant definition from a Constant."""
     definition = ''
 
@@ -131,17 +133,19 @@ def _generate_serializer(
         definition += f'\n{T}{T}optional_bitfield = 0'
         optional_idx = 0
         for field in message.fields:
-            if not field.optional:
+            if not field.is_optional:
                 continue
             definition += f'\n{T}{T}optional_bitfield |= (1 << {optional_idx}) if self.{field.name} is not None else 0'
             optional_idx += 1
         definition += f"\n{T}{T}buffer += optional_bitfield.to_bytes(length={num_optional_bytes}, byteorder='little', signed=False)"
 
     for field in message.fields:
-        if field.iterable:
+        field_format = parser.FORMAT_MAP[field.sub_type or field.pri_type]
+
+        if parser.is_field_iterable(field):
             # Write size
             definition += f"\n{T}{T}buffer += struct.pack('<H', len(self.{field.name}))"
-            if field.optional:
+            if field.is_optional:
                 definition += f' if self.{field.name} is not None else bytes()'
 
             # Write data
@@ -156,7 +160,7 @@ def _generate_serializer(
                     if field.sub_type is schema_bh.FieldType.STRING:
                         definition += '.encode()'
                 else:
-                    definition += f"\n{T}{T}buffer += struct.pack(f'<{{len(self.{field.name})}}{field.format}', *self.{field.name})"
+                    definition += f"\n{T}{T}buffer += struct.pack(f'<{{len(self.{field.name})}}{field_format}', *self.{field.name})"
             else:
                 definition += f'\n{T}{T}buffer += self.{field.name}'
                 if field.pri_type is schema_bh.FieldType.STRING:
@@ -164,14 +168,14 @@ def _generate_serializer(
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
             definition += f'\n{T}{T}buffer += self.{field.name}.serialize()'
         elif field.pri_type is schema_bh.FieldType.ENUM:
-            definition += f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name}.value)"
+            definition += f"\n{T}{T}buffer += struct.pack('<{field_format}', self.{field.name}.value)"
         else:
             definition += (
-                f"\n{T}{T}buffer += struct.pack('<{field.format}', self.{field.name})"
+                f"\n{T}{T}buffer += struct.pack('<{field_format}', self.{field.name})"
             )
 
         # Conditionally serialize optional fields
-        if field.optional:
+        if field.is_optional:
             definition += f' if self.{field.name} is not None else bytes()'
 
     definition += f'\n{T}{T}return buffer\n'
@@ -194,6 +198,9 @@ def _generate_deserializer(
 
     optional_idx = 0
     for field in message.fields:
+        field_format = parser.FORMAT_MAP[field.sub_type or field.pri_type]
+        field_size = parser.SIZE_MAP[field.sub_type or field.pri_type]
+
         if field.pri_type is schema_bh.FieldType.LIST:
             definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, offset)[0]"
             if field.sub_type in (
@@ -214,15 +221,15 @@ def _generate_deserializer(
                 definition += f'\n{T}{T}{T}offset += item_size'
             else:
                 definition += f'\n{T}{T}offset += 2'
-                definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'<{{{field.name}_size}}{field.format}', buffer, offset))"
-                definition += f'\n{T}{T}offset += {field.name}_size * {field.size}'
+                definition += f"\n{T}{T}{field.name} = list(struct.unpack_from(f'<{{{field.name}_size}}{field_format}', buffer, offset))"
+                definition += f'\n{T}{T}offset += {field.name}_size * {field_size}'
         elif field.pri_type in (
             schema_bh.FieldType.STRING,
             schema_bh.FieldType.BYTES,
         ):
             # Read size
             definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, offset)[0]"
-            if field.optional:
+            if field.is_optional:
                 definition += f' if optional_bitfield & (1 << {optional_idx}) else 0'
                 definition += (
                     f'\n{T}{T}offset += 2 * (optional_bitfield & (1 << {optional_idx}))'
@@ -236,38 +243,38 @@ def _generate_deserializer(
             )
             if field.pri_type is schema_bh.FieldType.STRING:
                 definition += '.decode()'
-            if field.optional:
+            if field.is_optional:
                 definition += f' if optional_bitfield & (1 << {optional_idx}) else None'
             definition += f'\n{T}{T}offset += {field.name}_size'
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
-            msg = _py_type(field, primary_namespace)
+            msg = _py_type(field, primary_namespace, add_optional=False)
             definition += f'\n{T}{T}{field.name}, {field.name}_size = {msg}.deserialize(buffer[offset:])'
-            if field.optional:
+            if field.is_optional:
                 definition += (
                     f' if optional_bitfield & (1 << {optional_idx}) else (None, 0)'
                 )
             definition += f'\n{T}{T}offset += {field.name}_size'
         elif field.pri_type is schema_bh.FieldType.ENUM:
-            enum_type = _py_type(field, primary_namespace)
-            definition += f"\n{T}{T}{field.name} = {enum_type}(struct.unpack_from('<{field.format}', buffer, offset)[0])"
-            if field.optional:
+            enum_type = _py_type(field, primary_namespace, add_optional=False)
+            definition += f"\n{T}{T}{field.name} = {enum_type}(struct.unpack_from('<{field_format}', buffer, offset)[0])"
+            if field.is_optional:
                 definition += f' if optional_bitfield & (1 << {optional_idx}) else None'
                 definition += (
-                    f'\n{T}{T}offset += {field.size} * ({field.name} is not None)'
+                    f'\n{T}{T}offset += {field_size} * ({field.name} is not None)'
                 )
             else:
-                definition += f'\n{T}{T}offset += {field.size}'
+                definition += f'\n{T}{T}offset += {field_size}'
         else:
-            definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field.format}', buffer, offset)[0]"
-            if field.optional:
+            definition += f"\n{T}{T}{field.name} = struct.unpack_from('<{field_format}', buffer, offset)[0]"
+            if field.is_optional:
                 definition += f' if optional_bitfield & (1 << {optional_idx}) else None'
                 definition += (
-                    f'\n{T}{T}offset += {field.size} * ({field.name} is not None)'
+                    f'\n{T}{T}offset += {field_size} * ({field.name} is not None)'
                 )
             else:
-                definition += f'\n{T}{T}offset += {field.size}'
+                definition += f'\n{T}{T}offset += {field_size}'
 
-        if field.optional:
+        if field.is_optional:
             optional_idx += 1
 
     definition += f'\n{T}{T}return cls('
@@ -306,7 +313,7 @@ def generate_message(
         if field.inline_comment:
             definition += f'  #{field.inline_comment}'
 
-    num_optional_fields = sum(1 for f in message.fields if f.optional)
+    num_optional_fields = sum(1 for f in message.fields if f.is_optional)
     num_optional_bytes = (num_optional_fields + 7) // 8
 
     # Add serializer method
@@ -338,8 +345,8 @@ def generate_message(
 
 
 def generate_registry(
-    transactions: list[parser.Transaction],
-    publishes: list[parser.Publish],
+    transactions: list[schema_bh.Transaction],
+    publishes: list[schema_bh.Publish],
     primary_namespace: str,
     stub: bool,
 ) -> str:
@@ -417,7 +424,7 @@ def generate_node(name: str, stub: bool) -> str:
 
 
 def generate_transaction(
-    transaction: parser.Transaction, stub: bool, primary_namespace: str
+    transaction: schema_bh.Transaction, stub: bool, primary_namespace: str
 ) -> str:
     """Generate a transaction definition."""
 
@@ -449,7 +456,7 @@ def generate_transaction(
     return definition
 
 
-def generate_publishes(publishes: list[parser.Publish]) -> str:
+def generate_publishes(publishes: list[schema_bh.Publish]) -> str:
     definition = ''
 
     if not publishes:

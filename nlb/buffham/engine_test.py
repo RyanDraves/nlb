@@ -60,80 +60,133 @@ class TestEngine(unittest.TestCase):
     PING = parser.Message(
         'Ping',
         [
-            parser.Field(
+            schema_bh.Field(
                 'ping',
                 schema_bh.FieldType.UINT8_T,
+                None,
+                False,
+                None,
+                [],
+                None,
             ),
         ],
     )
     FLASH_PAGE = parser.Message(
         'FlashPage',
         [
-            parser.Field(
+            schema_bh.Field(
                 'address',
                 schema_bh.FieldType.UINT32_T,
+                None,
+                False,
+                None,
+                [],
+                None,
             ),
-            parser.Field(
-                'data', schema_bh.FieldType.LIST, schema_bh.FieldType.UINT32_T
+            schema_bh.Field(
+                'data',
+                schema_bh.FieldType.LIST,
+                schema_bh.FieldType.UINT32_T,
+                False,
+                None,
+                [],
+                None,
             ),
-            parser.Field(
+            schema_bh.Field(
                 'read_size',
                 schema_bh.FieldType.UINT32_T,
-                optional=True,
+                None,
+                True,
+                None,
+                [],
+                None,
             ),
         ],
     )
     LOG_MESSAGE = parser.Message(
         'LogMessage',
         [
-            parser.Field(
+            schema_bh.Field(
                 'message',
                 schema_bh.FieldType.STRING,
+                None,
+                False,
+                None,
+                [],
+                None,
             ),
-            parser.Field(
+            schema_bh.Field(
                 'verbosity',
                 schema_bh.FieldType.ENUM,
+                None,
+                False,
+                None,
+                [],
+                None,
             ),
         ],
     )
     NESTED_MESSAGE = parser.Message(
         'NestedMessage',
         [
-            parser.Field(
+            schema_bh.Field(
                 'flag',
                 schema_bh.FieldType.BOOL,
-                optional=True,
+                None,
+                True,
+                None,
+                [],
+                None,
             ),
-            parser.Field(
+            schema_bh.Field(
                 'inner',
                 schema_bh.FieldType.MESSAGE,
-                obj_name=schema_bh.Name(LOG_MESSAGE.name, ''),
+                None,
+                False,
+                schema_bh.Name(LOG_MESSAGE.name, ''),
+                [],
+                None,
             ),
-            parser.Field(
+            schema_bh.Field(
                 'data',
                 schema_bh.FieldType.LIST,
                 schema_bh.FieldType.INT32_T,
+                False,
+                None,
+                [],
+                None,
             ),
-            parser.Field(
+            schema_bh.Field(
                 'nested',
                 schema_bh.FieldType.MESSAGE,
-                optional=True,
-                obj_name=schema_bh.Name(PING.name, ''),
+                None,
+                True,
+                schema_bh.Name(PING.name, ''),
+                [],
+                None,
             ),
         ],
     )
     STRING_LISTS = parser.Message(
         'StringLists',
         [
-            parser.Field(
+            schema_bh.Field(
                 'messages',
                 schema_bh.FieldType.LIST,
                 schema_bh.FieldType.STRING,
+                False,
+                None,
+                [],
+                None,
             ),
-            parser.Field(
+            schema_bh.Field(
                 'buffers',
                 schema_bh.FieldType.LIST,
                 schema_bh.FieldType.BYTES,
+                False,
+                None,
+                [],
+                None,
             ),
         ],
     )
