@@ -106,6 +106,13 @@ std::span<uint8_t> NestedMessage::serialize(std::span<uint8_t> buffer) const {
     offset += 1 * flag.has_value();
     auto message_buffer = message.serialize(buffer.subspan(offset));
     offset += message_buffer.size();
+    uint16_t messages_size = messages.size();
+    memcpy(buffer.data() + offset, &messages_size, 2);
+    offset += 2;
+    for (const auto &item : messages) {
+        auto item_buffer = item.serialize(buffer.subspan(offset));
+        offset += item_buffer.size();
+    }
     uint16_t numbers_size = numbers.size();
     memcpy(buffer.data() + offset, &numbers_size, 2);
     offset += 2;
@@ -129,6 +136,15 @@ std::pair<NestedMessage, std::span<const uint8_t> > NestedMessage::deserialize(s
     auto message_buffer = buffer.subspan(offset);
     std::tie(nested_message.message, message_buffer) = LogMessage::deserialize(message_buffer);
     offset += message_buffer.size();
+    uint16_t messages_size;
+    memcpy(&messages_size, buffer.data() + offset, 2);
+    offset += 2;
+    nested_message.messages.resize(messages_size);
+    for (auto &item : nested_message.messages) {
+        auto item_buffer = buffer.subspan(offset);
+        std::tie(item, item_buffer) = LogMessage::deserialize(item_buffer);
+        offset += item_buffer.size();
+    }
     uint16_t numbers_size;
     memcpy(&numbers_size, buffer.data() + offset, 2);
     offset += 2;

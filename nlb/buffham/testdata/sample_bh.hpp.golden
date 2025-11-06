@@ -76,6 +76,7 @@ struct LogMessage {
 struct NestedMessage {
     std::optional<bool> flag;
     LogMessage message;
+    std::vector<LogMessage> messages;
     std::vector<int32_t> numbers;
     Ping pong;
     nlb::buffham::testdata::Pong other_pong;

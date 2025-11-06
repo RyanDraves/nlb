@@ -76,6 +76,24 @@ class TestParserSimple(unittest.TestCase):
             ),
         )
 
+        # List of messages
+        message = parser.Message('MyMessage', [])
+        self.ctx.cur_buffham.messages.append(message)
+        field = 'list[MyMessage] message_list;'
+        parsed = self.ctx.parse_message_field(field, [])
+        self.assertEqual(
+            parsed,
+            schema_bh.Field(
+                'message_list',
+                schema_bh.FieldType.LIST,
+                schema_bh.FieldType.MESSAGE,
+                False,
+                schema_bh.Name(message.name, 'test'),
+                [],
+                None,
+            ),
+        )
+
         # Optional field
         field = 'optional list[uint8_t] optional_field;  # optional field'
         parsed = self.ctx.parse_message_field(field, [])
@@ -584,6 +602,15 @@ class TestParserSample(unittest.TestCase):
                     'message',
                     schema_bh.FieldType.MESSAGE,
                     None,
+                    False,
+                    schema_bh.Name(log_message.name, 'sample'),
+                    [],
+                    None,
+                ),
+                schema_bh.Field(
+                    'messages',
+                    schema_bh.FieldType.LIST,
+                    schema_bh.FieldType.MESSAGE,
                     False,
                     schema_bh.Name(log_message.name, 'sample'),
                     [],

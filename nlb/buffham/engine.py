@@ -80,6 +80,16 @@ def generate_serializer(
                             if field.sub_type is schema_bh.FieldType.STRING:
                                 item = item.encode()
                             buffer += item
+                    elif field.sub_type is schema_bh.FieldType.MESSAGE:
+                        assert field.obj_name is not None
+                        nested_message = message_registry[
+                            (field.obj_name.namespace, field.obj_name.name)
+                        ]
+                        # Turtles all the way down
+                        for item in value:
+                            buffer += generate_serializer(
+                                nested_message, message_registry
+                            )(item)
                     else:
                         buffer += struct.pack(f'<{len(value)}{field_format}', *value)
                 else:
@@ -153,6 +163,22 @@ def generate_deserializer[T: dataclass.DataclassLike](
                             if field.sub_type is schema_bh.FieldType.STRING:
                                 item = item.decode()
                             values[field.name].append(item)
+                    elif field.sub_type is schema_bh.FieldType.MESSAGE:
+                        assert field.obj_name is not None
+                        nested_clz, _ = split_optional(
+                            clz.__dataclass_fields__[field.name].type.__args__[0]
+                        )
+                        nested_message = message_registry[
+                            (field.obj_name.namespace, field.obj_name.name)
+                        ]
+                        values[field.name] = []
+                        for _ in range(size):
+                            # Turtles all the way up
+                            item, item_size = generate_deserializer(
+                                nested_message, message_registry, nested_clz
+                            )(buffer[offset:])
+                            values[field.name].append(item)
+                            offset += item_size
                     else:
                         values[field.name] = list(
                             struct.unpack_from(f'<{size}{field_format}', buffer, offset)
@@ -177,6 +203,10 @@ def generate_deserializer[T: dataclass.DataclassLike](
                     nested_message, message_registry, nested_clz
                 )(buffer[offset:])
                 offset += size
+            elif field.pri_type is schema_bh.FieldType.BOOL:
+                value = struct.unpack_from(f'<{field_format}', buffer, offset)[0]
+                values[field.name] = bool(value)
+                offset += struct.calcsize(field_format)
             elif field.pri_type is schema_bh.FieldType.ENUM:
                 enum_clz, _ = split_optional(clz.__dataclass_fields__[field.name].type)
                 value = struct.unpack_from(f'<{field_format}', buffer, offset)[0]

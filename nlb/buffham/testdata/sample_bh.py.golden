@@ -127,6 +127,7 @@ class LogMessage:
 class NestedMessage:
     flag: bool | None
     message: LogMessage
+    messages: list[LogMessage]
     numbers: list[int]
     pong: Ping
     other_pong: other_bh.Pong
@@ -138,6 +139,9 @@ class NestedMessage:
         buffer += optional_bitfield.to_bytes(length=1, byteorder='little', signed=False)
         buffer += struct.pack('<B', self.flag) if self.flag is not None else bytes()
         buffer += self.message.serialize()
+        buffer += struct.pack('<H', len(self.messages))
+        for item in self.messages:
+            buffer += item.serialize()
         buffer += struct.pack('<H', len(self.numbers))
         buffer += struct.pack(f'<{len(self.numbers)}i', *self.numbers)
         buffer += self.pong.serialize()
@@ -153,6 +157,13 @@ class NestedMessage:
         offset += 1 * (flag is not None)
         message, message_size = LogMessage.deserialize(buffer[offset:])
         offset += message_size
+        messages_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        messages = []
+        for _ in range(messages_size):
+            item, item_size = LogMessage.deserialize(buffer[offset:])
+            messages.append(item)
+            offset += item_size
         numbers_size = struct.unpack_from('<H', buffer, offset)[0]
         offset += 2
         numbers = list(struct.unpack_from(f'<{numbers_size}i', buffer, offset))
@@ -164,6 +175,7 @@ class NestedMessage:
         return cls(
             flag=flag,
             message=message,
+            messages=messages,
             numbers=numbers,
             pong=pong,
             other_pong=other_pong,

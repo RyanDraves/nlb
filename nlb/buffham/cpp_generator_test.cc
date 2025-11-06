@@ -102,7 +102,8 @@ TEST(SampleBhTest, TestNestedMessageSerialization) {
     testdata::Pong other_pong{43};
 
     testdata::NestedMessage nested_message{
-        true, log_message, {-1, -2}, ping, other_pong};
+        true,     log_message, {log_message, log_message},
+        {-1, -2}, ping,        other_pong};
 
     // Serialize
     std::array<uint8_t, 512> buffer{};
@@ -122,6 +123,16 @@ TEST(SampleBhTest, TestNestedMessageSerialization) {
                 Eq(nested_message.message.verbosity));
     ASSERT_THAT(deserialized_nested_message.message.my_enum,
                 Eq(nested_message.message.my_enum));
+    ASSERT_THAT(deserialized_nested_message.messages.size(),
+                Eq(nested_message.messages.size()));
+    for (size_t i = 0; i < nested_message.messages.size(); i++) {
+        ASSERT_THAT(deserialized_nested_message.messages[i].message,
+                    Eq(nested_message.messages[i].message));
+        ASSERT_THAT(deserialized_nested_message.messages[i].verbosity,
+                    Eq(nested_message.messages[i].verbosity));
+        ASSERT_THAT(deserialized_nested_message.messages[i].my_enum,
+                    Eq(nested_message.messages[i].my_enum));
+    }
     ASSERT_THAT(deserialized_nested_message.numbers,
                 ElementsAreArray(nested_message.numbers));
     ASSERT_THAT(deserialized_nested_message.pong.ping,

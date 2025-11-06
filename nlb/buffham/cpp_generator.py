@@ -70,15 +70,29 @@ def _get_namespaced_name(relative_name: str) -> str:
     return '::'.join(split[:-2] + split[-1:])
 
 
-def _cpp_type(field: schema_bh.Field, primary_namespace: str) -> str:
+def _cpp_type(
+    field: schema_bh.Field, primary_namespace: str, *, just_object: bool = False
+) -> str:
     """Get the C++ type for the field."""
-    if field.obj_name is not None:
+    if just_object and field.obj_name is not None:
+        return _get_namespaced_name(
+            parser.relative_name(field.obj_name, primary_namespace)
+        )
+
+    if field.pri_type is schema_bh.FieldType.LIST:
+        assert field.sub_type is not None
+        if field.sub_type is schema_bh.FieldType.MESSAGE:
+            assert field.obj_name is not None
+            sub_type_str = _get_namespaced_name(
+                parser.relative_name(field.obj_name, primary_namespace)
+            )
+        else:
+            sub_type_str = TYPE_MAP[field.sub_type]
+        type_str = f'std::vector<{sub_type_str}>'
+    elif field.obj_name is not None:
         type_str = _get_namespaced_name(
             parser.relative_name(field.obj_name, primary_namespace)
         )
-    elif field.pri_type is schema_bh.FieldType.LIST:
-        assert field.sub_type is not None
-        type_str = f'std::vector<{TYPE_MAP[field.sub_type]}>'
     else:
         type_str = TYPE_MAP[field.pri_type]
 
@@ -150,6 +164,12 @@ def _generate_serializer(
                     f'\n{T}{T}memcpy(buffer.data() + offset, item.data(), item_size);'
                 )
                 definition += f'\n{T}{T}offset += item_size;'
+                definition += f'\n{T}}}'
+            elif field.sub_type is schema_bh.FieldType.MESSAGE:
+                # Write each item as a nested message
+                definition += f'\n{T}for (const auto &item : {field.name}) {{'
+                definition += f'\n{T}{T}auto item_buffer = item.serialize(buffer.subspan(offset));'
+                definition += f'\n{T}{T}offset += item_buffer.size();'
                 definition += f'\n{T}}}'
             else:
                 # Write data
@@ -253,6 +273,13 @@ def _generate_deserializer(
                 )
                 definition += f'\n{T}{T}offset += item_size;'
                 definition += f'\n{T}}}'
+            elif field.sub_type is schema_bh.FieldType.MESSAGE:
+                # Read each item as a nested message
+                definition += f'\n{T}for (auto &item : {message_name}.{field.name}) {{'
+                definition += f'\n{T}{T}auto item_buffer = buffer.subspan(offset);'
+                definition += f'\n{T}{T}std::tie(item, item_buffer) = {_cpp_type(field, primary_namespace, just_object=True)}::deserialize(item_buffer);'
+                definition += f'\n{T}{T}offset += item_buffer.size();'
+                definition += f'\n{T}}}'
             else:
                 # Read data
                 read_expression = f'memcpy({message_name}.{field.name}{access}data(), buffer.data() + offset, {field.name}_size * {field_size})'
@@ -262,7 +289,7 @@ def _generate_deserializer(
                 definition += f'\n{T}offset += {field.name}_size * {field_size};'
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
             definition += f'\n{T}auto {field.name}_buffer = buffer.subspan(offset);'
-            expression = f'{_cpp_type(field, primary_namespace)}::deserialize({field.name}_buffer)'
+            expression = f'{_cpp_type(field, primary_namespace, just_object=True)}::deserialize({field.name}_buffer)'
             if field.is_optional:
                 # Return a pair of nullopt and an empty buffer
                 expression = f'(optional_bitfield & (1 << {optional_idx})) ? {expression} : std::make_pair(std::nullopt, buffer.subspan(0, 0))'

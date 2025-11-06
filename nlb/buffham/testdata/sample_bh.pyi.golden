@@ -69,6 +69,7 @@ class LogMessage:
 class NestedMessage:
     flag: bool | None
     message: LogMessage
+    messages: list[LogMessage]
     numbers: list[int]
     pong: Ping
     other_pong: other_bh.Pong

@@ -174,12 +174,24 @@ class Parser:
             pri_type = schema_bh.FieldType[pri_type_str]
             obj_name = None
         elif pri_type.startswith('list['):
-            try:
-                sub_type = schema_bh.FieldType[pri_type[5:-1].upper()]
-            except KeyError:
-                raise ValueError(f'Invalid list type {pri_type}')
+            sub_type_str = pri_type[5:-1]
+            if sub_type_str.upper() in schema_bh.FieldType._member_names_:
+                sub_type = schema_bh.FieldType[sub_type_str.upper()]
+                obj_name = None
+            else:
+                message, message_name = next(
+                    filter(
+                        lambda x: relative_name(x[1], self.cur_namespace)
+                        == sub_type_str,
+                        self.iter_messages(),
+                    ),
+                    (None, None),
+                )
+                if message is None:
+                    raise ValueError(f'Invalid sub-field type {sub_type_str}')
+                sub_type = schema_bh.FieldType.MESSAGE
+                obj_name = message_name
             pri_type = schema_bh.FieldType.LIST
-            obj_name = None
         else:
             message, message_name = next(
                 filter(
@@ -207,8 +219,8 @@ class Parser:
                 obj_name = enum_name
                 pri_type = schema_bh.FieldType.ENUM
 
-        # Ensure the sub_type is not a list or message
-        if sub_type in (schema_bh.FieldType.LIST, schema_bh.FieldType.MESSAGE):
+        # Ensure the sub_type is not a list
+        if sub_type is schema_bh.FieldType.LIST:
             raise ValueError('Nested iterables are not supported')
 
         inline_comment_match = INLINE_COMMENT_REGEX.match(line)

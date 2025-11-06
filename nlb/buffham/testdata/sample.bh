@@ -49,6 +49,7 @@ message LogMessage {  # In-line message comments are ignored
 message NestedMessage {
     optional bool flag;
     LogMessage message;
+    list[LogMessage] messages;
     list[int32_t] numbers;
     Ping pong;
     nlb.buffham.testdata.other.Pong other_pong;
