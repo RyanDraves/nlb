@@ -8,7 +8,7 @@ TEMPLATE_PATTERN = re.compile(r'\{\{ ([\w|\.]+) \}\}')
 
 
 def _expanded_constant(
-    ctx: parser.Parser, bh: parser.Buffham, constant: schema_bh.Constant
+    ctx: parser.Parser, bh: schema_bh.Buffham, constant: schema_bh.Constant
 ) -> str:
     """Expand a constant to its value.
 
@@ -18,7 +18,8 @@ def _expanded_constant(
     for reference in constant.references:
         reference_constant, _ = next(
             filter(
-                lambda x: parser.relative_name(x[1], bh.namespace) == reference,
+                lambda x: parser.relative_name(x[1], parser.full_name(bh.name))
+                == reference,
                 ctx.iter_constants(),
             ),
             (None, None),

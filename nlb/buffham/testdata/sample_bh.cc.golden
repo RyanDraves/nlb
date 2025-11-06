@@ -61,7 +61,7 @@ std::pair<FlashPage, std::span<const uint8_t> > FlashPage::deserialize(std::span
     flash_page.data.resize(data_size);
     memcpy(flash_page.data.data(), buffer.data() + offset, data_size * 1);
     offset += data_size * 1;
-    (optional_bitfield & (1 << 0)) ? memcpy(&flash_page.read_size.emplace(), buffer.data() + offset, 4) : 0;
+    ((optional_bitfield >> 0) & 1) ? memcpy(&flash_page.read_size.emplace(), buffer.data() + offset, 4) : 0;
     offset += 4 * flash_page.read_size.has_value();
     return {flash_page, buffer.subspan(0, offset)};
 }
@@ -131,7 +131,7 @@ std::pair<NestedMessage, std::span<const uint8_t> > NestedMessage::deserialize(s
     memcpy(&optional_bitfield, buffer.data(), 1);
     offset += 1;
     NestedMessage nested_message;
-    (optional_bitfield & (1 << 0)) ? memcpy(&nested_message.flag.emplace(), buffer.data() + offset, 1) : 0;
+    ((optional_bitfield >> 0) & 1) ? memcpy(&nested_message.flag.emplace(), buffer.data() + offset, 1) : 0;
     offset += 1 * nested_message.flag.has_value();
     auto message_buffer = buffer.subspan(offset);
     std::tie(nested_message.message, message_buffer) = LogMessage::deserialize(message_buffer);

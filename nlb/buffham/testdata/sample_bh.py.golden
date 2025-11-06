@@ -84,7 +84,7 @@ class FlashPage:
         offset += 2
         data = list(struct.unpack_from(f'<{data_size}B', buffer, offset))
         offset += data_size * 1
-        read_size = struct.unpack_from('<I', buffer, offset)[0] if optional_bitfield & (1 << 0) else None
+        read_size = struct.unpack_from('<I', buffer, offset)[0] if (optional_bitfield >> 0) & 1 else None
         offset += 4 * (read_size is not None)
         return cls(
             address=address,
@@ -153,7 +153,7 @@ class NestedMessage:
         offset = 0
         optional_bitfield = int.from_bytes(buffer[:1], byteorder='little', signed=False)
         offset += 1
-        flag = struct.unpack_from('<B', buffer, offset)[0] if optional_bitfield & (1 << 0) else None
+        flag = struct.unpack_from('<B', buffer, offset)[0] if (optional_bitfield >> 0) & 1 else None
         offset += 1 * (flag is not None)
         message, message_size = LogMessage.deserialize(buffer[offset:])
         offset += message_size

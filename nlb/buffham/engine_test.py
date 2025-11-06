@@ -4,7 +4,6 @@ import unittest
 from typing import Optional, Union
 
 from nlb.buffham import engine
-from nlb.buffham import parser
 from nlb.buffham import schema_bh
 
 
@@ -58,7 +57,7 @@ class OptionalTest:
 
 
 class TestEngine(unittest.TestCase):
-    PING = parser.Message(
+    PING = schema_bh.Message(
         'Ping',
         [
             schema_bh.Field(
@@ -71,8 +70,9 @@ class TestEngine(unittest.TestCase):
                 None,
             ),
         ],
+        [],
     )
-    FLASH_PAGE = parser.Message(
+    FLASH_PAGE = schema_bh.Message(
         'FlashPage',
         [
             schema_bh.Field(
@@ -103,8 +103,9 @@ class TestEngine(unittest.TestCase):
                 None,
             ),
         ],
+        [],
     )
-    LOG_MESSAGE = parser.Message(
+    LOG_MESSAGE = schema_bh.Message(
         'LogMessage',
         [
             schema_bh.Field(
@@ -126,8 +127,9 @@ class TestEngine(unittest.TestCase):
                 None,
             ),
         ],
+        [],
     )
-    NESTED_MESSAGE = parser.Message(
+    NESTED_MESSAGE = schema_bh.Message(
         'NestedMessage',
         [
             schema_bh.Field(
@@ -176,8 +178,9 @@ class TestEngine(unittest.TestCase):
                 None,
             ),
         ],
+        [],
     )
-    STRING_LISTS = parser.Message(
+    STRING_LISTS = schema_bh.Message(
         'StringLists',
         [
             schema_bh.Field(
@@ -199,6 +202,7 @@ class TestEngine(unittest.TestCase):
                 None,
             ),
         ],
+        [],
     )
 
     def setUp(self) -> None:

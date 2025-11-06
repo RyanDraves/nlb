@@ -79,7 +79,6 @@ py_test(
     srcs = ["engine_test.py"],
     deps = [
         ":engine",
-        ":parser",
         ":schema_bh",
     ],
 )
@@ -125,6 +124,7 @@ py_test(
         ":engine",
         ":parser",
         ":py_generator",
+        ":schema_bh",
         "//emb/network/serialize:bh_cobs",
         "//nlb/buffham:testdata/other_bh_py",
         "//nlb/util:test_utils",

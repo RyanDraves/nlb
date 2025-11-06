@@ -36,12 +36,24 @@ message Field {
     optional string inline_comment;
 }
 
+message Message {
+    string name;
+    list[Field] fields;
+    list[string] comments;
+}
+
 message EnumField {
     string name;
     # Assume enums have <=256 values
     uint8_t value;
     list[string] comments;
     optional string inline_comment;
+}
+
+message Enum {
+    string name;
+    list[EnumField] fields;
+    list[string] comments;
 }
 
 message Transaction {
@@ -70,4 +82,13 @@ message Constant {
     list[string] comments;
     optional string inline_comment;
     list[string] references;
+}
+
+message Buffham {
+    Name name;
+    list[Message] messages;
+    list[Transaction] transactions;
+    list[Publish] publishes;
+    list[Constant] constants;
+    list[Enum] enums;
 }

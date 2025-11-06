@@ -85,6 +85,8 @@ class Field:
             buffer += item.encode()
         buffer += struct.pack('<H', len(self.inline_comment)) if self.inline_comment is not None else bytes()
         buffer += self.inline_comment.encode() if self.inline_comment is not None else bytes()
+        print()
+        print(f'Serialize field {self.name=} {self.pri_type=} {self.sub_type=} {self.is_optional=} {self.obj_name=} {self.comments=} {self.inline_comment=} {len(buffer)=}')
         return buffer
 
     @classmethod
@@ -96,6 +98,8 @@ class Field:
         offset += 2
         name = buffer[offset:offset + name_size].decode()
         offset += name_size
+        print()
+        print(f'Deserialize field {optional_bitfield=} {name=} {name_size=} {offset=}')
         pri_type = FieldType(struct.unpack_from('<B', buffer, offset)[0])
         offset += 1
         sub_type = FieldType(struct.unpack_from('<B', buffer, offset)[0]) if optional_bitfield & (1 << 0) else None
@@ -113,9 +117,12 @@ class Field:
             comments.append(buffer[offset:offset + item_size].decode())
             offset += item_size
         inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if optional_bitfield & (1 << 2) else 0
-        offset += 2 * (optional_bitfield & (1 << 2))
+        offset += 2 * ((optional_bitfield >> 2) & 1)
+        print(2 * ((optional_bitfield >> 2) & 1))
         inline_comment = buffer[offset:offset + inline_comment_size].decode() if optional_bitfield & (1 << 2) else None
         offset += inline_comment_size
+        print()
+        print(f'Deserialize field {pri_type=} {sub_type=} {is_optional=} {obj_name=} {comments=} {inline_comment=} {offset=}')
         return cls(
             name=name,
             pri_type=pri_type,
@@ -124,6 +131,57 @@ class Field:
             obj_name=obj_name,
             comments=comments,
             inline_comment=inline_comment,
+        ), offset
+
+@dataclasses.dataclass
+class Message:
+    name: str
+    fields: list[Field]
+    comments: list[str]
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += struct.pack('<H', len(self.name))
+        buffer += self.name.encode()
+        buffer += struct.pack('<H', len(self.fields))
+        for item in self.fields:
+            buffer += item.serialize()
+        buffer += struct.pack('<H', len(self.comments))
+        for item in self.comments:
+            buffer += struct.pack('<H', len(item))
+            buffer += item.encode()
+        print()
+        print(f'Serialize message {self.name=} {self.comments=} {len(buffer)=}')
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        offset = 0
+        name_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        name = buffer[offset:offset + name_size].decode()
+        offset += name_size
+        fields_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        fields = []
+        for _ in range(fields_size):
+            item, item_size = Field.deserialize(buffer[offset:])
+            fields.append(item)
+            offset += item_size
+        comments_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        comments = []
+        for _ in range(comments_size):
+            item_size = struct.unpack_from('<H', buffer, offset)[0]
+            offset += 2
+            comments.append(buffer[offset:offset + item_size].decode())
+            offset += item_size
+        print()
+        print(f'Deserialize message {name=} {comments=} {offset=}')
+        return cls(
+            name=name,
+            fields=fields,
+            comments=comments,
         ), offset
 
 @dataclasses.dataclass
@@ -178,6 +236,53 @@ class EnumField:
             value=value,
             comments=comments,
             inline_comment=inline_comment,
+        ), offset
+
+@dataclasses.dataclass
+class Enum:
+    name: str
+    fields: list[EnumField]
+    comments: list[str]
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += struct.pack('<H', len(self.name))
+        buffer += self.name.encode()
+        buffer += struct.pack('<H', len(self.fields))
+        for item in self.fields:
+            buffer += item.serialize()
+        buffer += struct.pack('<H', len(self.comments))
+        for item in self.comments:
+            buffer += struct.pack('<H', len(item))
+            buffer += item.encode()
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        offset = 0
+        name_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        name = buffer[offset:offset + name_size].decode()
+        offset += name_size
+        fields_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        fields = []
+        for _ in range(fields_size):
+            item, item_size = EnumField.deserialize(buffer[offset:])
+            fields.append(item)
+            offset += item_size
+        comments_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        comments = []
+        for _ in range(comments_size):
+            item_size = struct.unpack_from('<H', buffer, offset)[0]
+            offset += 2
+            comments.append(buffer[offset:offset + item_size].decode())
+            offset += item_size
+        return cls(
+            name=name,
+            fields=fields,
+            comments=comments,
         ), offset
 
 @dataclasses.dataclass
@@ -376,4 +481,82 @@ class Constant:
             comments=comments,
             inline_comment=inline_comment,
             references=references,
+        ), offset
+
+@dataclasses.dataclass
+class Buffham:
+    name: Name
+    messages: list[Message]
+    transactions: list[Transaction]
+    publishes: list[Publish]
+    constants: list[Constant]
+    enums: list[Enum]
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        buffer += self.name.serialize()
+        buffer += struct.pack('<H', len(self.messages))
+        for item in self.messages:
+            buffer += item.serialize()
+        buffer += struct.pack('<H', len(self.transactions))
+        for item in self.transactions:
+            buffer += item.serialize()
+        buffer += struct.pack('<H', len(self.publishes))
+        for item in self.publishes:
+            buffer += item.serialize()
+        buffer += struct.pack('<H', len(self.constants))
+        for item in self.constants:
+            buffer += item.serialize()
+        buffer += struct.pack('<H', len(self.enums))
+        for item in self.enums:
+            buffer += item.serialize()
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        offset = 0
+        name, name_size = Name.deserialize(buffer[offset:])
+        offset += name_size
+        messages_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        messages = []
+        for _ in range(messages_size):
+            item, item_size = Message.deserialize(buffer[offset:])
+            messages.append(item)
+            offset += item_size
+        transactions_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        transactions = []
+        for _ in range(transactions_size):
+            item, item_size = Transaction.deserialize(buffer[offset:])
+            transactions.append(item)
+            offset += item_size
+        publishes_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        publishes = []
+        for _ in range(publishes_size):
+            item, item_size = Publish.deserialize(buffer[offset:])
+            publishes.append(item)
+            offset += item_size
+        constants_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        constants = []
+        for _ in range(constants_size):
+            item, item_size = Constant.deserialize(buffer[offset:])
+            constants.append(item)
+            offset += item_size
+        enums_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        enums = []
+        for _ in range(enums_size):
+            item, item_size = Enum.deserialize(buffer[offset:])
+            enums.append(item)
+            offset += item_size
+        return cls(
+            name=name,
+            messages=messages,
+            transactions=transactions,
+            publishes=publishes,
+            constants=constants,
+            enums=enums,
         ), offset

@@ -38,7 +38,8 @@ def split_optional(field_type: Type) -> tuple[Type, bool]:
 
 
 def generate_serializer(
-    message: parser.Message, message_registry: dict[tuple[str, str], parser.Message]
+    message: schema_bh.Message,
+    message_registry: dict[tuple[str, str], schema_bh.Message],
 ) -> Callable[[dataclass.DataclassLike], bytes]:
     """Generic serializer generator for a message schema."""
     num_optional_fields = sum(1 for f in message.fields if f.is_optional)
@@ -114,8 +115,8 @@ def generate_serializer(
 
 
 def generate_deserializer[T: dataclass.DataclassLike](
-    message: parser.Message,
-    message_registry: dict[tuple[str, str], parser.Message],
+    message: schema_bh.Message,
+    message_registry: dict[tuple[str, str], schema_bh.Message],
     clz: Type[T],
 ) -> Callable[[bytes], tuple[T, int]]:
     """Generic deserializer generator for a message schema."""
