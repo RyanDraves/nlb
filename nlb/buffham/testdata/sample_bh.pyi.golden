@@ -67,7 +67,7 @@ class LogMessage:
 
 @dataclasses.dataclass
 class NestedMessage:
-    flag: int | None
+    flag: bool | None
     message: LogMessage
     numbers: list[int]
     pong: Ping

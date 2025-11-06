@@ -1,5 +1,6 @@
 # Buffham files
 *_bh.pyi linguist-generated=true
+nlb/buffham/schema_bh.py linguist-generated=true
 # Python tooling files
 requirements_lock.txt linguist-generated=true
 gazelle_python.yaml linguist-generated=true

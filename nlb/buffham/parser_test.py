@@ -94,7 +94,7 @@ class TestParserSimple(unittest.TestCase):
             parser.Field(
                 'baz_5',
                 schema_bh.FieldType.MESSAGE,
-                obj_name=parser.Name(my_message.name, 'test'),
+                obj_name=schema_bh.Name(my_message.name, 'test'),
             ),
         )
 
@@ -181,7 +181,7 @@ class TestParserSimple(unittest.TestCase):
                     parser.Field(
                         'inner',
                         schema_bh.FieldType.MESSAGE,
-                        obj_name=parser.Name(inner.name, 'test'),
+                        obj_name=schema_bh.Name(inner.name, 'test'),
                     )
                 ],
             ),
@@ -222,8 +222,8 @@ class TestParserSimple(unittest.TestCase):
             parser.Transaction(
                 'ping',
                 0,
-                parser.Name(receive.name, 'test'),
-                parser.Name(send.name, 'test'),
+                schema_bh.Name(receive.name, 'test'),
+                schema_bh.Name(send.name, 'test'),
                 ['some other comment'],
             ),
         )
@@ -235,8 +235,8 @@ class TestParserSimple(unittest.TestCase):
             parser.Transaction(
                 'flash_page',
                 1,
-                parser.Name(receive.name, 'test'),
-                parser.Name(receive.name, 'test'),
+                schema_bh.Name(receive.name, 'test'),
+                schema_bh.Name(receive.name, 'test'),
                 comments=[],
                 inline_comment=' inline comment',
             ),
@@ -268,7 +268,7 @@ class TestParserSimple(unittest.TestCase):
             parser.Publish(
                 'log',
                 0,
-                parser.Name(log_msg.name, 'test'),
+                schema_bh.Name(log_msg.name, 'test'),
                 ['some other comment'],
             ),
         )
@@ -290,7 +290,7 @@ class TestParserSimple(unittest.TestCase):
             parser.Publish(
                 'ping_pong',
                 1,
-                parser.Name(ping.name, 'test'),
+                schema_bh.Name(ping.name, 'test'),
                 comments=[],
                 inline_comment=' inline comment',
             ),
@@ -356,8 +356,8 @@ class TestParserSimple(unittest.TestCase):
             parser.Enum(
                 'SampleEnum',
                 [
-                    parser.EnumField('A', 0, [], ' inline on A'),
-                    parser.EnumField('B', 1, [' Comment on B']),
+                    schema_bh.EnumField('A', 0, [], ' inline on A'),
+                    schema_bh.EnumField('B', 1, [' Comment on B'], None),
                 ],
                 comments,
             ),
@@ -395,11 +395,11 @@ class TestParserSample(unittest.TestCase):
         verbosity_enum = parser.Enum(
             'Verbosity',
             [
-                parser.EnumField('LOW', 0),
-                parser.EnumField(
+                schema_bh.EnumField('LOW', 0, [], None),
+                schema_bh.EnumField(
                     'MEDIUM', 1, [' Comment on MEDIUM'], ' Inline comment on MEDIUM'
                 ),
-                parser.EnumField('HIGH', 2),
+                schema_bh.EnumField('HIGH', 2, [], None),
             ],
             [' Enums can be defined and are treated as uint8_t values'],
         )
@@ -456,12 +456,12 @@ class TestParserSample(unittest.TestCase):
                 parser.Field(
                     'verbosity',
                     schema_bh.FieldType.ENUM,
-                    obj_name=parser.Name(verbosity_enum.name, 'sample'),
+                    obj_name=schema_bh.Name(verbosity_enum.name, 'sample'),
                 ),
                 parser.Field(
                     'my_enum',
                     schema_bh.FieldType.ENUM,
-                    obj_name=parser.Name(
+                    obj_name=schema_bh.Name(
                         other.enums[0].name, 'nlb.buffham.testdata.other'
                     ),
                 ),
@@ -472,13 +472,13 @@ class TestParserSample(unittest.TestCase):
             [
                 parser.Field(
                     'flag',
-                    schema_bh.FieldType.UINT8_T,
+                    schema_bh.FieldType.BOOL,
                     optional=True,
                 ),
                 parser.Field(
                     'message',
                     schema_bh.FieldType.MESSAGE,
-                    obj_name=parser.Name(log_message.name, 'sample'),
+                    obj_name=schema_bh.Name(log_message.name, 'sample'),
                 ),
                 parser.Field(
                     'numbers',
@@ -488,12 +488,12 @@ class TestParserSample(unittest.TestCase):
                 parser.Field(
                     'pong',
                     schema_bh.FieldType.MESSAGE,
-                    obj_name=parser.Name(ping.name, 'sample'),
+                    obj_name=schema_bh.Name(ping.name, 'sample'),
                 ),
                 parser.Field(
                     'other_pong',
                     schema_bh.FieldType.MESSAGE,
-                    obj_name=parser.Name(
+                    obj_name=schema_bh.Name(
                         other.messages[0].name, 'nlb.buffham.testdata.other'
                     ),
                 ),
@@ -536,21 +536,23 @@ class TestParserSample(unittest.TestCase):
                 parser.Transaction(
                     'ping',
                     1,
-                    parser.Name(other.messages[0].name, 'nlb.buffham.testdata.other'),
-                    parser.Name(log_message.name, 'sample'),
+                    schema_bh.Name(
+                        other.messages[0].name, 'nlb.buffham.testdata.other'
+                    ),
+                    schema_bh.Name(log_message.name, 'sample'),
                 ),
                 parser.Transaction(
                     'flash_page',
                     2,
-                    parser.Name(flash_page.name, 'sample'),
-                    parser.Name(flash_page.name, 'sample'),
+                    schema_bh.Name(flash_page.name, 'sample'),
+                    schema_bh.Name(flash_page.name, 'sample'),
                     [' Transaction comment'],
                 ),
                 parser.Transaction(
                     'read_flash_page',
                     3,
-                    parser.Name(flash_page.name, 'sample'),
-                    parser.Name(flash_page.name, 'sample'),
+                    schema_bh.Name(flash_page.name, 'sample'),
+                    schema_bh.Name(flash_page.name, 'sample'),
                     [],
                     ' In-line transaction comment',
                 ),
@@ -563,7 +565,7 @@ class TestParserSample(unittest.TestCase):
                 parser.Publish(
                     'log_message',
                     4,
-                    parser.Name(log_message.name, 'sample'),
+                    schema_bh.Name(log_message.name, 'sample'),
                     [' Publish comment'],
                     ' In-line publish comment',
                 ),

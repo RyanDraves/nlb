@@ -7,6 +7,7 @@ T = ' ' * 4  # Indentation
 
 
 TYPE_MAP = {
+    schema_bh.FieldType.BOOL: 'bool',
     schema_bh.FieldType.UINT8_T: 'int',
     schema_bh.FieldType.UINT16_T: 'int',
     schema_bh.FieldType.UINT32_T: 'int',
@@ -138,7 +139,12 @@ def _generate_serializer(
 
     for field in message.fields:
         if field.iterable:
+            # Write size
             definition += f"\n{T}{T}buffer += struct.pack('<H', len(self.{field.name}))"
+            if field.optional:
+                definition += f' if self.{field.name} is not None else bytes()'
+
+            # Write data
             if field.pri_type is schema_bh.FieldType.LIST:
                 if field.sub_type in (
                     schema_bh.FieldType.STRING,
@@ -214,17 +220,24 @@ def _generate_deserializer(
             schema_bh.FieldType.STRING,
             schema_bh.FieldType.BYTES,
         ):
+            # Read size
             definition += f"\n{T}{T}{field.name}_size = struct.unpack_from('<H', buffer, offset)[0]"
             if field.optional:
                 definition += f' if optional_bitfield & (1 << {optional_idx}) else 0'
-                definition += f'\n{T}{T}offset += 2 * ({field.name} is not None)'
+                definition += (
+                    f'\n{T}{T}offset += 2 * (optional_bitfield & (1 << {optional_idx}))'
+                )
             else:
                 definition += f'\n{T}{T}offset += 2'
+
+            # Read data
             definition += (
                 f'\n{T}{T}{field.name} = buffer[offset:offset + {field.name}_size]'
             )
             if field.pri_type is schema_bh.FieldType.STRING:
                 definition += '.decode()'
+            if field.optional:
+                definition += f' if optional_bitfield & (1 << {optional_idx}) else None'
             definition += f'\n{T}{T}offset += {field.name}_size'
         elif field.pri_type is schema_bh.FieldType.MESSAGE:
             msg = _py_type(field, primary_namespace)

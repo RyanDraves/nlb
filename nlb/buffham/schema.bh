@@ -1,19 +1,33 @@
 enum FieldType {
-    UINT8_T = 0;
-    UINT16_T = 1;
-    UINT32_T = 2;
-    UINT64_T = 3;
-    INT8_T = 4;
-    INT16_T = 5;
-    INT32_T = 6;
-    INT64_T = 7;
-    FLOAT32 = 8;
-    FLOAT64 = 9;
-    STRING = 10;
-    BYTES = 11;
-    ENUM = 12;  # Treated as UINT8_T
+    BOOL = 0;
+    UINT8_T = 1;
+    UINT16_T = 2;
+    UINT32_T = 3;
+    UINT64_T = 4;
+    INT8_T = 5;
+    INT16_T = 6;
+    INT32_T = 7;
+    INT64_T = 8;
+    FLOAT32 = 9;
+    FLOAT64 = 10;
+    STRING = 11;
+    BYTES = 12;
+    ENUM = 13;  # Treated as UINT8_T
     # Some Haskell nerd is going to come along and present a beatiful argument
     # on how terrible my design is, but alas, I do not care.
-    LIST = 13;
-    MESSAGE = 14;
+    LIST = 14;
+    MESSAGE = 15;
+}
+
+message Name {
+    string name;
+    string namespace;
+}
+
+message EnumField {
+    string name;
+    # Assume enums have <=256 values
+    uint8_t value;
+    list[string] comments;
+    optional string inline_comment;
 }

@@ -94,7 +94,7 @@ class TestPyGenerator(unittest.TestCase):
 
             # Test serialization & deserialization of `NestedMessage`
             nested_message = sample_bh.NestedMessage(
-                0x42, log_message, [-0x1, -0x2], ping, other_bh.Pong(0x43)
+                False, log_message, [-0x1, -0x2], ping, other_bh.Pong(0x43)
             )
             nested_message_message = next(
                 filter(lambda m: m.name == 'NestedMessage', buffham.messages)

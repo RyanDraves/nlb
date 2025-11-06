@@ -6,6 +6,7 @@ from nlb.buffham import schema_bh
 T = ' ' * 4  # Indentation
 
 TYPE_MAP = {
+    schema_bh.FieldType.BOOL: 'bool',
     schema_bh.FieldType.UINT8_T: 'uint8_t',
     schema_bh.FieldType.UINT16_T: 'uint16_t',
     schema_bh.FieldType.UINT32_T: 'uint32_t',

@@ -47,7 +47,7 @@ message LogMessage {  # In-line message comments are ignored
 }  # This in-line comment is also ignored
 
 message NestedMessage {
-    optional uint8_t flag;
+    optional bool flag;
     LogMessage message;
     list[int32_t] numbers;
     Ping pong;

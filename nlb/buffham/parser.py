@@ -27,12 +27,6 @@ class NamedEntry(dataclass.DataclassLike, Protocol):
 
 
 @dataclasses.dataclass
-class Name:
-    name: str
-    namespace: str
-
-
-@dataclasses.dataclass
 class Field:
     name: str
     pri_type: schema_bh.FieldType
@@ -40,7 +34,7 @@ class Field:
     sub_type: schema_bh.FieldType | None = None
     optional: bool = False
     # For messages / enum
-    obj_name: Name | None = None
+    obj_name: schema_bh.Name | None = None
     comments: list[str] = dataclasses.field(default_factory=list)
     inline_comment: str | None = None
 
@@ -61,6 +55,7 @@ class Field:
         and 1 for iterable fields like strings and bytes.
         """
         return {
+            schema_bh.FieldType.BOOL: 1,
             schema_bh.FieldType.UINT8_T: 1,
             schema_bh.FieldType.UINT16_T: 2,
             schema_bh.FieldType.UINT32_T: 4,
@@ -85,6 +80,7 @@ class Field:
         as `struct` is not used to encode them.
         """
         return {
+            schema_bh.FieldType.BOOL: 'B',
             schema_bh.FieldType.UINT8_T: 'B',
             schema_bh.FieldType.UINT16_T: 'H',
             schema_bh.FieldType.UINT32_T: 'I',
@@ -110,8 +106,8 @@ class Message:
 class Transaction:
     name: str
     request_id: int
-    receive_name: Name
-    send_name: Name
+    receive_name: schema_bh.Name
+    send_name: schema_bh.Name
     comments: list[str] = dataclasses.field(default_factory=list)
     inline_comment: str | None = None
 
@@ -120,7 +116,7 @@ class Transaction:
 class Publish:
     name: str
     request_id: int
-    send_name: Name
+    send_name: schema_bh.Name
     comments: list[str] = dataclasses.field(default_factory=list)
     inline_comment: str | None = None
 
@@ -136,17 +132,9 @@ class Constant:
 
 
 @dataclasses.dataclass
-class EnumField:
-    name: str
-    value: int
-    comments: list[str] = dataclasses.field(default_factory=list)
-    inline_comment: str | None = None
-
-
-@dataclasses.dataclass
 class Enum:
     name: str
-    fields: list[EnumField]
+    fields: list[schema_bh.EnumField]
     comments: list[str] = dataclasses.field(default_factory=list)
 
 
@@ -167,12 +155,12 @@ class Buffham:
         return f'{self.parent_namespace}.{self.name}'
 
 
-def full_name(entry_name: Name) -> str:
+def full_name(entry_name: schema_bh.Name) -> str:
     """Get the full name of the entry."""
     return f'{entry_name.namespace}.{entry_name.name}'
 
 
-def relative_name(entry_name: Name, cur_namespace: str) -> str:
+def relative_name(entry_name: schema_bh.Name, cur_namespace: str) -> str:
     """Get the relative name of the entry from the current namespace."""
     if entry_name.namespace == cur_namespace:
         return entry_name.name
@@ -193,23 +181,23 @@ class Parser:
         """Get the current Buffham being parsed."""
         return self.buffhams[self.cur_namespace]
 
-    def iter_messages(self) -> Generator[tuple[Message, Name], None, None]:
+    def iter_messages(self) -> Generator[tuple[Message, schema_bh.Name], None, None]:
         """Iterate over all messages in the context."""
         for buffham in self.buffhams.values():
             for message in buffham.messages:
-                yield message, Name(message.name, buffham.namespace)
+                yield message, schema_bh.Name(message.name, buffham.namespace)
 
-    def iter_enums(self) -> Generator[tuple[Enum, Name], None, None]:
+    def iter_enums(self) -> Generator[tuple[Enum, schema_bh.Name], None, None]:
         """Iterate over all enums in the context."""
         for buffham in self.buffhams.values():
             for enum in buffham.enums:
-                yield enum, Name(enum.name, buffham.namespace)
+                yield enum, schema_bh.Name(enum.name, buffham.namespace)
 
-    def iter_constants(self) -> Generator[tuple[Constant, Name], None, None]:
+    def iter_constants(self) -> Generator[tuple[Constant, schema_bh.Name], None, None]:
         """Iterate over all constants in the context."""
         for buffham in self.buffhams.values():
             for constant in buffham.constants:
-                yield constant, Name(constant.name, buffham.namespace)
+                yield constant, schema_bh.Name(constant.name, buffham.namespace)
 
     def parse_message_field(self, line: str, comments: list[str]) -> Field:
         """Parse a field from a line.
@@ -443,7 +431,7 @@ class Parser:
 
         return Constant(name, type_, value, comments, inline_comment, references)
 
-    def parse_enum_field(self, line: str, comments: list[str]) -> EnumField:
+    def parse_enum_field(self, line: str, comments: list[str]) -> schema_bh.EnumField:
         """Parse a single enum field from a line."""
         match = ENUM_VALUE_REGEX.match(line)
         if not match:
@@ -456,7 +444,7 @@ class Parser:
             inline_comment_match.groups()[0] if inline_comment_match else None
         )
 
-        return EnumField(value_name, int(value_num), comments, inline_comment)
+        return schema_bh.EnumField(value_name, int(value_num), comments, inline_comment)
 
     def parse_enum(
         self,
