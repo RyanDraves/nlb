@@ -1,19 +1,73 @@
 enum FieldType {
-    UINT8_T = 0;
-    UINT16_T = 1;
-    UINT32_T = 2;
-    UINT64_T = 3;
-    INT8_T = 4;
-    INT16_T = 5;
-    INT32_T = 6;
-    INT64_T = 7;
-    FLOAT32 = 8;
-    FLOAT64 = 9;
-    STRING = 10;
-    BYTES = 11;
-    ENUM = 12;  # Treated as UINT8_T
+    BOOL = 0;
+    UINT8_T = 1;
+    UINT16_T = 2;
+    UINT32_T = 3;
+    UINT64_T = 4;
+    INT8_T = 5;
+    INT16_T = 6;
+    INT32_T = 7;
+    INT64_T = 8;
+    FLOAT32 = 9;
+    FLOAT64 = 10;
+    STRING = 11;
+    BYTES = 12;
+    ENUM = 13;  # Treated as UINT8_T
     # Some Haskell nerd is going to come along and present a beatiful argument
     # on how terrible my design is, but alas, I do not care.
-    LIST = 13;
-    MESSAGE = 14;
+    LIST = 14;
+    MESSAGE = 15;
+}
+
+message Name {
+    string name;
+    string namespace;
+}
+
+message Field {
+    string name;
+    FieldType pri_type;
+    # For lists
+    optional FieldType sub_type;
+    bool is_optional;
+    # For messages / enum
+    optional Name obj_name;
+    list[string] comments;
+    optional string inline_comment;
+}
+
+message EnumField {
+    string name;
+    # Assume enums have <=256 values
+    uint8_t value;
+    list[string] comments;
+    optional string inline_comment;
+}
+
+message Transaction {
+    string name;
+    # Reasonable size limit on number of transactions/publishes
+    uint16_t request_id;
+    Name receive_name;
+    Name send_name;
+    list[string] comments;
+    optional string inline_comment;
+}
+
+message Publish {
+    string name;
+    # Reasonable size limit on number of transactions/publishes
+    uint16_t request_id;
+    Name send_name;
+    list[string] comments;
+    optional string inline_comment;
+}
+
+message Constant {
+    string name;
+    FieldType type;
+    string value;
+    list[string] comments;
+    optional string inline_comment;
+    list[string] references;
 }

@@ -147,6 +147,7 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [
         ":parser",
+        ":schema_bh",
     ],
 )
 

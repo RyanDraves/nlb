@@ -20,6 +20,46 @@ ENUM_START_REGEX = re.compile(r'^enum (\w+) {')
 ENUM_END_REGEX = re.compile(r'^}')
 ENUM_VALUE_REGEX = re.compile(r'^\s*(\w+)\s*=\s*(\d+);')
 
+# Size map for each field type
+#
+# Strings and bytes return 1 as the "size" of each "element"
+SIZE_MAP = {
+    schema_bh.FieldType.BOOL: 1,
+    schema_bh.FieldType.UINT8_T: 1,
+    schema_bh.FieldType.UINT16_T: 2,
+    schema_bh.FieldType.UINT32_T: 4,
+    schema_bh.FieldType.UINT64_T: 8,
+    schema_bh.FieldType.INT8_T: 1,
+    schema_bh.FieldType.INT16_T: 2,
+    schema_bh.FieldType.INT32_T: 4,
+    schema_bh.FieldType.INT64_T: 8,
+    schema_bh.FieldType.FLOAT32: 4,
+    schema_bh.FieldType.FLOAT64: 8,
+    schema_bh.FieldType.STRING: 1,
+    schema_bh.FieldType.BYTES: 1,
+    schema_bh.FieldType.ENUM: 1,
+    schema_bh.FieldType.MESSAGE: -1,  # N/A
+}
+
+
+FORMAT_MAP = {
+    schema_bh.FieldType.BOOL: 'B',
+    schema_bh.FieldType.UINT8_T: 'B',
+    schema_bh.FieldType.UINT16_T: 'H',
+    schema_bh.FieldType.UINT32_T: 'I',
+    schema_bh.FieldType.UINT64_T: 'Q',
+    schema_bh.FieldType.INT8_T: 'b',
+    schema_bh.FieldType.INT16_T: 'h',
+    schema_bh.FieldType.INT32_T: 'i',
+    schema_bh.FieldType.INT64_T: 'q',
+    schema_bh.FieldType.FLOAT32: 'f',
+    schema_bh.FieldType.FLOAT64: 'd',
+    schema_bh.FieldType.ENUM: 'B',
+    schema_bh.FieldType.MESSAGE: 'N/A',
+    schema_bh.FieldType.STRING: 'N/A',
+    schema_bh.FieldType.BYTES: 'N/A',
+}
+
 
 class NamedEntry(dataclass.DataclassLike, Protocol):
     @property
@@ -27,126 +67,16 @@ class NamedEntry(dataclass.DataclassLike, Protocol):
 
 
 @dataclasses.dataclass
-class Name:
-    name: str
-    namespace: str
-
-
-@dataclasses.dataclass
-class Field:
-    name: str
-    pri_type: schema_bh.FieldType
-    # For lists
-    sub_type: schema_bh.FieldType | None = None
-    optional: bool = False
-    # For messages / enum
-    obj_name: Name | None = None
-    comments: list[str] = dataclasses.field(default_factory=list)
-    inline_comment: str | None = None
-
-    @property
-    def iterable(self) -> bool:
-        """Check if the field is iterable."""
-        return self.pri_type in (
-            schema_bh.FieldType.LIST,
-            schema_bh.FieldType.STRING,
-            schema_bh.FieldType.BYTES,
-        )
-
-    @property
-    def size(self) -> int:
-        """Get the size of the field in bytes.
-
-        Returns the `sub_type` size if the field is a list
-        and 1 for iterable fields like strings and bytes.
-        """
-        return {
-            schema_bh.FieldType.UINT8_T: 1,
-            schema_bh.FieldType.UINT16_T: 2,
-            schema_bh.FieldType.UINT32_T: 4,
-            schema_bh.FieldType.UINT64_T: 8,
-            schema_bh.FieldType.INT8_T: 1,
-            schema_bh.FieldType.INT16_T: 2,
-            schema_bh.FieldType.INT32_T: 4,
-            schema_bh.FieldType.INT64_T: 8,
-            schema_bh.FieldType.FLOAT32: 4,
-            schema_bh.FieldType.FLOAT64: 8,
-            schema_bh.FieldType.STRING: 1,
-            schema_bh.FieldType.BYTES: 1,
-            schema_bh.FieldType.ENUM: 1,
-        }[self.sub_type or self.pri_type]
-
-    @property
-    def format(self) -> str:
-        """Get the `struct` format string for the field.
-
-        Returns the `sub_type` format if the field is a list
-        and raises KeyError for iterable fields like strings and bytes,
-        as `struct` is not used to encode them.
-        """
-        return {
-            schema_bh.FieldType.UINT8_T: 'B',
-            schema_bh.FieldType.UINT16_T: 'H',
-            schema_bh.FieldType.UINT32_T: 'I',
-            schema_bh.FieldType.UINT64_T: 'Q',
-            schema_bh.FieldType.INT8_T: 'b',
-            schema_bh.FieldType.INT16_T: 'h',
-            schema_bh.FieldType.INT32_T: 'i',
-            schema_bh.FieldType.INT64_T: 'q',
-            schema_bh.FieldType.FLOAT32: 'f',
-            schema_bh.FieldType.FLOAT64: 'd',
-            schema_bh.FieldType.ENUM: 'B',
-        }[self.sub_type or self.pri_type]
-
-
-@dataclasses.dataclass
 class Message:
     name: str
-    fields: list[Field]
+    fields: list[schema_bh.Field]
     comments: list[str] = dataclasses.field(default_factory=list)
-
-
-@dataclasses.dataclass
-class Transaction:
-    name: str
-    request_id: int
-    receive_name: Name
-    send_name: Name
-    comments: list[str] = dataclasses.field(default_factory=list)
-    inline_comment: str | None = None
-
-
-@dataclasses.dataclass
-class Publish:
-    name: str
-    request_id: int
-    send_name: Name
-    comments: list[str] = dataclasses.field(default_factory=list)
-    inline_comment: str | None = None
-
-
-@dataclasses.dataclass
-class Constant:
-    name: str
-    type: schema_bh.FieldType
-    value: str
-    comments: list[str] = dataclasses.field(default_factory=list)
-    inline_comment: str | None = None
-    references: list[str] = dataclasses.field(default_factory=list)
-
-
-@dataclasses.dataclass
-class EnumField:
-    name: str
-    value: int
-    comments: list[str] = dataclasses.field(default_factory=list)
-    inline_comment: str | None = None
 
 
 @dataclasses.dataclass
 class Enum:
     name: str
-    fields: list[EnumField]
+    fields: list[schema_bh.EnumField]
     comments: list[str] = dataclasses.field(default_factory=list)
 
 
@@ -155,9 +85,9 @@ class Buffham:
     name: str
     parent_namespace: str
     messages: list[Message] = dataclasses.field(default_factory=list)
-    transactions: list[Transaction] = dataclasses.field(default_factory=list)
-    publishes: list[Publish] = dataclasses.field(default_factory=list)
-    constants: list[Constant] = dataclasses.field(default_factory=list)
+    transactions: list[schema_bh.Transaction] = dataclasses.field(default_factory=list)
+    publishes: list[schema_bh.Publish] = dataclasses.field(default_factory=list)
+    constants: list[schema_bh.Constant] = dataclasses.field(default_factory=list)
     enums: list[Enum] = dataclasses.field(default_factory=list)
 
     @property
@@ -167,16 +97,25 @@ class Buffham:
         return f'{self.parent_namespace}.{self.name}'
 
 
-def full_name(entry_name: Name) -> str:
+def full_name(entry_name: schema_bh.Name) -> str:
     """Get the full name of the entry."""
     return f'{entry_name.namespace}.{entry_name.name}'
 
 
-def relative_name(entry_name: Name, cur_namespace: str) -> str:
+def relative_name(entry_name: schema_bh.Name, cur_namespace: str) -> str:
     """Get the relative name of the entry from the current namespace."""
     if entry_name.namespace == cur_namespace:
         return entry_name.name
     return full_name(entry_name)
+
+
+def is_field_iterable(field: schema_bh.Field) -> bool:
+    """Check if the field is iterable."""
+    return field.pri_type in (
+        schema_bh.FieldType.LIST,
+        schema_bh.FieldType.STRING,
+        schema_bh.FieldType.BYTES,
+    )
 
 
 @dataclasses.dataclass
@@ -193,25 +132,27 @@ class Parser:
         """Get the current Buffham being parsed."""
         return self.buffhams[self.cur_namespace]
 
-    def iter_messages(self) -> Generator[tuple[Message, Name], None, None]:
+    def iter_messages(self) -> Generator[tuple[Message, schema_bh.Name], None, None]:
         """Iterate over all messages in the context."""
         for buffham in self.buffhams.values():
             for message in buffham.messages:
-                yield message, Name(message.name, buffham.namespace)
+                yield message, schema_bh.Name(message.name, buffham.namespace)
 
-    def iter_enums(self) -> Generator[tuple[Enum, Name], None, None]:
+    def iter_enums(self) -> Generator[tuple[Enum, schema_bh.Name], None, None]:
         """Iterate over all enums in the context."""
         for buffham in self.buffhams.values():
             for enum in buffham.enums:
-                yield enum, Name(enum.name, buffham.namespace)
+                yield enum, schema_bh.Name(enum.name, buffham.namespace)
 
-    def iter_constants(self) -> Generator[tuple[Constant, Name], None, None]:
+    def iter_constants(
+        self,
+    ) -> Generator[tuple[schema_bh.Constant, schema_bh.Name], None, None]:
         """Iterate over all constants in the context."""
         for buffham in self.buffhams.values():
             for constant in buffham.constants:
-                yield constant, Name(constant.name, buffham.namespace)
+                yield constant, schema_bh.Name(constant.name, buffham.namespace)
 
-    def parse_message_field(self, line: str, comments: list[str]) -> Field:
+    def parse_message_field(self, line: str, comments: list[str]) -> schema_bh.Field:
         """Parse a field from a line.
 
         Fields are arranged as `[type] [name];`. Examples:
@@ -275,7 +216,7 @@ class Parser:
             inline_comment_match.groups()[0] if inline_comment_match else None
         )
 
-        return Field(
+        return schema_bh.Field(
             name,
             pri_type,
             sub_type,
@@ -314,7 +255,9 @@ class Parser:
                 field_comments = []
         return Message(name, fields, comments)
 
-    def parse_transaction(self, line: str, comments: list[str]) -> Transaction:
+    def parse_transaction(
+        self, line: str, comments: list[str]
+    ) -> schema_bh.Transaction:
         """Parse a transaction from a line.
 
         Transactions are arranged as:
@@ -354,7 +297,7 @@ class Parser:
             inline_comment_match.groups()[0] if inline_comment_match else None
         )
 
-        return Transaction(
+        return schema_bh.Transaction(
             name,
             request_id,
             receive_name,
@@ -363,7 +306,7 @@ class Parser:
             inline_comment,
         )
 
-    def parse_publish(self, line: str, comments: list[str]) -> Publish:
+    def parse_publish(self, line: str, comments: list[str]) -> schema_bh.Publish:
         """Parse a publish from a line.
 
         Publishes are arranged as:
@@ -395,9 +338,9 @@ class Parser:
             inline_comment_match.groups()[0] if inline_comment_match else None
         )
 
-        return Publish(name, request_id, send_name, comments, inline_comment)
+        return schema_bh.Publish(name, request_id, send_name, comments, inline_comment)
 
-    def parse_constant(self, line: str, comments: list[str]) -> Constant:
+    def parse_constant(self, line: str, comments: list[str]) -> schema_bh.Constant:
         """Parse a constant from a line.
 
         Constants are arranged as:
@@ -441,9 +384,11 @@ class Parser:
             ):
                 references.append(relative_name(constant_name, self.cur_namespace))
 
-        return Constant(name, type_, value, comments, inline_comment, references)
+        return schema_bh.Constant(
+            name, type_, value, comments, inline_comment, references
+        )
 
-    def parse_enum_field(self, line: str, comments: list[str]) -> EnumField:
+    def parse_enum_field(self, line: str, comments: list[str]) -> schema_bh.EnumField:
         """Parse a single enum field from a line."""
         match = ENUM_VALUE_REGEX.match(line)
         if not match:
@@ -456,7 +401,7 @@ class Parser:
             inline_comment_match.groups()[0] if inline_comment_match else None
         )
 
-        return EnumField(value_name, int(value_num), comments, inline_comment)
+        return schema_bh.EnumField(value_name, int(value_num), comments, inline_comment)
 
     def parse_enum(
         self,

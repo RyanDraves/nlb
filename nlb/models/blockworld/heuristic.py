@@ -2,7 +2,9 @@ from nlb.models.blockworld import environment
 from nlb.models.blockworld import metrics
 
 
-def heuristic_policy(state: environment.State, result: metrics.Result) -> environment.Action:
+def heuristic_policy(
+    state: environment.State, result: metrics.Result
+) -> environment.Action:
     """A simple heuristic policy to sort the stacks."""
     goal_stack = state[2]
 
