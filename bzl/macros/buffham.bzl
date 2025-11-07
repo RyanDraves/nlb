@@ -17,7 +17,7 @@ def _buffham_impl(name, visibility, src, deps, py, cc, tags):
         outs = [output_bhb],
         cmd = cmd,
         tools = ["//nlb/buffham"],
-        visibility = ["__pkg__"],
+        visibility = visibility,
     )
 
     if py:
