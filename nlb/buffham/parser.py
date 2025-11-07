@@ -515,6 +515,7 @@ class Parser:
             self.request_id = (
                 max(
                     self.request_id - 1,
+                    0,  # Ensure there's at least 2 elements
                     *(t.request_id for t in bh.transactions),
                     *(p.request_id for p in bh.publishes),
                 )
