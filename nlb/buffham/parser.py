@@ -370,16 +370,22 @@ class Parser:
             inline_comment_match.groups()[0] if inline_comment_match else None
         )
 
-        # Find references to other constants
+        # Expand references to other constants
+        expanded_value = value
         references = []
-        for _, constant_name in self.iter_constants():
+        for constant, constant_name in self.iter_constants():
             if re.match(
-                rf'.*{{{relative_name(constant_name, self.cur_namespace_str)}}}', value
+                rf'.*{{({relative_name(constant_name, self.cur_namespace_str)})}}',
+                value,
             ):
                 references.append(relative_name(constant_name, self.cur_namespace_str))
+                expanded_value = expanded_value.replace(
+                    f'{{{relative_name(constant_name, self.cur_namespace_str)}}}',
+                    constant.expanded_value,
+                )
 
         return schema_bh.Constant(
-            name, type_, value, comments, inline_comment, references
+            name, type_, value, expanded_value, comments, inline_comment, references
         )
 
     def parse_enum_field(self, line: str, comments: list[str]) -> schema_bh.EnumField:
@@ -501,6 +507,21 @@ class Parser:
     def parse_file(
         self, file: pathlib.Path, parent_namespace: str | None = None
     ) -> schema_bh.Buffham:
+        # Handle binary Buffham files
+        if file.suffix == '.bhb':
+            bh, _ = schema_bh.Buffham.deserialize(file.read_bytes())
+            self.buffhams[full_name(bh.name)] = bh
+            self.cur_namespace = bh.name
+            self.request_id = (
+                max(
+                    self.request_id - 1,
+                    *(t.request_id for t in bh.transactions),
+                    *(p.request_id for p in bh.publishes),
+                )
+                + 1
+            )
+            return bh
+
         # Determine the namespace
         if parent_namespace is None:
             parent_namespace = '.'.join(file.parent.parts)

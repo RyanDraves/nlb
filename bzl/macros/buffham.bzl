@@ -5,16 +5,23 @@ load("@bazel_lib//lib:write_source_files.bzl", "write_source_file")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 def _buffham_impl(name, visibility, src, deps, py, cc, tags):
-    native.filegroup(
-        name = name,
-        srcs = [src],
-        visibility = visibility,
-    )
-
     basename = name.replace("_bh", "")
 
+    cmd = "$(execpath //nlb/buffham) -l binary -i $(location {0}) -o $(RULEDIR)/{1}.bhb".format(src, basename)
+    for dep in deps:
+        cmd += " --dep $(location {0})".format(dep)
+    output_bhb = basename + ".bhb"
+    native.genrule(
+        name = name,
+        srcs = [src] + deps,
+        outs = [output_bhb],
+        cmd = cmd,
+        tools = ["//nlb/buffham"],
+        visibility = ["__pkg__"],
+    )
+
     if py:
-        cmd = "$(execpath //nlb/buffham) -l python -i $(location {0}) -o $(RULEDIR)/{1}_bh.py -s $(RULEDIR)/{1}_bh.pyi.intermediate".format(src, basename)
+        cmd = "$(execpath //nlb/buffham) -l python -i $(location {0}) -o $(RULEDIR)/{1}_bh.py -s $(RULEDIR)/{1}_bh.pyi.intermediate".format(name, basename)
         for dep in deps:
             cmd += " --dep $(location {0})".format(dep)
 
@@ -22,7 +29,7 @@ def _buffham_impl(name, visibility, src, deps, py, cc, tags):
 
         native.genrule(
             name = name + "_py_gen",
-            srcs = [src] + deps,
+            srcs = [name] + deps,
             outs = [basename + "_bh.py", basename + "_bh.pyi.intermediate"],
             cmd = cmd,
             tools = ["//nlb/buffham"],
@@ -42,7 +49,7 @@ def _buffham_impl(name, visibility, src, deps, py, cc, tags):
         )
 
     if cc:
-        cmd = "$(execpath //nlb/buffham) -l cpp -i $(location {0}) -o $(RULEDIR)/{1}_bh.hpp -s $(RULEDIR)/{1}_bh.cc".format(src, basename)
+        cmd = "$(execpath //nlb/buffham) -l cpp -i $(location {0}) -o $(RULEDIR)/{1}_bh.hpp -s $(RULEDIR)/{1}_bh.cc".format(name, basename)
         for dep in deps:
             cmd += " --dep $(location {0})".format(dep)
 
@@ -50,7 +57,7 @@ def _buffham_impl(name, visibility, src, deps, py, cc, tags):
 
         native.genrule(
             name = name + "_cc_gen",
-            srcs = [src] + deps,
+            srcs = [name] + deps,
             outs = [basename + "_bh.hpp", basename + "_bh.cc"],
             cmd = cmd,
             tools = ["//nlb/buffham"],
@@ -70,14 +77,12 @@ def _buffham_impl(name, visibility, src, deps, py, cc, tags):
             visibility = visibility,
         )
 
-def _buffham_template_impl(name, visibility, bh, template, out_file, bh_deps, **kwargs):
+def _buffham_template_impl(name, visibility, bh, template, out_file, **kwargs):
     cmd = "$(execpath //nlb/buffham) -l template -i $(location {0}) -t $(location {1}) -o $@".format(bh, template)
-    for dep in bh_deps:
-        cmd += " --dep $(location {0})".format(dep)
 
     native.genrule(
         name = name,
-        srcs = [bh, template] + bh_deps,
+        srcs = [bh, template],
         outs = [out_file],
         cmd = cmd,
         tools = ["//nlb/buffham"],
@@ -160,12 +165,6 @@ buffham_template = macro(
         "out_file": attr.output(
             mandatory = True,
             doc = "The output file to write the template to.",
-        ),
-        "bh_deps": attr.label_list(
-            allow_files = True,
-            doc = "The transitive dependencies (currently necessary) of the Buffham file.",
-            # Prevent receiving a `select` object on the input
-            configurable = False,
         ),
         "srcs": None,
         "outs": None,

@@ -14,6 +14,7 @@ class Languages(enum.Enum):
     PYTHON = enum.auto()
     CPP = enum.auto()
     TEMPLATE = enum.auto()
+    BINARY = enum.auto()
 
 
 @click.command()
@@ -84,6 +85,10 @@ def main(
         case Languages.TEMPLATE:
             assert template_file is not None
             template_generator.generate_template(p, ns, output, template_file)
+        case Languages.BINARY:
+            # Serialize the parsed buffham data
+            with output.open('wb') as f:
+                f.write(p.buffhams[ns].serialize())
         case _:
             raise ValueError(f'Unsupported language: {language}')
 

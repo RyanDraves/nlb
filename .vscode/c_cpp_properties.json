@@ -12,7 +12,10 @@
             "forcedInclude": [],
             "cStandard": "c17",
             "cppStandard": "gnu++23",
-            "defines": []
+            "defines": [],
+            "compileCommands": [
+                "${workspaceFolder}/compile_commands.json"
+            ]
         },
         {
             "name": "Arduino",

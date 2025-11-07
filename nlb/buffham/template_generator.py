@@ -2,36 +2,37 @@ import pathlib
 import re
 
 from nlb.buffham import parser
-from nlb.buffham import schema_bh
+
+# from nlb.buffham import schema_bh
 
 TEMPLATE_PATTERN = re.compile(r'\{\{ ([\w|\.]+) \}\}')
 
 
-def _expanded_constant(
-    ctx: parser.Parser, bh: schema_bh.Buffham, constant: schema_bh.Constant
-) -> str:
-    """Expand a constant to its value.
+# def _expanded_constant(
+#     ctx: parser.Parser, bh: schema_bh.Buffham, constant: schema_bh.Constant
+# ) -> str:
+#     """Expand a constant to its value.
 
-    If the constant references other constants, expand those as well.
-    """
-    reference_constants = {}
-    for reference in constant.references:
-        reference_constant, _ = next(
-            filter(
-                lambda x: parser.relative_name(x[1], parser.full_name(bh.name))
-                == reference,
-                ctx.iter_constants(),
-            ),
-            (None, None),
-        )
-        assert reference_constant is not None, f'Constant {reference} not found'
-        reference_constants[reference] = _expanded_constant(ctx, bh, reference_constant)
+#     If the constant references other constants, expand those as well.
+#     """
+#     reference_constants = {}
+#     for reference in constant.references:
+#         reference_constant, _ = next(
+#             filter(
+#                 lambda x: parser.relative_name(x[1], parser.full_name(bh.name))
+#                 == reference,
+#                 ctx.iter_constants(),
+#             ),
+#             (None, None),
+#         )
+#         assert reference_constant is not None, f'Constant {reference} not found'
+#         reference_constants[reference] = _expanded_constant(ctx, bh, reference_constant)
 
-    value = constant.value
-    for ref, val in reference_constants.items():
-        value = value.replace(f'{{{ref}}}', val)
+#     value = constant.value
+#     for ref, val in reference_constants.items():
+#         value = value.replace(f'{{{ref}}}', val)
 
-    return value
+#     return value
 
 
 def generate_template(
@@ -41,8 +42,6 @@ def generate_template(
     template_file: pathlib.Path,
 ) -> None:
     """Generate a template file."""
-    bh = ctx.buffhams[primary_namespace]
-
     lines = template_file.read_text().splitlines()
 
     # Search through the lines of the template file for template patterns
@@ -63,8 +62,6 @@ def generate_template(
                 if constant is None:
                     raise ValueError(f'Constant {m} not found')
 
-                line = line.replace(
-                    f'{{{{ {m} }}}}', _expanded_constant(ctx, bh, constant)
-                )
+                line = line.replace(f'{{{{ {m} }}}}', constant.expanded_value)
 
             fp.write(line + '\n')
