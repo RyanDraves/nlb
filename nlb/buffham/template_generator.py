@@ -3,36 +3,7 @@ import re
 
 from nlb.buffham import parser
 
-# from nlb.buffham import schema_bh
-
 TEMPLATE_PATTERN = re.compile(r'\{\{ ([\w|\.]+) \}\}')
-
-
-# def _expanded_constant(
-#     ctx: parser.Parser, bh: schema_bh.Buffham, constant: schema_bh.Constant
-# ) -> str:
-#     """Expand a constant to its value.
-
-#     If the constant references other constants, expand those as well.
-#     """
-#     reference_constants = {}
-#     for reference in constant.references:
-#         reference_constant, _ = next(
-#             filter(
-#                 lambda x: parser.relative_name(x[1], parser.full_name(bh.name))
-#                 == reference,
-#                 ctx.iter_constants(),
-#             ),
-#             (None, None),
-#         )
-#         assert reference_constant is not None, f'Constant {reference} not found'
-#         reference_constants[reference] = _expanded_constant(ctx, bh, reference_constant)
-
-#     value = constant.value
-#     for ref, val in reference_constants.items():
-#         value = value.replace(f'{{{ref}}}', val)
-
-#     return value
 
 
 def generate_template(
@@ -55,7 +26,10 @@ def generate_template(
             for m in match:
                 # Find the value in the Buffham constants
                 constant, _ = next(
-                    filter(lambda x: x[0].name == m, ctx.iter_constants()),
+                    filter(
+                        lambda x: parser.relative_name(x[1], primary_namespace) == m,
+                        ctx.iter_constants(),
+                    ),
                     (None, None),
                 )
 
