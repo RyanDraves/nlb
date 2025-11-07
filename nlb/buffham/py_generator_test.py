@@ -13,9 +13,6 @@ from nlb.buffham import schema_bh
 from nlb.buffham.testdata import other_bh
 from nlb.util import test_utils
 
-# Transitive dependency of our generated code
-# gazelle:include_dep //emb/network/serialize:bh_cobs
-
 
 class TestPyGenerator(unittest.TestCase):
     def setUp(self) -> None:

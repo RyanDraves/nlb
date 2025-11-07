@@ -402,6 +402,7 @@ class Constant:
     name: str
     type: FieldType
     value: str
+    expanded_value: str
     comments: list[str]
     inline_comment: str | None
     references: list[str]
@@ -416,6 +417,8 @@ class Constant:
         buffer += struct.pack('<B', self.type.value)
         buffer += struct.pack('<H', len(self.value))
         buffer += self.value.encode()
+        buffer += struct.pack('<H', len(self.expanded_value))
+        buffer += self.expanded_value.encode()
         buffer += struct.pack('<H', len(self.comments))
         for item in self.comments:
             buffer += struct.pack('<H', len(item))
@@ -443,6 +446,10 @@ class Constant:
         offset += 2
         value = buffer[offset:offset + value_size].decode()
         offset += value_size
+        expanded_value_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        expanded_value = buffer[offset:offset + expanded_value_size].decode()
+        offset += expanded_value_size
         comments_size = struct.unpack_from('<H', buffer, offset)[0]
         offset += 2
         comments = []
@@ -467,6 +474,7 @@ class Constant:
             name=name,
             type=type,
             value=value,
+            expanded_value=expanded_value,
             comments=comments,
             inline_comment=inline_comment,
             references=references,

@@ -405,6 +405,7 @@ class TestParserSimple(unittest.TestCase):
                 'foo',
                 schema_bh.FieldType.UINT8_T,
                 '0x01',
+                '0x01',
                 [],
                 None,
                 [],
@@ -416,6 +417,7 @@ class TestParserSimple(unittest.TestCase):
         bar = schema_bh.Constant(
             'bar',
             schema_bh.FieldType.UINT32_T,
+            '0x12345678',
             '0x12345678',
             [],
             ' inline comment',
@@ -435,6 +437,7 @@ class TestParserSimple(unittest.TestCase):
                 'baz',
                 schema_bh.FieldType.UINT32_T,
                 '0x1 + {bar}',
+                '0x1 + 0x12345678',
                 ['some other comment'],
                 None,
                 ['bar'],
@@ -749,6 +752,7 @@ class TestParserSample(unittest.TestCase):
                     'my_constant',
                     schema_bh.FieldType.UINT8_T,
                     '4',
+                    '4',
                     [' This is a constant in the global scope'],
                     None,
                     [],
@@ -756,6 +760,7 @@ class TestParserSample(unittest.TestCase):
                 schema_bh.Constant(
                     'constant_string',
                     schema_bh.FieldType.STRING,
+                    'Hello, world!',
                     'Hello, world!',
                     [
                         " Constants can be strings as well; they're interpreted with bare words"
@@ -767,6 +772,7 @@ class TestParserSample(unittest.TestCase):
                     'composed_constant',
                     schema_bh.FieldType.UINT16_T,
                     '2 + {my_constant} + {nlb.buffham.testdata.other.other_constant}',
+                    '2 + 4 + 2',
                     [' Constants may reference other constants with {brackets}'],
                     None,
                     ['nlb.buffham.testdata.other.other_constant', 'my_constant'],

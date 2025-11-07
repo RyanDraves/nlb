@@ -79,6 +79,7 @@ message Constant {
     string name;
     FieldType type;
     string value;
+    string expanded_value;
     list[string] comments;
     optional string inline_comment;
     list[string] references;

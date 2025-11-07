@@ -125,7 +125,6 @@ py_test(
         ":parser",
         ":py_generator",
         ":schema_bh",
-        "//emb/network/serialize:bh_cobs",
         "//nlb/buffham:testdata/other_bh_py",
         "//nlb/util:test_utils",
     ],
@@ -145,10 +144,7 @@ py_library(
     name = "template_generator",
     srcs = ["template_generator.py"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":parser",
-        ":schema_bh",
-    ],
+    deps = [":parser"],
 )
 
 py_test(
@@ -194,7 +190,6 @@ buffham_py_write(
 buffham_template(
     name = "testdata/sample_template",
     bh = ":testdata/sample_bh",
-    bh_deps = [":testdata/other_bh"],
     out_file = "testdata/sample_template.md",
     template = "testdata/sample.template.md",
 )
