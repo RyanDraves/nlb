@@ -38,17 +38,19 @@ services:
       DEFAULT_HOUSEHOLD: Invited
       # https://integrations.goauthentik.io/integrations/services/mealie/
       OIDC_AUTH_ENABLED: true
-      OIDC_PROVIDER_NAME: tailscale
+      OIDC_PROVIDER_NAME: Tailscale
       OIDC_CONFIGURATION_URL: https://idp.barn-arcturus.ts.net/.well-known/openid-configuration
       OIDC_SIGNUP_ENABLED: false
       OIDC_USER_CLAIM: email
       # Groups defined in Tailscale ACLs
-      OIDC_USER_GROUP: mealie-users
-      OIDC_ADMIN_GROUP: mealie-admins
+      # but appears to not work
+      # OIDC_USER_GROUP: mealie-users
+      # OIDC_ADMIN_GROUP: mealie-admins
       # The login page will be bypassed and you will be sent directly to your Identity Provider
-      OIDC_AUTO_REDIRECT: true
+      OIDC_AUTO_REDIRECT: false
       # By setting this value to true, a session will be extended as if "Remember Me" was checked.
       OIDC_REMEMBER_ME: true
+      OIDC_SCOPES_OVERRIDE: openid profile email
     secrets:
       - postgres_password
       - smtp_password
