@@ -39,8 +39,9 @@ services:
       # https://integrations.goauthentik.io/integrations/services/mealie/
       OIDC_AUTH_ENABLED: true
       OIDC_PROVIDER_NAME: tailscale
-      OIDC_CONFIGURATION_URL: https://idp.barn-arcturus.ts.net/application/o/mealie/.well-known/openid-configuration
+      OIDC_CONFIGURATION_URL: https://idp.barn-arcturus.ts.net/.well-known/openid-configuration
       OIDC_SIGNUP_ENABLED: false
+      OIDC_USER_CLAIM: email
       # Groups defined in Tailscale ACLs
       OIDC_USER_GROUP: mealie-users
       OIDC_ADMIN_GROUP: mealie-admins
