@@ -11,12 +11,29 @@ services:
       - TS_HOSTNAME=idp
       # Enable OAuth token exchange
       - TSIDP_ENABLE_STS=1
-    command:
-      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /run.sh"
+    secrets:
+      - tsidp_authkey
+    user: "0:0"  # Start as root to fix permissions, then drop to app user
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo '=== Debug Info ==='
+        id
+        echo '--- /data permissions (before) ---'
+        ls -ld /data
+        echo '--- Fixing permissions ---'
+        chown -R app:app /data
+        chmod -R u+rwX /data
+        echo '--- /data permissions (after) ---'
+        ls -ld /data
+        echo '=== End Debug Info ==='
+        export TS_AUTHKEY=$$(cat /run/secrets/tsidp_authkey)
+        exec su -s /bin/sh app -c "TS_AUTHKEY='$$TS_AUTHKEY' /run.sh"
 
 volumes:
   tsidp-data:
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  tsidp_authkey:
+    file: ${PWD}/../secrets/tsidp.authkey
