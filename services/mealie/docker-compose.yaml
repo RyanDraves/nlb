@@ -38,11 +38,12 @@ services:
       DEFAULT_HOUSEHOLD: Invited
       # https://integrations.goauthentik.io/integrations/services/mealie/
       OIDC_AUTH_ENABLED: true
-      OIDC_PROVIDER_NAME: authentik
-      OIDC_CONFIGURATION_URL: https://authentik.barn-arcturus.ts.net/application/o/mealie/.well-known/openid-configuration
-      OIDC_SIGNUP_ENABLED: true
-      OIDC_USER_GROUP: Mealie Users
-      OIDC_ADMIN_GROUP: Mealie Admins
+      OIDC_PROVIDER_NAME: tailscale
+      OIDC_CONFIGURATION_URL: https://idp.barn-arcturus.ts.net/application/o/mealie/.well-known/openid-configuration
+      OIDC_SIGNUP_ENABLED: false
+      # Groups defined in Tailscale ACLs
+      OIDC_USER_GROUP: mealie-users
+      OIDC_ADMIN_GROUP: mealie-admins
       # The login page will be bypassed and you will be sent directly to your Identity Provider
       OIDC_AUTO_REDIRECT: true
       # By setting this value to true, a session will be extended as if "Remember Me" was checked.
