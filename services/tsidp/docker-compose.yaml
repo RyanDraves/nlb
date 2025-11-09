@@ -1,0 +1,22 @@
+services:
+  tsidp:
+    container_name: tsidp
+    image: ghcr.io/tailscale/tsidp:latest
+    volumes:
+      - tsidp-data:/data
+    environment:
+      # tsidp is experimental - needed while version <1.0.0
+      - TAILSCALE_USE_WIP_CODE=1
+      - TS_STATE_DIR=/data
+      - TS_HOSTNAME=idp
+      # Enable OAuth token exchange
+      - TSIDP_ENABLE_STS=1
+    command:
+      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /run.sh"
+
+volumes:
+  tsidp-data:
+
+secrets:
+  tailnet_oauth:
+    file: ${PWD}/../secrets/tailnet_oauth.secret
