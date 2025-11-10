@@ -42,7 +42,7 @@ services:
       OIDC_CONFIGURATION_URL: https://idp.barn-arcturus.ts.net/.well-known/openid-configuration
       OIDC_SIGNUP_ENABLED: true
       OIDC_USER_CLAIM: email
-      OIDC_NAME_CLAIM: email
+      OIDC_NAME_CLAIM: username
       # Groups defined in Tailscale ACLs
       # but appears to not work
       OIDC_USER_GROUP: mealie-users
