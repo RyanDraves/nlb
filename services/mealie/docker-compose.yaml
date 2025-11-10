@@ -40,15 +40,16 @@ services:
       OIDC_AUTH_ENABLED: true
       OIDC_PROVIDER_NAME: Tailscale
       OIDC_CONFIGURATION_URL: https://idp.barn-arcturus.ts.net/.well-known/openid-configuration
+      # Required for first-time login from OIDC
       OIDC_SIGNUP_ENABLED: true
       OIDC_USER_CLAIM: email
-      OIDC_NAME_CLAIM: username
+      OIDC_NAME_CLAIM: preferred_username
+      OIDC_GROUPS_CLAIM: groups
       # Groups defined in Tailscale ACLs
-      # but appears to not work
       OIDC_USER_GROUP: mealie-users
       OIDC_ADMIN_GROUP: mealie-admins
       # The login page will be bypassed and you will be sent directly to your Identity Provider
-      OIDC_AUTO_REDIRECT: false
+      OIDC_AUTO_REDIRECT: true
       # By setting this value to true, a session will be extended as if "Remember Me" was checked.
       OIDC_REMEMBER_ME: true
       OIDC_SCOPES_OVERRIDE: openid profile email
