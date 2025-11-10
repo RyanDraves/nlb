@@ -40,7 +40,7 @@ services:
       OIDC_AUTH_ENABLED: true
       OIDC_PROVIDER_NAME: Tailscale
       OIDC_CONFIGURATION_URL: https://idp.barn-arcturus.ts.net/.well-known/openid-configuration
-      OIDC_SIGNUP_ENABLED: false
+      OIDC_SIGNUP_ENABLED: true
       OIDC_USER_CLAIM: email
       OIDC_NAME_CLAIM: email
       # Groups defined in Tailscale ACLs
