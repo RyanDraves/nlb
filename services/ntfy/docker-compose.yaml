@@ -31,7 +31,7 @@ services:
     secrets:
       - tailnet_oauth
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container,tag:ntfy
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
       TS_AUTHKEY: file:/run/secrets/tailnet_oauth
