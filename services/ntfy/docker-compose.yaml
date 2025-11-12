@@ -1,0 +1,55 @@
+services:
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: ntfy
+    network_mode: service:tailscale
+    entrypoint:
+      - cp /config/server.yml /etc/ntfy/server.yml
+      - ntfy serve
+    environment:
+      - TZ=America/Denver
+    volumes:
+      - ntfy-cache:/var/cache/ntfy
+      - ntfy-etc:/etc/ntfy
+      - ${PWD}/server.yml:/config/server.yml
+    ports:
+      - 80:80
+    healthcheck:
+        test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -Eo '\"healthy\"\\s*:\\s*true' || exit 1"]
+        interval: 60s
+        timeout: 10s
+        retries: 3
+        start_period: 40s
+    restart: unless-stopped
+    init: true # needed, if healthcheck is used. Prevents zombie processes
+
+  tailscale:
+    image: tailscale/tailscale
+    container_name: ntfy-tailscale
+    hostname: ntfy
+    secrets:
+      - tailnet_oauth
+    environment:
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/ts-serve.json
+      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+    volumes:
+      - ntfy-ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the config file for changes
+      - ${PWD}/ts-serve:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+
+volumes:
+  ntfy-cache:
+  ntfy-etc:
+  ntfy-ts-authkey:
+
+secrets:
+  tailnet_oauth:
+    file: ${PWD}/../secrets/tailnet_oauth.secret
