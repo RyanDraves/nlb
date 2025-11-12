@@ -4,8 +4,11 @@ services:
     container_name: ntfy
     network_mode: service:tailscale
     entrypoint:
-      - cp /config/server.yml /etc/ntfy/server.yml
-      - ntfy serve
+      - /bin/sh
+      - -c
+      - |
+        cp /config/server.yml /etc/ntfy/server.yml
+        ntfy serve
     environment:
       - TZ=America/Denver
     volumes:
