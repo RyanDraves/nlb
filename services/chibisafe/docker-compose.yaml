@@ -36,6 +36,7 @@ services:
       TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
+      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
     volumes:
       - chibisafe-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
@@ -46,8 +47,6 @@ services:
       - net_admin
       - sys_module
     restart: unless-stopped
-    command: >
-      /bin/sh -c "export TS_AUTHKEY=$$(cat /run/secrets/tailnet_oauth)?ephemeral=false && /usr/local/bin/containerboot"
 
 volumes:
   chibisafe-ts-authkey:

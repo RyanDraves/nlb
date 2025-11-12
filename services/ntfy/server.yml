@@ -1,0 +1,7 @@
+base-url: "https://ntfy.barn-arcturus.ts.net"
+cache-file: "/var/cache/ntfy/cache.db"
+attachment-cache-dir: "/var/cache/ntfy/attachments"
+# Instant iOS notifications require sending polling notices to
+# the central server
+# https://docs.ntfy.sh/config/?h=upstream+base+url#ios-instant-notifications
+upstream-base-url: https://ntfy.sh
