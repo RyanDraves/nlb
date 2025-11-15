@@ -22,7 +22,6 @@
     "next": "15.x"
   },
   "devDependencies": {
-    "@bazel/ibazel": "0.25.0",
     "@tailwindcss/typography": "0.5.15",
     "@types/mdx": "2.x",
     "@types/node": "^20.14.8",

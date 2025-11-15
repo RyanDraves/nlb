@@ -40,6 +40,7 @@ APT_PACKAGES=(
     libusb-1.0-0-dev
     tree
     htop
+    # System interpreter packages
     python-is-python3
     python3-pip
     python3-ipython
@@ -187,46 +188,6 @@ function arduino_setup() {
     echo "Installing arduino:avr core"
     arduino-cli core update-index
     arduino-cli core install arduino:avr
-}
-
-function setup_go() {
-    install_go
-
-    # Install tools for Go
-    # (currently none, `setec` didn't work out)
-}
-
-function install_go() {
-    # Check if go is already installed
-    if check_command go; then
-        echo "go is already installed"
-        return 0
-    fi
-
-    echo "Installing Go"
-    # Versions & SHA sums at https://go.dev/dl/
-    if [[ "$(uname -m)" == "aarch64" ]]; then
-        # Install Go for ARM64
-        local go_url="https://go.dev/dl/go1.24.1.linux-arm64.tar.gz"
-
-        wget --no-verbose $go_url -O /tmp/go.tar.gz 2> /dev/null
-        verify_sha256sum /tmp/go.tar.gz 8df5750ffc0281017fb6070fba450f5d22b600a02081dceef47966ffaf36a3af
-    else
-        # Install Go for x86_64
-        local go_url="https://go.dev/dl/go1.24.1.linux-amd64.tar.gz"
-
-        wget --no-verbose $go_url -O /tmp/go.tar.gz 2> /dev/null
-        verify_sha256sum /tmp/go.tar.gz cb2396bae64183cdccf81a9a6df0aea3bce9511fc21469fb89a0c00470088073
-    fi
-
-    # Unpack go.tar.gz to ~/.local
-    tar -C $HOME/.local -xzf /tmp/go.tar.gz
-
-    # Add Go to PATH
-    add_to_path $HOME/.local/go/bin
-
-    # Add GOPATH to PATH
-    add_to_path $HOME/go/bin
 }
 
 function install_docker() {
@@ -613,7 +574,6 @@ run_section "Filesystem setup" filesystem_setup
 run_section "Install Bazelisk" install_bazelisk
 run_section "Copy udev rules" copy_udev_rules
 run_section "Setup Aruindo CLI" arduino_setup
-run_section "Setup Go" setup_go
 run_section "Install docker" install_docker
 run_section "Setup dev environment" dev_env_setup
 # Check if user is `dravesr` before setting up Ryan's environment

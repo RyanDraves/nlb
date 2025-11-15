@@ -1,0 +1,84 @@
+{
+    "$schema": "https://raw.githubusercontent.com/theoremlp/rules_multitool/main/lockfile.schema.json",
+    "ibazel": {
+        "binaries": [
+            {
+                "kind": "file",
+                "url": "https://github.com/bazelbuild/bazel-watcher/releases/download/v0.27.0/ibazel_linux_arm64",
+                "sha256": "c890c17287f81f0bbb4bf42a7484636ce581c5d71acc5e7446c9f7d106d71568",
+                "os": "linux",
+                "cpu": "arm64"
+            },
+            {
+                "kind": "file",
+                "url": "https://github.com/bazelbuild/bazel-watcher/releases/download/v0.27.0/ibazel_linux_amd64",
+                "sha256": "7f819e1876bb71cfced7c56ccdb2a0d85fe5b88c732da87a9c267de7f807df2c",
+                "os": "linux",
+                "cpu": "x86_64"
+            },
+            {
+                "kind": "file",
+                "url": "https://github.com/bazelbuild/bazel-watcher/releases/download/v0.27.0/ibazel_darwin_arm64",
+                "sha256": "49135983b52efd5c1448921f7af488b0e9229777a1cda4f53fb1892e8640e104",
+                "os": "macos",
+                "cpu": "arm64"
+            }
+        ]
+    },
+    "multitool": {
+        "binaries": [
+            {
+                "kind": "archive",
+                "url": "https://github.com/theoremlp/multitool/releases/download/v0.9.0/multitool-aarch64-unknown-linux-gnu.tar.xz",
+                "file": "multitool-aarch64-unknown-linux-gnu/multitool",
+                "sha256": "693b66def2d8dacdfcb5a011b7c32a8e89a13bdc031db8dc40c0759a38253103",
+                "os": "linux",
+                "cpu": "arm64"
+            },
+            {
+                "kind": "archive",
+                "url": "https://github.com/theoremlp/multitool/releases/download/v0.9.0/multitool-x86_64-unknown-linux-gnu.tar.xz",
+                "file": "multitool-x86_64-unknown-linux-gnu/multitool",
+                "sha256": "34dc5968dad458a4050ebde58e484ebb7c624a119e4031347683eeb80922e6df",
+                "os": "linux",
+                "cpu": "x86_64"
+            },
+            {
+                "kind": "archive",
+                "url": "https://github.com/theoremlp/multitool/releases/download/v0.9.0/multitool-aarch64-apple-darwin.tar.xz",
+                "file": "multitool-aarch64-apple-darwin/multitool",
+                "sha256": "8f5e0cd033b0fcc128c762f8d527110433523da378619cecf40e91c1df5c0686",
+                "os": "macos",
+                "cpu": "arm64"
+            }
+        ]
+    },
+    "pioasm": {
+        "binaries": [
+            {
+                "kind": "archive",
+                "url": "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.2.0-3/pico-sdk-tools-2.2.0-aarch64-lin.tar.gz",
+                "file": "pioasm/pioasm",
+                "sha256": "4517d78021af73231bbce3ecf725433a4ba61574275bbba780461a2df93d839e",
+                "os": "linux",
+                "cpu": "arm64"
+            },
+            {
+                "kind": "archive",
+                "url": "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.2.0-3/pico-sdk-tools-2.2.0-x86_64-lin.tar.gz",
+                "file": "pioasm/pioasm",
+                "sha256": "f8c34e99af693fdcf420c2ecdd3f0204d5bf4f6bc774249983413bb1e0934000",
+                "os": "linux",
+                "cpu": "x86_64"
+            },
+            {
+                "kind": "archive",
+                "url": "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.2.0-3/pico-sdk-tools-2.2.0-mac.zip",
+                "file": "pioasm/pioasm",
+                "sha256": "586ded1697b49e4c23c106f23b77ba43cc24c9d2cd417ce10be884a3047b2b63",
+                "os": "macos",
+                "cpu": "arm64"
+            }
+        ]
+    }
+}

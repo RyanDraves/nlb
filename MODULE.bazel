@@ -34,23 +34,10 @@ register_toolchains(
     "@pico-sdk//bazel/toolchain:mac-aarch64-rp2350",
 )
 
-bazel_dep(name = "picotool", version = "2.2.0")
-
 # Pioasm is not yet available in the Pico SDK Bazel build
 # https://github.com/raspberrypi/pico-sdk/tree/master/bazel#known-issues-and-limitations
-# but the binary is distributed in another repo
-http_archive(
-    name = "pioasm-linux-x86",
-    build_file = "//bzl/deps:pioasm.BUILD",
-    integrity = "sha256-4LbfMMhz/bhC8tgr0EBvnQHPCujbQovctXoK2+V97bE=",
-    url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.1.1-1/pico-sdk-tools-2.1.1-x86_64-lin.tar.gz",
-)
-http_archive(
-    name = "pioasm-linux-arm",
-    build_file = "//bzl/deps:pioasm.BUILD",
-    integrity = "sha256-8nV0tAOqVRpUpZtKycNPwFR9H6GCQm1wyLjmixaOfEo=",
-    url = "https://github.com/raspberrypi/pico-sdk-tools/releases/download/v2.1.1-1/pico-sdk-tools-2.1.1-aarch64-lin.tar.gz",
-)
+# but the binary is distributed in another repo and configured in `multitool.lock.json`.
+bazel_dep(name = "picotool", version = "2.2.0")
 
 #
 # Rules Python
@@ -116,6 +103,11 @@ git_override(
 # Bazel-controlled dev tooling
 #
 bazel_dep(name = "bazel_env.bzl", version = "0.5.0", dev_dependency = True)
+bazel_dep(name = "rules_multitool", version = "1.9.0")
+
+multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
+multitool.hub(lockfile = "//:multitool.lock.json")
+use_repo(multitool, "multitool")
 
 #
 # Pybind11
@@ -149,6 +141,10 @@ bazel_dep(name = "aspect_rules_lint", version = "1.0.0-rc4")
 
 node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node", dev_dependency = True)
 node.toolchain(node_version = "20.13.1")
+use_repo(node, "nodejs_toolchains")
+
+# Pick out some platforms manually for cross-platform builds
+# https://github.com/aspect-build/rules_js/issues/2135
 use_repo(node, "nodejs_linux_amd64")
 use_repo(node, "nodejs_linux_arm64")
 
@@ -222,6 +218,11 @@ crate.spec(package = "console_error_panic_hook", version = "0.1.7")
 crate.spec(package = "web-sys", version = "0.3", features = ["console"])
 crate.from_specs()
 use_repo(crate, "crates")
+
+#
+# Go
+#
+bazel_dep(name = "rules_go", version = "0.59.0")
 
 #
 # Containerization
