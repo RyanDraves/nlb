@@ -1,28 +1,27 @@
 load("@bazel_env.bzl", "bazel_env")
-
-# TODO: This is prime https://github.com/bazel-contrib/rules_multitool usage.
-alias(
-    name = "pioasm",
-    actual = select(
-        {
-            "@platforms//cpu:x86_64": "@pioasm-linux-x86//:pioasm",
-            "@platforms//cpu:aarch64": "@pioasm-linux-arm//:pioasm",
-        },
-    ),
-    visibility = ["//visibility:public"],
-)
+load("@multitool//:tools.bzl", MULTITOOL_TOOLS = "TOOLS")
 
 bazel_env(
     name = "bazel_env",
     toolchains = {
-        "jdk": "@rules_java//toolchains:current_host_java_runtime",
+        # Go requires Bazel 9.0.0+ (pre-release)
+        # "go": "@rules_go//go:toolchain",
+        # "jdk": "@rules_java//toolchains:current_host_java_runtime",
+        "nodejs": "@nodejs_toolchains//:resolved_toolchain",
+        "rust": "@rules_rust//rust/toolchain:current_rust_toolchain",
     },
-    # See https://github.com/buildbuddy-io/bazel_env.bzl?tab=readme-ov-file#fetching-external-tools
-    # when adding multitool support.
     tools = {
+        # Bazel
         "buildifier": "@buildifier_prebuilt//:buildifier",
         "buildozer": "@buildifier_prebuilt//:buildozer",
+        # Pico
         "picotool": "@picotool",
         "pioasm": ":pioasm",
-    },
+        # NodeJS
+        "node": "$(NODE_PATH)",
+        "pnpm": "@pnpm",
+        # Rust
+        "cargo": "@rules_rust//tools/upstream_wrapper:cargo",
+        "rustfmt": "@rules_rust//tools/upstream_wrapper:rustfmt",
+    } | MULTITOOL_TOOLS,
 )
