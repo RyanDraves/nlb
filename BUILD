@@ -79,6 +79,9 @@ gazelle(
 
 # gazelle:build_file_name BUILD
 
+# Customize for Go files
+# gazelle:go_visibility //visibility:public
+
 # Customize for Starlark files
 # gazelle:exclude blz/macros/js_image.bzl
 # gazelle:exclude blz/macros/pico.bzl

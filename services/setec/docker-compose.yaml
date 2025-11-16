@@ -1,0 +1,24 @@
+services:
+  setec:
+    # bazel run //apps/setec:setec_amd64_load to build & load the image locally
+    # bazel run //apps/setec:setec_push to push the image to the registry
+    image: ghcr.io/ryandraves/setec:latest
+    container_name: setec
+    volumes:
+      - setec-state-dir:/var/lib/setec
+    restart: always
+    environment:
+      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+    command:
+      - server
+      - --hostname
+      - setec
+    secrets:
+      - tailnet_oauth
+
+volumes:
+  setec-state-dir:
+
+secrets:
+  tailnet_oauth:
+    file: ${PWD}/../secrets/tailnet_oauth.secret

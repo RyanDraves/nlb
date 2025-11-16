@@ -55,10 +55,6 @@ def go_image(name, binary, args, platform_names, labels, local_tags, remote_repo
         **kwargs
     )
 
-    # for platform_name, toolchain in [
-    #     ("linux_amd64", "@rules_go//go/toolchain:linux_amd64"),
-    #     ("linux_arm64", "@rules_go//go/toolchain:linux_arm64"),
-    # ]:
     for platform_name, platform in platform_names:
         platform_transition_filegroup(
             name = "{0}_{1}".format(name, platform_name),
