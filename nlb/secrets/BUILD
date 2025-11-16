@@ -1,6 +1,6 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@rules_go//go:def.bzl", "go_binary", "go_library")
-load("//bzl/macros/go_image.bzl", "go_image")
+load("//bzl/macros:go_image.bzl", "go_image")
 
 py_library(
     name = "secrets",

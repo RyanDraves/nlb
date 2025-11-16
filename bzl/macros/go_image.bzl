@@ -5,7 +5,7 @@ and `js_image.bzl` in this repo.
 """
 
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
-load("@rules_oci//oci:defs.bzl", "oci_image_index", "oci_load", "oci_push")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load", "oci_push")
 load("@tar.bzl//tar:tar.bzl", "tar")
 
 def go_image(name, binary, args, platform_names, labels, local_tags, remote_repo, remote_tags, base = "@distroless_base", **kwargs):
@@ -41,7 +41,7 @@ def go_image(name, binary, args, platform_names, labels, local_tags, remote_repo
     )
 
     oci_image(
-        name = name,
+        name = name + "_image",
         base = base,
         tars = [
             name + "_app_layer",
@@ -62,7 +62,7 @@ def go_image(name, binary, args, platform_names, labels, local_tags, remote_repo
     for platform_name, platform in platform_names:
         platform_transition_filegroup(
             name = "{0}_{1}".format(name, platform_name),
-            srcs = [name],
+            srcs = [name + "_image"],
             target_platform = platform,
         )
 
