@@ -27,7 +27,7 @@ volumes:
 
 secrets:
   tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+    file: ${PWD}/../secrets/setec.authkey
   setec_kms_key:
     file: ${PWD}/../secrets/setec_kms.key
   setec_aws_access_key:
