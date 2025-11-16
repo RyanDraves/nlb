@@ -260,6 +260,7 @@ use_repo(go_deps, "com_github_tailscale_setec")
 # Containerization
 #
 bazel_dep(name = "rules_oci", version = "2.2.3")
+bazel_dep(name = "tar.bzl", version = "0.7.0")
 # TODO: Consider https://registry.bazel.build/modules/container_structure_test
 # https://github.com/aspect-build/rules_js/blob/08eb590169cf9c61a02f7056bb3486f8214e90b6/e2e/js_image_oci/src/BUILD.bazel#L78-L84
 
@@ -281,6 +282,17 @@ oci.pull(
     tag = "latest",
 )
 use_repo(oci, "debian", "debian_linux_386", "debian_linux_amd64", "debian_linux_arm64_v8", "debian_linux_arm_v5", "debian_linux_arm_v7", "debian_linux_mips64le", "debian_linux_ppc64le", "debian_linux_s390x")
+
+oci.pull(
+    name = "distroless_base",
+    digest = "sha256:9e9b50d2048db3741f86a48d939b4e4cc775f5889b3496439343301ff54cdba8",
+    image = "gcr.io/distroless/base",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+)
+use_repo(oci, "distroless_base", "distroless_base_linux_amd64", "distroless_base_linux_arm64")
 
 #
 # Repo shuffling

@@ -92,3 +92,16 @@ py_binary(
     visibility = ["//visibility:public"],
     deps = ["@pip//pytest"],
 )
+
+bzl_library(
+    name = "go_image",
+    srcs = ["go_image.bzl"],
+    deps = [
+        "@bazel_lib//lib:transitions",
+        "@rules_oci//oci:defs",
+        "@tar.bzl//tar:tar",
+    ],
+)
+
+# Starlark Gazelle extension is too primitive to accept other directives
+# gazelle:ignore

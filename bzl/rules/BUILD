@@ -27,3 +27,6 @@ bzl_library(
 #         "@rules_cc//cc/common",
 #     ],
 # )
+
+# Starlark Gazelle extension is too primitive to accept other directives
+# gazelle:ignore
