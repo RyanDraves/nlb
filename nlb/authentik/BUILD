@@ -6,7 +6,7 @@ py_library(
     srcs = ["client.py"],
     visibility = ["//visibility:public"],
     deps = [
-        "//nlb/util:secrets",
+        "//nlb/secrets",
         "@pip//requests",
     ],
 )

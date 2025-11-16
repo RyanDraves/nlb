@@ -72,12 +72,6 @@ py_library(
 )
 
 py_library(
-    name = "secrets",
-    srcs = ["secrets.py"],
-    visibility = ["//visibility:public"],
-)
-
-py_library(
     name = "semantic_errors",
     srcs = ["semantic_errors.py"],
     visibility = ["//visibility:public"],

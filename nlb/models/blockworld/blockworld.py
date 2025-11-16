@@ -15,11 +15,11 @@ from nlb.models.blockworld import mdp_manual
 from nlb.models.blockworld import metrics
 from nlb.models.blockworld import open_loop_llm
 from nlb.models.blockworld import plot
+from nlb.secrets import secrets
 from nlb.util import click_utils
 from nlb.util import console_utils
 from nlb.util import dataframe
 from nlb.util import path_utils
-from nlb.util import secrets
 from nlb.util import timer
 
 
