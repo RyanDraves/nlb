@@ -8,7 +8,7 @@ services:
       - setec-state-dir:/var/lib/setec
     restart: always
     environment:
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/setec_authkey
       STATE_DIR: /var/lib/setec
       HOSTNAME: setec
       KMS_KEY_NAME: /run/secrets/setec_kms_key
@@ -17,7 +17,7 @@ services:
     command:
       - server
     secrets:
-      - tailnet_oauth
+      - setec_authkey
       - setec_kms_key
       - setec_aws_access_key
       - setec_aws_secret_key
@@ -26,7 +26,7 @@ volumes:
   setec-state-dir:
 
 secrets:
-  tailnet_oauth:
+  setec_authkey:
     file: ${PWD}/../secrets/setec.authkey
   setec_kms_key:
     file: ${PWD}/../secrets/setec_kms.key
