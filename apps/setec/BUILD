@@ -2,7 +2,7 @@ load("//bzl/macros:go_image.bzl", "go_image")
 
 go_image(
     name = "setec",
-    args = ["--state-dir", "/var/lib/setec"],
+    args = [],
     binary = "@com_github_tailscale_setec//cmd/setec",
     labels = ":labels.txt",
     local_tags = ["ghcr.io/ryandraves/setec:latest"],

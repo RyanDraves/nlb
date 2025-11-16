@@ -13,6 +13,8 @@ services:
       - server
       - --hostname
       - setec
+      - --state-dir
+      - /var/lib/setec
     secrets:
       - tailnet_oauth
 
