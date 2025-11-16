@@ -7,10 +7,9 @@ go 1.25.4
 
 require github.com/tailscale/setec v0.0.0-20251018231117-bc7a01a47c9c
 
-// Outdated dependencies + an import on `testutil` freak out Gazelle's
-// behavior generating BUILD files during `go_deps.from_file`.
-// This fork accounts for both.
-replace github.com/tailscale/setec => github.com/RyanDraves/setec v0.0.2
+// This fork accounts for things that make Gazelle's behavior more
+// predictable and eases integration into a Docker container.
+replace github.com/tailscale/setec => github.com/RyanDraves/setec v0.0.3
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect

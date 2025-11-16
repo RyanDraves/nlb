@@ -9,21 +9,13 @@ services:
     restart: always
     environment:
       TS_AUTHKEY: file:/run/secrets/tailnet_oauth
-      SETEC_KMS_KEY_PATH: /run/secrets/setec_kms_key
-      AWS_ACCESS_KEY_PATH: /run/secrets/setec_aws_access_key
-      AWS_SECRET_KEY_PATH: /run/secrets/setec_aws_secret_key
+      STATE_DIR: /var/lib/setec
+      HOSTNAME: setec
+      KMS_KEY_NAME: /run/secrets/setec_kms_key
+      AWS_ACCESS_KEY_ID_PATH: /run/secrets/setec_aws_access_key
+      AWS_SECRET_ACCESS_KEY_PATH: /run/secrets/setec_aws_secret_key
     command:
       - server
-      - --hostname
-      - setec
-      - --state-dir
-      - /var/lib/setec
-      - --kms-key-name
-      - $$(SETEC_KMS_KEY_PATH)
-    entrypoint:
-      - /bin/sh
-      - -c
-      - set -e; export SETEC_KMS_KEY=$(cat /run/secrets/setec_kms_key); export AWS_ACCESS_KEY=$(cat /run/secrets/setec_aws_access_key); export AWS_SECRET_KEY=$(cat /run/secrets/setec_aws_secret_key); echo 'Secrets loaded successfully'; /opt/app
     secrets:
       - tailnet_oauth
       - setec_kms_key
