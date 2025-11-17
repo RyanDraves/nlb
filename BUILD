@@ -79,14 +79,6 @@ gazelle(
 
 # gazelle:build_file_name BUILD
 
-# Customize for Go files
-# gazelle:go_visibility //visibility:public
-
-# Customize for Starlark files
-# gazelle:exclude blz/macros/js_image.bzl
-# gazelle:exclude blz/macros/pico.bzl
-# gazelle:exclude blz/rules/platform_transition.bzl
-
 # Customize mappings for Python rules
 # gazelle:map_kind py_binary py_binary //bzl/macros:python.bzl
 # gazelle:map_kind py_library py_library @aspect_rules_py//py:defs.bzl

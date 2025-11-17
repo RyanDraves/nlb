@@ -10,14 +10,12 @@ services:
     container_name: mealie-spirit-tracks
     network_mode: service:tailscale
     environment:
-      SPIRIT_TRACKS_CONFIG: /config/spirit_tracks_config.json
+      SPIRIT_TRACKS_CONFIG: /config/secrets.json
       SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
     volumes:
       - mealie-secrets-mealie:/secrets/mealie
       - mealie-secrets-postgres:/secrets/postgres
-      - ${PWD}/spirit_tracks_config.json:/config/spirit_tracks_config.json:ro
-    secrets:
-      - tailnet_oauth
+      - ${PWD}/secrets.json:/config/secrets.json:ro
     restart: "no"
 
   mealie:

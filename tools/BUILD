@@ -1,7 +1,6 @@
 load("@bazel_env.bzl", "bazel_env")
 load("@gazelle//:go_tools.bzl", "GO_TOOLS")
 load("@multitool//:tools.bzl", MULTITOOL_TOOLS = "TOOLS")
-load("@rules_go//go:def.bzl", "go_library")
 
 bazel_env(
     name = "bazel_env",
@@ -28,11 +27,4 @@ bazel_env(
         "cargo": "@rules_rust//tools/upstream_wrapper:cargo",
         "rustfmt": "@rules_rust//tools/upstream_wrapper:rustfmt",
     } | MULTITOOL_TOOLS | GO_TOOLS,
-)
-
-go_library(
-    name = "tools",
-    srcs = ["tools.go"],
-    importpath = "nlb/tools",
-    visibility = ["//visibility:public"],
 )
