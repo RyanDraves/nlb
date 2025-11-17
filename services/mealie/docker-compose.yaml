@@ -8,6 +8,7 @@ services:
   spirit-tracks:
     image: ghcr.io/ryandraves/spirit_tracks:latest
     container_name: mealie-spirit-tracks
+    network_mode: service:tailscale
     environment:
       SPIRIT_TRACKS_CONFIG: /config/spirit_tracks_config.json
       SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
