@@ -6,7 +6,7 @@ name: services
 
 services:
   spirit-tracks:
-    image: ghcr.io/ryandraves/setec:latest
+    image: ghcr.io/ryandraves/spirit_tracks:latest
     container_name: mealie-spirit-tracks
     environment:
       SPIRIT_TRACKS_CONFIG: /config/spirit_tracks_config.json
