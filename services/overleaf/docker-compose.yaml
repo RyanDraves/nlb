@@ -88,7 +88,7 @@ services:
       - overleaf-redis-data:/data
 
   tailscale:
-    image: tailscale/tailscale:1.90.8
+    image: tailscale/tailscale:v1.90.8
     container_name: overleaf-tailscale
     hostname: overleaf
     secrets:
