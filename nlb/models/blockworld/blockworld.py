@@ -14,7 +14,7 @@ from nlb.models.blockworld import mdp_llm
 from nlb.models.blockworld import mdp_manual
 from nlb.models.blockworld import metrics
 from nlb.models.blockworld import open_loop_llm
-from nlb.models.blockworld import plot
+from nlb.models.blockworld import blockworld_plot
 from nlb.secrets import secrets
 from nlb.util import click_utils
 from nlb.util import console_utils
@@ -163,7 +163,7 @@ def main(
                         if (
                             monte_carlo is None or rng_seed == min(42, monte_carlo)
                         ) and make_gif:
-                            plot.plot_environment(
+                            blockworld_plot.plot_environment(
                                 num_blocks, states, actions, output=output
                             )
     except Exception as e:

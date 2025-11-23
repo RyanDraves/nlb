@@ -6,6 +6,7 @@ py_binary(
     srcs = ["blockworld.py"],
     visibility = ["//visibility:public"],
     deps = [
+        ":blockworld_plot",
         ":closed_loop_llm",
         ":environment",
         ":heuristic",
@@ -14,7 +15,6 @@ py_binary(
         ":mdp_manual",
         ":metrics",
         ":open_loop_llm",
-        ":plot",
         "//nlb/secrets",
         "//nlb/util:click_utils",
         "//nlb/util:console_utils",
@@ -148,8 +148,8 @@ py_library(
 )
 
 py_binary(
-    name = "plot",
-    srcs = ["plot.py"],
+    name = "blockworld_plot",
+    srcs = ["blockworld_plot.py"],
     data = [
         ":claw.png",
     ],
