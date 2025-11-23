@@ -9,13 +9,11 @@ services:
     restart: always
     environment:
       TS_AUTHKEY_PATH: /run/secrets/setec_authkey
-      STATE_DIR: /var/lib/setec
-      HOSTNAME: setec
-      KMS_KEY_NAME: /run/secrets/setec_kms_key
       AWS_ACCESS_KEY_ID_PATH: /run/secrets/setec_aws_access_key
       AWS_SECRET_ACCESS_KEY_PATH: /run/secrets/setec_aws_secret_key
-    command:
-      - server
+      SETEC_STATE_DIR: /var/lib/setec
+      SETEC_HOSTNAME: setec_local_test
+      SETEC_KMS_KEY_NAME_PATH: /run/secrets/setec_kms_key
     secrets:
       - setec_authkey
       - setec_kms_key

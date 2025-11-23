@@ -8,7 +8,7 @@ load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load", "oci_push")
 load("@tar.bzl//tar:tar.bzl", "tar")
 
-def go_image(name, binary, args, platform_names, labels, local_tags, remote_repo, remote_tags, base = "@distroless_base", **kwargs):
+def go_image(name, binary, args, platform_names, labels, local_tags, remote_repo, remote_tags, base = "@distroless_base", additional_tars = [], entrypoint = "/opt/app", **kwargs):
     """Multi-arch OCI image for a Go binary.
 
     Creates:
@@ -29,6 +29,8 @@ def go_image(name, binary, args, platform_names, labels, local_tags, remote_repo
         remote_repo: The remote repository to push the image to.
         remote_tags: A list of tags to use for the remote pushes of the image.
         base: The base image to use for the OCI image. Defaults to "@distroless_base".
+        additional_tars: A list of additional tar files to include in the image.
+        entrypoint: The entrypoint for the OCI image. Defaults to "/opt/app".
         **kwargs: Additional arguments to pass to the all rules.
     """
     tar(
@@ -45,9 +47,9 @@ def go_image(name, binary, args, platform_names, labels, local_tags, remote_repo
         base = base,
         tars = [
             name + "_app_layer",
-        ],
+        ] + additional_tars,
         entrypoint = [
-            "/opt/app",
+            entrypoint,
         ],
         labels = labels,
         cmd = args,
@@ -63,7 +65,7 @@ def go_image(name, binary, args, platform_names, labels, local_tags, remote_repo
         )
 
         oci_load(
-            name = "{0}_{1}.load".format(name, platform_name),
+            name = "{0}_{1}_load".format(name, platform_name),
             image = ":{0}_{1}".format(name, platform_name),
             repo_tags = local_tags,
             **kwargs
