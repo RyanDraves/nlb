@@ -12,7 +12,7 @@ services:
       AWS_ACCESS_KEY_ID_PATH: /run/secrets/setec_aws_access_key
       AWS_SECRET_ACCESS_KEY_PATH: /run/secrets/setec_aws_secret_key
       SETEC_STATE_DIR: /var/lib/setec
-      SETEC_HOSTNAME: setec_local_test
+      SETEC_HOSTNAME: setec
       SETEC_KMS_KEY_NAME_PATH: /run/secrets/setec_kms_key
     secrets:
       - setec_authkey
