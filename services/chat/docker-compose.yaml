@@ -12,7 +12,7 @@ services:
     entrypoint: [ "/bin/sh", "-c", "set -e; export ACCESS_CODE=$(cat /run/secrets/lobe_chat_password); export OPENAI_API_KEY=$(cat /run/secrets/openai_key); echo 'Secrets loaded successfully'; /bin/node /app/startServer.js" ]
 
   tailscale:
-    image: tailscale/tailscale
+    image: tailscale/tailscale:1.90.8
     container_name: lobe-chat-tailscale
     hostname: chat
     secrets:

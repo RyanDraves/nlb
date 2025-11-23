@@ -15,7 +15,7 @@ services:
     entrypoint: '/home/lighttpd/entrypoint.sh'
 
   tailscale:
-    image: tailscale/tailscale
+    image: tailscale/tailscale:1.90.8
     container_name: homer-tailscale
     hostname: dash
     secrets:

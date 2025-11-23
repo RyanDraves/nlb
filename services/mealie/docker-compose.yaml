@@ -101,7 +101,7 @@ services:
         condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale
+    image: tailscale/tailscale:1.90.8
     container_name: mealie-tailscale
     hostname: recipes
     secrets:
