@@ -45,7 +45,7 @@ def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], link
 
     The UF2 file can be flashed to a Pico device in BOOTSEL mode with:
     ```
-    bazel run //tools:picotool -- load bazel-bin/path/to/name.uf2
+    picotool load bazel-bin/path/to/name.uf2
     ```
 
     Args:
