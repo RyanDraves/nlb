@@ -1,10 +1,23 @@
 services:
+  spirit-tracks:
+    image: ghcr.io/ryandraves/spirit_tracks:latest
+    network_mode: service:tailscale
+    environment:
+      SPIRIT_TRACKS_CONFIG: /config/secrets.json
+      SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
+    volumes:
+      - secrets-karakeep:/secrets/karakeep
+      - secrets-meili:/secrets/meili
+      - ${PWD}/secrets.json:/config/secrets.json:ro
+    restart: "no"
+
   web:
     container_name: karakeep
     image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION:-release}
     restart: unless-stopped
     volumes:
       - karakeep-data:/data
+      - secrets-karakeep:/secrets:ro
     network_mode: service:tailscale
     environment:
       MEILI_ADDR: http://meilisearch:7700
@@ -18,17 +31,15 @@ services:
       # You almost never want to change the value of the DATA_DIR variable.
       # If you want to mount a custom directory, change the volume mapping above instead.
       DATA_DIR: /data # DON'T CHANGE THIS
-    secrets:
-      - nextauth_secret
-      - meili_master_key
-      - oidc_id
-      - oidc_secret
-      - openai_key
     entrypoint: [
       "/bin/sh",
       "-c",
-      "set -e; export NEXTAUTH_SECRET=$(cat /run/secrets/nextauth_secret); export MEILI_MASTER_KEY=$(cat /run/secrets/meili_master_key); export OAUTH_CLIENT_ID=$(cat /run/secrets/oidc_id); export OAUTH_CLIENT_SECRET=$(cat /run/secrets/oidc_secret); export OPENAI_API_KEY=$(cat /run/secrets/openai_key); echo 'Secrets loaded successfully'; /init"
+      "set -e; export NEXTAUTH_SECRET=$(cat /secrets/karakeep_nextauth_secret); export MEILI_MASTER_KEY=$(cat /secrets/karakeep_meili_master_key); export OAUTH_CLIENT_ID=$(cat /secrets/karakeep_oidc_id); export OAUTH_CLIENT_SECRET=$(cat /secrets/karakeep_oidc_secret); export OPENAI_API_KEY=$(cat /secrets/karakeep_openai_key); echo 'Secrets loaded successfully'; /init"
     ]
+    depends_on:
+      spirit-tracks:
+        condition: service_completed_successfully
+
   chrome:
     container_name: karakeep-chrome
     image: gcr.io/zenika-hub/alpine-chrome:123
@@ -40,21 +51,25 @@ services:
       - --remote-debugging-address=0.0.0.0
       - --remote-debugging-port=9222
       - --hide-scrollbars
+
   meilisearch:
     container_name: karakeep-meilisearch
     image: getmeili/meilisearch:v1.13.3
     restart: unless-stopped
     environment:
       MEILI_NO_ANALYTICS: "true"
-    secrets:
-      - meili_master_key
     volumes:
       - karakeep-meilisearch:/meili_data
+      - secrets-meili:/secrets:ro
     entrypoint: [
       "/bin/sh",
       "-c",
-      "set -e; export MEILI_MASTER_KEY=$(cat /run/secrets/meili_master_key); echo 'Secrets loaded successfully'; tini -- /bin/meilisearch"
+      "set -e; export MEILI_MASTER_KEY=$(cat /secrets/karakeep_meili_master_key); echo 'Secrets loaded successfully'; tini -- /bin/meilisearch"
     ]
+    depends_on:
+      spirit-tracks:
+        condition: service_completed_successfully
+
   tailscale:
     image: tailscale/tailscale:v1.90.8
     container_name: karakeep-tailscale
@@ -81,17 +96,9 @@ volumes:
   karakeep-meilisearch:
   karakeep-data:
   karakeep-ts-authkey:
+  secrets-karakeep:
+  secrets-meili:
 
 secrets:
   tailnet_oauth:
     file: ${PWD}/../secrets/tailnet_oauth.secret
-  nextauth_secret:
-    file: ${PWD}/../secrets/karakeep_nextauth.secret
-  meili_master_key:
-    file: ${PWD}/../secrets/karakeep_meili_master.key
-  oidc_id:
-    file: ${PWD}/../secrets/karakeep_oidc.id
-  oidc_secret:
-    file: ${PWD}/../secrets/karakeep_oidc.secret
-  openai_key:
-    file: ${PWD}/../secrets/openai.key
