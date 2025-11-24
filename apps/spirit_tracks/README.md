@@ -7,7 +7,7 @@ A Go binary that loads secrets from Tailscale's [setec](https://github.com/tails
 ### Command Line
 
 ```bash
-bazel run //nlb/secrets:spirit_tracks -- \
+bazel run //nlb/secrets/spirit_tracks -- \
   --config=/path/to/config.json \
   --setec-addr=https://setec.example.com
 ```
@@ -17,7 +17,7 @@ bazel run //nlb/secrets:spirit_tracks -- \
 ```bash
 export SPIRIT_TRACKS_CONFIG=/path/to/config.json
 export SPIRIT_TRACKS_SETEC_ADDR=https://setec.example.com
-bazel run //nlb/secrets:spirit_tracks
+bazel run //nlb/secrets/spirit_tracks
 ```
 
 Environment variables are used as defaults when command-line flags are not provided. Command-line flags take precedence over environment variables.

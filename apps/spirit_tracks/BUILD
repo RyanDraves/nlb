@@ -3,7 +3,7 @@ load("//bzl/macros:go_image.bzl", "go_image")
 go_image(
     name = "spirit_tracks",
     args = [],
-    binary = "//nlb/secrets:spirit_tracks",
+    binary = "//nlb/secrets/spirit_tracks",
     labels = ":labels.txt",
     local_tags = ["ghcr.io/ryandraves/spirit_tracks:latest"],
     platform_names = [
