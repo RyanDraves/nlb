@@ -41,7 +41,8 @@ The configuration file is a JSON file with the following structure:
       "values": [
         "service2/secret1",
         "service2/secret2"
-      ]
+      ],
+      "uid": 1000
     }
   ]
 }
@@ -52,6 +53,7 @@ The configuration file is a JSON file with the following structure:
 - `secrets`: Array of secret groups
   - `output_dir`: Directory where secrets will be written
   - `values`: Array of secret names to retrieve from setec
+  - `uid` (optional): User ID to set as the owner of the secret files. If not specified, files will be owned by the user running the binary (typically root in containers)
 
 ## Example
 
@@ -117,14 +119,16 @@ volumes:
       "output_dir": "/secrets/app",
       "values": [
         "myapp/db_password",
-        "myapp/api_key",
-      ]
+        "myapp/api_key"
+      ],
+      "uid": 1000
     },
     {
       "output_dir": "/secrets/db",
       "values": [
         "myapp/db_password"
-      ]
+      ],
+      "uid": 999
     }
   ]
 }

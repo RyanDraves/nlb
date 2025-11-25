@@ -22,6 +22,7 @@ type Config struct {
 type SecretGroup struct {
 	OutputDir string   `json:"output_dir"`
 	Values    []string `json:"values"`
+	UID       *int     `json:"uid,omitempty"` // Optional UID to set file ownership
 }
 
 // validate checks if the configuration is valid
@@ -80,7 +81,7 @@ func main() {
 
 		// Retrieve and write each secret
 		for _, secretName := range group.Values {
-			if err := writeSecret(ctx, &client, group.OutputDir, secretName); err != nil {
+			if err := writeSecret(ctx, &client, &group, secretName); err != nil {
 				log.Fatalf("Failed to write secret %s: %v", secretName, err)
 			}
 			log.Printf("  ✓ Written secret: %s", secretName)
@@ -106,7 +107,7 @@ func loadConfig(path string) (*Config, error) {
 }
 
 // writeSecret retrieves a secret from setec and writes it to a file
-func writeSecret(ctx context.Context, client *setec.Client, outputDir, secretName string) error {
+func writeSecret(ctx context.Context, client *setec.Client, group *SecretGroup, secretName string) error {
 	// Get the secret from setec
 	secret, err := client.Get(ctx, secretName)
 	if err != nil {
@@ -115,16 +116,23 @@ func writeSecret(ctx context.Context, client *setec.Client, outputDir, secretNam
 
 	// Sanitize the secret name for use as a filename (replace / with _)
 	filename := strings.ReplaceAll(secretName, "/", "_")
-	outputPath := filepath.Join(outputDir, filename)
+	outputPath := filepath.Join(group.OutputDir, filename)
 
 	// Ensure output directory exists
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := os.MkdirAll(group.OutputDir, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
 	// Write secret to file with secure permissions (0600 = rw-------)
 	if err := os.WriteFile(outputPath, []byte(secret.Value), 0600); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	// Change file ownership if UID is specified
+	if group.UID != nil {
+		if err := os.Chown(outputPath, *group.UID, -1); err != nil {
+			return fmt.Errorf("failed to change file ownership to UID %d: %w", *group.UID, err)
+		}
 	}
 
 	return nil

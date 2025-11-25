@@ -12,7 +12,8 @@
             "values": [
                 "service2/secret1",
                 "service2/secret2"
-            ]
+            ],
+            "uid": 1000
         }
     ]
 }

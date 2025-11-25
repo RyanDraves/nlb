@@ -6,6 +6,8 @@ mkdir -p /www/assets
 mkdir -p /www/assets/icons
 cp /home/lighttpd/config.yaml /www/assets/config.yml
 cp /home/lighttpd/favicon.ico /www/assets/icons/favicon.ico
+# get the current uid
+echo "Current UID: $(id -u)"
 token=$(cat /secrets/dash_portainer_token)
 sed -i 's@PORTAINER_TOKEN@'"$token"'@g' /www/assets/config.yml
 token=$(cat /secrets/dash_mealie_token)
