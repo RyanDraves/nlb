@@ -17,6 +17,3 @@ nlb<br />
 ├── sharetrace -> Library & CLI to share Python tracebacks<br />
 ├── tailscale -> Tailscale utilities<br />
 ├── util -> Utilities<br />
-└── wizaidry -> Library for creating proto-Agentic AI wizards<br />
-
-`wizaidry` has its own [blog post](https://ryandraves.com/posts/wizaidry), which can serve as a Getting Started page.

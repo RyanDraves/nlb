@@ -17,13 +17,15 @@
 set -e
 set -o pipefail
 
-BAZELISK_VERSION=v1.25.0
-BAZELISK_X86_SHA384_SUM=f452948139ca10fb2f85b9e9381f103c63978773884a3ee3092685b47556241058c7bc4e5806e5bd1c754076814fd60a
-BAZELISK_ARM64_SHA384_SUM=6457888166ac4c3fb5ee82323987bec29e97736caeeee46be2467b54ba27d7095f84271666f992af58978415bbb300a1
+BAZELISK_VERSION=v1.27.0
+BAZELISK_X86_SHA256_SUM=e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76
+BAZELISK_ARM64_SHA256_SUM=bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d
+BAZELISK_ARM64_MACOS_SHA256_SUM=8bf08c894ccc19ef37f286e58184c3942c58cb08da955e990522703526ddb720
 
-GH_VERSION="2.73.0"
-GH_X86_SHA256_SUM=9ebc6b751ee182fdb291ceb2213cc17abb1624b30f6d7a3913097af41f48b1b4
-GH_ARM64_SHA256_SUM=cc2fc6a3ce9d00435a8bceebf89c37bff8a773c5ef2d74203f6f5ce4fb10d66a
+GH_VERSION="2.83.2"
+GH_X86_SHA256_SUM=ca6e7641214fbd0e21429cec4b64a7ba626fd946d8f9d6d191467545b092015e
+GH_ARM64_SHA256_SUM=b1a0c0a0fcf18524e36996caddc92a062355ed014defc836203fe20fba75a38e
+GH_ARM64_MACOS_SHA256_SUM=ba3e0396ebbc8da17256144ddda503e4e79c8b502166335569f8390d6b75fa8d
 
 REPO_ROOT=$(dirname $(readlink -f $0))
 
@@ -52,12 +54,35 @@ APT_PACKAGES=(
     minicom
     # DB
     libpq-dev
-    # Sound
-    portaudio19-dev
     # Copying
     xclip
     # Dev tools
     direnv
+    tmux
+)
+
+BREW_PACKAGES=(
+    curl
+    git
+    git-lfs
+    wget
+    openjdk
+    tree
+    htop
+    # System interpreter packages
+    python3
+    ipython
+    numpy
+    # For local Pico tooling
+    pkg-config
+    cmake
+    # For local Pico testing
+    minicom
+    # DB
+    libpq
+    # Dev tools
+    direnv
+    tmux
 )
 
 function check_if_on_wsl() {
@@ -65,6 +90,30 @@ function check_if_on_wsl() {
         return 0
     fi
     return 1
+}
+
+function is_macos() {
+    [[ "$(uname)" == "Darwin" ]]
+}
+
+function is_linux() {
+    [[ "$(uname)" == "Linux" ]]
+}
+
+function get_shell_rc_file() {
+    # Detect the current shell and return the appropriate RC file
+    if [[ -n "$ZSH_VERSION" ]] || [[ "$SHELL" == */zsh ]]; then
+        shell_file="$HOME/.zshrc"
+    else
+        shell_file="$HOME/.bashrc"
+    fi
+
+    # If the shell rc file does not exist, create it
+    if [ ! -f "$shell_file" ]; then
+        touch "$shell_file"
+    fi
+
+    echo "$shell_file"
 }
 
 RYANS_APT_PACKAGES=()
@@ -106,16 +155,113 @@ function install_apt_packages() {
     sudo apt install -y "${missing_packages[@]}"
 }
 
+function install_brew_packages() {
+    local packages=("$@")
+
+    # Check if brew is available
+    if ! check_command brew; then
+        echo "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+        # Add brew to PATH for Apple Silicon Macs
+        if [[ -f /opt/homebrew/bin/brew ]]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+        fi
+    fi
+
+    # Check if brew packages are already installed
+    all_installed=true
+    missing_packages=()
+    for package in "${packages[@]}"; do
+        if brew list "$package" &> /dev/null; then
+            continue
+        fi
+        all_installed=false
+        missing_packages+=("$package")
+    done
+
+    if $all_installed; then
+        echo "All brew packages are already installed"
+        return 0
+    fi
+
+    echo "Installing missing brew packages: ${missing_packages[@]}"
+
+    # Install brew packages
+    brew install "${missing_packages[@]}"
+}
+
+function install_system_packages() {
+    if is_macos; then
+        install_brew_packages "${BREW_PACKAGES[@]}"
+    elif is_linux; then
+        install_apt_packages "${APT_PACKAGES[@]}"
+    else
+        echo "Unsupported OS: $(uname)"
+        return 1
+    fi
+}
+
 function filesystem_setup() {
+    local shell_rc=$(get_shell_rc_file)
+
     add_to_path $HOME/.local/bin
 
     mkdir -p $HOME/.local/share/completions
-    maybe_add_to_file $HOME/.bashrc "source $HOME/.local/share/completions/*"
+    maybe_add_to_file "$shell_rc" "source $HOME/.local/share/completions/*"
 
-    maybe_add_to_file $HOME/.bashrc "export JAVA_HOME=/usr/lib/jvm/default-java"
+    # Set JAVA_HOME based on OS
+    if is_macos; then
+        # macOS sets JAVA_HOME differently
+        if [[ -x /usr/libexec/java_home ]]; then
+            maybe_add_to_file "$shell_rc" 'export JAVA_HOME=$(/usr/libexec/java_home 2>/dev/null || echo "")'
+        fi
+    else
+        maybe_add_to_file "$shell_rc" "export JAVA_HOME=/usr/lib/jvm/default-java"
+    fi
 
     # Setup Git LFS
     git lfs install
+
+    # Setup user bazelrc with BuildBuddy configuration
+    setup_user_bazelrc
+}
+
+function setup_user_bazelrc() {
+    local bazelrc_file="$REPO_ROOT/.user.bazelrc"
+
+    # Check if file exists and has BuildBuddy config
+    if [ -f "$bazelrc_file" ] && grep -q "x-buildbuddy-api-key" "$bazelrc_file"; then
+        echo ".user.bazelrc already configured"
+        return 0
+    fi
+
+    # Create file with template if it doesn't exist or is missing BuildBuddy config
+    if [ ! -f "$bazelrc_file" ]; then
+        cat > "$bazelrc_file" << 'EOF'
+common --color=yes
+build --disk_cache=~/.cache/bazel
+build --remote_header=x-buildbuddy-api-key=[insert secret here]
+EOF
+        echo -e "${CYAN}${BOLD}"
+        echo "----------------------------------------"
+        echo "Created .user.bazelrc with BuildBuddy template"
+        echo "Please update x-buildbuddy-api-key with your actual API key"
+        echo "----------------------------------------"
+        echo -e "${RESET}"
+    else
+        # File exists but doesn't have BuildBuddy config, append it
+        cat >> "$bazelrc_file" << 'EOF'
+build --disk_cache=~/.cache/bazel
+build --remote_header=x-buildbuddy-api-key=[insert secret here]
+EOF
+        echo -e "${CYAN}${BOLD}"
+        echo "----------------------------------------"
+        echo "Added BuildBuddy configuration to .user.bazelrc"
+        echo "Please update x-buildbuddy-api-key with your actual API key"
+        echo "----------------------------------------"
+        echo -e "${RESET}"
+    fi
 }
 
 function install_bazelisk() {
@@ -130,17 +276,34 @@ function install_bazelisk() {
         return 0
     fi
 
-    if [[ "$(uname -m)" == "aarch64" ]]; then
-        # Install bazelisk for ARM64
-        wget --no-verbose https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-arm64 -O ~/.local/bin/bazel
-        verify_sha384sum ~/.local/bin/bazel $BAZELISK_ARM64_SHA384_SUM
-    else
-        # Install bazelisk from release
-        wget --no-verbose https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-amd64 -O ~/.local/bin/bazel
+    local os_suffix="linux"
+    local arch_suffix="amd64"
+    local expected_sum=$BAZELISK_X86_SHA256_SUM
 
-        # Verify bazelisk checksum
-        verify_sha384sum ~/.local/bin/bazel $BAZELISK_X86_SHA384_SUM
+    if is_macos; then
+        os_suffix="darwin"
     fi
+
+    if [[ "$(uname -m)" == "aarch64" ]] || [[ "$(uname -m)" == "arm64" ]]; then
+        arch_suffix="arm64"
+        if is_macos; then
+            expected_sum=$BAZELISK_ARM64_MACOS_SHA256_SUM
+        else
+            expected_sum=$BAZELISK_ARM64_SHA256_SUM
+        fi
+    fi
+
+    local bazelisk_url="https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-${os_suffix}-${arch_suffix}"
+
+    # Download appropriate bazelisk binary
+    if check_command wget; then
+        wget --no-verbose "$bazelisk_url" -O ~/.local/bin/bazel
+    else
+        curl -fsSL "$bazelisk_url" -o ~/.local/bin/bazel
+    fi
+
+    # Verify checksum
+    verify_sha256sum ~/.local/bin/bazel $expected_sum
 
     # Make bazel executable
     chmod +x ~/.local/bin/bazel
@@ -228,14 +391,20 @@ function install_docker() {
 }
 
 function dev_env_setup() {
+    local shell_rc=$(get_shell_rc_file)
+
     echo "Exporting venv..."
-    bazel run //:venv venv
+    bazel run //:venv
     # Allow local files to be used
     venv/bin/pip install -e .
     echo "Done exporting venv"
 
-    # Setup direnv
-    maybe_add_to_file $HOME/.bashrc 'eval "$(direnv hook bash)"'
+    # Setup direnv with the appropriate shell hook
+    if [[ "$shell_rc" == *"zshrc"* ]]; then
+        maybe_add_to_file "$shell_rc" 'eval "$(direnv hook zsh)"'
+    else
+        maybe_add_to_file "$shell_rc" 'eval "$(direnv hook bash)"'
+    fi
 
     echo "Allowing direnv in repo root"
     cd $REPO_ROOT
@@ -252,17 +421,21 @@ function dev_env_setup() {
 
 function setup_ryans_custom_settings() {
     setup_gh
-    install_apt_packages "${RYANS_APT_PACKAGES[@]}"
+    if is_linux; then
+        install_apt_packages "${RYANS_APT_PACKAGES[@]}"
+    fi
     install_vscode_keybindings misc/dravesr/keybindings.json
-    setup_user_bazelrc
     setup_bash_aliases
-    install_system_python_packages
+    # Not working on MacOS yet
+    if is_linux; then
+        install_system_python_packages
+    fi
 }
 
 function setup_gh() {
     install_gh
     authenticate_gh
-    make_gh_alias feature 'nlb_gh_feature $@' -s
+    make_gh_alias feature '!nlb_gh_feature $@' -s
     make_gh_alias merge 'pr merge -s -d'
     install_gh_extension github/gh-copilot
 }
@@ -274,24 +447,48 @@ function install_gh() {
         return 0
     fi
 
-    if [[ "$(uname -m)" == "aarch64" ]]; then
-        # Install gh for ARM64
-        echo "Installing gh v$GH_VERSION"
-        local gh_url="https://github.com/cli/cli/releases/download/v$GH_VERSION/gh_${GH_VERSION}_linux_arm64.tar.gz"
+    echo "Installing gh v$GH_VERSION"
 
-        wget --no-verbose $gh_url -O /tmp/gh.tar.gz
-        verify_sha256sum /tmp/gh.tar.gz $GH_ARM64_SHA256_SUM
-    else
-        # Install gh from release
-        echo "Installing gh v$GH_VERSION"
-        local gh_url="https://github.com/cli/cli/releases/download/v$GH_VERSION/gh_${GH_VERSION}_linux_amd64.tar.gz"
+    local os_suffix="linux"
+    local arch_suffix="amd64"
+    local expected_sum=$GH_X86_SHA256_SUM
+    local file_ext="tar.gz"
 
-        wget --no-verbose $gh_url -O /tmp/gh.tar.gz
-        verify_sha256sum /tmp/gh.tar.gz $GH_X86_SHA256_SUM
+    if is_macos; then
+        os_suffix="macOS"
+        file_ext="zip"
     fi
 
-    # Unpack gh.tar.gz to ~/.local
-    tar -xzf /tmp/gh.tar.gz -C ~/.local --strip-components=1
+    if [[ "$(uname -m)" == "aarch64" ]] || [[ "$(uname -m)" == "arm64" ]]; then
+        arch_suffix="arm64"
+        if is_macos; then
+            expected_sum=$GH_ARM64_MACOS_SHA256_SUM
+        else
+            expected_sum=$GH_ARM64_SHA256_SUM
+        fi
+    fi
+
+    local gh_url="https://github.com/cli/cli/releases/download/v$GH_VERSION/gh_${GH_VERSION}_${os_suffix}_${arch_suffix}.${file_ext}"
+    local gh_file="/tmp/gh.${file_ext}"
+
+    if check_command wget; then
+        wget --no-verbose $gh_url -O "$gh_file"
+    else
+        curl -fsSL $gh_url -o "$gh_file"
+    fi
+
+    verify_sha256sum "$gh_file" $expected_sum
+
+    # Unpack based on file type
+    if is_macos; then
+        # macOS uses zip
+        unzip -q "$gh_file" -d /tmp/gh_extract
+        cp -R /tmp/gh_extract/gh_${GH_VERSION}_${os_suffix}_${arch_suffix}/* ~/.local/
+        rm -rf /tmp/gh_extract
+    else
+        # Linux uses tar.gz
+        tar -xzf "$gh_file" -C ~/.local --strip-components=1
+    fi
 
     # Verify is installed with the correct version
     version=$(gh --version)
@@ -325,13 +522,17 @@ function make_gh_alias() {
     local command=$2
     shift 2
     local additional_args=("$@")
-    # Check if a matching alias and command already exist
-    if gh alias list | grep -q "$alias"; then
-        if gh alias list | grep -qx "$alias: $command"; then
+
+    # Check if alias exists
+    if gh alias list | grep -q "^$alias:"; then
+        # Escape special regex characters in the command for matching
+        local escaped_command=$(printf '%s\n' "$command" | sed 's/[[\.*^$/]/\\&/g')
+        # Check if the command matches (gh may wrap commands in quotes or not)
+        if gh alias list | grep -qE "^$alias: ('$escaped_command'|$escaped_command)$"; then
             echo "gh alias $alias already exists"
             return 0
         fi
-        echo "gh alias $alias already a different command"
+        echo "Updating gh alias $alias"
         gh alias set --clobber $alias "$command" "${additional_args[@]}"
     else
         echo "Creating gh alias $alias"
@@ -357,27 +558,27 @@ function install_vscode_keybindings() {
     if check_if_on_wsl; then
         windows_user=$(powershell.exe '$env:UserName' | tr -d '\r')
         keybindings_file=/mnt/c/Users/$windows_user/AppData/Roaming/Code/User/keybindings.json
+    elif is_macos; then
+        keybindings_file="$HOME/Library/Application Support/Code/User/keybindings.json"
     else
         keybindings_file=$HOME/.config/Code/User/keybindings.json
     fi
 
-    if copy_if_not_up_to_date $repo_keybindings_file $keybindings_file false; then
+    if copy_if_not_up_to_date $repo_keybindings_file "$keybindings_file" false; then
         echo "Copied $repo_keybindings_file to $keybindings_file"
     fi
 }
 
-function setup_user_bazelrc() {
-    echo "Setting up .user.bazelrc"
-    local bazelrc_file="$REPO_ROOT/.user.bazelrc"
-    local bazelrc_lines=(
-        "common --color=yes"
-    )
-    maybe_add_to_file "$bazelrc_file" "${bazelrc_lines[@]}"
-}
-
 function setup_bash_aliases() {
-    echo "Setting up .bash_aliases"
-    local bash_aliases_file="$HOME/.bash_aliases"
+    echo "Setting up shell aliases"
+    local shell_rc=$(get_shell_rc_file)
+    local aliases_file="$HOME/.bash_aliases"
+
+    # For zsh, we can use the same file and source it from zshrc
+    if [[ "$shell_rc" == *"zshrc"* ]]; then
+        maybe_add_to_file "$shell_rc" "[[ -f ~/.bash_aliases ]] && source ~/.bash_aliases"
+    fi
+
     local bash_aliases_lines=(
         "# Turn on tap-to-click"
         "alias silent_mode='gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click true'"
@@ -396,12 +597,17 @@ function setup_bash_aliases() {
 }"
     )
 
-    maybe_add_to_file "$bash_aliases_file" "${bash_aliases_lines[@]}"
+    maybe_add_to_file "$aliases_file" "${bash_aliases_lines[@]}"
 }
 
 function install_system_python_packages() {
-    # Big scary flag, but that won't stop the fun
-    /usr/bin/pip install nl-blocks --upgrade --break-system-packages
+    if is_macos; then
+        # On macOS, use Homebrew's pip3
+        /opt/homebrew/bin/pip3 install nl-blocks --upgrade --break-system-packages
+    else
+        # Big scary flag, but that won't stop the fun
+        /usr/bin/pip install nl-blocks --upgrade --break-system-packages
+    fi
 }
 
 #
@@ -415,83 +621,25 @@ CYAN=$(tput setaf 6)
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
 
-# Trap to restore cursor on exit
-cleanup() {
-    tput cnorm  # Restore cursor visibility
-}
-trap cleanup EXIT
-
-# Spinner function - always stays at the last line
-spinner() {
-    local pid=$1
-    local delay=0.1
-    local spin_chars=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
-
-    tput civis  # Hide cursor
-    while kill -0 "$pid" 2>/dev/null; do
-        for i in "${spin_chars[@]}"; do
-            tput sc   # Save cursor position
-            tput cup "$(tput lines)" 0  # Move cursor to the last line
-            echo -ne "${CYAN}${BOLD}[$i] ${RESET}$SPINNER_MESSAGE   "
-            tput rc   # Restore cursor position
-            sleep $delay
-        done
-    done
-    tput cnorm  # Restore cursor when done
-}
-
-# Function to run a section with a spinner and live logs
 run_section() {
-    SPINNER_MESSAGE="$1"
+    SECTION_MESSAGE="$1"
     shift  # Remove the first argument
 
-    echo -e "\n${BOLD}${CYAN}➤ $SPINNER_MESSAGE...${RESET}\n"
+    echo -e "\n${BOLD}${CYAN}➤ $SECTION_MESSAGE...${RESET}\n"
 
-    # Create a temporary log file
-    local log_file
-    log_file=$(mktemp)
-
-    # Run the command **in the background**, logging output
-    "$@" > "$log_file" 2>&1 &
-    local pid=$!
-
-    # Start the spinner (this stays until the command finishes)
-    spinner $pid &
-    local spinner_pid=$!
-
-    # Live log streaming while the command runs
-    tail -f "$log_file" | sed --unbuffered 's/^/  /' &
-    local tail_pid=$!
-
-    # Wait for command to finish
-    wait $pid
-    local exit_code=$?
-
-    # Stop the spinner and log streaming
-    kill $spinner_pid 2>/dev/null
-    kill $tail_pid 2>/dev/null
-    wait $spinner_pid 2>/dev/null || true  # Suppress error message
-    wait $tail_pid 2>/dev/null || true
-
-    # Clear spinner line before showing final status
-    tput cup "$(tput lines)" 0
-    echo -ne "\r\033[K"
-
-    # Show success or failure message
-    if [ $exit_code -eq 0 ]; then
-        echo -e "${GREEN}${BOLD}[✔] ${RESET}$SPINNER_MESSAGE\n"
+    if "$@"; then
+        echo -e "${GREEN}${BOLD}[✔] ${RESET}$SECTION_MESSAGE\n"
     else
-        echo -e "${RED}${BOLD}[✘] ${RESET}$SPINNER_MESSAGE (Failed!)\n"
-        echo -e "${RED}${BOLD}Error log:${RESET}"
-        tail -n 20 "$log_file"  # Show last 20 lines of error log
-        exit 1  # Stop execution
+        echo -e "${RED}${BOLD}[✘] ${RESET}$SECTION_MESSAGE (Failed!)\n"
+        exit 1
     fi
 }
 
 function add_to_path() {
     local path=$1
+    local shell_rc=$(get_shell_rc_file)
     mkdir -p $path
-    maybe_add_to_file $HOME/.bashrc "PATH=\"$path:\$PATH\""
+    maybe_add_to_file "$shell_rc" "PATH=\"$path:\$PATH\""
     # Export to make the new PATH available in the current shell
     export PATH="$path:$PATH"
 }
@@ -544,37 +692,73 @@ function maybe_add_to_file() {
 }
 
 function success() {
-    echo -e "\e[32m"
+    printf "\e[32m\n"
     echo "(っ◔◡◔)っ ♥success♥"
-    echo -e "\e[0m"
+    printf "\e[0m\n"
+}
+
+function get_file_mtime() {
+    # Get modification time of a file (cross-platform)
+    local file=$1
+    if is_macos; then
+        stat -f %m "$file"
+    else
+        stat -c %Y "$file"
+    fi
 }
 
 function copy_if_not_up_to_date() {
-    # Copy $src to $dest if $dest/$(basename $src) does not exist
-    # or if the destination file is not up to date
+    # Copy $src to $dest if destination does not exist or is not up to date
+    # If $dest is a directory, the file will be copied into it
+    # If $dest is a file path, it will be copied to that exact location
     # Returns 0 if file is copied, 1 otherwise
     local src=$1
     local dest=$2
     local needs_sudo=$3
-    if [ ! -f $dest/$(basename $src) ] || [ $(stat -c %Y $src) -gt $(stat -c %Y $dest/$(basename $src)) ]; then
+
+    # Determine the destination file path
+    local dest_file
+    if [ -d "$dest" ]; then
+        # dest is a directory, append basename
+        dest_file="$dest/$(basename "$src")"
+    else
+        # dest is a file path (directory might not exist yet)
+        dest_file="$dest"
+        # Create parent directory if it doesn't exist
+        local dest_dir=$(dirname "$dest")
+        if [ ! -d "$dest_dir" ]; then
+            if $needs_sudo; then
+                sudo mkdir -p "$dest_dir"
+            else
+                mkdir -p "$dest_dir"
+            fi
+        fi
+    fi
+
+    # Check if copy is needed
+    if [ ! -f "$dest_file" ] || [ $(get_file_mtime "$src") -gt $(get_file_mtime "$dest_file") ]; then
         if $needs_sudo; then
-            sudo cp $src $dest
-            echo "Copied $src to $dest/$(basename $src)"
+            sudo cp "$src" "$dest_file"
+            echo "Copied $src to $dest_file"
             return 0
         else
-            cp $src $dest
+            cp "$src" "$dest_file"
             return 0
         fi
     fi
     return 1
 }
 
-run_section "Install apt packages" install_apt_packages "${APT_PACKAGES[@]}"
+run_section "Install system packages" install_system_packages
 run_section "Filesystem setup" filesystem_setup
 run_section "Install Bazelisk" install_bazelisk
-run_section "Copy udev rules" copy_udev_rules
-run_section "Setup Aruindo CLI" arduino_setup
-run_section "Install docker" install_docker
+if is_linux; then
+    run_section "Copy udev rules" copy_udev_rules
+    run_section "Setup Arduino CLI" arduino_setup
+fi
+if is_linux; then
+    run_section "Install docker" install_docker
+fi
 run_section "Setup dev environment" dev_env_setup
 # Check if user is `dravesr` before setting up Ryan's environment
 if [ "$USER" = "dravesr" ]; then
