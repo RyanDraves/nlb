@@ -148,7 +148,6 @@ manifest:
     PyQt6.Qt6.qml.QtWebSockets.libqmlwebsocketsplugin: PyQt6_Qt6
     PyQt6.sip: PyQt6_sip
     Rtree.libs.libspatialindex-567d5dd6: Rtree
-    Xlib: python_xlib
     agents: openai_agents
     alembic: alembic
     annotated_types: annotated_types
@@ -176,7 +175,6 @@ manifest:
     docutils: docutils
     dotenv: python_dotenv
     email_validator: email_validator
-    evdev: evdev
     exceptiongroup: exceptiongroup
     executing: executing
     fastmcp: fastmcp
@@ -240,16 +238,13 @@ manifest:
     ptyprocess: ptyprocess
     pure_eval: pure_eval
     py: pytest
-    pyaudio: pyaudio
     pycparser: pycparser
     pydantic: pydantic
     pydantic_core: pydantic_core
     pydantic_settings: pydantic_settings
-    pydub: pydub
     pygments: pygments
     pylab: matplotlib
     pymap3d: pymap3d
-    pynput: pynput
     pyparsing: pyparsing
     pyperclip: pyperclip
     pytest: pytest
@@ -271,7 +266,6 @@ manifest:
     serial: pyserial
     six: six
     sniffio: sniffio
-    sounddevice: sounddevice
     sqlalchemy: SQLAlchemy
     sse_starlette: sse_starlette
     stack_data: stack_data
@@ -295,4 +289,4 @@ manifest:
     zmq: pyzmq
   pip_repository:
     name: pip
-integrity: 151ade43a2c5f22c4d5a4f4957228be6e7d515f9cd437fbc3c8e445042ce4232
+integrity: ace317855b0b34c46f404bd6d98abcd3524f5d61b60e30bf340e98622e14b3a7

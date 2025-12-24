@@ -62,10 +62,6 @@ py_package(
         "//nlb/util:timer",
         "//nlb/util:venv_completions",
         "//nlb/util:version",
-        "//nlb/wizaidry:audio_util",
-        "//nlb/wizaidry:text_handler",
-        "//nlb/wizaidry:util",
-        "//nlb/wizaidry:voice_handler",
     ],
 )
 
@@ -90,19 +86,21 @@ py_wheel(
     distribution = "nl_blocks",  # Unfortunate PyPI name collision
     # Update via `tools/release/python/update_build.sh`
     # or https://github.com/RyanDraves/nlb/actions/workflows/python_release.yaml
-    entry_points = {"console_scripts": [
-        "arduino_mcp = nlb.mcp.arduino_mcp:main",
-        "blockworld = nlb.models.blockworld.blockworld:main",
-        "blockworld_plot = nlb.models.blockworld.blockworld_plot:main",
-        "buffham = nlb.buffham.buffham:main",
-        "file_edit_mcp = nlb.mcp.file_edit_mcp:main",
-        "nlb_gh_feature = nlb.github.nlb_gh_feature:main",
-        "nlb_invite = nlb.authentik.nlb_invite:main",
-        "nlb_tailscale = nlb.tailscale.nlb_tailscale:main",
-        "sharetrace = nlb.sharetrace.sharetrace:main",
-        "sharetrace_demo = nlb.sharetrace.sharetrace_demo:main",
-        "venv_completions = nlb.util.venv_completions:main",
-    ]},
+    entry_points = {
+        "console_scripts": [
+            "arduino_mcp = nlb.mcp.arduino_mcp:main",
+            "blockworld = nlb.models.blockworld.blockworld:main",
+            "blockworld_plot = nlb.models.blockworld.blockworld_plot:main",
+            "buffham = nlb.buffham.buffham:main",
+            "file_edit_mcp = nlb.mcp.file_edit_mcp:main",
+            "nlb_gh_feature = nlb.github.nlb_gh_feature:main",
+            "nlb_invite = nlb.authentik.nlb_invite:main",
+            "nlb_tailscale = nlb.tailscale.nlb_tailscale:main",
+            "sharetrace = nlb.sharetrace.sharetrace:main",
+            "sharetrace_demo = nlb.sharetrace.sharetrace_demo:main",
+            "venv_completions = nlb.util.venv_completions:main",
+        ],
+    },
     license = "MIT",
     # https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
     project_urls = {
