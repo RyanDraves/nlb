@@ -2,12 +2,6 @@
 
 set -e
 
-# Print the current user & user ID
-echo "Running as user: $(whoami) with UID: $(id -u)"
-# Print the permissions of the /secrets directory
-echo "Permissions of /secrets directory:"
-ls -ld /secrets
-
 mkdir -p /www/assets
 mkdir -p /www/assets/icons
 cp /home/lighttpd/config.yaml /www/assets/config.yml
