@@ -48,7 +48,7 @@ services:
       POSTGRES_HOST: hyd-postgres
       POSTGRES_PORT: 5432
     volumes:
-      secrets-hyd:/secrets:ro
+      - secrets-hyd:/secrets:ro
     depends_on:
       hyd-db:
         condition: service_healthy
