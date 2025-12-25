@@ -9,7 +9,7 @@ module(
 #
 # "Standard" dependencies
 #
-bazel_dep(name = "bazel_lib", version = "3.0.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.22.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_cc", version = "0.2.12")
@@ -17,7 +17,8 @@ bazel_dep(name = "rules_platform", version = "0.1.0")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+# Currently unused. Yay!
+# git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 #
 # Pico SDK & Picotool
@@ -188,8 +189,8 @@ use_repo(rules_ts_ext, "npm_typescript")
 #
 # Rust
 #
-bazel_dep(name = "rules_rust", version = "0.67.0")
-bazel_dep(name = "rules_rust_wasm_bindgen", version = "0.67.0")
+bazel_dep(name = "rules_rust", version = "0.68.1")
+bazel_dep(name = "rules_rust_wasm_bindgen", version = "0.68.1")
 
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(
@@ -210,7 +211,7 @@ crate = use_extension(
 )
 crate.spec(
     package = "wasm-bindgen",
-    version = "=0.2.100",
+    version = "=0.2.105",
 )
 crate.spec(
     package = "wee_alloc",

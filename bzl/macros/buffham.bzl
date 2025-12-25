@@ -1,7 +1,7 @@
 """Macros for generating Buffham files."""
 
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_file")
 load("@aspect_rules_py//py:defs.bzl", "py_library")
-load("@bazel_lib//lib:write_source_files.bzl", "write_source_file")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 def _buffham_impl(name, visibility, src, deps, py, cc, tags):
@@ -93,7 +93,7 @@ def _buffham_template_impl(name, visibility, bh, template, out_file, **kwargs):
 def buffham_py_write(name, visibility = ["//visibility:public"]):
     """Legacy macro to write the generated `_bh.pyi` file to the source tree.
 
-    `bazel_lib` needs to remove its `glob` call to make this a symbolic macro.
+    `aspect_bazel_lib` needs to remove its `glob` call to make this a symbolic macro.
     """
     basename = name.replace("_bh", "").replace("_py", "").replace("_write", "")
 

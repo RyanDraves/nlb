@@ -103,7 +103,7 @@ I wasted a lot of time making scripts to run a hermetically installed tool back 
 ## `rules_ruby`
 `rules_ruby` was greatly simplified the project scope and was fun to set up. However, since I was pulling in changes from active development to get some features I needed, I ended up churning through a lot of implementation as I played around with what was possible to set up.
 
-After the jump script adventures I spent a good while trying to write a Bazel rule that depended on `@ruby//:jekyll`. I [learned](rules_ruby_issue), with the patient help of the `rule_ruby` maintainer, that I was running things in a non-hermetic / unintended way, that `no-sandbox` would fix the issues I was having using the intended `@bundle//bin:jekyll` target, and that my rule could just be a macro calling `bazel_skylib` or `bazel_lib` rules. Most of the heavy lifting in the project was learning these 3 lessons (as well as the exorbitant amount of time spent on the learning curve of making Bazel rules)
+After the jump script adventures I spent a good while trying to write a Bazel rule that depended on `@ruby//:jekyll`. I [learned](rules_ruby_issue), with the patient help of the `rule_ruby` maintainer, that I was running things in a non-hermetic / unintended way, that `no-sandbox` would fix the issues I was having using the intended `@bundle//bin:jekyll` target, and that my rule could just be a macro calling `bazel_skylib` or `aspect_bazel_lib` rules. Most of the heavy lifting in the project was learning these 3 lessons (as well as the exorbitant amount of time spent on the learning curve of making Bazel rules)
 
 # Next Steps
 
@@ -122,7 +122,7 @@ After that, there are a few goodies that would clean up the tooling a bit:
 [rules_ruby_hermetic_commands]: https://github.com/bazel-contrib/rules_ruby/issues/41
 [rules_ruby_issue]: https://github.com/bazel-contrib/rules_ruby/issues/72
 
-export default function MDXPage({children}) {
+export default function MDXPage({ children }) {
   return (
     <MdxLayout metadata={metadata}>
       {children}

@@ -4,7 +4,7 @@ From https://github.com/bazel-starters/go/blob/c3cc3dbc982bc8e26f222e586c40f314a
 and `js_image.bzl` in this repo.
 """
 
-load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load", "oci_push")
 load("@tar.bzl//tar:tar.bzl", "tar")
 

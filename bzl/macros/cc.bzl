@@ -1,6 +1,6 @@
 """Wrappers for cross-platform C++ building"""
 
-load("@bazel_lib//lib:transitions.bzl", "platform_transition_test")
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_test")
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 

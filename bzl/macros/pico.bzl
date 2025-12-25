@@ -1,6 +1,6 @@
 """Macros for building Pico projects"""
 
-load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@pico-sdk//bazel/toolchain:objcopy.bzl", "objcopy_to_bin")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bzl/macros:emb.bzl", "flash")
