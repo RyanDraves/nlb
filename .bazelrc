@@ -71,7 +71,8 @@ test --test_output=errors
 # From https://github.com/google/copybara?tab=readme-ov-file#using-pre-built-copybara-in-bazel
 common --java_runtime_version=remotejdk_21
 
-run:pypi --run_under="TWINE_PASSWORD=$(cat $BUILD_WORKING_DIRECTORY/services/secrets/pypi.token)"
-run:testpypi --run_under="TWINE_PASSWORD=$(cat $BUILD_WORKING_DIRECTORY/services/secrets/pypi_test.token)"
+# TODO: Feed the secrets from the setec client
+run:pypi --run_under="TWINE_PASSWORD=$(cat $BUILD_WORKING_DIRECTORY/services/secrets/personal/pypi.token)"
+run:testpypi --run_under="TWINE_PASSWORD=$(cat $BUILD_WORKING_DIRECTORY/services/secrets/personal/pypi_test.token)"
 
 try-import %workspace%/.user.bazelrc

@@ -25,7 +25,7 @@ services:
     init: true # needed, if healthcheck is used. Prevents zombie processes
 
   tailscale:
-    image: tailscale/tailscale
+    image: tailscale/tailscale:v1.90.8
     container_name: ntfy-tailscale
     hostname: ntfy
     secrets:

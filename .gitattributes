@@ -6,6 +6,8 @@ requirements_lock.txt linguist-generated=true
 gazelle_python.yaml linguist-generated=true
 # pnpm files
 pnpm-lock.yaml linguist-generated=true
+# go files
+go.sum linguist-generated=true
 # LFS files
 *.3mf filter=lfs diff=lfs merge=lfs -text
 *.gcode filter=lfs diff=lfs merge=lfs -text

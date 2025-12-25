@@ -1,0 +1,34 @@
+services:
+  setec:
+    # bazel run //apps/setec:setec_amd64_load to build & load the image locally
+    # bazel run //apps/setec:setec_push to push the image to the registry
+    image: ghcr.io/ryandraves/setec:latest
+    container_name: setec
+    volumes:
+      - setec-state-dir:/var/lib/setec
+    restart: always
+    environment:
+      TS_AUTHKEY_PATH: /run/secrets/setec_authkey
+      AWS_ACCESS_KEY_ID_PATH: /run/secrets/setec_aws_access_key
+      AWS_SECRET_ACCESS_KEY_PATH: /run/secrets/setec_aws_secret_key
+      SETEC_STATE_DIR: /var/lib/setec
+      SETEC_HOSTNAME: setec
+      SETEC_KMS_KEY_NAME_PATH: /run/secrets/setec_kms_key
+    secrets:
+      - setec_authkey
+      - setec_kms_key
+      - setec_aws_access_key
+      - setec_aws_secret_key
+
+volumes:
+  setec-state-dir:
+
+secrets:
+  setec_authkey:
+    file: ${PWD}/../secrets/setec.authkey
+  setec_kms_key:
+    file: ${PWD}/../secrets/setec_kms.key
+  setec_aws_access_key:
+    file: ${PWD}/../secrets/setec_aws_access.key
+  setec_aws_secret_key:
+    file: ${PWD}/../secrets/setec_aws_secret.key

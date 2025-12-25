@@ -1,21 +1,32 @@
 services:
+  spirit-tracks:
+    image: ghcr.io/ryandraves/spirit_tracks:latest
+    network_mode: service:tailscale
+    environment:
+      SPIRIT_TRACKS_CONFIG: /config/secrets.json
+      SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
+    volumes:
+      - secrets-dash:/secrets/dash
+      - ${PWD}/secrets.json:/config/secrets.json:ro
+    restart: "no"
+
   homer:
     image: b4bz/homer:latest
     container_name: homer
     network_mode: service:tailscale
     volumes:
       - ${PWD}/config:/home/lighttpd
-    secrets:
-      - portainer_token
-      - mealie_token
-      - octoprint_token
+      - secrets-dash:/secrets:ro
     deploy:
       restart_policy:
         condition: on-failure
     entrypoint: '/home/lighttpd/entrypoint.sh'
+    depends_on:
+      spirit-tracks:
+        condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale
+    image: tailscale/tailscale:v1.90.8
     container_name: homer-tailscale
     hostname: dash
     secrets:
@@ -38,13 +49,8 @@ services:
 
 volumes:
   homer-ts-authkey:
+  secrets-dash:
 
 secrets:
   tailnet_oauth:
     file: ${PWD}/../secrets/tailnet_oauth.secret
-  portainer_token:
-    file: ${PWD}/../secrets/portainer.token
-  mealie_token:
-    file: ${PWD}/../secrets/mealie.token
-  octoprint_token:
-    file: ${PWD}/../secrets/octoprint.token

@@ -30,7 +30,7 @@ Multi-platform builds require a platform transition on the targets to be built f
 
 The current state of affairs is:
 - [rules_platform](https://registry.bazel.build/modules/rules_platform)'s `platform_data` (binary targets only)
-- [bazel_lib](https://github.com/bazel-contrib/bazel-lib/blob/main/docs/transitions.md)'s `transitions.bzl` (binary targets, file targets, test targets)
+- [aspect_bazel_lib](https://github.com/bazel-contrib/bazel-lib/blob/main/docs/transitions.md)'s `transitions.bzl` (binary targets, file targets, test targets)
 - `//bzl/rules:platform_transition.bzl` (file targets, CC libraries)
 
 It's a complete mess. If you want to customize flags within a platform, instead of binding all of them to the platform with platform flags, then custom rules for that are needed too.

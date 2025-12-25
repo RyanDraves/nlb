@@ -4,7 +4,7 @@ from typing import Any, Literal, TypedDict, Unpack
 
 import requests
 
-from nlb.util import secrets
+from nlb.secrets import secrets
 
 
 class InvitationCreateRequest(TypedDict):

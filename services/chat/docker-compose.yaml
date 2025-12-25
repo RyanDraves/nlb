@@ -1,18 +1,31 @@
 services:
+  spirit-tracks:
+    image: ghcr.io/ryandraves/spirit_tracks:latest
+    network_mode: service:tailscale
+    environment:
+      SPIRIT_TRACKS_CONFIG: /config/secrets.json
+      SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
+    volumes:
+      - secrets-chat:/secrets/chat
+      - ${PWD}/secrets.json:/config/secrets.json:ro
+    restart: "no"
+
   lobe-chat:
     image: ghcr.io/ryandraves/lobe-chat:whoami
     container_name: lobe-chat
     network_mode: service:tailscale
-    secrets:
-      - lobe_chat_password
-      - openai_key
+    volumes:
+      secrets-chat:/secrets:ro
     deploy:
       restart_policy:
         condition: on-failure
-    entrypoint: [ "/bin/sh", "-c", "set -e; export ACCESS_CODE=$(cat /run/secrets/lobe_chat_password); export OPENAI_API_KEY=$(cat /run/secrets/openai_key); echo 'Secrets loaded successfully'; /bin/node /app/startServer.js" ]
+    entrypoint: [ "/bin/sh", "-c", "set -e; export ACCESS_CODE=$(cat /secrets/chat_password); export OPENAI_API_KEY=$(cat /secrets/chat_openai_key); echo 'Secrets loaded successfully'; /bin/node /app/startServer.js" ]
+    depends_on:
+      spirit-tracks:
+        condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale
+    image: tailscale/tailscale:v1.90.8
     container_name: lobe-chat-tailscale
     hostname: chat
     secrets:
@@ -35,11 +48,8 @@ services:
 
 volumes:
   lobe-chat-ts-authkey:
+  secrets-chat:
 
 secrets:
   tailnet_oauth:
     file: ${PWD}/../secrets/tailnet_oauth.secret
-  lobe_chat_password:
-    file: ${PWD}/../secrets/lobe_chat.password
-  openai_key:
-    file: ${PWD}/../secrets/openai.key

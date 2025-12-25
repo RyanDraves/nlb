@@ -1,6 +1,6 @@
 """Macros for building Pico projects"""
 
-load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@pico-sdk//bazel/toolchain:objcopy.bzl", "objcopy_to_bin")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bzl/macros:emb.bzl", "flash")
@@ -45,7 +45,7 @@ def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], link
 
     The UF2 file can be flashed to a Pico device in BOOTSEL mode with:
     ```
-    bazel run //tools:picotool -- load bazel-bin/path/to/name.uf2
+    picotool load bazel-bin/path/to/name.uf2
     ```
 
     Args:

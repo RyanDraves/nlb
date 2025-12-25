@@ -1,6 +1,6 @@
-load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
-load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
+load("@gazelle//:def.bzl", "gazelle")
 load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@pip//:requirements.bzl", "all_whl_requirements")
@@ -65,17 +65,16 @@ write_source_files(
     ],
 )
 
-gazelle_binary(
-    name = "gazelle_multilang",
-    languages = [
-        #182 use https://github.com/bazel-starters/py/blob/main/BUILD#L26
-        "@rules_python_gazelle_plugin//python",
-    ],
-)
-
 gazelle(
     name = "gazelle",
-    gazelle = ":gazelle_multilang",
+    env = {
+        "ENABLE_LANGUAGES": ",".join([
+            "starlark",
+            "go",
+            "python",
+        ]),
+    },
+    gazelle = "@multitool//tools/gazelle",
 )
 
 # gazelle:build_file_name BUILD

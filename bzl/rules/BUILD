@@ -1,4 +1,4 @@
-load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("@aspect_bazel_lib//:bzl_library.bzl", "bzl_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -27,3 +27,6 @@ bzl_library(
 #         "@rules_cc//cc/common",
 #     ],
 # )
+
+# Starlark Gazelle extension is too primitive to accept other directives
+# gazelle:ignore

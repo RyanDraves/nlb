@@ -6,11 +6,11 @@ mkdir -p /www/assets
 mkdir -p /www/assets/icons
 cp /home/lighttpd/config.yaml /www/assets/config.yml
 cp /home/lighttpd/favicon.ico /www/assets/icons/favicon.ico
-token=$(cat /run/secrets/portainer_token)
+token=$(cat /secrets/dash_portainer_token)
 sed -i 's@PORTAINER_TOKEN@'"$token"'@g' /www/assets/config.yml
-token=$(cat /run/secrets/mealie_token)
+token=$(cat /secrets/dash_mealie_token)
 sed -i 's@MEALIE_TOKEN@'"$token"'@g' /www/assets/config.yml
-token=$(cat /run/secrets/octoprint_token)
+token=$(cat /secrets/dash_octoprint_token)
 sed -i 's@OCTOPRINT_TOKEN@'"$token"'@g' /www/assets/config.yml
 
 # Rest of entrypoint copied from https://github.com/bastienwirtz/homer

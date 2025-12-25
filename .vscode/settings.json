@@ -132,6 +132,9 @@
     "triggerTaskOnSave.tasks": {
         "Update requirements.txt": [
             "requirements.txt"
+        ],
+        "Update go.mod": [
+            "go.mod"
         ]
     },
     "cSpell.showAutocompleteDirectiveSuggestions": false

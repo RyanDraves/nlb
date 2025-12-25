@@ -1,3 +1,5 @@
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
 package(default_visibility = ["//visibility:public"])
 
 constraint_setting(
@@ -47,4 +49,9 @@ config_setting(
 config_setting(
     name = "log_protocol_unittest_enabled",
     flag_values = {"//bzl/configs:LOG_PROTOCOL": "unittest"},
+)
+
+bzl_library(
+    name = "defs",
+    srcs = ["defs.bzl"],
 )

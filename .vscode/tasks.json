@@ -6,6 +6,12 @@
             "type": "shell",
             "command": "bazel run //:requirements.update && bazel run //:venv venv && bazel run //:gazelle_python_manifest.update && venv/bin/pip install -e ${workspaceFolder}",
             "problemMatcher": []
+        },
+        {
+            "label": "Update go.mod",
+            "type": "shell",
+            "command": "bazel run @rules_go//go -- mod tidy",
+            "problemMatcher": []
         }
-    ]
+    ],
 }

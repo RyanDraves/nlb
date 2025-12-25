@@ -1,4 +1,16 @@
 services:
+  spirit-tracks:
+    image: ghcr.io/ryandraves/spirit_tracks:latest
+    network_mode: service:tailscale
+    environment:
+      SPIRIT_TRACKS_CONFIG: /config/secrets.json
+      SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
+    volumes:
+      - secrets-hyd:/secrets/hyd
+      - secrets-postgres:/secrets/postgres
+      - ${PWD}/secrets.json:/config/secrets.json:ro
+    restart: "no"
+
   hyd-db:
     image: postgres:15
     container_name: hyd-postgres
@@ -7,40 +19,44 @@ services:
       POSTGRES_USER: hyd
       PGUSER: hyd
       POSTGRES_DB: hyd
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
-    secrets:
-      - postgres_password
+      POSTGRES_PASSWORD_FILE: /secrets/hyd_postgres_password
     ports:
       - "5432:5432"
     volumes:
       - hyd-pgdata:/var/lib/postgresql/data
+      - secrets-postgres:/secrets:ro
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "hyd" ]
       interval: 30s
       timeout: 20s
       retries: 3
+    depends_on:
+      spirit-tracks:
+        condition: service_completed_successfully
 
   hyd:
     # bazel run //apps/hyd:hyd_amd64_load to build & load the image locally
     # bazel run //apps/hyd:hyd_push to push the image to the registry
     image: ghcr.io/ryandraves/hyd:latest
     container_name: hyd
-    depends_on:
-      hyd-db:
-        condition: service_healthy
     restart: always
     network_mode: service:tailscale
     environment:
       POSTGRES_USER: hyd
       POSTGRES_DB: hyd
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_PASSWORD_FILE: /secrets/hyd_postgres_password
       POSTGRES_HOST: hyd-postgres
       POSTGRES_PORT: 5432
-    secrets:
-      - postgres_password
+    volumes:
+      - secrets-hyd:/secrets:ro
+    depends_on:
+      hyd-db:
+        condition: service_healthy
+      spirit-tracks:
+        condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale
+    image: tailscale/tailscale:v1.90.8
     container_name: hyd-tailscale
     hostname: hyd
     secrets:
@@ -64,10 +80,10 @@ services:
 volumes:
   hyd-pgdata:
   hyd-ts-authkey:
+  secrets-hyd:
+  secrets-postgres:
 
 
 secrets:
   tailnet_oauth:
     file: ${PWD}/../secrets/tailnet_oauth.secret
-  postgres_password:
-    file: ${PWD}/../secrets/hyd_postgres.password

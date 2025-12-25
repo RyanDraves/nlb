@@ -1,4 +1,4 @@
-load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("@aspect_bazel_lib//:bzl_library.bzl", "bzl_library")
 load("//bzl/macros:python.bzl", "py_binary")
 
 package(default_visibility = ["//visibility:public"])
@@ -12,8 +12,8 @@ bzl_library(
     name = "buffham",
     srcs = ["buffham.bzl"],
     deps = [
+        "@aspect_bazel_lib//lib:write_source_files",
         "@aspect_rules_py//py:defs",
-        "@bazel_lib//lib:write_source_files",
         "@rules_cc//cc:defs_bzl",
     ],
 )
@@ -22,7 +22,7 @@ bzl_library(
     name = "cc",
     srcs = ["cc.bzl"],
     deps = [
-        "@bazel_lib//lib:transitions",
+        "@aspect_bazel_lib//lib:transitions",
         "@bazel_skylib//rules:expand_template",
         "@rules_cc//cc:defs_bzl",
     ],
@@ -69,7 +69,7 @@ bzl_library(
 #     deps = [
 #         "//bzl/macros:emb",
 #         "//bzl/rules:pico",
-#         "@bazel_lib//lib:transitions",
+#         "@aspect_bazel_lib//lib:transitions",
 #         "@pico-sdk//bazel/toolchain:objcopy",
 #         "@rules_cc//cc:defs_bzl",
 #     ],
@@ -92,3 +92,16 @@ py_binary(
     visibility = ["//visibility:public"],
     deps = ["@pip//pytest"],
 )
+
+bzl_library(
+    name = "go_image",
+    srcs = ["go_image.bzl"],
+    deps = [
+        "@aspect_bazel_lib//lib:transitions",
+        "@rules_oci//oci:defs",
+        "@tar.bzl//tar:tar",
+    ],
+)
+
+# Starlark Gazelle extension is too primitive to accept other directives
+# gazelle:ignore

@@ -27,7 +27,7 @@ function update_deps() {
     done
 
     # Run Buildozer to update the BUILD file, allow non-zero exit code
-    bazel run --config quiet //tools:buildozer -- -f "$temp_file" || true
+    buildozer -f "$temp_file" || true
 }
 
 function update_completion_data_files() {
@@ -59,13 +59,13 @@ function update_completion_data_files() {
     done
 
     # Run Buildozer to update the BUILD file
-    bazel run --config quiet //tools:buildozer -- -f "$temp_file"
+    buildozer -f "$temp_file"
 
     # Replace the `%` back to `:` in the BUILD file
     sed -i 's/%/:/g' "$repo_root/nlb/BUILD"
 
     # Run buildifier to format the BUILD file
-    bazel run --config quiet //tools:buildifier -- "$repo_root/nlb/BUILD" || true
+    buildifier "$repo_root/nlb/BUILD" || true
 }
 
 function update_entry_points() {
@@ -87,7 +87,7 @@ function update_entry_points() {
     done
 
     # Run Buildozer to update the BUILD file
-    bazel run --config quiet //tools:buildozer -- -f "$temp_file" || true
+    buildozer -f "$temp_file" || true
 }
 
 function update_version() {

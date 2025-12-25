@@ -542,4 +542,4 @@ def main(cur_dir: pathlib.Path) -> None:
 
 
 if __name__ == '__main__':
-    main(prog_name='plot')
+    main(prog_name='blockworld_plot')

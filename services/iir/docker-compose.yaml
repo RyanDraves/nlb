@@ -1,4 +1,15 @@
 services:
+  spirit-tracks:
+    image: ghcr.io/ryandraves/spirit_tracks:latest
+    network_mode: service:tailscale
+    environment:
+      SPIRIT_TRACKS_CONFIG: /config/secrets.json
+      SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
+    volumes:
+      - secrets-iir:/secrets/iir
+      - ${PWD}/secrets.json:/config/secrets.json:ro
+    restart: "no"
+
   iir:
     # bazel run //apps/iir:iir_amd64_load to build & load the image locally
     # bazel run //apps/iir:iir_push to push the image to the registry
@@ -6,13 +17,16 @@ services:
     container_name: iir
     restart: always
     network_mode: service:tailscale
+    volumes:
+      - secrets-iir:/secrets:ro
     environment:
-      OPENWEATHER_API_KEY_FILE: /run/secrets/openweather_api_key
-    secrets:
-      - openweather_api_key
+      OPENWEATHER_API_KEY_FILE: /secrets/iir_openweathermap_api_key
+    depends_on:
+      spirit-tracks:
+        condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale
+    image: tailscale/tailscale:v1.90.8
     container_name: iir-tailscale
     hostname: isitraining
     secrets:
@@ -35,10 +49,9 @@ services:
 
 volumes:
   iir-ts-authkey:
+  secrets-iir:
 
 
 secrets:
   tailnet_oauth:
     file: ${PWD}/../secrets/tailnet_oauth.secret
-  openweather_api_key:
-    file: ${PWD}/../secrets/iir_openweather_api.key

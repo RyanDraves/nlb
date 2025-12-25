@@ -5,6 +5,19 @@
 name: services
 
 services:
+  spirit-tracks:
+    image: ghcr.io/ryandraves/spirit_tracks:latest
+    container_name: mealie-spirit-tracks
+    network_mode: service:tailscale
+    environment:
+      SPIRIT_TRACKS_CONFIG: /config/secrets.json
+      SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
+    volumes:
+      - mealie-secrets-mealie:/secrets/mealie
+      - mealie-secrets-postgres:/secrets/postgres
+      - ${PWD}/secrets.json:/config/secrets.json:ro
+    restart: "no"
+
   mealie:
     image: ghcr.io/mealie-recipes/mealie:v2.8.0
     container_name: mealie
@@ -16,6 +29,7 @@ services:
           memory: 1000M
     volumes:
       - mealie-data:/app/data/
+      - mealie-secrets-mealie:/secrets:ro
     environment:
       ALLOW_SIGNUP: false
       ALLOW_PASSWORD_LOGIN: false
@@ -53,19 +67,16 @@ services:
       # By setting this value to true, a session will be extended as if "Remember Me" was checked.
       OIDC_REMEMBER_ME: true
       OIDC_SCOPES_OVERRIDE: openid profile email
-    secrets:
-      - postgres_password
-      - smtp_password
-      - oidc_id
-      - oidc_secret
     entrypoint: [
       "/bin/sh",
       "-c",
-      "set -e; export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); export SMTP_PASSWORD=$(cat /run/secrets/smtp_password); export OIDC_CLIENT_ID=$(cat /run/secrets/oidc_id); export OIDC_CLIENT_SECRET=$(cat /run/secrets/oidc_secret); echo 'Secrets loaded successfully'; /app/run.sh"
+      "set -e; export POSTGRES_PASSWORD=$(cat /secrets/mealie_postgres_password); export SMTP_PASSWORD=$(cat /secrets/mealie_smtp_password); export OIDC_CLIENT_ID=$(cat /secrets/mealie_oidc_id); export OIDC_CLIENT_SECRET=$(cat /secrets/mealie_oidc_secret); echo 'Secrets loaded successfully'; /app/run.sh"
     ]
     depends_on:
       postgres:
         condition: service_healthy
+      spirit-tracks:
+        condition: service_completed_successfully
 
   postgres:
     container_name: mealie-postgres
@@ -73,12 +84,11 @@ services:
     restart: always
     volumes:
       - mealie-pgdata:/var/lib/postgresql/data
+      - mealie-secrets-postgres:/secrets:ro
     environment:
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_PASSWORD_FILE: /secrets/mealie_postgres_password
       POSTGRES_USER: mealie
       PGUSER: mealie
-    secrets:
-      - postgres_password
     healthcheck:
       test: [ "CMD", "pg_isready" ]
       interval: 30s
@@ -86,15 +96,18 @@ services:
       retries: 3
     networks:
       - mealie
+    depends_on:
+      spirit-tracks:
+        condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale
+    image: tailscale/tailscale:v1.90.8
     container_name: mealie-tailscale
     hostname: recipes
     secrets:
       - tailnet_oauth
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container,tag:ntfy
+      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
       TS_AUTHKEY: file:/run/secrets/tailnet_oauth
@@ -121,16 +134,10 @@ volumes:
   mealie-data:
   mealie-pgdata:
   mealie-ts-authkey:
+  mealie-secrets-mealie:
+  mealie-secrets-postgres:
 
 
 secrets:
   tailnet_oauth:
     file: ${PWD}/../secrets/tailnet_oauth.secret
-  postgres_password:
-    file: ${PWD}/../secrets/mealie_postgres.password
-  smtp_password:
-    file: ${PWD}/../secrets/mealie_smtp.password
-  oidc_id:
-    file: ${PWD}/../secrets/mealie_oidc.id
-  oidc_secret:
-    file: ${PWD}/../secrets/mealie_oidc.secret

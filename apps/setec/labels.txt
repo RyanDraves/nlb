@@ -1,0 +1,3 @@
+org.opencontainers.image.source=https://github.com/tailscale/setec
+org.opencontainers.image.description="setec image"
+org.opencontainers.image.licenses=MIT
