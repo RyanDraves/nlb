@@ -42,6 +42,7 @@ py_package(
         "//nlb/models/blockworld:metrics",
         "//nlb/models/blockworld:open_loop_llm",
         "//nlb/secrets",
+        "//nlb/secrets:setec_client",
         "//nlb/sharetrace",
         "//nlb/sharetrace:__init__",
         "//nlb/sharetrace:interface",
