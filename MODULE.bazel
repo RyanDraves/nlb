@@ -24,6 +24,12 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 # Pico SDK & Picotool
 #
 bazel_dep(name = "pico-sdk", version = "2.2.0")
+single_version_override(
+    module_name = "pico-sdk",
+    patches = [
+        "//bzl/deps:pico-sdk.patch",
+    ],
+)
 
 register_toolchains(
     "@pico-sdk//bazel/toolchain:linux-x86_64-rp2040",
