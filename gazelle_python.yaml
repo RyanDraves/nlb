@@ -166,6 +166,7 @@ manifest:
     cryptography: cryptography
     cycler: cycler
     cyclopts: cyclopts
+    daltonize: daltonize
     dateutil: python_dateutil
     dbus_fast: dbus_fast
     decorator: decorator
@@ -289,4 +290,4 @@ manifest:
     zmq: pyzmq
   pip_repository:
     name: pip
-integrity: ace317855b0b34c46f404bd6d98abcd3524f5d61b60e30bf340e98622e14b3a7
+integrity: 56617fba008528e8d756787f6b86b678a56c01d23876fb7c331d13a9b37d4c2a
