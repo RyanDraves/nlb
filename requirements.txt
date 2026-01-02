@@ -5,6 +5,8 @@
 # - `Gruntfuggly.triggertaskonsave` will run this automatically
 alembic>=1.15.1,<2
 bleak>=2.0.0,<3
+cycler>=0.12.1,<1
+daltonize>=0.2.0,<1
 dotenv>=0.9.9,<1
 fastmcp>=2.5.2,<3
 imageio>=2.37.0,<3

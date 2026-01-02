@@ -333,11 +333,17 @@ cryptography==46.0.0 \
 cycler==0.12.1 \
     --hash=sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30 \
     --hash=sha256:88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c
-    # via matplotlib
+    # via
+    #   -r requirements.txt
+    #   matplotlib
 cyclopts==3.24.0 \
     --hash=sha256:809d04cde9108617106091140c3964ee6fceb33cecdd537f7ffa360bde13ed71 \
     --hash=sha256:de6964a041dfb3c57bf043b41e68c43548227a17de1bad246e3a0bfc5c4b7417
     # via fastmcp
+daltonize==0.2.0 \
+    --hash=sha256:194191c2febc5cdf955584e93a0d266e9fd92a477b57f08b76abe684ceb09d8a \
+    --hash=sha256:7191363abbb7625e56a3748402fab05096804a034fa361478fdfb75a60c90db2
+    # via -r requirements.txt
 dbus-fast==3.1.2 \
     --hash=sha256:038d3e8803f62b1d789ce0c602cc8c317c47c21e67bb2dd544b9c0fc97b4b2e2 \
     --hash=sha256:0e780564da75082b0addb950c4ec138a3baa3bbd8e7702fc4642c3565db2e429 \
@@ -1014,6 +1020,7 @@ numpy==2.2.2 \
     # via
     #   -r requirements.txt
     #   contourpy
+    #   daltonize
     #   imageio
     #   matplotlib
     #   pandas
@@ -1196,6 +1203,7 @@ pillow==11.1.0 \
     --hash=sha256:fbd43429d0d7ed6533b25fc993861b8fd512c42d04514a0dd6337fb3ccf22761
     # via
     #   -r requirements.txt
+    #   daltonize
     #   imageio
     #   matplotlib
 pip==25.1.1 \
