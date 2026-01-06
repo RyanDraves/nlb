@@ -230,6 +230,7 @@ manifest:
     pexpect: pexpect
     pfzy: pfzy
     pip: pip
+    pkg_resources: setuptools
     plotly: plotly
     pluggy: pluggy
     portpicker: portpicker
@@ -265,6 +266,7 @@ manifest:
     ruff: ruff
     scipy: scipy
     serial: pyserial
+    setuptools: setuptools
     six: six
     sniffio: sniffio
     sqlalchemy: SQLAlchemy
@@ -290,4 +292,4 @@ manifest:
     zmq: pyzmq
   pip_repository:
     name: pip
-integrity: 56617fba008528e8d756787f6b86b678a56c01d23876fb7c331d13a9b37d4c2a
+integrity: 2fa9213c9dd29e1e858ae0dacfbb9ce9f0e0408ac1d0c7ebd72b73399a637ae5

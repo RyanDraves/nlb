@@ -9,6 +9,7 @@ py_library(
         "@pip//matplotlib",
         "@pip//numpy",
         "@pip//pillow",
+        "@pip//setuptools",
     ],
 )
 

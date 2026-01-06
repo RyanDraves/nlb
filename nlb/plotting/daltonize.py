@@ -7,6 +7,8 @@ from daltonize import daltonize
 from matplotlib import figure
 from PIL import Image
 
+# gazelle:include_dep @pip//setuptools
+
 # Colorblindness simulation types
 ColorblindType = Literal['protan', 'deutan', 'tritan']
 
