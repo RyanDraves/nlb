@@ -166,6 +166,7 @@ manifest:
     cryptography: cryptography
     cycler: cycler
     cyclopts: cyclopts
+    daltonize: daltonize
     dateutil: python_dateutil
     dbus_fast: dbus_fast
     decorator: decorator
@@ -229,6 +230,7 @@ manifest:
     pexpect: pexpect
     pfzy: pfzy
     pip: pip
+    pkg_resources: setuptools
     plotly: plotly
     pluggy: pluggy
     portpicker: portpicker
@@ -264,6 +266,7 @@ manifest:
     ruff: ruff
     scipy: scipy
     serial: pyserial
+    setuptools: setuptools
     six: six
     sniffio: sniffio
     sqlalchemy: SQLAlchemy
@@ -289,4 +292,4 @@ manifest:
     zmq: pyzmq
   pip_repository:
     name: pip
-integrity: ace317855b0b34c46f404bd6d98abcd3524f5d61b60e30bf340e98622e14b3a7
+integrity: 2fa9213c9dd29e1e858ae0dacfbb9ce9f0e0408ac1d0c7ebd72b73399a637ae5
