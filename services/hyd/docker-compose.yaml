@@ -20,8 +20,6 @@ services:
       PGUSER: hyd
       POSTGRES_DB: hyd
       POSTGRES_PASSWORD_FILE: /secrets/hyd_postgres_password
-    ports:
-      - "5432:5432"
     volumes:
       - hyd-pgdata:/var/lib/postgresql/data
       - secrets-postgres:/secrets:ro
