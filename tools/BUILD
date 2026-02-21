@@ -12,6 +12,8 @@ bazel_env(
         # "rust": "@rules_rust//rust/toolchain:current_rust_toolchain",
     },
     tools = {
+        # First party stuff
+        "nlb_tailscale": "//nlb/tailscale/cmd:main",
         # Bazel
         "buildifier": "@buildifier_prebuilt//:buildifier",
         "buildozer": "@buildifier_prebuilt//:buildozer",
