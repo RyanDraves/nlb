@@ -27,6 +27,12 @@ GH_X86_SHA256_SUM=ca6e7641214fbd0e21429cec4b64a7ba626fd946d8f9d6d191467545b09201
 GH_ARM64_SHA256_SUM=b1a0c0a0fcf18524e36996caddc92a062355ed014defc836203fe20fba75a38e
 GH_ARM64_MACOS_SHA256_SUM=ba3e0396ebbc8da17256144ddda503e4e79c8b502166335569f8390d6b75fa8d
 
+# Go is exported by multitool, but we need it for the Go extension to be happy
+GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')
+GO_X86_SHA256_SUM=aac1b08a0fb0c4e0a7c1555beb7b59180b05dfc5a3d62e40e9de90cd42f88235
+GO_ARM64_SHA256_SUM=bd03b743eb6eb4193ea3c3fd3956546bf0e3ca5b7076c8226334afe6b75704cd
+GO_MACOS_ARM64_SHA256_SUM=9c8fcb30a922a845ed3733bd4afdd67b5aa8d43c9ecce0d4d11e832437a52126
+
 REPO_ROOT=$(dirname $(readlink -f $0))
 
 APT_PACKAGES=(
@@ -310,6 +316,66 @@ function install_bazelisk() {
 
     # Verify bazel is installed
     bazel version
+}
+
+function install_go() {
+    # Check if go is already installed and has the correct version
+    if check_command go; then
+        installed_version=$(go version | awk '{print $3}' | sed 's/go//')
+        if [[ "$installed_version" == "$GO_VERSION" ]]; then
+            echo "Go $GO_VERSION is already installed"
+            return 0
+        else
+            echo "Go is installed but version is $installed_version, expected $GO_VERSION"
+        fi
+    fi
+
+    echo "Installing Go $GO_VERSION"
+
+    local os_suffix="linux-amd64"
+    local expected_sum=$GO_X86_SHA256_SUM
+
+    if [[ "$(uname -m)" == "aarch64" ]] || [[ "$(uname -m)" == "arm64" ]]; then
+        os_suffix="${os_suffix/amd64/arm64}"
+        if is_macos; then
+            expected_sum=$GO_MACOS_ARM64_SHA256_SUM
+        else
+            expected_sum=$GO_ARM64_SHA256_SUM
+        fi
+    fi
+
+    local go_url="https://golang.org/dl/go${GO_VERSION}.${os_suffix}.tar.gz"
+    local go_file="/tmp/go.tar.gz"
+
+    if check_command wget; then
+        wget --no-verbose "$go_url" -O "$go_file"
+    else
+        curl -fsSL "$go_url" -o "$go_file"
+    fi
+
+    verify_sha256sum "$go_file" $expected_sum
+
+    # Remove any existing Go installation in ~/.local/go
+    if [ -d "$HOME/.local/go" ]; then
+        rm -rf "$HOME/.local/go"
+    fi
+
+    # Extract Go to ~/.local
+    tar -C "$HOME/.local" -xzf "$go_file"
+
+    # Add Go bin directory to PATH
+    add_to_path "$HOME/.local/go/bin"
+
+    # Verify Go is installed with the correct version
+    version=$(go version)
+    if ! echo $version | grep -q "go$GO_VERSION"; then
+        echo -e "\e[31mGo is not installed correctly\e[0m"
+        echo "Expected version: go$GO_VERSION"
+        echo "Actual version: $version"
+        exit 1
+    fi
+
+    echo "Go $GO_VERSION installed successfully"
 }
 
 function copy_udev_rules() {
@@ -752,6 +818,7 @@ function copy_if_not_up_to_date() {
 run_section "Install system packages" install_system_packages
 run_section "Filesystem setup" filesystem_setup
 run_section "Install Bazelisk" install_bazelisk
+run_section "Install Go" install_go
 if is_linux; then
     run_section "Copy udev rules" copy_udev_rules
     run_section "Setup Arduino CLI" arduino_setup

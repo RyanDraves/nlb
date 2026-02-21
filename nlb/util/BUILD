@@ -1,4 +1,5 @@
 load("@aspect_rules_py//py:defs.bzl", "py_library")
+load("@rules_go//go:def.bzl", "go_library")
 load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
 py_library(
@@ -128,4 +129,20 @@ py_library(
     name = "test_utils",
     srcs = ["test_utils.py"],
     visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "util",
+    srcs = [
+        "console.go",
+        "prompt.go",
+    ],
+    importpath = "nlb/nlb/util",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_charmbracelet_bubbles//filepicker",
+        "@com_github_charmbracelet_bubbles//textinput",
+        "@com_github_charmbracelet_bubbletea//:bubbletea",
+        "@com_github_charmbracelet_lipgloss//:lipgloss",
+    ],
 )
