@@ -58,6 +58,7 @@ jobs:
 
       - name: Common Setup
         run: |
+          sudo apt-get update
           sudo apt-get install -y portaudio19-dev
           echo "build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}" > .user.bazelrc
       - name: Build

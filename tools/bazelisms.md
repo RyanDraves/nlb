@@ -58,3 +58,26 @@ git_override(
 Breaking out of the sandbox to use Bazel-built tools directly in a workspace it a bit of a pain. I previously relied upon [this strategy](https://github.com/RyanDraves/nlb/blob/a5dd59be58bb7fb1feabf447c4be66318571388b/tools/workspace_tool.bzl) and an extremely naive method of making a [wrapper script](https://github.com/RyanDraves/nlb/blob/a5dd59be58bb7fb1feabf447c4be66318571388b/tools/bin/buildifier) that places each "workspace tool" onto the `$PATH` and invoking `bazel run` on the workspace tool target. This works fine, but has the obvious overhead of a Bazel invocation for every tool invocation. Point your editor to it for linters and you quickly realize how annoying it is to invoke Bazel so frequently.
 
 The [bazel-devenv](https://blog.aspect.build/bazel-devenv) strategy is a big upgrade. But it comes with some tradeoffs, so this documents a fallback strategy (workspace tools for breaking out of the sandbox).
+
+## Go dependencies
+`rules_go`, Bazel, and Gazelle are in a constant fight to create and fix each other's problems. It can make some things insufferable, like adding a dependency by hand.
+- You add the dependency to `go.mod`
+- You run `go mod tidy` (the Bazelified `bazel run @rules_go//go -- mod tidy`)
+- It triggers `bazel mod tidy`
+- It determines it's an unused dependency and kindly removes it from `go.mod`
+
+Or even better, however Go's packaging scheme works with `rules_go` means that only parts of the packages you use are fetched. Which is fine, until you use another part of a package you supposedly depended on. This causes a build error and requires another `go mod tidy`.
+
+And even better than that, `rules_go`/Gazelle seems to be autogenerating BUILD files for the packages you pull in. Which is prone to failure. So you get the fun of trying to `exclude` different parts of your dependency's dependencies in the hopes that it all works.
+
+### Add a Go dependency
+`bazel run @rules_go//go -- get [dependency]`
+
+### Fetch the dependency again because the build failed
+`bazel run @rules_go//go -- mod tidy`
+
+### Manage BUILD files
+`bazel run //:gazelle` (not worth to do by hand)
+
+### Third party dependency invalid BUILD files
+Try to add `exclude [dependency] [version]` in `go.mod`
