@@ -30,6 +30,7 @@ type TailscaleClient interface {
 	PushFile(ctx context.Context, peerID tailcfg.StableNodeID, size int64, name string, r io.Reader) error
 	WaitingFiles(ctx context.Context) ([]apitype.WaitingFile, error)
 	GetWaitingFile(ctx context.Context, baseName string) (io.ReadCloser, int64, error)
+	DeleteWaitingFile(ctx context.Context, baseName string) error
 }
 
 type TailscaleWrapper struct {
@@ -178,6 +179,11 @@ func (w *TailscaleWrapper) ReceiveFiles() error {
 		}
 
 		util.Info("Received file: %s", file_path)
+
+		err = w.LocalClient.DeleteWaitingFile(w.ctx, file.Name)
+		if err != nil {
+			util.Error("Failed to delete waiting file %s: %v", file.Name, err)
+		}
 	}
 
 	return nil

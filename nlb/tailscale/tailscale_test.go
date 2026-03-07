@@ -48,6 +48,11 @@ func (m *mockTailscaleClient) GetWaitingFile(ctx context.Context, baseName strin
 	return io.NopCloser(bytes.NewBufferString(content)), int64(len(content)), nil
 }
 
+func (m *mockTailscaleClient) DeleteWaitingFile(ctx context.Context, baseName string) error {
+	delete(m.fileContents, baseName)
+	return nil
+}
+
 func TestListPeers(t *testing.T) {
 	// Create unique keys for each peer
 	key1 := key.NewNode()

@@ -140,9 +140,9 @@ go_library(
     importpath = "nlb/nlb/util",
     visibility = ["//visibility:public"],
     deps = [
-        "@com_github_charmbracelet_bubbles//filepicker",
-        "@com_github_charmbracelet_bubbles//textinput",
-        "@com_github_charmbracelet_bubbletea//:bubbletea",
-        "@com_github_charmbracelet_lipgloss//:lipgloss",
+        "@land_charm_bubbles_v2//filepicker",
+        "@land_charm_bubbles_v2//textinput",
+        "@land_charm_bubbletea_v2//:bubbletea",
+        "@land_charm_lipgloss_v2//:lipgloss",
     ],
 )

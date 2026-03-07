@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/filepicker"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/filepicker"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type listModel[T any] struct {
@@ -49,12 +49,12 @@ func (m listModel[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m listModel[T]) View() string {
+func (m listModel[T]) View() tea.View {
 	if m.done && m.selected != nil {
 		// Collapsed view after selection
 		selectedName := m.displayFunc(*m.selected)
 		selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
-		return fmt.Sprintf("? %s: %s\n", m.message, selectedStyle.Render(selectedName))
+		return tea.NewView(fmt.Sprintf("? %s: %s\n", m.message, selectedStyle.Render(selectedName)))
 	}
 
 	// Full interactive view
@@ -73,7 +73,7 @@ func (m listModel[T]) View() string {
 	}
 
 	s += "\n(use arrows or j/k to move, enter to select, q to quit)\n"
-	return s
+	return tea.NewView(s)
 }
 
 // ListPrompt displays an interactive list selection prompt and returns the selected item.
@@ -149,7 +149,7 @@ func (m multiSelectModel[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m multiSelectModel[T]) View() string {
+func (m multiSelectModel[T]) View() tea.View {
 	if m.done {
 		// Collapsed view after selection
 		selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
@@ -157,7 +157,7 @@ func (m multiSelectModel[T]) View() string {
 		for i := range m.selected {
 			selectedNames = append(selectedNames, m.displayFunc(m.items[i]))
 		}
-		return fmt.Sprintf("? %s: %s\n", m.message, selectedStyle.Render(fmt.Sprintf("%d selected", len(selectedNames))))
+		return tea.NewView(fmt.Sprintf("? %s: %s\n", m.message, selectedStyle.Render(fmt.Sprintf("%d selected", len(selectedNames)))))
 	}
 
 	// Full interactive view
@@ -185,7 +185,7 @@ func (m multiSelectModel[T]) View() string {
 	}
 
 	s += "\n(use arrows or j/k to move, space to toggle, enter to confirm, q to quit)\n"
-	return s
+	return tea.NewView(s)
 }
 
 // MultiSelectPrompt displays an interactive multi-select list prompt and returns the selected items.
@@ -241,13 +241,13 @@ func (m filePathModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEnter:
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "enter":
 			m.value = m.textInput.Value()
 			m.done = true
 			return m, tea.Quit
-		case tea.KeyCtrlC, tea.KeyEsc:
+		case "ctrl+c", "esc":
 			m.err = fmt.Errorf("cancelled")
 			return m, tea.Quit
 		}
@@ -257,18 +257,18 @@ func (m filePathModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m filePathModel) View() string {
+func (m filePathModel) View() tea.View {
 	if m.done {
 		// Collapsed view after completion
 		selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
-		return fmt.Sprintf("? %s: %s\n", m.message, selectedStyle.Render(m.value))
+		return tea.NewView(fmt.Sprintf("? %s: %s\n", m.message, selectedStyle.Render(m.value)))
 	}
 
-	return fmt.Sprintf(
+	return tea.NewView(fmt.Sprintf(
 		"%s:\n\n%s\n\n(enter to confirm, ctrl+c to cancel)\n",
 		m.message,
 		m.textInput.View(),
-	)
+	))
 }
 
 // FilePathPrompt displays a text input prompt for entering a file path or glob pattern.
@@ -278,7 +278,7 @@ func FilePathPrompt(message string, defaultValue string) (string, error) {
 	ti.Placeholder = defaultValue
 	ti.Focus()
 	ti.CharLimit = 500
-	ti.Width = 50
+	ti.SetWidth(50)
 
 	if defaultValue != "" {
 		ti.SetValue(defaultValue)
@@ -347,11 +347,11 @@ func (m filePickerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m filePickerModel) View() string {
+func (m filePickerModel) View() tea.View {
 	if m.done {
 		// Collapsed view after selection
 		selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86"))
-		return fmt.Sprintf("? Select a file or glob pattern: %s\n", selectedStyle.Render(m.selectedFile))
+		return tea.NewView(fmt.Sprintf("? Select a file or glob pattern: %s\n", selectedStyle.Render(m.selectedFile)))
 	}
 
 	var s strings.Builder
@@ -363,7 +363,7 @@ func (m filePickerModel) View() string {
 	}
 	s.WriteString("\n" + m.filepicker.CurrentDirectory + "/" + m.filepicker.FileSelected)
 	s.WriteString("\n" + m.filepicker.View() + "\n")
-	return s.String()
+	return tea.NewView(s.String())
 }
 
 // PromptForFiles prompts with an interactive file browser and returns matching files.
@@ -443,6 +443,7 @@ func PromptForDirectory(message string) (string, error) {
 	fp.ShowPermissions = false
 	fp.DirAllowed = true
 	fp.FileAllowed = false
+	fp.SetCWDDefault(true)
 
 	model := filePickerModel{
 		filepicker: fp,
