@@ -41,7 +41,7 @@ services:
       POSTGRES_USER: hyd
       POSTGRES_DB: hyd
       POSTGRES_PASSWORD_FILE: /secrets/hyd_postgres_password
-      POSTGRES_HOST: hyd-postgres
+      POSTGRES_HOST: hyd-db
       POSTGRES_PORT: 5432
     volumes:
       - hyd-secrets-hyd:/secrets:ro
