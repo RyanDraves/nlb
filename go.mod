@@ -20,9 +20,6 @@ require (
 	github.com/spf13/pflag v1.0.9 // indirect
 )
 
-// This fork accounts for things that make Gazelle's behavior more predictable.
-// replace github.com/tailscale/setec => github.com/RyanDraves/setec v0.0.9
-
 // This fork addes some filepicker functionality
 replace charm.land/bubbles/v2 => github.com/RyanDraves/bubbles/v2 v2.0.1
 
