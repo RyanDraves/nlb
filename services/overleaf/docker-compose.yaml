@@ -85,7 +85,7 @@ services:
       - overleaf-redis-data:/data
 
   tailscale:
-    image: tailscale/tailscale:v1.90.8
+    image: tailscale/tailscale:v1.94.2
     hostname: overleaf
     secrets:
       - overleaf_authkey
