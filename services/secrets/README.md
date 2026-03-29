@@ -25,7 +25,6 @@
 | `personal/ghcr_io_pat` | PAT for Github Docker registry (push permissions) | `docker login ghcr.io` to rotate |
 | `personal/pypi_test_token` | API token to publish to PyPI's test index | Provisioned at https://test.pypi.org/manage/account/ |
 | `personal/pypi_token` | API token to publish to PyPI's production index | Provisioned at https://pypi.org/manage/account/ |
-| `personal/tailnet_oauth_secret` | Used to provision a [container as a machine on the tailnet](https://tailscale.com/kb/1282/docker#ts_socks5_server) | |
 
 ## Exceptions
 Authentik had a template for `.env` file usage, so some secrets are stored and documented in Authentik's service folder.

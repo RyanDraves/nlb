@@ -1,14 +1,12 @@
 services:
   chibisafe:
     image: chibisafe/chibisafe:latest
-    container_name: chibisafe
     environment:
       - BASE_API_URL=http://chibisafe_server:8000
     restart: unless-stopped
 
   chibisafe_server:
     image: chibisafe/chibisafe-server:latest
-    container_name: chibisafe-server
     volumes:
       - chibisafe-database:/app/database:rw
       - chibisafe-uploads:/app/uploads:rw
@@ -17,7 +15,6 @@ services:
 
   caddy:
     image: caddy:2-alpine
-    container_name: chibisafe-caddy
     network_mode: service:tailscale
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
@@ -28,15 +25,13 @@ services:
 
   tailscale:
     image: tailscale/tailscale:v1.90.8
-    container_name: chibisafe-tailscale
     hostname: files
     secrets:
-      - tailnet_oauth
+      - chibisafe_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/chibisafe_authkey
     volumes:
       - chibisafe-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
@@ -56,5 +51,5 @@ volumes:
 
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  chibisafe_authkey:
+    file: ${PWD}/../secrets/chibisafe.authkey

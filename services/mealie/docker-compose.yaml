@@ -1,13 +1,6 @@
-# Add the `services` prefix so we don't have to deal with
-# moving the prod data around. I tried copying the data with
-# `    docker run --rm -v source_volume:/from -v destination_volume:/to alpine sh -c "cp -av /from/* /to"`
-# but the user auth didn't like that (different salt?).
-name: services
-
 services:
   spirit-tracks:
     image: ghcr.io/ryandraves/spirit_tracks:latest
-    container_name: mealie-spirit-tracks
     network_mode: service:tailscale
     environment:
       SPIRIT_TRACKS_CONFIG: /config/secrets.json
@@ -19,8 +12,7 @@ services:
     restart: "no"
 
   mealie:
-    image: ghcr.io/mealie-recipes/mealie:v2.8.0
-    container_name: mealie
+    image: ghcr.io/mealie-recipes/mealie:v3.14.0
     restart: always
     network_mode: service:tailscale
     deploy:
@@ -79,7 +71,6 @@ services:
         condition: service_completed_successfully
 
   postgres:
-    container_name: mealie-postgres
     image: postgres:15
     restart: always
     volumes:
@@ -94,23 +85,19 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
-    networks:
-      - mealie
     depends_on:
       spirit-tracks:
         condition: service_completed_successfully
 
   tailscale:
     image: tailscale/tailscale:v1.90.8
-    container_name: mealie-tailscale
     hostname: recipes
     secrets:
-      - tailnet_oauth
+      - mealie_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/mealie_authkey
     volumes:
       - mealie-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
@@ -121,14 +108,7 @@ services:
       - net_admin
       - sys_module
     restart: unless-stopped
-    networks:
-      - mealie
 
-# Custom network; only needed if other compose files are in the parent
-# `services` directory.
-networks:
-  mealie:
-    driver: bridge
 
 volumes:
   mealie-data:
@@ -139,5 +119,5 @@ volumes:
 
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  mealie_authkey:
+    file: ${PWD}/../secrets/mealie.authkey

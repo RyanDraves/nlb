@@ -6,18 +6,17 @@ services:
       SPIRIT_TRACKS_CONFIG: /config/secrets.json
       SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
     volumes:
-      - secrets-karakeep:/secrets/karakeep
-      - secrets-meili:/secrets/meili
+      - karakeep-secrets-karakeep:/secrets/karakeep
+      - karakeep-secrets-meili:/secrets/meili
       - ${PWD}/secrets.json:/config/secrets.json:ro
     restart: "no"
 
   web:
-    container_name: karakeep
     image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION:-release}
     restart: unless-stopped
     volumes:
       - karakeep-data:/data
-      - secrets-karakeep:/secrets:ro
+      - karakeep-secrets-karakeep:/secrets:ro
     network_mode: service:tailscale
     environment:
       MEILI_ADDR: http://meilisearch:7700
@@ -41,7 +40,6 @@ services:
         condition: service_completed_successfully
 
   chrome:
-    container_name: karakeep-chrome
     image: gcr.io/zenika-hub/alpine-chrome:123
     restart: unless-stopped
     command:
@@ -53,14 +51,13 @@ services:
       - --hide-scrollbars
 
   meilisearch:
-    container_name: karakeep-meilisearch
     image: getmeili/meilisearch:v1.13.3
     restart: unless-stopped
     environment:
       MEILI_NO_ANALYTICS: "true"
     volumes:
       - karakeep-meilisearch:/meili_data
-      - secrets-meili:/secrets:ro
+      - karakeep-secrets-meili:/secrets:ro
     entrypoint: [
       "/bin/sh",
       "-c",
@@ -72,15 +69,13 @@ services:
 
   tailscale:
     image: tailscale/tailscale:v1.90.8
-    container_name: karakeep-tailscale
     hostname: bookmarks
     secrets:
-      - tailnet_oauth
+      - karakeep_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/karakeep_authkey
     volumes:
       - karakeep-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
@@ -96,9 +91,9 @@ volumes:
   karakeep-meilisearch:
   karakeep-data:
   karakeep-ts-authkey:
-  secrets-karakeep:
-  secrets-meili:
+  karakeep-secrets-karakeep:
+  karakeep-secrets-meili:
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  karakeep_authkey:
+    file: ${PWD}/../secrets/karakeep.authkey

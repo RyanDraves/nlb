@@ -6,17 +6,16 @@ services:
       SPIRIT_TRACKS_CONFIG: /config/secrets.json
       SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
     volumes:
-      - secrets-dash:/secrets/dash
+      - dash-secrets:/secrets/dash
       - ${PWD}/secrets.json:/config/secrets.json:ro
     restart: "no"
 
   homer:
     image: b4bz/homer:latest
-    container_name: homer
     network_mode: service:tailscale
     volumes:
       - ${PWD}/config:/home/lighttpd
-      - secrets-dash:/secrets:ro
+      - dash-secrets:/secrets:ro
     deploy:
       restart_policy:
         condition: on-failure
@@ -27,17 +26,15 @@ services:
 
   tailscale:
     image: tailscale/tailscale:v1.90.8
-    container_name: homer-tailscale
     hostname: dash
     secrets:
-      - tailnet_oauth
+      - dash_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/dash_authkey
     volumes:
-      - homer-ts-authkey:/var/lib/tailscale
+      - dash-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
       - ${PWD}/ts-serve:/config
     devices:
@@ -48,9 +45,9 @@ services:
     restart: unless-stopped
 
 volumes:
-  homer-ts-authkey:
-  secrets-dash:
+  dash-ts-authkey:
+  dash-secrets:
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  dash_authkey:
+    file: ${PWD}/../secrets/dash.authkey

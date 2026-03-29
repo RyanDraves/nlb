@@ -1,9 +1,9 @@
 services:
   tsidp:
-    container_name: tsidp
     image: ghcr.io/tailscale/tsidp:latest
     volumes:
       - tsidp-data:/data
+    restart: always
     environment:
       # tsidp is experimental - needed while version <1.0.0
       - TAILSCALE_USE_WIP_CODE=1

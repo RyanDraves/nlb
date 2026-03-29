@@ -1,7 +1,6 @@
 services:
   portainer:
     image: portainer/portainer-ce:lts
-    container_name: portainer
     restart: always
     network_mode: service:tailscale
     volumes:
@@ -10,15 +9,13 @@ services:
 
   tailscale:
     image: tailscale/tailscale:v1.90.8
-    container_name: portainer-tailscale
     hostname: portainer
     secrets:
-      - tailnet_oauth
+      - portainer_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/portainer_authkey
     volumes:
       - portainer-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
@@ -36,5 +33,5 @@ volumes:
 
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  portainer_authkey:
+    file: ${PWD}/../secrets/portainer.authkey
