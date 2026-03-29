@@ -8,9 +8,9 @@ services:
   chibisafe_server:
     image: chibisafe/chibisafe-server:latest
     volumes:
-      - chibisafe-database:/app/database:rw
-      - chibisafe-uploads:/app/uploads:rw
-      - chibisafe-logs:/app/logs:rw
+      - images-database:/app/database:rw
+      - images-uploads:/app/uploads:rw
+      - images-logs:/app/logs:rw
     restart: unless-stopped
 
   caddy:
@@ -18,7 +18,7 @@ services:
     network_mode: service:tailscale
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - chibisafe-uploads:/app/uploads:ro
+      - images-uploads:/app/uploads:ro
     environment:
       - BASE_URL=":8080"
     restart: unless-stopped
@@ -27,13 +27,13 @@ services:
     image: tailscale/tailscale:v1.94.2
     hostname: images
     secrets:
-      - chibisafe_authkey
+      - images_authkey
     environment:
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/chibisafe_authkey
+      TS_AUTHKEY: file:/run/secrets/images_authkey
     volumes:
-      - chibisafe-ts-authkey:/var/lib/tailscale
+      - images-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
       - ${PWD}/ts-serve:/config
     devices:
@@ -44,12 +44,12 @@ services:
     restart: unless-stopped
 
 volumes:
-  chibisafe-ts-authkey:
-  chibisafe-uploads:
-  chibisafe-logs:
-  chibisafe-database:
+  images-ts-authkey:
+  images-uploads:
+  images-logs:
+  images-database:
 
 
 secrets:
-  chibisafe_authkey:
-    file: ${PWD}/../secrets/chibisafe.authkey
+  images_authkey:
+    file: ${PWD}/../secrets/images.authkey
