@@ -45,7 +45,7 @@ services:
       # https://integrations.goauthentik.io/integrations/services/mealie/
       OIDC_AUTH_ENABLED: true
       OIDC_PROVIDER_NAME: Tailscale
-      OIDC_CONFIGURATION_URL: https://idp.barn-arcturus.ts.net/.well-known/openid-configuration
+      OIDC_CONFIGURATION_URL: https://tsidp.barn-arcturus.ts.net/.well-known/openid-configuration
       # Required for first-time login from OIDC
       OIDC_SIGNUP_ENABLED: true
       OIDC_USER_CLAIM: email
@@ -62,7 +62,7 @@ services:
     entrypoint: [
       "/bin/sh",
       "-c",
-      "set -e; export POSTGRES_PASSWORD=$(cat /secrets/mealie_postgres_password); export SMTP_PASSWORD=$(cat /secrets/mealie_smtp_password); export OIDC_CLIENT_ID=$(cat /secrets/mealie_oidc_id); export OIDC_CLIENT_SECRET=$(cat /secrets/mealie_oidc_secret); echo 'Secrets loaded successfully'; /app/run.sh"
+      "set -e; export POSTGRES_PASSWORD=$(cat /secrets/recipes_postgres_password); export SMTP_PASSWORD=$(cat /secrets/recipes_smtp_password); export OIDC_CLIENT_ID=$(cat /secrets/recipes_oidc_id); export OIDC_CLIENT_SECRET=$(cat /secrets/recipes_oidc_secret); echo 'Secrets loaded successfully'; /app/run.sh"
     ]
     depends_on:
       postgres:
@@ -74,10 +74,10 @@ services:
     image: postgres:15
     restart: always
     volumes:
-      - mealie-pgdata:/var/lib/postgresql/data
-      - mealie-secrets-postgres:/secrets:ro
+      - recipes-pgdata:/var/lib/postgresql/data
+      - recipes-secrets-postgres:/secrets:ro
     environment:
-      POSTGRES_PASSWORD_FILE: /secrets/mealie_postgres_password
+      POSTGRES_PASSWORD_FILE: /secrets/recipes_postgres_password
       POSTGRES_USER: mealie
       PGUSER: mealie
     healthcheck:
@@ -93,13 +93,13 @@ services:
     image: tailscale/tailscale:v1.94.2
     hostname: recipes
     secrets:
-      - mealie_authkey
+      - recipes_authkey
     environment:
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/mealie_authkey
+      TS_AUTHKEY: file:/run/secrets/recipes_authkey
     volumes:
-      - mealie-ts-authkey:/var/lib/tailscale
+      - recipes-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
       - ${PWD}/ts-serve:/config
     devices:
@@ -111,13 +111,13 @@ services:
 
 
 volumes:
-  mealie-data:
-  mealie-pgdata:
-  mealie-ts-authkey:
-  mealie-secrets-mealie:
-  mealie-secrets-postgres:
+  recipes-data:
+  recipes-pgdata:
+  recipes-ts-authkey:
+  recipes-secrets-mealie:
+  recipes-secrets-postgres:
 
 
 secrets:
-  mealie_authkey:
+  recipes_authkey:
     file: ${PWD}/../secrets/recipes.authkey
