@@ -1,7 +1,6 @@
 services:
   ntfy:
     image: binwiederhier/ntfy
-    container_name: ntfy
     network_mode: service:tailscale
     entrypoint:
       - /bin/sh
@@ -25,16 +24,14 @@ services:
     init: true # needed, if healthcheck is used. Prevents zombie processes
 
   tailscale:
-    image: tailscale/tailscale:v1.90.8
-    container_name: ntfy-tailscale
+    image: tailscale/tailscale:v1.94.2
     hostname: ntfy
     secrets:
-      - tailnet_oauth
+      - ntfy_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/ntfy_authkey
     volumes:
       - ntfy-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
@@ -52,5 +49,5 @@ volumes:
   ntfy-ts-authkey:
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  ntfy_authkey:
+    file: ${PWD}/../secrets/ntfy.authkey

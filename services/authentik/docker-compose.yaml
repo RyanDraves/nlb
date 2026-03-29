@@ -79,16 +79,14 @@ services:
       redis:
         condition: service_healthy
   tailscale:
-    image: tailscale/tailscale:v1.90.8
-    container_name: authentik-tailscale
+    image: tailscale/tailscale:v1.94.2
     hostname: authentik
     secrets:
-      - tailnet_oauth
+      - authentik_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/authentik_authkey
     volumes:
       - authentik-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
@@ -106,5 +104,5 @@ volumes:
   authentik-ts-authkey:
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  authentik_authkey:
+    file: ${PWD}/../secrets/authentik.authkey

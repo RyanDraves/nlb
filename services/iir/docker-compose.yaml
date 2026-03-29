@@ -6,7 +6,7 @@ services:
       SPIRIT_TRACKS_CONFIG: /config/secrets.json
       SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
     volumes:
-      - secrets-iir:/secrets/iir
+      - iir-secrets:/secrets/iir
       - ${PWD}/secrets.json:/config/secrets.json:ro
     restart: "no"
 
@@ -14,11 +14,10 @@ services:
     # bazel run //apps/iir:iir_amd64_load to build & load the image locally
     # bazel run //apps/iir:iir_push to push the image to the registry
     image: ghcr.io/ryandraves/iir:latest
-    container_name: iir
     restart: always
     network_mode: service:tailscale
     volumes:
-      - secrets-iir:/secrets:ro
+      - iir-secrets:/secrets:ro
     environment:
       OPENWEATHER_API_KEY_FILE: /secrets/iir_openweathermap_api_key
     depends_on:
@@ -26,16 +25,14 @@ services:
         condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale:v1.90.8
-    container_name: iir-tailscale
+    image: tailscale/tailscale:v1.94.2
     hostname: isitraining
     secrets:
-      - tailnet_oauth
+      - iir_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/iir_authkey
     volumes:
       - iir-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
@@ -49,9 +46,9 @@ services:
 
 volumes:
   iir-ts-authkey:
-  secrets-iir:
+  iir-secrets:
 
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  iir_authkey:
+    file: ${PWD}/../secrets/iir.authkey

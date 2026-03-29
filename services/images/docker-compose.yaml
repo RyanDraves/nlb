@@ -1,44 +1,39 @@
 services:
   chibisafe:
     image: chibisafe/chibisafe:latest
-    container_name: chibisafe
     environment:
       - BASE_API_URL=http://chibisafe_server:8000
     restart: unless-stopped
 
   chibisafe_server:
     image: chibisafe/chibisafe-server:latest
-    container_name: chibisafe-server
     volumes:
-      - chibisafe-database:/app/database:rw
-      - chibisafe-uploads:/app/uploads:rw
-      - chibisafe-logs:/app/logs:rw
+      - images-database:/app/database:rw
+      - images-uploads:/app/uploads:rw
+      - images-logs:/app/logs:rw
     restart: unless-stopped
 
   caddy:
     image: caddy:2-alpine
-    container_name: chibisafe-caddy
     network_mode: service:tailscale
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - chibisafe-uploads:/app/uploads:ro
+      - images-uploads:/app/uploads:ro
     environment:
       - BASE_URL=":8080"
     restart: unless-stopped
 
   tailscale:
-    image: tailscale/tailscale:v1.90.8
-    container_name: chibisafe-tailscale
-    hostname: files
+    image: tailscale/tailscale:v1.94.2
+    hostname: images
     secrets:
-      - tailnet_oauth
+      - images_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/images_authkey
     volumes:
-      - chibisafe-ts-authkey:/var/lib/tailscale
+      - images-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
       - ${PWD}/ts-serve:/config
     devices:
@@ -49,12 +44,12 @@ services:
     restart: unless-stopped
 
 volumes:
-  chibisafe-ts-authkey:
-  chibisafe-uploads:
-  chibisafe-logs:
-  chibisafe-database:
+  images-ts-authkey:
+  images-uploads:
+  images-logs:
+  images-database:
 
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  images_authkey:
+    file: ${PWD}/../secrets/images.authkey

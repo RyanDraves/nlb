@@ -6,18 +6,17 @@ services:
       SPIRIT_TRACKS_CONFIG: /config/secrets.json
       SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
     volumes:
-      - secrets-karakeep:/secrets/karakeep
-      - secrets-meili:/secrets/meili
+      - bookmarks-secrets-karakeep:/secrets/karakeep
+      - bookmarks-secrets-meili:/secrets/meili
       - ${PWD}/secrets.json:/config/secrets.json:ro
     restart: "no"
 
   web:
-    container_name: karakeep
     image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION:-release}
     restart: unless-stopped
     volumes:
-      - karakeep-data:/data
-      - secrets-karakeep:/secrets:ro
+      - bookmarks-data:/data
+      - bookmarks-secrets-karakeep:/secrets:ro
     network_mode: service:tailscale
     environment:
       MEILI_ADDR: http://meilisearch:7700
@@ -34,14 +33,13 @@ services:
     entrypoint: [
       "/bin/sh",
       "-c",
-      "set -e; export NEXTAUTH_SECRET=$(cat /secrets/karakeep_nextauth_secret); export MEILI_MASTER_KEY=$(cat /secrets/karakeep_meili_master_key); export OAUTH_CLIENT_ID=$(cat /secrets/karakeep_oidc_id); export OAUTH_CLIENT_SECRET=$(cat /secrets/karakeep_oidc_secret); export OPENAI_API_KEY=$(cat /secrets/karakeep_openai_key); echo 'Secrets loaded successfully'; /init"
+      "set -e; export NEXTAUTH_SECRET=$(cat /secrets/bookmarks_nextauth_secret); export MEILI_MASTER_KEY=$(cat /secrets/bookmarks_meili_master_key); export OAUTH_CLIENT_ID=$(cat /secrets/bookmarks_oidc_id); export OAUTH_CLIENT_SECRET=$(cat /secrets/bookmarks_oidc_secret); export OPENAI_API_KEY=$(cat /secrets/bookmarks_openai_key); echo 'Secrets loaded successfully'; /init"
     ]
     depends_on:
       spirit-tracks:
         condition: service_completed_successfully
 
   chrome:
-    container_name: karakeep-chrome
     image: gcr.io/zenika-hub/alpine-chrome:123
     restart: unless-stopped
     command:
@@ -53,36 +51,33 @@ services:
       - --hide-scrollbars
 
   meilisearch:
-    container_name: karakeep-meilisearch
     image: getmeili/meilisearch:v1.13.3
     restart: unless-stopped
     environment:
       MEILI_NO_ANALYTICS: "true"
     volumes:
-      - karakeep-meilisearch:/meili_data
-      - secrets-meili:/secrets:ro
+      - bookmarks-meilisearch:/meili_data
+      - bookmarks-secrets-meili:/secrets:ro
     entrypoint: [
       "/bin/sh",
       "-c",
-      "set -e; export MEILI_MASTER_KEY=$(cat /secrets/karakeep_meili_master_key); echo 'Secrets loaded successfully'; tini -- /bin/meilisearch"
+      "set -e; export MEILI_MASTER_KEY=$(cat /secrets/bookmarks_meili_master_key); echo 'Secrets loaded successfully'; tini -- /bin/meilisearch"
     ]
     depends_on:
       spirit-tracks:
         condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale:v1.90.8
-    container_name: karakeep-tailscale
+    image: tailscale/tailscale:v1.94.2
     hostname: bookmarks
     secrets:
-      - tailnet_oauth
+      - bookmarks_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/bookmarks_authkey
     volumes:
-      - karakeep-ts-authkey:/var/lib/tailscale
+      - bookmarks-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
       - ${PWD}/ts-serve:/config
     devices:
@@ -93,12 +88,12 @@ services:
     restart: unless-stopped
 
 volumes:
-  karakeep-meilisearch:
-  karakeep-data:
-  karakeep-ts-authkey:
-  secrets-karakeep:
-  secrets-meili:
+  bookmarks-meilisearch:
+  bookmarks-data:
+  bookmarks-ts-authkey:
+  bookmarks-secrets-karakeep:
+  bookmarks-secrets-meili:
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  bookmarks_authkey:
+    file: ${PWD}/../secrets/bookmarks.authkey

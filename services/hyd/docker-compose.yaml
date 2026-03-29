@@ -6,14 +6,13 @@ services:
       SPIRIT_TRACKS_CONFIG: /config/secrets.json
       SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
     volumes:
-      - secrets-hyd:/secrets/hyd
-      - secrets-postgres:/secrets/postgres
+      - hyd-secrets-hyd:/secrets/hyd
+      - hyd-secrets-postgres:/secrets/postgres
       - ${PWD}/secrets.json:/config/secrets.json:ro
     restart: "no"
 
   hyd-db:
     image: postgres:15
-    container_name: hyd-postgres
     restart: always
     environment:
       POSTGRES_USER: hyd
@@ -22,7 +21,7 @@ services:
       POSTGRES_PASSWORD_FILE: /secrets/hyd_postgres_password
     volumes:
       - hyd-pgdata:/var/lib/postgresql/data
-      - secrets-postgres:/secrets:ro
+      - hyd-secrets-postgres:/secrets:ro
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "hyd" ]
       interval: 30s
@@ -36,17 +35,16 @@ services:
     # bazel run //apps/hyd:hyd_amd64_load to build & load the image locally
     # bazel run //apps/hyd:hyd_push to push the image to the registry
     image: ghcr.io/ryandraves/hyd:latest
-    container_name: hyd
     restart: always
     network_mode: service:tailscale
     environment:
       POSTGRES_USER: hyd
       POSTGRES_DB: hyd
       POSTGRES_PASSWORD_FILE: /secrets/hyd_postgres_password
-      POSTGRES_HOST: hyd-postgres
+      POSTGRES_HOST: hyd-db
       POSTGRES_PORT: 5432
     volumes:
-      - secrets-hyd:/secrets:ro
+      - hyd-secrets-hyd:/secrets:ro
     depends_on:
       hyd-db:
         condition: service_healthy
@@ -54,16 +52,14 @@ services:
         condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale:v1.90.8
-    container_name: hyd-tailscale
+    image: tailscale/tailscale:v1.94.2
     hostname: hyd
     secrets:
-      - tailnet_oauth
+      - hyd_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/hyd_authkey
     volumes:
       - hyd-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
@@ -78,10 +74,10 @@ services:
 volumes:
   hyd-pgdata:
   hyd-ts-authkey:
-  secrets-hyd:
-  secrets-postgres:
+  hyd-secrets-hyd:
+  hyd-secrets-postgres:
 
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  hyd_authkey:
+    file: ${PWD}/../secrets/hyd.authkey

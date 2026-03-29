@@ -1,26 +1,18 @@
-# Add the `services` prefix so we don't have to deal with
-# moving the prod data around. I tried copying the data with
-# `    docker run --rm -v source_volume:/from -v destination_volume:/to alpine sh -c "cp -av /from/* /to"`
-# but the user auth didn't like that (different salt?).
-name: services
-
 services:
   spirit-tracks:
     image: ghcr.io/ryandraves/spirit_tracks:latest
-    container_name: mealie-spirit-tracks
     network_mode: service:tailscale
     environment:
       SPIRIT_TRACKS_CONFIG: /config/secrets.json
       SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
     volumes:
-      - mealie-secrets-mealie:/secrets/mealie
-      - mealie-secrets-postgres:/secrets/postgres
+      - recipes-secrets-mealie:/secrets/mealie
+      - recipes-secrets-postgres:/secrets/postgres
       - ${PWD}/secrets.json:/config/secrets.json:ro
     restart: "no"
 
   mealie:
-    image: ghcr.io/mealie-recipes/mealie:v2.8.0
-    container_name: mealie
+    image: ghcr.io/mealie-recipes/mealie:v3.14.0
     restart: always
     network_mode: service:tailscale
     deploy:
@@ -28,8 +20,8 @@ services:
         limits:
           memory: 1000M
     volumes:
-      - mealie-data:/app/data/
-      - mealie-secrets-mealie:/secrets:ro
+      - recipes-data:/app/data/
+      - recipes-secrets-mealie:/secrets:ro
     environment:
       ALLOW_SIGNUP: false
       ALLOW_PASSWORD_LOGIN: false
@@ -40,7 +32,7 @@ services:
       # Database Settings
       DB_ENGINE: postgres
       POSTGRES_USER: mealie
-      POSTGRES_SERVER: mealie-postgres
+      POSTGRES_SERVER: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: mealie
       SMTP_HOST: mail.smtp2go.com
@@ -53,15 +45,15 @@ services:
       # https://integrations.goauthentik.io/integrations/services/mealie/
       OIDC_AUTH_ENABLED: true
       OIDC_PROVIDER_NAME: Tailscale
-      OIDC_CONFIGURATION_URL: https://idp.barn-arcturus.ts.net/.well-known/openid-configuration
+      OIDC_CONFIGURATION_URL: https://tsidp.barn-arcturus.ts.net/.well-known/openid-configuration
       # Required for first-time login from OIDC
       OIDC_SIGNUP_ENABLED: true
       OIDC_USER_CLAIM: email
       OIDC_NAME_CLAIM: preferred_username
       OIDC_GROUPS_CLAIM: groups
       # Groups defined in Tailscale ACLs
-      OIDC_USER_GROUP: mealie-users
-      OIDC_ADMIN_GROUP: mealie-admins
+      OIDC_USER_GROUP: recipes-users
+      OIDC_ADMIN_GROUP: recipes-admins
       # The login page will be bypassed and you will be sent directly to your Identity Provider
       OIDC_AUTO_REDIRECT: true
       # By setting this value to true, a session will be extended as if "Remember Me" was checked.
@@ -70,7 +62,7 @@ services:
     entrypoint: [
       "/bin/sh",
       "-c",
-      "set -e; export POSTGRES_PASSWORD=$(cat /secrets/mealie_postgres_password); export SMTP_PASSWORD=$(cat /secrets/mealie_smtp_password); export OIDC_CLIENT_ID=$(cat /secrets/mealie_oidc_id); export OIDC_CLIENT_SECRET=$(cat /secrets/mealie_oidc_secret); echo 'Secrets loaded successfully'; /app/run.sh"
+      "set -e; export POSTGRES_PASSWORD=$(cat /secrets/recipes_postgres_password); export SMTP_PASSWORD=$(cat /secrets/recipes_smtp_password); export OIDC_CLIENT_ID=$(cat /secrets/recipes_oidc_id); export OIDC_CLIENT_SECRET=$(cat /secrets/recipes_oidc_secret); echo 'Secrets loaded successfully'; /app/run.sh"
     ]
     depends_on:
       postgres:
@@ -79,14 +71,13 @@ services:
         condition: service_completed_successfully
 
   postgres:
-    container_name: mealie-postgres
     image: postgres:15
     restart: always
     volumes:
-      - mealie-pgdata:/var/lib/postgresql/data
-      - mealie-secrets-postgres:/secrets:ro
+      - recipes-pgdata:/var/lib/postgresql/data
+      - recipes-secrets-postgres:/secrets:ro
     environment:
-      POSTGRES_PASSWORD_FILE: /secrets/mealie_postgres_password
+      POSTGRES_PASSWORD_FILE: /secrets/recipes_postgres_password
       POSTGRES_USER: mealie
       PGUSER: mealie
     healthcheck:
@@ -94,25 +85,21 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
-    networks:
-      - mealie
     depends_on:
       spirit-tracks:
         condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale:v1.90.8
-    container_name: mealie-tailscale
+    image: tailscale/tailscale:v1.94.2
     hostname: recipes
     secrets:
-      - tailnet_oauth
+      - recipes_authkey
     environment:
-      TS_EXTRA_ARGS: --advertise-tags=tag:container
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/ts-serve.json
-      TS_AUTHKEY: file:/run/secrets/tailnet_oauth
+      TS_AUTHKEY: file:/run/secrets/recipes_authkey
     volumes:
-      - mealie-ts-authkey:/var/lib/tailscale
+      - recipes-ts-authkey:/var/lib/tailscale
       # Use a directory so `fsnotify` can watch the config file for changes
       - ${PWD}/ts-serve:/config
     devices:
@@ -121,23 +108,16 @@ services:
       - net_admin
       - sys_module
     restart: unless-stopped
-    networks:
-      - mealie
 
-# Custom network; only needed if other compose files are in the parent
-# `services` directory.
-networks:
-  mealie:
-    driver: bridge
 
 volumes:
-  mealie-data:
-  mealie-pgdata:
-  mealie-ts-authkey:
-  mealie-secrets-mealie:
-  mealie-secrets-postgres:
+  recipes-data:
+  recipes-pgdata:
+  recipes-ts-authkey:
+  recipes-secrets-mealie:
+  recipes-secrets-postgres:
 
 
 secrets:
-  tailnet_oauth:
-    file: ${PWD}/../secrets/tailnet_oauth.secret
+  recipes_authkey:
+    file: ${PWD}/../secrets/recipes.authkey
