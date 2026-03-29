@@ -5,7 +5,7 @@ go 1.26.0
 // bazel run @rules_go//go -- mod tidy
 // `Gruntfuggly.triggertaskonsave` will run this automatically
 
-require github.com/tailscale/setec v0.0.0-20260210162250-22930071e0cc
+require github.com/tailscale/setec v0.0.0-20260310221408-dcd97e42f251
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
@@ -21,7 +21,7 @@ require (
 )
 
 // This fork accounts for things that make Gazelle's behavior more predictable.
-replace github.com/tailscale/setec => github.com/RyanDraves/setec v0.0.9
+// replace github.com/tailscale/setec => github.com/RyanDraves/setec v0.0.9
 
 // This fork addes some filepicker functionality
 replace charm.land/bubbles/v2 => github.com/RyanDraves/bubbles/v2 v2.0.1

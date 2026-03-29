@@ -12,8 +12,6 @@ github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg
 github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/RyanDraves/bubbles/v2 v2.0.1 h1:BjWHho14A11tO63EuAN36YN8nbapfkosM1/Bs+ay1RM=
 github.com/RyanDraves/bubbles/v2 v2.0.1/go.mod h1:rCHoleP2XhU8um45NTuOWBPNVHxnkXKTiZqcclL/qOI=
-github.com/RyanDraves/setec v0.0.9 h1:JfZBTEAP8qAcNbweTwMSydKyI/Rl0T7YkVNNtuOZSx4=
-github.com/RyanDraves/setec v0.0.9/go.mod h1:6NU8H/GLPVX2TnXAY1duyy9ylLaHwFpr0X93UPiYmNI=
 github.com/akutz/memconn v0.1.0 h1:NawI0TORU4hcOMsMr11g7vwlCdkYeLKXBcxWu2W/P8A=
 github.com/akutz/memconn v0.1.0/go.mod h1:Jo8rI7m0NieZyLI5e2CDlRdRqRRB4S7Xp77ukDjH+Fw=
 github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e h1:4dAU9FXIyQktpoUAgOJK3OTFc/xug0PCXYCqU0FgDKI=
@@ -235,6 +233,8 @@ github.com/tailscale/netlink v1.1.1-0.20240822203006-4d49adab4de7 h1:uFsXVBE9Qr4
 github.com/tailscale/netlink v1.1.1-0.20240822203006-4d49adab4de7/go.mod h1:NzVQi3Mleb+qzq8VmcWpSkcSYxXIg0DkI6XDzpVkhJ0=
 github.com/tailscale/peercred v0.0.0-20250107143737-35a0c7bd7edc h1:24heQPtnFR+yfntqhI3oAu9i27nEojcQ4NuBQOo5ZFA=
 github.com/tailscale/peercred v0.0.0-20250107143737-35a0c7bd7edc/go.mod h1:f93CXfllFsO9ZQVq+Zocb1Gp4G5Fz0b0rXHLOzt/Djc=
+github.com/tailscale/setec v0.0.0-20260310221408-dcd97e42f251 h1:kNnJlwxSzue+VRJuDdZ/yebcMM2q9KqFmK9xQqH1YRc=
+github.com/tailscale/setec v0.0.0-20260310221408-dcd97e42f251/go.mod h1:6NU8H/GLPVX2TnXAY1duyy9ylLaHwFpr0X93UPiYmNI=
 github.com/tailscale/web-client-prebuilt v0.0.0-20251127225136-f19339b67368 h1:0tpDdAj9sSfSZg4gMwNTdqMP592sBrq2Sm0w6ipnh7k=
 github.com/tailscale/web-client-prebuilt v0.0.0-20251127225136-f19339b67368/go.mod h1:agQPE6y6ldqCOui2gkIh7ZMztTkIQKH049tv8siLuNQ=
 github.com/tailscale/wf v0.0.0-20240214030419-6fbb0a674ee6 h1:l10Gi6w9jxvinoiq15g8OToDdASBni4CyJOdHY1Hr8M=

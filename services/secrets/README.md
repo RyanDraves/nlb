@@ -18,7 +18,7 @@
 | `iir/openweathermap_api_key` | OpenWeatherMap API key | |
 | `personal/claude_key` | Anthropic API key | Provisioned at https://console.anthropic.com/settings/keys |
 | `personal/gemini_key` | Google Gemini API key | Provision at https://console.cloud.google.com/apis/credentials (select correct Google account) |
-| `personal/ghcr_io_pat` | PAT for Github Docker registry (push permissions) | `docker login ghcr.io` to rotate |
+| `personal/ghcr_io` | PAT for Github Docker registry (push permissions) | `docker login ghcr.io` to rotate |
 | `personal/pypi_test_token` | API token to publish to PyPI's test index | Provisioned at https://test.pypi.org/manage/account/ |
 | `personal/pypi_token` | API token to publish to PyPI's production index | Provisioned at https://pypi.org/manage/account/ |
 | `recipes/oidc_id` | tsidp client ID | |
