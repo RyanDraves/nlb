@@ -652,6 +652,8 @@ function setup_bash_aliases() {
         "alias fuck_silent_mode='gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click false'"
         "# Matlab usability"
         "alias matlab='matlab -nodesktop -nosplash'"
+        "# Trackpad driver reset"
+        "alias drunk_driver='sudo modprobe -r i2c_hid_acpi && sudo modprobe i2c_hid_acpi'"
         "# Output SHA256 integrity hashes as Bazel wants them"
         "function bazel_sha256() {
     openssl dgst -sha256 -binary \"\$1\" | openssl base64 -A | sed 's/^/sha256-/'
