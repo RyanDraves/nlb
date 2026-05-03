@@ -195,6 +195,13 @@ function install_brew_packages() {
 
     # Install brew packages
     brew install "${missing_packages[@]}"
+
+    # Register Homebrew OpenJDK with macOS JavaVirtualMachines so java_home can find it.
+    local openjdk_jdk_path="/opt/homebrew/opt/openjdk/libexec/openjdk.jdk"
+    local macos_jvm_link="/Library/Java/JavaVirtualMachines/openjdk.jdk"
+    if [[ -d "$openjdk_jdk_path" ]]; then
+        sudo ln -sfn "$openjdk_jdk_path" "$macos_jvm_link"
+    fi
 }
 
 function install_system_packages() {
