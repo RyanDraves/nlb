@@ -1,12 +1,12 @@
 services:
   chibisafe:
-    image: chibisafe/chibisafe:latest
+    image: chibisafe/chibisafe:v6.5.5
     environment:
       - BASE_API_URL=http://chibisafe_server:8000
     restart: unless-stopped
 
   chibisafe_server:
-    image: chibisafe/chibisafe-server:latest
+    image: chibisafe/chibisafe-server:v6.0.4
     volumes:
       - images-database:/app/database:rw
       - images-uploads:/app/uploads:rw
@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
 
   caddy:
-    image: caddy:2-alpine
+    image: caddy:2.11.3-alpine
     network_mode: service:tailscale
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro

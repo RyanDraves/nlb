@@ -1,0 +1,77 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "schedule": ["before 6am on Saturday"],
+  "timezone": "America/New_York",
+
+  "packageRules": [
+    {
+      "description": "Ignore own GHCR images (built from this repo)",
+      "matchPackagePatterns": ["^ghcr\\.io/ryandraves/"],
+      "enabled": false
+    },
+    {
+      "description": "Group all Bazel module updates into one PR",
+      "matchManagers": ["bazel-module"],
+      "groupName": "bazel modules",
+      "automerge": false
+    },
+    {
+      "description": "Group GitHub Actions updates and auto-merge after CI",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Group Docker Compose image updates into one PR",
+      "matchManagers": ["docker-compose"],
+      "groupName": "docker service images",
+      "automerge": false
+    },
+    {
+      "description": "Auto-merge Go patch updates",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "description": "Group npm/pnpm major updates separately",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "npm major updates",
+      "automerge": false
+    },
+    {
+      "description": "Digest-pin tsidp — only publishes :latest, no stable version tags",
+      "matchPackageNames": ["ghcr.io/tailscale/tsidp"],
+      "pinDigests": true
+    }
+  ],
+
+  "customManagers": [
+    {
+      "description": "Rust crates declared in MODULE.bazel via crate_universe",
+      "customType": "regex",
+      "fileMatch": ["^MODULE\\.bazel$"],
+      "matchStrings": [
+        "\"(?<depName>[a-z_][a-z0-9_-]*)\"\\s*=\\s*crate\\.spec\\(\\s*version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "crate",
+      "versioningTemplate": "cargo"
+    }
+  ],
+
+  "bazelModule": {
+    "enabled": true
+  },
+
+  "pip_requirements": {
+    "fileMatch": ["(^|/)requirements[^/]*\\.txt$"]
+  },
+
+  "pnpm": {
+    "enabled": true
+  }
+}

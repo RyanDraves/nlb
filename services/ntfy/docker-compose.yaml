@@ -1,6 +1,6 @@
 services:
   ntfy:
-    image: binwiederhier/ntfy
+    image: binwiederhier/ntfy:v2.23.0
     network_mode: service:tailscale
     entrypoint:
       - /bin/sh
