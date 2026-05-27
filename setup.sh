@@ -42,6 +42,7 @@ APT_PACKAGES=(
     git-lfs
     unzip
     wget
+    perl
     default-jdk
     zip
     zlib1g-dev
@@ -383,6 +384,44 @@ function install_go() {
     fi
 
     echo "Go $GO_VERSION installed successfully"
+}
+
+function setup_texlive_for_latex_workshop() {
+    local texlive_macos_bin="/usr/local/texlive/2026/bin/universal-darwin"
+    if is_macos && [ -d "$texlive_macos_bin" ]; then
+        # Add macOS TeX Live path before checking for TeX binaries
+        add_to_path "$texlive_macos_bin"
+    fi
+
+    # LaTeX Workshop expects TeX binaries such as pdflatex and latexmk.
+    if check_command pdflatex && check_command latexmk; then
+        echo "TeX Live tools for LaTeX Workshop are already installed"
+        return 0
+    fi
+
+    if is_macos; then
+        echo ""
+        echo "Please install MacTeX (the native macOS distribution of TeX Live) from:"
+        echo "  https://www.tug.org/mactex/"
+        echo ""
+        echo "After installation, run this script again to automatically add TeX to your PATH."
+        return 0
+    fi
+
+    echo ""
+    echo "TeX Live is the recommended distribution for LaTeX Workshop."
+    echo "Unix quickinstall steps for Linux:"
+    cat <<'EOF'
+  1. cd /tmp
+  2. curl -L -o install-tl-unx.tar.gz https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
+  3. zcat < install-tl-unx.tar.gz | tar xf -
+  4. cd install-tl-2*
+  5. sudo perl ./install-tl --no-interaction
+  6. Add /usr/local/texlive/YYYY/bin/PLATFORM to PATH in your shell rc file.
+
+After installation, restart VS Code so LaTeX Workshop can find the TeX binaries.
+EOF
+    return 0
 }
 
 function copy_udev_rules() {
@@ -828,6 +867,7 @@ run_section "Install system packages" install_system_packages
 run_section "Filesystem setup" filesystem_setup
 run_section "Install Bazelisk" install_bazelisk
 run_section "Install Go" install_go
+run_section "Setup TeX Live for LaTeX Workshop" setup_texlive_for_latex_workshop
 if is_linux; then
     run_section "Copy udev rules" copy_udev_rules
     run_section "Setup Arduino CLI" arduino_setup
