@@ -31,6 +31,12 @@
       "automerge": false
     },
     {
+      "description": "Group all Python dependency updates into one PR",
+      "matchManagers": ["pip_requirements"],
+      "groupName": "python dependencies",
+      "automerge": false
+    },
+    {
       "description": "Auto-merge Go patch updates",
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["patch"],
@@ -61,17 +67,5 @@
       "datasourceTemplate": "crate",
       "versioningTemplate": "cargo"
     }
-  ],
-
-  "bazelModule": {
-    "enabled": true
-  },
-
-  "pip_requirements": {
-    "fileMatch": ["(^|/)requirements[^/]*\\.txt$"]
-  },
-
-  "pnpm": {
-    "enabled": true
-  }
+  ]
 }
