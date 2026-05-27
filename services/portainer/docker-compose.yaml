@@ -1,6 +1,6 @@
 services:
   portainer:
-    image: portainer/portainer-ce:lts
+    image: portainer/portainer-ce:2.39.2
     restart: always
     network_mode: service:tailscale
     volumes:
