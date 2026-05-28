@@ -31,7 +31,7 @@ GH_ARM64_MACOS_SHA256_SUM=ba3e0396ebbc8da17256144ddda503e4e79c8b502166335569f839
 GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')
 GO_X86_SHA256_SUM=aac1b08a0fb0c4e0a7c1555beb7b59180b05dfc5a3d62e40e9de90cd42f88235
 GO_ARM64_SHA256_SUM=bd03b743eb6eb4193ea3c3fd3956546bf0e3ca5b7076c8226334afe6b75704cd
-GO_MACOS_ARM64_SHA256_SUM=9c8fcb30a922a845ed3733bd4afdd67b5aa8d43c9ecce0d4d11e832437a52126
+GO_MACOS_ARM64_SHA256_SUM=b1640525dfe68f066d56f200bef7bf4dce955a1a893bd061de6754c211431023
 
 REPO_ROOT=$(dirname $(readlink -f $0))
 
@@ -90,6 +90,8 @@ BREW_PACKAGES=(
     # Dev tools
     direnv
     tmux
+    # So your mouse buttons do something
+    sanesidebuttons
 )
 
 function check_if_on_wsl() {
@@ -220,9 +222,10 @@ function filesystem_setup() {
     local shell_rc=$(get_shell_rc_file)
 
     add_to_path $HOME/.local/bin
-
-    mkdir -p $HOME/.local/share/completions
-    maybe_add_to_file "$shell_rc" "source $HOME/.local/share/completions/*"
+    if [[ "$shell_rc" != *"zshrc"* ]]; then
+        mkdir -p $HOME/.local/share/completions
+        maybe_add_to_file "$shell_rc" "source $HOME/.local/share/completions/*"
+    fi
 
     # Set JAVA_HOME based on OS
     if is_macos; then
@@ -279,9 +282,25 @@ EOF
 }
 
 function install_bazelisk() {
-    # Add bazel-complete.bash to ~/.local/share/completions
-    if copy_if_not_up_to_date misc/bazel-complete.bash ~/.local/share/completions false; then
-        echo "Copied bazel-complete.bash to ~/.local/share/completions"
+    local shell_rc=$(get_shell_rc_file)
+
+    if [[ "$shell_rc" == *"zshrc"* ]] || is_macos; then
+        # Install zsh completion for bazel
+        mkdir -p ~/.zsh/completion
+        if copy_if_not_up_to_date misc/bazel-complete.zsh ~/.zsh/completion/_bazel false; then
+            echo "Copied bazel-complete.zsh to ~/.zsh/completion/_bazel"
+        fi
+
+        mkdir -p ~/.zsh/cache
+        maybe_add_to_file "$shell_rc" 'fpath=(~/.zsh/completion $fpath)'
+        maybe_add_to_file "$shell_rc" 'autoload -Uz compinit && compinit'
+        maybe_add_to_file "$shell_rc" "zstyle ':completion:*' use-cache on"
+        maybe_add_to_file "$shell_rc" "zstyle ':completion:*' cache-path ~/.zsh/cache"
+    else
+        # Add bazel-complete.bash to ~/.local/share/completions
+        if copy_if_not_up_to_date misc/bazel-complete.bash ~/.local/share/completions false; then
+            echo "Copied bazel-complete.bash to ~/.local/share/completions"
+        fi
     fi
 
     # Check if bazel is already installed
@@ -340,11 +359,17 @@ function install_go() {
 
     echo "Installing Go $GO_VERSION"
 
-    local os_suffix="linux-amd64"
+    local os="linux"
+    local arch="amd64"
     local expected_sum=$GO_X86_SHA256_SUM
 
+    if is_macos; then
+        os="darwin"
+        expected_sum=$GO_MACOS_X86_SHA256_SUM
+    fi
+
     if [[ "$(uname -m)" == "aarch64" ]] || [[ "$(uname -m)" == "arm64" ]]; then
-        os_suffix="${os_suffix/amd64/arm64}"
+        arch="arm64"
         if is_macos; then
             expected_sum=$GO_MACOS_ARM64_SHA256_SUM
         else
@@ -352,6 +377,7 @@ function install_go() {
         fi
     fi
 
+    local os_suffix="${os}-${arch}"
     local go_url="https://golang.org/dl/go${GO_VERSION}.${os_suffix}.tar.gz"
     local go_file="/tmp/go.tar.gz"
 
