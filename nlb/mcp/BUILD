@@ -7,7 +7,7 @@ py_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":arduino",
-        "@pip//fastmcp",
+        "@pip//fastmcp_slim",
         "@pip//rich_click",
     ],
 )
@@ -19,7 +19,7 @@ py_library(
     deps = [
         ":util",
         "//nlb/arduino:client",
-        "@pip//fastmcp",
+        "@pip//fastmcp_slim",
         "@pip//pydantic",
     ],
 )
@@ -30,7 +30,7 @@ py_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":file_edit",
-        "@pip//fastmcp",
+        "@pip//fastmcp_slim",
         "@pip//rich_click",
     ],
 )
@@ -40,7 +40,7 @@ py_test(
     srcs = ["file_edit_test.py"],
     deps = [
         ":file_edit",
-        "@pip//fastmcp",
+        "@pip//fastmcp_slim",
     ],
 )
 
@@ -51,7 +51,7 @@ py_library(
     deps = [
         ":util",
         "//nlb/util:semantic_errors",
-        "@pip//fastmcp",
+        "@pip//fastmcp_slim",
         "@pip//pydantic",
     ],
 )
