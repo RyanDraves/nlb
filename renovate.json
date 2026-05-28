@@ -31,10 +31,23 @@
       "automerge": false
     },
     {
+      "description": "Do not update the pip-compiled lockfile directly; CI regenerates it via Bazel",
+      "matchManagers": ["pip_requirements"],
+      "matchFileNames": ["requirements_lock.txt"],
+      "enabled": false
+    },
+    {
       "description": "Group all Python dependency updates into one PR",
       "matchManagers": ["pip_requirements"],
       "groupName": "python dependencies",
       "automerge": false
+    },
+    {
+      "description": "Group Python security updates into one PR; run outside normal schedule",
+      "matchManagers": ["pip_requirements"],
+      "isVulnerabilityAlert": true,
+      "groupName": "python security updates",
+      "schedule": ["at any time"]
     },
     {
       "description": "Auto-merge Go patch updates",
