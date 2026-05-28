@@ -7,8 +7,10 @@
   "packageRules": [
     {
       "description": "Ignore own GHCR images (built from this repo)",
-      "matchPackagePatterns": ["^ghcr\\.io/ryandraves/"],
-      "enabled": false
+      "enabled": false,
+      "matchPackageNames": [
+        "/^ghcr\\.io/ryandraves//"
+      ]
     },
     {
       "description": "Group all Bazel module updates into one PR",
@@ -73,7 +75,9 @@
     {
       "description": "Rust crates declared in MODULE.bazel via crate_universe",
       "customType": "regex",
-      "fileMatch": ["^MODULE\\.bazel$"],
+      "managerFilePatterns": [
+        "/^MODULE\\.bazel$/"
+      ],
       "matchStrings": [
         "\"(?<depName>[a-z_][a-z0-9_-]*)\"\\s*=\\s*crate\\.spec\\(\\s*version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
       ],
