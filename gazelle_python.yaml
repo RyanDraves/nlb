@@ -161,7 +161,6 @@ manifest:
     cffi: cffi
     charset_normalizer: charset_normalizer
     click: click
-    colorama: colorama
     contourpy: contourpy
     cryptography: cryptography
     cycler: cycler
@@ -181,7 +180,7 @@ manifest:
     fastmcp: fastmcp
     fontTools: fonttools
     greenlet: greenlet
-    griffe: griffe
+    griffe: griffelib
     h11: h11
     httpcore: httpcore
     httpx: httpx
@@ -189,6 +188,7 @@ manifest:
     idna: idna
     imageio: imageio
     iniconfig: iniconfig
+    ipython_pygments_lexers: ipython_pygments_lexers
     isodate: isodate
     jedi: jedi
     jinja2: jinja2
@@ -196,6 +196,7 @@ manifest:
     jsonschema: jsonschema
     jsonschema_path: jsonschema_path
     jsonschema_specifications: jsonschema_specifications
+    jwt: pyjwt
     kiwisolver: kiwisolver
     lazy_object_proxy: lazy_object_proxy
     mako: Mako
@@ -251,7 +252,6 @@ manifest:
     pyperclip: pyperclip
     pytest: pytest
     python_multipart: python_multipart
-    pytz: pytz
     rapidfuzz: rapidfuzz
     referencing: referencing
     requests: requests
@@ -281,7 +281,6 @@ manifest:
     typing_extensions: typing_extensions
     typing_inspect: typing_inspect
     typing_inspection: typing_inspection
-    tzdata: tzdata
     urllib3: urllib3
     utm: utm
     uvicorn: uvicorn
@@ -292,4 +291,4 @@ manifest:
     zmq: pyzmq
   pip_repository:
     name: pip
-integrity: 2fa9213c9dd29e1e858ae0dacfbb9ce9f0e0408ac1d0c7ebd72b73399a637ae5
+integrity: faa44b9281da341c064ecaa53b183c9f4f82e65c9bd0d66eaf37fdcc90c2e3e1
