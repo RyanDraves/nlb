@@ -3,6 +3,7 @@
 # - bazel run //:gazelle_python_manifest.update
 # - pip install -e .  # (Optional)
 # - `Gruntfuggly.triggertaskonsave` will run this automatically
+# - Renovate will update this file & trigger the `regen-python-lockfile.yaml` workflow
 alembic>=1.15.1,<2
 bleak>=3,<4
 cycler>=0.12.1,<1
