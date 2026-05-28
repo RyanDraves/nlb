@@ -125,7 +125,6 @@ manifest:
     pexpect: pexpect
     pfzy: pfzy
     pip: pip
-    pkg_resources: setuptools
     platformdirs: platformdirs
     plotly: plotly
     pluggy: pluggy
@@ -187,4 +186,4 @@ manifest:
     zmq: pyzmq
   pip_repository:
     name: pip
-integrity: 06d1f3515c025c6200aafd9dda461df2bf504c19e581657e30cbf72837605fba
+integrity: f60850f14f862636bd305bf5fc0cc62e596cba6e14a74742fc7f616087baf354
