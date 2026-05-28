@@ -292,7 +292,8 @@ function install_bazelisk() {
         fi
 
         mkdir -p ~/.zsh/cache
-        maybe_add_to_file "$shell_rc" "fpath=(~/.zsh/completion $fpath)"
+        maybe_add_to_file "$shell_rc" 'fpath=(~/.zsh/completion $fpath)'
+        maybe_add_to_file "$shell_rc" 'autoload -Uz compinit && compinit'
         maybe_add_to_file "$shell_rc" "zstyle ':completion:*' use-cache on"
         maybe_add_to_file "$shell_rc" "zstyle ':completion:*' cache-path ~/.zsh/cache"
     else
