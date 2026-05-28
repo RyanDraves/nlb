@@ -149,6 +149,7 @@ manifest:
     PyQt6.sip: PyQt6_sip
     Rtree.libs.libspatialindex-567d5dd6: Rtree
     agents: openai_agents
+    aiofile: aiofile
     alembic: alembic
     annotated_types: annotated_types
     anyio: anyio
@@ -156,7 +157,10 @@ manifest:
     attr: attrs
     attrs: attrs
     authlib: authlib
+    beartype: beartype
     bleak: bleak
+    cachetools: cachetools
+    caio: caio
     certifi: certifi
     cffi: cffi
     charset_normalizer: charset_normalizer
@@ -177,7 +181,7 @@ manifest:
     email_validator: email_validator
     exceptiongroup: exceptiongroup
     executing: executing
-    fastmcp: fastmcp
+    fastmcp: fastmcp_slim
     fontTools: fonttools
     greenlet: greenlet
     griffe: griffelib
@@ -189,16 +193,22 @@ manifest:
     imageio: imageio
     iniconfig: iniconfig
     ipython_pygments_lexers: ipython_pygments_lexers
-    isodate: isodate
+    jaraco.classes: jaraco.classes
+    jaraco.context: jaraco_context
+    jaraco.functools: jaraco_functools
     jedi: jedi
+    jeepney: jeepney
     jinja2: jinja2
     jiter: jiter
+    joserfc: joserfc
+    jsonref: jsonref
     jsonschema: jsonschema
     jsonschema_path: jsonschema_path
     jsonschema_specifications: jsonschema_specifications
     jwt: pyjwt
+    key_value: py_key_value_aio
+    keyring: keyring
     kiwisolver: kiwisolver
-    lazy_object_proxy: lazy_object_proxy
     mako: Mako
     markdown_it: markdown_it_py
     markupsafe: MarkupSafe
@@ -218,23 +228,33 @@ manifest:
     narwhals: narwhals
     numpy: numpy
     openai: openai
-    openapi_core: openapi_core
     openapi_pydantic: openapi_pydantic
-    openapi_schema_validator: openapi_schema_validator
-    openapi_spec_validator: openapi_spec_validator
+    opentelemetry.attributes: opentelemetry_api
+    opentelemetry.baggage: opentelemetry_api
+    opentelemetry.context: opentelemetry_api
+    opentelemetry.environment_variables: opentelemetry_api
+    opentelemetry.metrics: opentelemetry_api
+    opentelemetry.propagate: opentelemetry_api
+    opentelemetry.propagators.composite: opentelemetry_api
+    opentelemetry.propagators.textmap: opentelemetry_api
+    opentelemetry.trace: opentelemetry_api
+    opentelemetry.util.re: opentelemetry_api
+    opentelemetry.util.types: opentelemetry_api
+    opentelemetry.version: opentelemetry_api
     ordered_set: ordered_set
     packaging: packaging
     pandas: pandas
-    parse: parse
     parso: parso
     pathable: pathable
     pexpect: pexpect
     pfzy: pfzy
     pip: pip
+    platformdirs: platformdirs
     plotly: plotly
     pluggy: pluggy
     portpicker: portpicker
     prompt_toolkit: prompt_toolkit
+    proxytypes: jsonref
     psutil: psutil
     psycopg2: psycopg2_binary
     ptyprocess: ptyprocess
@@ -255,7 +275,6 @@ manifest:
     referencing: referencing
     requests: requests
     responses: responses
-    rfc3339_validator: rfc3339_validator
     rich: rich
     rich_click: rich_click
     rich_rst: rich_rst
@@ -264,6 +283,7 @@ manifest:
     ruamel.yaml: ruamel.yaml
     ruff: ruff
     scipy: scipy
+    secretstorage: secretstorage
     serial: pyserial
     setuptools: setuptools
     six: six
@@ -280,14 +300,15 @@ manifest:
     typing_extensions: typing_extensions
     typing_inspect: typing_inspect
     typing_inspection: typing_inspection
+    uncalled_for: uncalled_for
     urllib3: urllib3
     utm: utm
     uvicorn: uvicorn
+    watchfiles: watchfiles
     wcwidth: wcwidth
     websockets: websockets
-    werkzeug: werkzeug
     yaml: PyYAML
     zmq: pyzmq
   pip_repository:
     name: pip
-integrity: 0cd406745c500b8add1ac52ea21a8a5c3cbab550290c4268dc84b8dda28bb373
+integrity: 8fce5b9c97a9edc4cdbe9c3e631f2627a2a36af4e4ce57a715fc68afa5b7bb42
