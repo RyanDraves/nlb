@@ -11,7 +11,7 @@ from nlb.util import semantic_errors
 
 class FileEditTool:
     def __init__(self, sandbox_dir: pathlib.Path = util.SANDBOX_DIR):
-        self._sandbox_dir = sandbox_dir
+        self._sandbox_dir = sandbox_dir.resolve()
         self._sandbox_dir.mkdir(parents=True, exist_ok=True)
 
     @property
