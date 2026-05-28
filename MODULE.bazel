@@ -9,7 +9,7 @@ module(
 #
 # "Standard" dependencies
 #
-bazel_dep(name = "aspect_bazel_lib", version = "2.22.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.22.5")
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_cc", version = "0.2.17")
@@ -142,9 +142,9 @@ bazel_dep(name = "googletest", version = "1.15.2")
 #
 # Web development
 #
-bazel_dep(name = "aspect_rules_js", version = "2.7.0")
-bazel_dep(name = "aspect_rules_ts", version = "3.5.0")
-bazel_dep(name = "rules_nodejs", version = "6.3.4")
+bazel_dep(name = "aspect_rules_js", version = "3.1.2")
+bazel_dep(name = "aspect_rules_ts", version = "3.8.10")
+bazel_dep(name = "rules_nodejs", version = "6.7.3")
 bazel_dep(name = "aspect_rules_lint", version = "1.0.0-rc4")
 
 node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node", dev_dependency = True)
@@ -270,7 +270,7 @@ use_repo(go_deps, "com_github_spf13_cobra", "com_github_tailscale_setec", "com_t
 # Containerization
 #
 bazel_dep(name = "rules_oci", version = "2.2.3")
-bazel_dep(name = "tar.bzl", version = "0.7.0")
+bazel_dep(name = "tar.bzl", version = "0.10.4")
 # TODO: Consider https://registry.bazel.build/modules/container_structure_test
 # https://github.com/aspect-build/rules_js/blob/08eb590169cf9c61a02f7056bb3486f8214e90b6/e2e/js_image_oci/src/BUILD.bazel#L78-L84
 
