@@ -15,7 +15,7 @@
   "dependencies": {
     "@tailwindcss/typography": "^0.5.16",
     "autoprefixer": "^10.4.21",
-    "next": "15.2.1"
+    "next": "15.5.18"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.14",
