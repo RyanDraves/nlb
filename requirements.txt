@@ -21,7 +21,7 @@ OpenAI[realtime]>=2,<3
 openai-agents>=0.3.2,<1
 pandas>=3,<4
 portpicker>=1.6.0,<2
-pillow>=11.1.0,<12
+pillow>=12,<13
 pip>=25.1.1,<26
 psycopg2-binary>=2.9.10,<3
 # Matplotlib backend
