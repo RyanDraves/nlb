@@ -5,7 +5,7 @@ go 1.26.0
 // bazel run @rules_go//go -- mod tidy
 // `Gruntfuggly.triggertaskonsave` will run this automatically
 
-require github.com/tailscale/setec v0.0.0-20260310221408-dcd97e42f251
+require github.com/tailscale/setec v0.0.0-20260415230416-802071d7d5bf
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
