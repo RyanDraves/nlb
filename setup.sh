@@ -237,8 +237,8 @@ function filesystem_setup() {
         maybe_add_to_file "$shell_rc" "export JAVA_HOME=/usr/lib/jvm/default-java"
     fi
 
-    # Setup Git LFS
     git lfs install
+    git -C "$REPO_ROOT" lfs pull
 
     # Setup user bazelrc with BuildBuddy configuration
     setup_user_bazelrc

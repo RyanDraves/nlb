@@ -131,6 +131,13 @@ def next(
     if is_exported:
         out_dirs.append("out")
 
+    node_toolchain = select({
+        "//bzl/platforms:is_darwin_arm64": "@nodejs_darwin_arm64//:toolchain",
+        "//bzl/platforms:is_linux_arm64": "@nodejs_linux_arm64//:toolchain",
+        "//bzl/platforms:is_linux_amd64": "@nodejs_linux_amd64//:toolchain",
+        "//conditions:default": "@platforms//:incompatible",
+    })
+
     # `next build` creates an optimized bundle of the application
     # https://nextjs.org/docs/api-reference/cli#build
     js_run_binary(
@@ -156,13 +163,7 @@ def next(
         data = srcs + data,
         chdir = native.package_name(),
         tags = tags,
-        node_toolchain = select(
-            {
-                "@platforms//cpu:arm64": "@nodejs_linux_arm64//:toolchain",
-                "@platforms//cpu:x86_64": "@nodejs_linux_amd64//:toolchain",
-                "//conditions:default": "@platforms//:incompatible",
-            },
-        ),
+        node_toolchain = node_toolchain,
         **kwargs
     )
 
@@ -176,12 +177,6 @@ def next(
         chdir = native.package_name(),
         tags = tags,
         # https://github.com/aspect-build/rules_js/issues/2135
-        node_toolchain = select(
-            {
-                "@platforms//cpu:arm64": "@nodejs_linux_arm64//:toolchain",
-                "@platforms//cpu:x86_64": "@nodejs_linux_amd64//:toolchain",
-                "//conditions:default": "@platforms//:incompatible",
-            },
-        ),
+        node_toolchain = node_toolchain,
         **kwargs
     )

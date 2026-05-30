@@ -19,7 +19,9 @@
     "@nlb/lrb": "workspace:*",
     "classnames": "^2.5.1",
     "date-fns": "^3.6.0",
-    "next": "15.x"
+    "next": "15.x",
+    "satellite.js": "^5.0.0",
+    "three": "^0.170.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "0.5.15",
@@ -27,6 +29,7 @@
     "@types/node": "^20.14.8",
     "@types/react": "npm:types-react@19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
+    "@types/three": "^0.170.0",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "shiki": "^1.24.4",
