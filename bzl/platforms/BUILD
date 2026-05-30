@@ -3,9 +3,7 @@ package(default_visibility = ["//visibility:public"])
 # config_settings for `select()`ing on the host OS+CPU. Unlike the platform()
 # targets below (which describe a machine for toolchain/exec resolution and
 # can't be used in a select), these are predicates over the current
-# configuration. Each ANDs an OS and a CPU constraint, which a single
-# constraint_value select key can't express. Used by the next() macro to pick
-# the matching Node toolchain for the dev/start servers (see next.bzl).
+# configuration.
 config_setting(
     name = "is_darwin_arm64",
     constraint_values = [

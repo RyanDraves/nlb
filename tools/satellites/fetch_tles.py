@@ -9,8 +9,6 @@ Space-Track requires authentication. Set the credentials via environment:
 
     SPACETRACK_IDENTITY  (account email)
     SPACETRACK_PASSWORD  (account password)
-
-Stdlib only -- no third-party dependencies.
 """
 
 import argparse
@@ -29,8 +27,7 @@ DEFAULT_NORAD_IDS = ['56371', '62454', '62455', '62456', '62457']
 
 LOGIN_URL = 'https://www.space-track.org/ajaxauth/login'
 # `gp` is the current general-perturbations element set; `3le` prepends a name
-# line ("0 NAME") to each TLE. No `orderby` clause: it would require a space in
-# the URL (which http.client rejects), and we key results by NORAD id anyway.
+# line ("0 NAME") to each TLE.
 QUERY_URL = (
     'https://www.space-track.org/basicspacedata/query/class/gp'
     '/NORAD_CAT_ID/{ids}/format/3le'

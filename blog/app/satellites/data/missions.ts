@@ -1,9 +1,4 @@
 // Mission descriptions for the satellite visualization.
-//
-// This file is hand-authored and intentionally decoupled from the volatile
-// orbital data in `tles.json` (which the monthly workflow rewrites). Fill in
-// the empty fields below — the `name`, `role`, and `blurb` show up in the
-// hover/click tooltip on the /satellites page.
 
 export interface Mission {
   /** NORAD catalog id; must match a key in tles.json. */
