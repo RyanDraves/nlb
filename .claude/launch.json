@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "blog-dev",
+      "runtimeExecutable": "bazel",
+      "runtimeArgs": [
+        "run",
+        "//blog:next_dev"
+      ],
+      "port": 3000
+    }
+  ]
+}

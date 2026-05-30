@@ -1,0 +1,52 @@
+name: Update satellite TLEs
+
+on:
+  schedule:
+    # 09:00 UTC on the 1st of every month.
+    - cron: "0 9 1 * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: bazelbuild/setup-bazelisk@v3
+
+      - name: Bazel cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-tles-${{ hashFiles('MODULE.bazel.lock') }}
+          restore-keys: ${{ runner.os }}-bazel-tles-
+
+      - name: Write BuildBuddy config
+        run: |
+          echo "build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}" > .user.bazelrc
+
+      - name: Fetch latest TLEs
+        env:
+          # Space-Track account credentials
+          SPACETRACK_IDENTITY: ${{ secrets.SPACETRACK_IDENTITY }}
+          SPACETRACK_PASSWORD: ${{ secrets.SPACETRACK_PASSWORD }}
+        run: |
+          bazel run //tools/satellites:fetch_tles -- \
+            --out "$(pwd)/blog/app/satellites/data/tles.json"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "Monthly satellite TLE refresh"
+          branch: "data/tle-refresh"
+          title: "Monthly satellite TLE refresh"
+          sign-commits: true
+          body: |
+            Automated monthly refresh of the active GEO satellites' two-line
+            element sets, pulled from CelesTrak. Merging redeploys the blog's
+            /satellites visualization with the latest ephemerides.

@@ -5,6 +5,10 @@ SRCS = [
     "layout.tsx",
     "mdx.d.ts",
     "clif/page.tsx",
+    "satellites/page.tsx",
+    "satellites/globe.tsx",
+    "satellites/data/missions.ts",
+    "satellites/data/tles.json",
 ] + glob(
     [
         "posts/*/*.tsx",
@@ -24,10 +28,13 @@ ts_project(
     visibility = ["//blog:__subpackages__"],
     deps = [
         "//blog:node_modules/@types/react",
+        "//blog:node_modules/@types/three",
         "//blog:node_modules/classnames",
         "//blog:node_modules/date-fns",
         "//blog:node_modules/next",
+        "//blog:node_modules/satellite.js",
         "//blog:node_modules/shiki",
+        "//blog:node_modules/three",
         "//blog/lib",
         "//blog/rust",
     ],

@@ -1,5 +1,33 @@
 package(default_visibility = ["//visibility:public"])
 
+# config_settings for `select()`ing on the host OS+CPU. Unlike the platform()
+# targets below (which describe a machine for toolchain/exec resolution and
+# can't be used in a select), these are predicates over the current
+# configuration.
+config_setting(
+    name = "is_darwin_arm64",
+    constraint_values = [
+        "@platforms//os:macos",
+        "@platforms//cpu:arm64",
+    ],
+)
+
+config_setting(
+    name = "is_linux_arm64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:arm64",
+    ],
+)
+
+config_setting(
+    name = "is_linux_amd64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
 platform(
     name = "host_unittest",
     constraint_values = [

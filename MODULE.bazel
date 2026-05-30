@@ -155,6 +155,7 @@ use_repo(node, "nodejs_toolchains")
 # https://github.com/aspect-build/rules_js/issues/2135
 use_repo(node, "nodejs_linux_amd64")
 use_repo(node, "nodejs_linux_arm64")
+use_repo(node, "nodejs_darwin_arm64")
 
 pnpm = use_extension("@aspect_rules_js//npm:extensions.bzl", "pnpm", dev_dependency = True)
 pnpm.pnpm(pnpm_version_from = "//:package.json")

@@ -239,6 +239,7 @@ function filesystem_setup() {
 
     # Setup Git LFS
     git lfs install
+    git -C "$REPO_ROOT" lfs pull
 
     # Setup user bazelrc with BuildBuddy configuration
     setup_user_bazelrc
