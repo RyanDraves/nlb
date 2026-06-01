@@ -42,11 +42,13 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
+          # TODO: Rename this secret or make a new token
+          token: ${{ secrets.RENOVATE_PR_TOKEN || github.token }}
           commit-message: "Monthly satellite TLE refresh"
           branch: "data/tle-refresh"
           title: "Monthly satellite TLE refresh"
           sign-commits: true
           body: |
             Automated monthly refresh of the active GEO satellites' two-line
-            element sets, pulled from CelesTrak. Merging redeploys the blog's
+            element sets, pulled from Space-Track. Merging redeploys the blog's
             /satellites visualization with the latest ephemerides.
