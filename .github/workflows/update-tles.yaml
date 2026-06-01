@@ -48,7 +48,7 @@ jobs:
           branch: "data/tle-refresh"
           title: "Monthly satellite TLE refresh"
           sign-commits: true
-          body: |
+          body: >
             Automated monthly refresh of the active GEO satellites' two-line
             element sets, pulled from Space-Track. Merging redeploys the blog's
             /satellites visualization with the latest ephemerides.
