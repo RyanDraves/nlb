@@ -17,3 +17,5 @@ go.sum linguist-generated=true
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.gif filter=lfs diff=lfs merge=lfs -text
 *.webp filter=lfs diff=lfs merge=lfs -text
+# Sound
+*.wav filter=lfs diff=lfs merge=lfs -text

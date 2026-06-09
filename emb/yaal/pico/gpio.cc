@@ -19,6 +19,10 @@ void Gpio::set_mode(Mode mode) {
     case Mode::OUTPUT:
         gpio_set_dir(pin_, GPIO_OUT);
         break;
+    case Mode::INPUT_PULLUP:
+        gpio_set_dir(pin_, GPIO_IN);
+        gpio_pull_up(pin_);
+        break;
     }
 }
 

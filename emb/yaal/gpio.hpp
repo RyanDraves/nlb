@@ -8,6 +8,7 @@ namespace yaal {
 enum Mode : uint8_t {
     INPUT = 0,
     OUTPUT = 1,
+    INPUT_PULLUP = 2,
 };
 
 class Gpio {

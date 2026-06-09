@@ -1,0 +1,68 @@
+;
+; Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
+;
+; SPDX-License-Identifier: BSD-3-Clause
+;
+; Adapted from pico-extras `audio_i2s.pio`.
+
+; Transmit a stereo I2S audio stream as 16 bits per sample.
+;
+; Autopull must be enabled, with threshold set to 32.
+; Since I2S is MSB-first, shift direction should be to left.
+;
+; Data is output at 1 bit per 2 clock cycles (32 bits per channel, so the
+; state machine clock runs at 64x the frame rate). Use the clock divider to
+; adjust the sample frequency.
+;
+; One output pin is used for the data output.
+; Two side-set pins are used. Bit 0 is the bit clock (BCK), bit 1 is the word
+; select (LRCK).
+
+.pio_version 0 // only requires PIO version 0
+
+.program audio_i2s
+.side_set 2
+
+                    ;        /--- LRCK
+                    ;        |/-- BCK
+bitloop1:           ;        ||
+    out pins, 1       side 0b10
+    jmp x-- bitloop1  side 0b11
+    out pins, 1       side 0b00
+    set x, 14         side 0b01
+
+bitloop0:
+    out pins, 1       side 0b00
+    jmp x-- bitloop0  side 0b01
+    out pins, 1       side 0b10
+public entry_point:
+    set x, 14         side 0b11
+
+% c-sdk {
+
+// Set up the GPIOs and state machine to output I2S audio on `data_pin`, with
+// BCK on `clock_pin_base` and LRCK on `clock_pin_base + 1`. The state machine
+// is left disabled.
+static inline void audio_i2s_program_init(PIO pio, uint sm, uint offset,
+                                          uint data_pin, uint clock_pin_base) {
+    pio_gpio_init(pio, data_pin);
+    pio_gpio_init(pio, clock_pin_base);
+    pio_gpio_init(pio, clock_pin_base + 1);
+
+    pio_sm_config sm_config = audio_i2s_program_get_default_config(offset);
+
+    sm_config_set_out_pins(&sm_config, data_pin, 1);
+    sm_config_set_sideset_pins(&sm_config, clock_pin_base);
+    sm_config_set_out_shift(&sm_config, false, true, 32);
+    sm_config_set_fifo_join(&sm_config, PIO_FIFO_JOIN_TX);
+
+    pio_sm_init(pio, sm, offset, &sm_config);
+
+    uint pin_mask = (1u << data_pin) | (3u << clock_pin_base);
+    pio_sm_set_pindirs_with_mask(pio, sm, pin_mask, pin_mask);
+    pio_sm_set_pins(pio, sm, 0);  // clear pins
+
+    pio_sm_exec(pio, sm, pio_encode_jmp(offset + audio_i2s_offset_entry_point));
+}
+
+%}

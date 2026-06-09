@@ -2,6 +2,12 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:pico.bzl", "pio_cc_library")
 
 cc_library(
+    name = "audio_clip",
+    hdrs = ["audio_clip.hpp"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "flash",
     srcs = select(
         {
@@ -113,6 +119,38 @@ cc_library(
             "//conditions:default": [],
         },
     ),
+)
+
+pio_cc_library(
+    name = "audio",
+    srcs = select(
+        {
+            "@platforms//cpu:armv6-m": ["pico/audio.cc"],
+            # Same as host, for now
+            "//bzl/constraints:unittest": ["host/audio.cc"],
+            "//conditions:default": ["host/audio.cc"],
+        },
+    ),
+    hdrs = ["audio.hpp"],
+    pio = "pico/pio/i2s.pio",
+    visibility = ["//visibility:public"],
+    deps = [":audio_clip"] + select(
+        {
+            "@platforms//cpu:armv6-m": [
+                "@pico-sdk//src/rp2_common/hardware_clocks",
+                "@pico-sdk//src/rp2_common/hardware_dma",
+                "@pico-sdk//src/rp2_common/hardware_pio",
+            ],
+            "//conditions:default": [],
+        },
+    ),
+)
+
+cc_library(
+    name = "host_audio",
+    hdrs = ["host/audio.hpp"],
+    visibility = ["//visibility:public"],
+    deps = [":audio"],
 )
 
 #
