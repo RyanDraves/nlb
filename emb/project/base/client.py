@@ -40,10 +40,23 @@ class BaseClient(client.Client):
         resp = base_bh.WRITE_FLASH_IMAGE.transact(self._node, msg)
         assert resp.address == address
 
-    def write_flash_image(self, image: pathlib.Path | str) -> None:
+    def write_flash_image(
+        self, image: pathlib.Path | str
+    ) -> bootloader_bh.SystemFlashPage:
+        """Write a new image to the opposite flash bank.
+
+        Returns the system page as written, i.e. the state just before the
+        bootloader applies the new image on reset.
+        """
         image = pathlib.Path(image)
-        # TODO: Make 1024 for serial
-        chunk_size = 256
+        if image.stat().st_size > bootloader_bh.PICO_APP_SIZE:
+            raise ValueError(
+                f'Image {image} is {image.stat().st_size} bytes, larger than '
+                f'the {bootloader_bh.PICO_APP_SIZE} byte app bank'
+            )
+        # Chunk by what the comms transport can carry in a single frame
+        # (e.g. BLE messages must fit in a single GATT write)
+        chunk_size = self._node._comms_transporter.MAX_PAYLOAD_SIZE
 
         with progress.Progress() as progress_bar:
             address = 0
@@ -66,6 +79,8 @@ class BaseClient(client.Client):
         self.write_system_page(system_page)
 
         logging.info(f'Flash image written from {image}')
+
+        return system_page
 
     def _read_flash(self, address: int, size: int) -> base_bh.FlashPage:
         msg = base_bh.FlashPage(address=address, read_size=size, data=[])

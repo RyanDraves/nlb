@@ -13,6 +13,9 @@ class NlbNode[
 ]:
     """A generic client node"""
 
+    # How long to wait for a transaction response before giving up
+    TRANSACT_TIMEOUT_S = 5.0
+
     def __init__(
         self,
         serializer: Serializer | None = None,
@@ -106,7 +109,10 @@ class NlbNode[
             self._comms_transporter.send(
                 self._serializer.serialize(message, request_id)
             )
-            self._cv.wait()
+            if not self._cv.wait(timeout=self.TRANSACT_TIMEOUT_S):
+                self._request_id = None
+                raise TimeoutError(
+                    f'No response to request {request_id} within '
+                    f'{self.TRANSACT_TIMEOUT_S}s'
+                )
             return self._msg
-
-        return self._serializer.deserialize(self._comms_transporter.receive())

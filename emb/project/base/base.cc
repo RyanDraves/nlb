@@ -1,8 +1,11 @@
 
+#include <algorithm>
+#include <array>
 #include <cinttypes>
 #include <optional>
 
 #include "emb/project/base/base_bh.hpp"
+#include "emb/project/base/image_stamp.hpp"
 #include "emb/project/base/pio_blink.hpp"
 #include "emb/project/bootloader/bootloader_bh.hpp"
 #include "emb/util/log.hpp"
@@ -32,6 +35,18 @@ void Base::initialize() {
     // need to gracefully handle bad deserialization
     auto buffer = yaal::flash_sector_read(0);
     impl_->system = bootloader::SystemFlashPage::deserialize(buffer).first;
+
+    // Report the running image's stamped hash (patched into the binary
+    // post-build) in the system page so the host can verify a flash
+    auto hash = image_hash();
+    if (impl_->system.image_hash.size() != hash.size() ||
+        !std::equal(hash.begin(), hash.end(),
+                    impl_->system.image_hash.begin())) {
+        impl_->system.image_hash.assign(hash.begin(), hash.end());
+        std::array<uint8_t, 128> page_buffer;
+        auto page = impl_->system.serialize(page_buffer);
+        yaal::flash_sector_write(0, page);
+    }
 
 #if PIO_BLINK
     impl_->led_blink_pio.emplace(1 /* frequency */);

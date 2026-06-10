@@ -1,3 +1,4 @@
+load("@aspect_rules_py//py:defs.bzl", "py_library")
 load("@pip//:requirements.bzl", "requirement")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write", "buffham_template")
@@ -18,10 +19,28 @@ buffham_py_write(
     name = "bootloader_bh_py_write",
 )
 
+py_library(
+    name = "stamp_lib",
+    srcs = ["stamp.py"],
+    visibility = ["//visibility:public"],
+    deps = [requirement("rich-click")],
+)
+
+py_binary(
+    name = "stamp",
+    srcs = ["stamp.py"],
+    add_completions = False,
+    visibility = ["//visibility:public"],
+    deps = ["@pip//rich_click"],
+)
+
 pico_project(
     srcs = ["main.cc"],
     linker_script = ":bootloader_linker_script",
     names = ["bootloader_pico"],
+    # The bootloader image is not stamped; it doesn't link the image stamp
+    # and isn't flashed through `flash.py`
+    stamp = False,
     deps = [
         ":bootloader_bh_cc",
         "//emb/project/base:base_bh_cc",
@@ -29,6 +48,7 @@ pico_project(
         "@pico-sdk//src/rp2_common:hardware_structs",
         "@pico-sdk//src/rp2_common/hardware_flash",
         "@pico-sdk//src/rp2_common/hardware_gpio",
+        "@pico-sdk//src/rp2_common/pico_stdio_usb",
         "@pico-sdk//src/rp2_common/pico_stdlib",
     ],
 )
@@ -138,6 +158,7 @@ provisions = [
         deps = [
             requirement("rich-click"),
             ":bootloader_bh_py",
+            ":stamp_lib",
             "//emb/network/transport:usb",
             "//emb/project/base:base_bh_py",
             "//emb/project/base:client",

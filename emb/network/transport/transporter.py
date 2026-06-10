@@ -4,6 +4,10 @@ from typing import Callable, Protocol
 class TransporterLike(Protocol):
     """Protocol for sending and receiving data."""
 
+    # The largest message payload a single frame can comfortably carry,
+    # e.g. for chunking flash image transfers
+    MAX_PAYLOAD_SIZE: int
+
     def start(self) -> None: ...
 
     def stop(self) -> None: ...

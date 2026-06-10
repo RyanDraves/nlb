@@ -6,7 +6,7 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bzl/macros:emb.bzl", "flash")
 load("//bzl/rules:pico.bzl", "pico_binary")
 
-def _pico_elf_and_bin(name, binary, platform, linker_script, **kwargs):
+def _pico_elf_and_bin(name, binary, platform, linker_script, stamp = True, **kwargs):
     """Macro for the ELF and bin files for a Pico project
 
     Args:
@@ -14,6 +14,7 @@ def _pico_elf_and_bin(name, binary, platform, linker_script, **kwargs):
         binary: The binary to use
         platform: The Pico platform to build for
         linker_script: The linker script to use
+        stamp: Whether to stamp the bin with its image hash
         **kwargs: Additional arguments to pass to `rp2040_binary`
     """
     pico_binary(
@@ -25,11 +26,22 @@ def _pico_elf_and_bin(name, binary, platform, linker_script, **kwargs):
 
     # `_intermediate` as it doesn't have the right platform
     objcopy_to_bin(
-        name = name + "_bin_intermediate",
+        name = name + ("_bin_unstamped" if stamp else "_bin_intermediate"),
         src = name + ".elf",
-        out = name + "_intermediate.bin",
+        out = name + ("_unstamped.bin" if stamp else "_intermediate.bin"),
         target_compatible_with = ["@pico-sdk//bazel/constraint:rp2040"],
     )
+
+    if stamp:
+        # Stamp the image with its own hash (see `image_stamp.hpp`)
+        native.genrule(
+            name = name + "_bin_intermediate",
+            srcs = [name + "_unstamped.bin"],
+            outs = [name + "_intermediate.bin"],
+            cmd = "$(execpath //emb/project/bootloader:stamp) $(location {0}_unstamped.bin) $(location {0}_intermediate.bin)".format(name),
+            target_compatible_with = ["@pico-sdk//bazel/constraint:rp2040"],
+            tools = ["//emb/project/bootloader:stamp"],
+        )
 
     platform_transition_filegroup(
         name = name + ".bin",
@@ -38,7 +50,7 @@ def _pico_elf_and_bin(name, binary, platform, linker_script, **kwargs):
         **kwargs
     )
 
-def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], linker_script = "//emb/project/bootloader:application_linker_script", **kwargs):
+def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], linker_script = "//emb/project/bootloader:application_linker_script", stamp = True, **kwargs):
     """Compile a Pico project
 
     Produces a host binary, an ELF file, a UF2 file, and a bin file.
@@ -54,6 +66,7 @@ def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], link
         deps: The dependencies
         platforms: The Pico platform to build for
         linker_script: The linker script to use
+        stamp: Whether to stamp the bin with its image hash
         **kwargs: Additional arguments to pass to binary targets
     """
     for name, platform in zip(names, platforms):
@@ -66,7 +79,7 @@ def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], link
             **kwargs
         )
 
-        _pico_elf_and_bin(name, name, platform, linker_script, **kwargs)
+        _pico_elf_and_bin(name, name, platform, linker_script, stamp = stamp, **kwargs)
 
         # Create an additional binary without the bootloader in the linker script
         _pico_elf_and_bin(
@@ -74,6 +87,7 @@ def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], link
             name,
             platform,
             "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
+            stamp = stamp,
             tags = ["manual"],
             **kwargs
         )

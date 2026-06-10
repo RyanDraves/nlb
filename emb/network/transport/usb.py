@@ -1,10 +1,40 @@
 import abc
 import logging
 import threading
+import time
 from typing import Callable, ClassVar, cast
 
 import serial
 from serial.tools import list_ports, list_ports_common
+
+
+def find_ports(vendor_product_id: str) -> list[str]:
+    """Find the serial ports of all connected devices matching the ID."""
+    devices = cast(
+        list[list_ports_common.ListPortInfo],
+        list(list_ports.grep(vendor_product_id)),
+    )
+    return [device.device for device in devices]
+
+
+def wait_for_port(vendor_product_id: str, timeout_s: float) -> str | None:
+    """Wait for a device matching the ID to enumerate, returning its port."""
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        if ports := find_ports(vendor_product_id):
+            return ports[0]
+        time.sleep(0.2)
+    return None
+
+
+def wait_for_removal(vendor_product_id: str, timeout_s: float) -> bool:
+    """Wait for all devices matching the ID to drop off the bus."""
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        if not find_ports(vendor_product_id):
+            return True
+        time.sleep(0.1)
+    return False
 
 
 class Serial(abc.ABC):
@@ -12,6 +42,9 @@ class Serial(abc.ABC):
     BAUD_RATE: ClassVar[int]
     STOP_BYTES: ClassVar[bytes]
     DEVICE_NAME: ClassVar[str]
+
+    # Bounded by `kBufSize = 1536` in `bh_cobs.hpp` less message overhead
+    MAX_PAYLOAD_SIZE = 1024
 
     def __init__(self, port: str | None = None):
         # TODO: Make this automatically handle disconnects/reconnects

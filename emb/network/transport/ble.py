@@ -18,6 +18,10 @@ class Ble(abc.ABC):
     NOTIFY_CHAR_UUID: ClassVar[str]
     DEVICE_NAME: ClassVar[str]
 
+    # A frame must fit in a single GATT write (see `HCI_ACL_PAYLOAD_SIZE`
+    # in `btstack_config.h` and the rx handling in `pico/ble.cc`)
+    MAX_PAYLOAD_SIZE = 256
+
     def __init__(self):
         self._started = False
         self.__client: bleak.BleakClient | None = None

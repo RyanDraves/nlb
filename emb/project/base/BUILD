@@ -40,11 +40,19 @@ feature_cc_library(
 )
 
 cc_library(
+    name = "image_stamp_cc",
+    srcs = ["image_stamp.cc"],
+    hdrs = ["image_stamp.hpp"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "base_cc",
     srcs = ["base.cc"],
     visibility = ["//visibility:public"],
     deps = [
         ":base_bh_cc",
+        ":image_stamp_cc",
         ":pio_blink_cc",
         "//emb/project/bootloader:bootloader_bh_cc",
         "//emb/util:log",
@@ -87,8 +95,13 @@ py_library(
     deps = [
         ":base_bh_py",
         ":client",
+        "//emb/network/transport:usb",
         "//emb/project:shell",
+        "//emb/project/bootloader:bootloader_bh_py",
+        "//emb/project/bootloader:stamp_lib",
         "@pip//ipython",
+        "@pip//pyserial",
+        "@pip//rich",
         "@pip//rich_click",
     ],
 )

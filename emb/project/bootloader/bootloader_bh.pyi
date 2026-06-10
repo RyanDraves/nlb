@@ -22,6 +22,9 @@ class SystemFlashPage:
     image_size_b: int
     # Whether a new image has been flashed into bank B
     new_image_flashed: int
+    # Stamped SHA256 of the image in bank A, reported by the application
+    # on boot (see `emb/project/base/image_stamp.hpp`)
+    image_hash: list[int]
 
     def serialize(self) -> bytes: ...
     @classmethod

@@ -9,6 +9,10 @@ class Zmq:
     DEFAULT_HOST = 'tcp://localhost'
     DEFAULT_ADDRESS = DEFAULT_HOST + ':1337'
 
+    # ZMQ doesn't bound the frame size, but the receiving node does
+    # (`kBufSize = 1536` in `bh_cobs.hpp`, less message overhead)
+    MAX_PAYLOAD_SIZE = 1024
+
     def __init__(self, address: str):
         self._ctx = zmq.Context(1)
         self._address = address

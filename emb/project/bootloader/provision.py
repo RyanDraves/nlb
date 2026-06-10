@@ -12,6 +12,7 @@ from emb.network.transport import usb
 from emb.project.base import base_bh
 from emb.project.base import client
 from emb.project.bootloader import bootloader_bh
+from emb.project.bootloader import stamp
 from nlb.util import console_utils
 
 
@@ -78,6 +79,7 @@ def main(
         image_size_a=base_image_path.stat().st_size,
         image_size_b=0,
         new_image_flashed=False,
+        image_hash=list(stamp.read_hash(base_image_path.read_bytes())),
     )
     with tempfile.NamedTemporaryFile() as temp_file:
         buffer = bytes()
