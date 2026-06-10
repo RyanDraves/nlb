@@ -4,7 +4,7 @@ load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write")
 load("//bzl/macros:cc.bzl", "cc_unittest")
 load("//bzl/macros:emb.bzl", "host_test", "wav_cc_library")
 load("//bzl/macros:pico.bzl", "pico_project")
-load("//bzl/macros:python.bzl", "py_binary")
+load("//bzl/macros:python.bzl", "py_binary", "py_test")
 
 py_library(
     name = "client",
@@ -64,7 +64,6 @@ cc_unittest(
 cc_library(
     name = "punbox_cc",
     srcs = ["punbox.cc"],
-    hdrs = ["punbox.hpp"],
     visibility = ["//visibility:public"],
     deps = [
         ":logic",
@@ -103,14 +102,16 @@ host_test(
     ],
 )
 
-py_binary(
-    name = "hil",
-    srcs = ["hil.py"],
+# gazelle:python_ignore_files hil_test.py
+py_test(
+    name = "hil_test",
+    srcs = ["hil_test.py"],
+    # Requires a punbox board connected over USB; run manually
+    tags = ["manual"],
     deps = [
         ":client",
-        "//emb/project:shell",
-        "//emb/project/punbox:punbox_bh_py",
-        "@pip//rich_click",
+        ":punbox_bh_py",
+        "//emb/network/transport:usb",
     ],
 )
 

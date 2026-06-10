@@ -11,3 +11,6 @@ message PunboxState {
 transaction play_sound[emb.project.base.base.Ping, PunboxState];
 # Read the current state without triggering playback
 transaction get_state[emb.project.base.base.Ping, PunboxState];
+
+# Poll the button; called from the main loop
+svr_method tick;

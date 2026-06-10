@@ -7,7 +7,6 @@
 #include "emb/network/transport/comms_transport.hpp"
 #include "emb/network/transport/log_transport.hpp"
 #include "emb/project/base/base_bh.hpp"
-#include "emb/project/punbox/punbox.hpp"
 #include "emb/project/punbox/punbox_bh.hpp"
 #include "emb/util/log.hpp"
 
@@ -38,8 +37,11 @@ int main() {
 
     while (true) {
         // `receive` returns within ~10ms on the Pico's serial transport, so
-        // this loop also polls the button often enough to debounce it
+        // this loop also polls the button often enough to debounce it.
+        //
+        // NOTE: `punbox` shares its (heap-allocated) implementation with the
+        // copy moved into `node`, so ticking the local instance is fine.
         node.receive();
-        emb::project::punbox::tick();
+        punbox.tick();
     }
 }

@@ -9,7 +9,7 @@ class TestParserSimple(unittest.TestCase):
     def setUp(self) -> None:
         name = schema_bh.Name('test', '')
         self.ctx = parser.Parser(
-            {parser.full_name(name): schema_bh.Buffham(name, [], [], [], [], [])},
+            {parser.full_name(name): schema_bh.Buffham(name, [], [], [], [], [], [])},
             cur_namespace=name,
         )
 
@@ -479,6 +479,22 @@ class TestParserSimple(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.ctx.parse_enum(enum_lines, [])
 
+    def test_parse_svr_method(self):
+        svr_method = 'svr_method tick;'
+        parsed = self.ctx.parse_svr_method(svr_method, [])
+        self.assertEqual(parsed, schema_bh.SvrMethod('tick', [], None))
+
+        # With comments
+        svr_method = 'svr_method poll;  # inline comment'
+        parsed = self.ctx.parse_svr_method(svr_method, [' a comment'])
+        self.assertEqual(
+            parsed, schema_bh.SvrMethod('poll', [' a comment'], ' inline comment')
+        )
+
+        # Invalid line
+        with self.assertRaises(ValueError):
+            self.ctx.parse_svr_method('svr_method missing_semicolon', [])
+
 
 class TestParserSample(unittest.TestCase):
     def setUp(self) -> None:
@@ -784,5 +800,16 @@ class TestParserSample(unittest.TestCase):
             parsed.enums,
             [
                 verbosity_enum,
+            ],
+        )
+
+        self.assertListEqual(
+            parsed.svr_methods,
+            [
+                schema_bh.SvrMethod(
+                    'tick',
+                    [' Server method comment'],
+                    ' In-line svr_method comment',
+                ),
             ],
         )

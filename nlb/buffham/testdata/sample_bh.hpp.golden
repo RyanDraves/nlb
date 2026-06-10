@@ -115,6 +115,9 @@ class Sample {
     // Transaction comment
     FlashPage flash_page(const FlashPage &flash_page);
     FlashPage read_flash_page(const FlashPage &flash_page);  // In-line transaction comment
+
+    // Server method comment
+    void tick();  // In-line svr_method comment
   private:
     struct SampleImpl;
     SampleImpl *impl_;

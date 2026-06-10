@@ -383,7 +383,10 @@ def generate_message(
 
 
 def generate_project_class(
-    name: str, transactions: list[schema_bh.Transaction], primary_namespace: str
+    name: str,
+    transactions: list[schema_bh.Transaction],
+    svr_methods: list[schema_bh.SvrMethod],
+    primary_namespace: str,
 ) -> str:
     """Generate a project class definition."""
     definition = f'class {name} {{\n{T[::2]}public:\n{T}{name}();\n{T}~{name}();\n\n'
@@ -412,6 +415,17 @@ def generate_project_class(
         definition += f'{T}{_get_namespaced_name(parser.relative_name(transaction.send_name, primary_namespace))} {transaction.name}(const {_get_namespaced_name(parser.relative_name(transaction.receive_name, primary_namespace))} &{_to_snake_case(transaction.receive_name.name)});'
         if transaction.inline_comment:
             definition += f'  //{transaction.inline_comment}'
+        definition += '\n'
+
+    # Add each server method, to be implemented by the project
+    if svr_methods:
+        definition += '\n'
+    for svr_method in svr_methods:
+        if svr_method.comments:
+            definition += _generate_comment(svr_method.comments, T) + '\n'
+        definition += f'{T}void {svr_method.name}();'
+        if svr_method.inline_comment:
+            definition += f'  //{svr_method.inline_comment}'
         definition += '\n'
 
     # Add a pIMPL struct
@@ -573,10 +587,13 @@ def generate_cpp(
             fp.write(generate_message(message, primary_namespace, hpp))
 
         # Generate transaction definitions
-        if len(bh.transactions) and hpp:
+        if (len(bh.transactions) or len(bh.svr_methods)) and hpp:
             fp.write(
                 generate_project_class(
-                    bh.name.name.title(), bh.transactions, primary_namespace
+                    bh.name.name.title(),
+                    bh.transactions,
+                    bh.svr_methods,
+                    primary_namespace,
                 )
             )
 

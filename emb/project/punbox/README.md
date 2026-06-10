@@ -24,8 +24,8 @@ A small USB-powered box: tell a pun, press the button on top, and a
 
 - `logic.{hpp,cc}`: `PunboxLogic`, the platform-free core (button debounce →
   clip playback). Unit-tested in `logic_test.cc`.
-- `punbox.{hpp,cc}`: the buffham `Punbox` handlers (`play_sound`, `get_state`)
-  plus a free `tick()` the main loop calls to poll the button.
+- `punbox.cc`: the buffham `Punbox` handlers (`play_sound`, `get_state`) plus
+  `tick()`, a buffham `svr_method` the main loop calls to poll the button.
 - `//emb/yaal:audio`: PIO + DMA I2S driver; clips stream from flash with no
   CPU involvement.
 - `:rimshot`: the sound clip, embedded at build time by
@@ -54,11 +54,12 @@ bazel run //emb/project/punbox:punbox_flash
 
 ## Hardware smoke test
 
-1. `bazel run //emb/project/punbox:hil` — pings the board, reads state, and
-   triggers playback; the rimshot should play through the speakers
+1. `bazel test //emb/project/punbox:hil_test` — pings the board, triggers
+   playback, and verifies the state; the rimshot should play through the
+   speakers (the target is tagged `manual`, so CI skips it)
 2. Press the physical button — the rimshot should play again
-3. Re-run `:hil` (or use `:shell` and `client.get_state()`) — `press_count`
-   should reflect both the RPC trigger and the physical press
+3. Re-run `:hil_test` (or use `:shell` and `client.get_state()`) —
+   `press_count` should reflect both the RPC triggers and the physical press
 
 For interactive poking, `bazel run //emb/project/punbox:shell` opens an
 IPython shell with `client` connected over USB serial.

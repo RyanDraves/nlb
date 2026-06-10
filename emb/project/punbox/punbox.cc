@@ -1,5 +1,3 @@
-#include "emb/project/punbox/punbox.hpp"
-
 #include <cinttypes>
 
 #include "emb/project/base/base_bh.hpp"
@@ -21,9 +19,6 @@ namespace {
 constexpr uint8_t kI2sDataPin = 26;       // DIN
 constexpr uint8_t kI2sClockPinBase = 27;  // BCK, with LRCK on 28
 constexpr uint8_t kButtonPin = 6;         // Active-low, against an internal pull-up
-
-// Set on construction so the free `tick()` can reach the logic instance
-PunboxLogic *g_logic = nullptr;
 
 }  // namespace
 
@@ -47,12 +42,9 @@ struct Punbox::PunboxImpl {
     PunboxLogic logic;
 };
 
-Punbox::Punbox() : impl_(new PunboxImpl) { g_logic = &impl_->logic; }
+Punbox::Punbox() : impl_(new PunboxImpl) {}
 
-Punbox::~Punbox() {
-    g_logic = nullptr;
-    delete impl_;
-}
+Punbox::~Punbox() { delete impl_; }
 
 void Punbox::initialize() { impl_->initialize(); }
 
@@ -65,11 +57,7 @@ PunboxState Punbox::get_state(const base::Ping &ping) {
     return impl_->state();
 }
 
-void tick() {
-    if (g_logic != nullptr) {
-        g_logic->tick(yaal::get_time_ms());
-    }
-}
+void Punbox::tick() { impl_->logic.tick(yaal::get_time_ms()); }
 
 }  // namespace punbox
 }  // namespace project
