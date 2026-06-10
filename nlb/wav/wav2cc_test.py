@@ -137,7 +137,3 @@ class TestMain(unittest.TestCase):
             # 100ms at 22.05kHz + 50ms default padding
             expected_frames = 2205 + 1102
             self.assertIn(f'.num_frames = {expected_frames},', contents)
-
-
-if __name__ == '__main__':
-    unittest.main()

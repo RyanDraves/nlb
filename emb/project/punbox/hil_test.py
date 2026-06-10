@@ -34,7 +34,3 @@ class HilTest(unittest.TestCase):
 
             state = self.client.get_state()
             self.assertEqual(state.press_count, initial.press_count + 1)
-
-
-if __name__ == '__main__':
-    unittest.main()
