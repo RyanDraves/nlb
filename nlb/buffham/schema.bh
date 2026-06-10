@@ -75,6 +75,12 @@ message Publish {
     optional string inline_comment;
 }
 
+message SvrMethod {
+    string name;
+    list[string] comments;
+    optional string inline_comment;
+}
+
 message Constant {
     string name;
     FieldType type;
@@ -92,4 +98,5 @@ message Buffham {
     list[Publish] publishes;
     list[Constant] constants;
     list[Enum] enums;
+    list[SvrMethod] svr_methods;
 }

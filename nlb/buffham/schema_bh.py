@@ -398,6 +398,54 @@ class Publish:
         ), offset
 
 @dataclasses.dataclass
+class SvrMethod:
+    name: str
+    comments: list[str]
+    inline_comment: str | None
+
+    def serialize(self) -> bytes:
+        buffer = bytes()
+        optional_bitfield = 0
+        optional_bitfield |= (1 << 0) if self.inline_comment is not None else 0
+        buffer += optional_bitfield.to_bytes(length=1, byteorder='little', signed=False)
+        buffer += struct.pack('<H', len(self.name))
+        buffer += self.name.encode()
+        buffer += struct.pack('<H', len(self.comments))
+        for item in self.comments:
+            buffer += struct.pack('<H', len(item))
+            buffer += item.encode()
+        buffer += struct.pack('<H', len(self.inline_comment)) if self.inline_comment is not None else bytes()
+        buffer += self.inline_comment.encode() if self.inline_comment is not None else bytes()
+        return buffer
+
+    @classmethod
+    def deserialize(cls, buffer: bytes) -> tuple[Self, int]:
+        offset = 0
+        optional_bitfield = int.from_bytes(buffer[:1], byteorder='little', signed=False)
+        offset += 1
+        name_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        name = buffer[offset:offset + name_size].decode()
+        offset += name_size
+        comments_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        comments = []
+        for _ in range(comments_size):
+            item_size = struct.unpack_from('<H', buffer, offset)[0]
+            offset += 2
+            comments.append(buffer[offset:offset + item_size].decode())
+            offset += item_size
+        inline_comment_size = struct.unpack_from('<H', buffer, offset)[0] if (optional_bitfield >> 0) & 1 else 0
+        offset += 2 * ((optional_bitfield >> 0) & 1)
+        inline_comment = buffer[offset:offset + inline_comment_size].decode() if (optional_bitfield >> 0) & 1 else None
+        offset += inline_comment_size
+        return cls(
+            name=name,
+            comments=comments,
+            inline_comment=inline_comment,
+        ), offset
+
+@dataclasses.dataclass
 class Constant:
     name: str
     type: FieldType
@@ -488,6 +536,7 @@ class Buffham:
     publishes: list[Publish]
     constants: list[Constant]
     enums: list[Enum]
+    svr_methods: list[SvrMethod]
 
     def serialize(self) -> bytes:
         buffer = bytes()
@@ -506,6 +555,9 @@ class Buffham:
             buffer += item.serialize()
         buffer += struct.pack('<H', len(self.enums))
         for item in self.enums:
+            buffer += item.serialize()
+        buffer += struct.pack('<H', len(self.svr_methods))
+        for item in self.svr_methods:
             buffer += item.serialize()
         return buffer
 
@@ -549,6 +601,13 @@ class Buffham:
             item, item_size = Enum.deserialize(buffer[offset:])
             enums.append(item)
             offset += item_size
+        svr_methods_size = struct.unpack_from('<H', buffer, offset)[0]
+        offset += 2
+        svr_methods = []
+        for _ in range(svr_methods_size):
+            item, item_size = SvrMethod.deserialize(buffer[offset:])
+            svr_methods.append(item)
+            offset += item_size
         return cls(
             name=name,
             messages=messages,
@@ -556,4 +615,5 @@ class Buffham:
             publishes=publishes,
             constants=constants,
             enums=enums,
+            svr_methods=svr_methods,
         ), offset

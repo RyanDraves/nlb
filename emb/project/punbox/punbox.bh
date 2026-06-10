@@ -1,0 +1,16 @@
+import emb.project.base.base;
+
+message PunboxState {
+    # Number of debounced button presses (and remote triggers) since boot
+    uint32_t press_count;
+    # 1 if the clip is currently playing
+    uint8_t playing;
+}
+
+# Trigger clip playback, as if the button were pressed
+transaction play_sound[emb.project.base.base.Ping, PunboxState];
+# Read the current state without triggering playback
+transaction get_state[emb.project.base.base.Ping, PunboxState];
+
+# Poll the button; called from the main loop
+svr_method tick;

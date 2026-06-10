@@ -16,6 +16,7 @@ MESSAGE_START_REGEX = re.compile(r'^message (\w+) {')
 MESSAGE_END_REGEX = re.compile(r'^}')
 TRANSACTION_REGEX = re.compile(r'^transaction (\w+)\[([\w|\.]+), ([\w|\.]+)\]')
 PUBLISH_REGEX = re.compile(r'^publish (\w+)\[([\w|\.]+)\]')
+SVR_METHOD_REGEX = re.compile(r'^svr_method (\w+);')
 ENUM_START_REGEX = re.compile(r'^enum (\w+) {')
 ENUM_END_REGEX = re.compile(r'^}')
 ENUM_VALUE_REGEX = re.compile(r'^\s*(\w+)\s*=\s*(\d+);')
@@ -334,6 +335,29 @@ class Parser:
 
         return schema_bh.Publish(name, request_id, send_name, comments, inline_comment)
 
+    def parse_svr_method(self, line: str, comments: list[str]) -> schema_bh.SvrMethod:
+        """Parse a server method from a line.
+
+        Server methods are arranged as:
+        - `svr_method [name];`
+
+        They add a `void [name]();` method to the generated server class
+        (i.e. the C++ project class), to be implemented by the project.
+        """
+        match = SVR_METHOD_REGEX.match(line)
+
+        if not match:
+            raise ValueError(f'Invalid svr_method line: {line}')
+
+        name = match.groups()[0]
+
+        inline_comment_match = INLINE_COMMENT_REGEX.match(line)
+        inline_comment = (
+            inline_comment_match.groups()[0] if inline_comment_match else None
+        )
+
+        return schema_bh.SvrMethod(name, comments, inline_comment)
+
     def parse_constant(self, line: str, comments: list[str]) -> schema_bh.Constant:
         """Parse a constant from a line.
 
@@ -530,7 +554,7 @@ class Parser:
         self.cur_namespace = name
 
         # Insert a new Buffham into the context
-        bh = schema_bh.Buffham(name, [], [], [], [], [])
+        bh = schema_bh.Buffham(name, [], [], [], [], [], [])
         if full_name(bh.name) in self.buffhams:
             raise ValueError(f'Duplicate Buffham namespace: {bh.name}')
         self.buffhams[full_name(bh.name)] = bh
@@ -570,6 +594,12 @@ class Parser:
             CONSTANT_REGEX,
             self.parse_constant,
             bh.constants,
+        )
+        self.parse_singleline_definition(
+            lines,
+            SVR_METHOD_REGEX,
+            self.parse_svr_method,
+            bh.svr_methods,
         )
 
         return bh

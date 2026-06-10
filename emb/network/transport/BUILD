@@ -175,8 +175,8 @@ cc_library(
     srcs = ["host/zmq.cc"],
     hdrs = ["zmq.hpp"],
     deps = [
+        "//bzl/deps:libzmq",  # Need to pair this with cppzmq for linkage
         "@cppzmq",
-        "@libzmq",  # Need to pair this with cppzmq for linkage
     ],
 )
 
@@ -205,7 +205,7 @@ cc_host_test(
     visibility = ["//visibility:public"],
     deps = [
         ":transport_zmq",
+        "//bzl/deps:libzmq",  # Need to pair this with cppzmq for linkage
         "@cppzmq",
-        "@libzmq",  # Need to pair this with cppzmq for linkage
     ],
 )

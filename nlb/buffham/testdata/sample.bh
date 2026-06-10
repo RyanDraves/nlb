@@ -68,3 +68,6 @@ transaction read_flash_page[FlashPage, FlashPage];  # In-line transaction commen
 
 # Publish comment
 publish log_message[LogMessage];  # In-line publish comment
+
+# Server method comment
+svr_method tick;  # In-line svr_method comment

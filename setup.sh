@@ -92,6 +92,8 @@ BREW_PACKAGES=(
     tmux
     # So your mouse buttons do something
     sanesidebuttons
+    # Audio/video editing
+    ffmpeg
 )
 
 function check_if_on_wsl() {

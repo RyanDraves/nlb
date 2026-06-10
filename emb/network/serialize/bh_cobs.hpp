@@ -2,6 +2,7 @@
 
 #include <cinttypes>
 #include <span>
+#include <utility>
 
 #include "emb/network/frame/cobs.hpp"
 

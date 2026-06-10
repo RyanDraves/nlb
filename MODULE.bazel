@@ -124,14 +124,26 @@ bazel_dep(name = "pybind11_bazel", version = "2.12.0")
 #
 # Zmq
 #
+# NOTE: `cppzmq` (header-only) pulls the BCR `libzmq` module for its headers,
+# but only the prebuilt archives below are ever linked.
 bazel_dep(name = "cppzmq", version = "4.10.0.bcr.1")
 
+# Prebuilt libzmq binaries; `//bzl/deps:libzmq` selects the right platform.
+# Build new archives with the `cache-and-release` repo's libzmq workflow.
 http_archive(
-    name = "libzmq",
+    name = "libzmq_linux_x86_64",
     build_file = "//bzl/deps:libzmq.BUILD",
-    sha256 = "39bea5d50a1ce7a01e23363d08e33f4b204f7da5da0b32a25ce40f6ef641eb69",
+    sha256 = "fcc1580d542be23fb2831e688f9167afd0c409b745163b3c2e1e877c930e01ff",
     strip_prefix = "libzmq-linux-x86_64",
-    url = "https://github.com/RyanDraves/cache-and-release/releases/download/libzmq-v4.3.5/libzmq-linux-x86_64.tar.gz",
+    url = "https://github.com/RyanDraves/cache-and-release/releases/download/libzmq-v4.3.5-2/libzmq-linux-x86_64.tar.gz",
+)
+
+http_archive(
+    name = "libzmq_macos_arm64",
+    build_file = "//bzl/deps:libzmq.BUILD",
+    sha256 = "61902778d31f6cd6184c63a00276b3c4e86fd88d6e4979a886fb98e5f92f6a42",
+    strip_prefix = "libzmq-macos-arm64",
+    url = "https://github.com/RyanDraves/cache-and-release/releases/download/libzmq-v4.3.5-2/libzmq-macos-arm64.tar.gz",
 )
 
 #
