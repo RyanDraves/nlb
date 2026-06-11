@@ -18,9 +18,6 @@ nlb.egg-info/
 # Web things
 node_modules/
 
-# Future development things
-vscode/
-
 # Shhhhh
 services/secrets/*
 !services/secrets/README.md

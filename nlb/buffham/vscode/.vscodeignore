@@ -1,0 +1,5 @@
+BUILD
+node_modules/**
+vsce_/**
+vsce_node_bin/**
+.vscodeignore

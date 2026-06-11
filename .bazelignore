@@ -5,3 +5,4 @@ lrb/node_modules
 apps/hyd/node_modules
 apps/iir/node_modules
 bzl/test_module
+nlb/buffham/vscode/node_modules

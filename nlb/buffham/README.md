@@ -11,7 +11,9 @@ These goals are flexible.
 - Write the parser schemas in Buffham (cool)
 - Dictionary support
 - File support (read/write to/from text/binary)
-- Editor integrations for language syntax support
+
+A VSCode extension with syntax highlighting and snippets is available in
+[vscode/](vscode/README.md).
 
 # Server methods
 Projects can declare extra methods on the generated server class (i.e. the

@@ -183,11 +183,17 @@ npm.npm_translate_lock(
         "//apps/iir:package.json",
         "//blog:package.json",
         "//lrb:package.json",
+        "//nlb/buffham/vscode:package.json",
     ],
     npmrc = "//:.npmrc",
     pnpm_lock = "//:pnpm-lock.yaml",
     public_hoist_packages = {
         "@next/eslint-plugin-next": ["blog"],
+        # vsce's secretlint scan resolves its rule modules with a node_modules
+        # walk-up from the package store; hoist them to the root so it succeeds
+        "@secretlint/secretlint-formatter-sarif": [""],
+        "@secretlint/secretlint-rule-no-dotenv": [""],
+        "@secretlint/secretlint-rule-preset-recommend": [""],
         "eslint-config-react-app": ["react"],
         "eslint@8.28.0": ["react"],
     },

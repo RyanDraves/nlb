@@ -1,0 +1,50 @@
+{
+    "name": "buffham",
+    "displayName": "Buffham",
+    "description": "Syntax highlighting and snippets for Buffham (.bh) message schema files",
+    "version": "0.1.0",
+    "publisher": "ryandraves",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/RyanDraves/nlb"
+    },
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Snippets"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "buffham",
+                "aliases": [
+                    "Buffham",
+                    "buffham"
+                ],
+                "extensions": [
+                    ".bh"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "buffham",
+                "scopeName": "source.buffham",
+                "path": "./syntaxes/buffham.tmLanguage.json"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "buffham",
+                "path": "./snippets/buffham.json"
+            }
+        ]
+    },
+    "devDependencies": {
+        "@vscode/vsce": "^3.9.2"
+    }
+}

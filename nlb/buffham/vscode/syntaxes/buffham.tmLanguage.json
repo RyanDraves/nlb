@@ -1,0 +1,158 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Buffham",
+    "scopeName": "source.buffham",
+    "patterns": [
+        { "include": "#comment" },
+        { "include": "#import" },
+        { "include": "#constant" },
+        { "include": "#message" },
+        { "include": "#enum" },
+        { "include": "#transaction" },
+        { "include": "#publish" },
+        { "include": "#svr_method" }
+    ],
+    "repository": {
+        "comment": {
+            "name": "comment.line.number-sign.buffham",
+            "match": "#.*$"
+        },
+        "import": {
+            "match": "^(import)\\s+([\\w.]+)\\s*(;)",
+            "captures": {
+                "1": { "name": "keyword.control.import.buffham" },
+                "2": { "name": "entity.name.namespace.buffham" },
+                "3": { "name": "punctuation.terminator.buffham" }
+            }
+        },
+        "constant": {
+            "begin": "^(constant)\\s+(\\w+)\\s+(\\w+)\\s*(=)",
+            "end": ";",
+            "beginCaptures": {
+                "1": { "name": "keyword.control.constant.buffham" },
+                "2": { "name": "storage.type.primitive.buffham" },
+                "3": { "name": "variable.other.constant.buffham" },
+                "4": { "name": "keyword.operator.assignment.buffham" }
+            },
+            "endCaptures": {
+                "0": { "name": "punctuation.terminator.buffham" }
+            },
+            "patterns": [
+                { "include": "#constant_reference" },
+                { "include": "#number" },
+                {
+                    "name": "keyword.operator.arithmetic.buffham",
+                    "match": "[+\\-*]"
+                }
+            ]
+        },
+        "constant_reference": {
+            "match": "(\\{)([\\w.]+)(\\})",
+            "captures": {
+                "1": { "name": "punctuation.definition.template-expression.begin.buffham" },
+                "2": { "name": "variable.other.constant.buffham" },
+                "3": { "name": "punctuation.definition.template-expression.end.buffham" }
+            }
+        },
+        "number": {
+            "name": "constant.numeric.buffham",
+            "match": "\\b(0[xX][0-9a-fA-F]+|\\d+)\\b"
+        },
+        "message": {
+            "begin": "^(message)\\s+(\\w+)\\s*(\\{)",
+            "end": "^(\\})",
+            "beginCaptures": {
+                "1": { "name": "storage.type.structure.buffham" },
+                "2": { "name": "entity.name.type.buffham" },
+                "3": { "name": "punctuation.section.block.begin.buffham" }
+            },
+            "endCaptures": {
+                "1": { "name": "punctuation.section.block.end.buffham" }
+            },
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#field" }
+            ]
+        },
+        "field": {
+            "match": "^\\s*(optional\\s+)?(list)?(\\[)?([\\w.]+)(\\])?\\s+(\\w+)\\s*(;)",
+            "captures": {
+                "1": { "name": "storage.modifier.optional.buffham" },
+                "2": { "name": "storage.type.list.buffham" },
+                "3": { "name": "punctuation.definition.generic.begin.buffham" },
+                "4": { "name": "storage.type.buffham", "patterns": [{ "include": "#type" }] },
+                "5": { "name": "punctuation.definition.generic.end.buffham" },
+                "6": { "name": "variable.other.member.buffham" },
+                "7": { "name": "punctuation.terminator.buffham" }
+            }
+        },
+        "type": {
+            "patterns": [
+                {
+                    "name": "storage.type.primitive.buffham",
+                    "match": "\\b(bool|uint8_t|uint16_t|uint32_t|uint64_t|int8_t|int16_t|int32_t|int64_t|float32|float64|string|bytes)\\b"
+                },
+                {
+                    "name": "entity.name.type.buffham",
+                    "match": "[\\w.]+"
+                }
+            ]
+        },
+        "enum": {
+            "begin": "^(enum)\\s+(\\w+)\\s*(\\{)",
+            "end": "^(\\})",
+            "beginCaptures": {
+                "1": { "name": "storage.type.structure.buffham" },
+                "2": { "name": "entity.name.type.enum.buffham" },
+                "3": { "name": "punctuation.section.block.begin.buffham" }
+            },
+            "endCaptures": {
+                "1": { "name": "punctuation.section.block.end.buffham" }
+            },
+            "patterns": [
+                { "include": "#comment" },
+                {
+                    "match": "^\\s*(\\w+)\\s*(=)\\s*(\\d+)\\s*(;)",
+                    "captures": {
+                        "1": { "name": "constant.other.enum.buffham" },
+                        "2": { "name": "keyword.operator.assignment.buffham" },
+                        "3": { "name": "constant.numeric.buffham" },
+                        "4": { "name": "punctuation.terminator.buffham" }
+                    }
+                }
+            ]
+        },
+        "transaction": {
+            "match": "^(transaction)\\s+(\\w+)(\\[)([\\w.]+)(,)\\s*([\\w.]+)(\\])\\s*(;)",
+            "captures": {
+                "1": { "name": "keyword.control.transaction.buffham" },
+                "2": { "name": "entity.name.function.buffham" },
+                "3": { "name": "punctuation.definition.generic.begin.buffham" },
+                "4": { "name": "entity.name.type.buffham" },
+                "5": { "name": "punctuation.separator.buffham" },
+                "6": { "name": "entity.name.type.buffham" },
+                "7": { "name": "punctuation.definition.generic.end.buffham" },
+                "8": { "name": "punctuation.terminator.buffham" }
+            }
+        },
+        "publish": {
+            "match": "^(publish)\\s+(\\w+)(\\[)([\\w.]+)(\\])\\s*(;)",
+            "captures": {
+                "1": { "name": "keyword.control.publish.buffham" },
+                "2": { "name": "entity.name.function.buffham" },
+                "3": { "name": "punctuation.definition.generic.begin.buffham" },
+                "4": { "name": "entity.name.type.buffham" },
+                "5": { "name": "punctuation.definition.generic.end.buffham" },
+                "6": { "name": "punctuation.terminator.buffham" }
+            }
+        },
+        "svr_method": {
+            "match": "^(svr_method)\\s+(\\w+)\\s*(;)",
+            "captures": {
+                "1": { "name": "keyword.control.svr-method.buffham" },
+                "2": { "name": "entity.name.function.buffham" },
+                "3": { "name": "punctuation.terminator.buffham" }
+            }
+        }
+    }
+}
