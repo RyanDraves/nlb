@@ -1,0 +1,68 @@
+{
+    "Import": {
+        "prefix": "import",
+        "body": "import ${1:namespace.path.module};",
+        "description": "Import another buffham file"
+    },
+    "Message": {
+        "prefix": "message",
+        "body": [
+            "message ${1:Name} {",
+            "\t${2:uint8_t} ${3:field};$0",
+            "}"
+        ],
+        "description": "Define a message"
+    },
+    "Enum": {
+        "prefix": "enum",
+        "body": [
+            "enum ${1:Name} {",
+            "\t${2:VALUE} = 0;$0",
+            "}"
+        ],
+        "description": "Define an enum"
+    },
+    "Constant": {
+        "prefix": "constant",
+        "body": "constant ${1:uint8_t} ${2:name} = ${3:value};",
+        "description": "Define a constant"
+    },
+    "Transaction": {
+        "prefix": "transaction",
+        "body": "transaction ${1:name}[${2:ReceiveMessage}, ${3:SendMessage}];",
+        "description": "Define a transaction (request/response pair)"
+    },
+    "Publish": {
+        "prefix": "publish",
+        "body": "publish ${1:name}[${2:Message}];",
+        "description": "Define a publish event"
+    },
+    "Server method": {
+        "prefix": "svr_method",
+        "body": "svr_method ${1:name};",
+        "description": "Declare a server method stub"
+    },
+    "Optional field": {
+        "prefix": "optional",
+        "body": "optional ${1:uint32_t} ${2:field};",
+        "description": "Optional message field"
+    },
+    "List field": {
+        "prefix": "list",
+        "body": "list[${1:uint8_t}] ${2:field};",
+        "description": "List message field"
+    },
+    "bool": { "prefix": "bool", "body": "bool ", "description": "Boolean type" },
+    "uint8_t": { "prefix": "uint8_t", "body": "uint8_t ", "description": "Unsigned 8-bit integer" },
+    "uint16_t": { "prefix": "uint16_t", "body": "uint16_t ", "description": "Unsigned 16-bit integer" },
+    "uint32_t": { "prefix": "uint32_t", "body": "uint32_t ", "description": "Unsigned 32-bit integer" },
+    "uint64_t": { "prefix": "uint64_t", "body": "uint64_t ", "description": "Unsigned 64-bit integer" },
+    "int8_t": { "prefix": "int8_t", "body": "int8_t ", "description": "Signed 8-bit integer" },
+    "int16_t": { "prefix": "int16_t", "body": "int16_t ", "description": "Signed 16-bit integer" },
+    "int32_t": { "prefix": "int32_t", "body": "int32_t ", "description": "Signed 32-bit integer" },
+    "int64_t": { "prefix": "int64_t", "body": "int64_t ", "description": "Signed 64-bit integer" },
+    "float32": { "prefix": "float32", "body": "float32 ", "description": "32-bit float" },
+    "float64": { "prefix": "float64", "body": "float64 ", "description": "64-bit float" },
+    "string": { "prefix": "string", "body": "string ", "description": "Variable-length string" },
+    "bytes": { "prefix": "bytes", "body": "bytes ", "description": "Variable-length binary data" }
+}

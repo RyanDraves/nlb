@@ -1,0 +1,7 @@
+BUILD
+node_modules/**
+test/**
+vitest.config.mjs
+vsce_/**
+vsce_node_bin/**
+.vscodeignore
