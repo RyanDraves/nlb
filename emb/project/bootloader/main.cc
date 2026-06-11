@@ -7,8 +7,10 @@
 #include "hardware/structs/nvic.h"
 #include "hardware/structs/scb.h"
 #include "hardware/structs/systick.h"
+#include "pico/stdio_usb.h"
 #include "pico/stdlib.h"
 
+#include <cstdio>
 #include <span>
 
 /* Borrowed from
@@ -60,11 +62,14 @@ int main() {
     // Increment the boot count
     system_flash_page.boot_count++;
 
+    // Initialize USB serial for progress output
+    stdio_init_all();
+
     // Blink the LED to indicate the bootloader is running
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
-    // Lighting sequence
+    // Initial lighting sequence
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
     sleep_ms(50);
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
@@ -82,15 +87,44 @@ int main() {
     gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
     if (system_flash_page.new_image_flashed) {
+        // Give the host a moment to attach to the freshly-enumerated USB
+        // serial port so it can observe the swap progress
+        for (int i = 0; i < 200 && !stdio_usb_connected(); i++) {
+            sleep_ms(10);
+        }
         // Do a "double-shuffle" to move the new image from B to A
         // and the old image from A to B
         uint32_t addr_a = emb::yaal::kAppAddrA;
         uint32_t addr_b = emb::yaal::kAppAddrB;
 
+        // Progress, in bytes processed of the larger image
+        uint32_t total = system_flash_page.image_size_a >
+                                 system_flash_page.image_size_b
+                             ? system_flash_page.image_size_a
+                             : system_flash_page.image_size_b;
+
         // Start with the LED on
         gpio_put(PICO_DEFAULT_LED_PIN, 1);
+        bool led_on = true;
 
-        bool led_on = false;
+        // Alternate fast and slow blinks during the swap so the pattern is
+        // aperiodic, unlike the application's steady blinking. Toggle
+        // intervals are in sectors (~100ms each to swap).
+        constexpr uint32_t kBlinkPattern[] = {1, 1, 1, 1, 1, 1, 4, 4};
+        constexpr size_t kBlinkPatternSize =
+            sizeof(kBlinkPattern) / sizeof(kBlinkPattern[0]);
+        uint32_t sectors = 0;
+        uint32_t next_toggle = 1;
+        size_t pattern_idx = 0;
+        auto tick_led = [&]() {
+            sectors++;
+            if (sectors >= next_toggle) {
+                led_on = !led_on;
+                gpio_put(PICO_DEFAULT_LED_PIN, led_on);
+                next_toggle += kBlinkPattern[pattern_idx];
+                pattern_idx = (pattern_idx + 1) % kBlinkPatternSize;
+            }
+        };
         while (addr_b < emb::yaal::kAppAddrB + system_flash_page.image_size_b) {
             read_buffer(g_buffer, addr_a, FLASH_SECTOR_SIZE);
             emb::yaal::flash_write(
@@ -100,11 +134,14 @@ int main() {
             addr_a += FLASH_SECTOR_SIZE;
             addr_b += FLASH_SECTOR_SIZE;
 
-            // Toggle the LED every 10KB
-            if ((addr_b - emb::yaal::kAppAddrB) % 10240 == 0) {
-                gpio_put(PICO_DEFAULT_LED_PIN, led_on);
-                led_on = !led_on;
+            // Report progress every 4 sectors
+            if ((addr_b - emb::yaal::kAppAddrB) % (4 * FLASH_SECTOR_SIZE) ==
+                0) {
+                printf("FLASH %lu %lu\n", addr_b - emb::yaal::kAppAddrB,
+                       total);
             }
+
+            tick_led();
         }
 
         // Make sure we copied all of image A to B
@@ -113,7 +150,21 @@ int main() {
             emb::yaal::flash_write(addr_b, g_buffer);
             addr_a += FLASH_SECTOR_SIZE;
             addr_b += FLASH_SECTOR_SIZE;
+
+            // Report progress every 4 sectors
+            if ((addr_b - emb::yaal::kAppAddrB) % (4 * FLASH_SECTOR_SIZE) ==
+                0) {
+                printf("FLASH %lu %lu\n", addr_b - emb::yaal::kAppAddrB,
+                       total);
+            }
+
+            tick_led();
         }
+
+        printf("FLASH %lu %lu\nDONE\n", total, total);
+        stdio_flush();
+        // Give USB a moment to drain the progress output to the host
+        sleep_ms(50);
 
         // Ensure the LED is off
         gpio_put(PICO_DEFAULT_LED_PIN, 0);

@@ -17,14 +17,18 @@ py_binary(
     srcs = ["wav2cc.py"],
     main = "wav2cc.py",
     visibility = ["//visibility:public"],
-    deps = [":wav2cc_lib"],
+    deps = [
+        "@pip//numpy",
+        "@pip//rich_click",
+        "@pip//scipy",
+    ],
 )
 
 py_test(
     name = "wav2cc_test",
     srcs = ["wav2cc_test.py"],
     deps = [
-        ":wav2cc_lib",
+        "//nlb/wav:wav2cc_lib",
         "@pip//numpy",
         "@pip//scipy",
     ],

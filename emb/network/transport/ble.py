@@ -2,7 +2,7 @@ import abc
 import asyncio
 import logging
 import threading
-from typing import Awaitable, Callable, ClassVar
+from typing import Callable, ClassVar, Coroutine
 
 import bleak
 from bleak import exc
@@ -17,6 +17,10 @@ class Ble(abc.ABC):
     WRITE_CHAR_UUID: ClassVar[str]
     NOTIFY_CHAR_UUID: ClassVar[str]
     DEVICE_NAME: ClassVar[str]
+
+    # A frame must fit in a single GATT write (see `HCI_ACL_PAYLOAD_SIZE`
+    # in `btstack_config.h` and the rx handling in `pico/ble.cc`)
+    MAX_PAYLOAD_SIZE: ClassVar[int] = 256
 
     def __init__(self):
         self._started = False
@@ -34,7 +38,7 @@ class Ble(abc.ABC):
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._loop_thread.join()
 
-    def _run_coroutine_threadsafe[T](self, coro: Awaitable[T]) -> T:
+    def _run_coroutine_threadsafe[T](self, coro: Coroutine[None, None, T]) -> T:
         future = asyncio.run_coroutine_threadsafe(coro, self._loop)
         # Wait for the coroutine to finish and get result
         return future.result()

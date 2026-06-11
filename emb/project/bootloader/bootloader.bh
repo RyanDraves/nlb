@@ -17,4 +17,7 @@ message SystemFlashPage {
     uint32_t image_size_b;
     # Whether a new image has been flashed into bank B
     uint8_t new_image_flashed;
+    # Stamped SHA256 of the image in bank A, reported by the application
+    # on boot (see `emb/project/base/image_stamp.hpp`)
+    list[uint8_t] image_hash;
 }

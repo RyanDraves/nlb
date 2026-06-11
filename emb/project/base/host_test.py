@@ -37,6 +37,7 @@ class HostTest(host_test_base.HostTestBase[client.BaseClient, base_bh.BaseNode])
                     image_size_a=self.image.stat().st_size,
                     image_size_b=0,
                     new_image_flashed=0,
+                    image_hash=[],
                 )
             )
 
@@ -58,7 +59,11 @@ class HostTest(host_test_base.HostTestBase[client.BaseClient, base_bh.BaseNode])
         with self.client:
             self.client.write_system_page(
                 bootloader_bh.SystemFlashPage(
-                    boot_count=123, image_size_a=0, image_size_b=0, new_image_flashed=0
+                    boot_count=123,
+                    image_size_a=0,
+                    image_size_b=0,
+                    new_image_flashed=0,
+                    image_hash=[],
                 )
             )
 

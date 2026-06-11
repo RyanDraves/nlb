@@ -3,7 +3,7 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write")
 load("//bzl/macros:emb.bzl", "host_test")
 load("//bzl/macros:pico.bzl", "pico_project")
-load("//bzl/macros:python.bzl", "py_binary")
+load("//bzl/macros:python.bzl", "py_binary", "py_test")
 load("//bzl/rules:feature.bzl", "feature_cc_library")
 
 # Necessary consequency to make `bzl/macros/emb.bzl` work (simply)
@@ -40,11 +40,19 @@ feature_cc_library(
 )
 
 cc_library(
+    name = "image_stamp_cc",
+    srcs = ["image_stamp.cc"],
+    hdrs = ["image_stamp.hpp"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "base_cc",
     srcs = ["base.cc"],
     visibility = ["//visibility:public"],
     deps = [
         ":base_bh_cc",
+        ":image_stamp_cc",
         ":pio_blink_cc",
         "//emb/project/bootloader:bootloader_bh_cc",
         "//emb/util:log",
@@ -87,9 +95,27 @@ py_library(
     deps = [
         ":base_bh_py",
         ":client",
+        "//emb/network/transport:usb",
         "//emb/project:shell",
+        "//emb/project/bootloader:bootloader_bh_py",
+        "//emb/project/bootloader:stamp_lib",
         "@pip//ipython",
+        "@pip//pyserial",
+        "@pip//rich",
         "@pip//rich_click",
+    ],
+)
+
+# gazelle:python_ignore_files hil_test.py
+py_test(
+    name = "hil_test",
+    srcs = ["hil_test.py"],
+    # Requires a provisioned board connected over USB; run manually
+    tags = ["manual"],
+    deps = [
+        ":base_bh_py",
+        ":client",
+        "//emb/network/transport:usb",
     ],
 )
 

@@ -10,7 +10,7 @@ from nlb.util import dataclass
 class DataclassNode[
     DataclassSerializer: serializer.DataclassSerializer,
     Transporter: transporter.TransporterLike,
-](node.NlbNode[DataclassSerializer, Transporter]):
+](node.NlbNode[DataclassSerializer, Transporter, Transporter]):
     """Generic node that uses dataclasses for message types."""
 
     def _transact(
