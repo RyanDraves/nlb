@@ -225,60 +225,178 @@ class BuffhamHoverProvider {
 const FIND_FILES_EXCLUDE =
     '{**/bazel-*/**,**/.claude/**,**/node_modules/**,**/.git/**}';
 
-// Find-all-references (Shift+F12) across the workspace's buffham files.
-// References are namespace-aware: a symbol is referenced bare within its
-// defining file and as `namespace.path.Symbol` from other files.
+// Find every reference to the symbol at `position`. References are
+// namespace-aware: a symbol is referenced bare within its defining file and as
+// `namespace.path.Symbol` from other files. Returns {symbol, locations} or
+// null; the declaration is included unless `includeDeclaration` is false.
+async function findReferences(document, position, includeDeclaration) {
+    const resolved = await resolveReference(document, position);
+    if (!resolved || !resolved.symbol) {
+        return null;
+    }
+    const symbol = resolved.symbol;
+    const definingUri = resolved.document.uri;
+
+    // The defining file's namespace, e.g. `nlb.buffham.testdata.sample`
+    const namespace = vscode.workspace
+        .asRelativePath(definingUri, false)
+        .replace(/\.bh$/, '')
+        .replaceAll('/', '.');
+    const qualified = `${namespace}.${symbol}`.replaceAll('.', '\\.');
+    const qualifiedRegex = new RegExp(`(?<![\\w.])${qualified}\\b`, 'g');
+    // Bare references are not preceded by a dot (namespaced tail) or word
+    const bareRegex = new RegExp(`(?<![\\w.])${symbol}\\b`, 'g');
+
+    const locations = [];
+    const files = await vscode.workspace.findFiles('**/*.bh', FIND_FILES_EXCLUDE);
+    for (const file of files) {
+        let target;
+        try {
+            target = await vscode.workspace.openTextDocument(file);
+        } catch {
+            continue;
+        }
+        const isDefiningFile = file.toString() === definingUri.toString();
+        for (let i = 0; i < target.lineCount; i++) {
+            const text = target.lineAt(i).text;
+            const matches = [...text.matchAll(qualifiedRegex)].map(
+                // Point at the symbol itself, not the namespace prefix
+                (match) => match.index + match[0].length - symbol.length
+            );
+            if (isDefiningFile) {
+                if (!includeDeclaration && i === resolved.position.line) {
+                    continue;
+                }
+                matches.push(
+                    ...[...text.matchAll(bareRegex)].map((match) => match.index)
+                );
+            }
+            for (const start of matches) {
+                locations.push(new vscode.Location(
+                    file, new vscode.Range(i, start, i, start + symbol.length)
+                ));
+            }
+        }
+    }
+    return { symbol: symbol, locations: locations };
+}
+
+// Find-all-references (Shift+F12) across the workspace's buffham files
 class BuffhamReferenceProvider {
     async provideReferences(document, position, context) {
-        const resolved = await resolveReference(document, position);
-        if (!resolved || !resolved.symbol) {
+        const references = await findReferences(
+            document, position, context.includeDeclaration
+        );
+        return references ? references.locations : [];
+    }
+}
+
+// Rename (F2) a message, enum, or constant and all of its usages
+class BuffhamRenameProvider {
+    prepareRename(document, position) {
+        const range = document.getWordRangeAtPosition(position, /\w+/);
+        if (!range) {
+            throw new Error('Nothing to rename here');
+        }
+        return range;
+    }
+
+    async provideRenameEdits(document, position, newName) {
+        if (!/^\w+$/.test(newName)) {
+            throw new Error(`Invalid buffham name: ${newName}`);
+        }
+        const references = await findReferences(document, position, true);
+        if (!references) {
+            throw new Error('No definition found for this symbol');
+        }
+        const edit = new vscode.WorkspaceEdit();
+        for (const location of references.locations) {
+            edit.replace(location.uri, location.range, newName);
+        }
+        return edit;
+    }
+}
+
+// Collect the type and constant names defined in a document
+function collectDefinitions(document) {
+    const definitions = { types: [], constants: [] };
+    for (let i = 0; i < document.lineCount; i++) {
+        const text = document.lineAt(i).text;
+        let match;
+        if ((match = MESSAGE_START_REGEX.exec(text))) {
+            definitions.types.push({ name: match[1], kind: vscode.CompletionItemKind.Struct });
+        } else if ((match = ENUM_START_REGEX.exec(text))) {
+            definitions.types.push({ name: match[1], kind: vscode.CompletionItemKind.Enum });
+        } else if ((match = CONSTANT_REGEX.exec(text))) {
+            definitions.constants.push({ name: match[1], kind: vscode.CompletionItemKind.Constant });
+        }
+    }
+    return definitions;
+}
+
+// Context-aware completions: locally-defined and imported type names where a
+// type is expected, namespaces in import statements, and constants in
+// `{constant}` references.
+class BuffhamCompletionProvider {
+    async provideCompletionItems(document, position) {
+        const prefix = document.lineAt(position.line).text.slice(0, position.character);
+
+        // `import <...>`: offer every buffham file's namespace
+        if (/^import\s/.test(prefix)) {
+            const files = await vscode.workspace.findFiles('**/*.bh', FIND_FILES_EXCLUDE);
+            return files
+                .map((file) => vscode.workspace
+                    .asRelativePath(file, false)
+                    .replace(/\.bh$/, '')
+                    .replaceAll('/', '.'))
+                .filter((namespace) => !namespace.includes('-'))
+                .map((namespace) => new vscode.CompletionItem(
+                    namespace, vscode.CompletionItemKind.Module
+                ));
+        }
+
+        // Types are expected in fields, `transaction [...]`/`publish [...]`
+        // brackets, and `list[...]`; constants in `{...}` references
+        const inConstantRef = /\{[\w.]*$/.test(prefix);
+        const expectsType =
+            /^\s*(optional\s+)?[\w.]*$/.test(prefix) || /[\[,]\s*[\w.]*$/.test(prefix);
+        if (!inConstantRef && !expectsType) {
             return [];
         }
-        const symbol = resolved.symbol;
-        const definingUri = resolved.document.uri;
+        const wanted = inConstantRef ? 'constants' : 'types';
 
-        // The defining file's namespace, e.g. `nlb.buffham.testdata.sample`
-        const namespace = vscode.workspace
-            .asRelativePath(definingUri, false)
-            .replace(/\.bh$/, '')
-            .replaceAll('/', '.');
-        const qualified = `${namespace}.${symbol}`.replaceAll('.', '\\.');
-        const qualifiedRegex = new RegExp(`(?<![\\w.])${qualified}\\b`, 'g');
-        // Bare references are not preceded by a dot (namespaced tail) or word
-        const bareRegex = new RegExp(`(?<![\\w.])${symbol}\\b`, 'g');
-
-        const locations = [];
-        const files = await vscode.workspace.findFiles('**/*.bh', FIND_FILES_EXCLUDE);
-        for (const file of files) {
-            let target;
+        const items = [];
+        // Local definitions complete bare
+        for (const definition of collectDefinitions(document)[wanted]) {
+            items.push(new vscode.CompletionItem(definition.name, definition.kind));
+        }
+        // Imported definitions complete fully qualified
+        const folder = vscode.workspace.getWorkspaceFolder(document.uri);
+        for (let i = 0; folder && i < document.lineCount; i++) {
+            const importMatch = IMPORT_REGEX.exec(document.lineAt(i).text);
+            if (!importMatch) {
+                continue;
+            }
+            const namespace = importMatch[1];
+            const target = vscode.Uri.joinPath(
+                folder.uri, namespace.replaceAll('.', '/') + '.bh'
+            );
+            let imported;
             try {
-                target = await vscode.workspace.openTextDocument(file);
+                imported = await vscode.workspace.openTextDocument(target);
             } catch {
                 continue;
             }
-            const isDefiningFile = file.toString() === definingUri.toString();
-            for (let i = 0; i < target.lineCount; i++) {
-                const text = target.lineAt(i).text;
-                const matches = [...text.matchAll(qualifiedRegex)].map(
-                    // Point at the symbol itself, not the namespace prefix
-                    (match) => match.index + match[0].length - symbol.length
+            for (const definition of collectDefinitions(imported)[wanted]) {
+                const item = new vscode.CompletionItem(
+                    `${namespace}.${definition.name}`, definition.kind
                 );
-                if (isDefiningFile) {
-                    if (!context.includeDeclaration && i === resolved.position.line) {
-                        continue;
-                    }
-                    matches.push(
-                        ...[...text.matchAll(bareRegex)].map((match) => match.index)
-                    );
-                }
-                for (const start of matches) {
-                    locations.push(new vscode.Location(
-                        file, new vscode.Range(i, start, i, start + symbol.length)
-                    ));
-                }
+                // Keep qualified names visible while typing the namespace
+                item.filterText = `${namespace}.${definition.name}`;
+                items.push(item);
             }
         }
-        return locations;
+        return items;
     }
 }
 
@@ -299,6 +417,12 @@ function activate(context) {
         ),
         vscode.languages.registerReferenceProvider(
             selector, new BuffhamReferenceProvider()
+        ),
+        vscode.languages.registerRenameProvider(
+            selector, new BuffhamRenameProvider()
+        ),
+        vscode.languages.registerCompletionItemProvider(
+            selector, new BuffhamCompletionProvider(), '.', '['
         )
     );
 }
