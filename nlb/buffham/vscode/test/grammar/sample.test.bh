@@ -1,0 +1,59 @@
+# SYNTAX TEST "source.buffham" "buffham grammar"
+
+import nlb.buffham.testdata.other;
+# <------ keyword.control.import.buffham
+#      ^^^^^^^^^^^^^^^^^^^^^^^^^^ entity.name.namespace.buffham
+
+# A comment line
+# <---------------- comment.line.number-sign.buffham
+
+constant uint8_t my_constant = 4;
+# <-------- keyword.control.constant.buffham
+#        ^^^^^^^ storage.type.primitive.buffham
+#                ^^^^^^^^^^^ variable.other.constant.buffham
+#                              ^ constant.numeric.buffham
+
+constant uint16_t composed = 2 + {my_constant};
+#                                 ^^^^^^^^^^^ variable.other.constant.buffham
+#                              ^ keyword.operator.arithmetic.buffham
+
+enum Verbosity {
+# <---- storage.type.structure.buffham
+#    ^^^^^^^^^ entity.name.type.enum.buffham
+    LOW = 0;
+#   ^^^ constant.other.enum.buffham
+#         ^ constant.numeric.buffham
+}
+
+message LogMessage {
+# <------- storage.type.structure.buffham
+#       ^^^^^^^^^^ entity.name.type.buffham
+    string message;
+#   ^^^^^^ storage.type.primitive.buffham
+#          ^^^^^^^ variable.other.member.buffham
+    Verbosity verbosity;
+#   ^^^^^^^^^ entity.name.type.buffham
+    optional uint32_t read_size;
+#   ^^^^^^^^ storage.modifier.optional.buffham
+#            ^^^^^^^^ storage.type.primitive.buffham
+    list[uint8_t] data;
+#   ^^^^ storage.type.list.buffham
+#        ^^^^^^^ storage.type.primitive.buffham
+    nlb.buffham.testdata.other.Pong other_pong;
+#   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ entity.name.type.buffham
+}
+
+transaction ping[nlb.buffham.testdata.other.Pong, LogMessage];
+# <----------- keyword.control.transaction.buffham
+#           ^^^^ entity.name.function.buffham
+#                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ entity.name.type.buffham
+#                                                 ^^^^^^^^^^ entity.name.type.buffham
+
+publish log_message[LogMessage];
+# <------- keyword.control.publish.buffham
+#       ^^^^^^^^^^^ entity.name.function.buffham
+#                   ^^^^^^^^^^ entity.name.type.buffham
+
+svr_method tick;
+# <---------- keyword.control.svr-method.buffham
+#          ^^^^ entity.name.function.buffham

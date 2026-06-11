@@ -427,4 +427,18 @@ function activate(context) {
     );
 }
 
-module.exports = { activate };
+module.exports = {
+    activate,
+    // Exported for testing
+    findDefinition,
+    resolveReference,
+    findReferences,
+    collectDefinitions,
+    BuffhamLinkProvider,
+    BuffhamDefinitionProvider,
+    BuffhamDocumentSymbolProvider,
+    BuffhamHoverProvider,
+    BuffhamReferenceProvider,
+    BuffhamRenameProvider,
+    BuffhamCompletionProvider,
+};

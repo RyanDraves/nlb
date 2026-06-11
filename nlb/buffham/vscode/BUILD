@@ -2,6 +2,8 @@ load("@aspect_rules_js//js:defs.bzl", "js_run_binary")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@npm//nlb/buffham/vscode:@vscode/vsce/package_json.bzl", vsce_bin = "bin")
+load("@npm//nlb/buffham/vscode:vitest/package_json.bzl", vitest_bin = "bin")
+load("@npm//nlb/buffham/vscode:vscode-tmgrammar-test/package_json.bzl", tmgrammar_bin = "bin")
 
 npm_link_all_packages(name = "node_modules")
 
@@ -44,4 +46,42 @@ js_run_binary(
 build_test(
     name = "vsix_build_test",
     targets = [":vsix"],
+)
+
+vitest_bin.vitest_test(
+    name = "extension_test",
+    size = "small",
+    args = [
+        "run",
+        "--config",
+        "vitest.config.mjs",
+    ],
+    chdir = package_name(),
+    data = [
+        "extension.js",
+        "test/extension.test.js",
+        "test/modules/vscode.js",
+        "test/vscode-stub.js",
+        "vitest.config.mjs",
+        ":node_modules/vitest",
+    ],
+    env = {
+        # Satisfies extension.js's `require('vscode')` with the test stub
+        "NODE_PATH": "test/modules",
+    },
+)
+
+tmgrammar_bin.vscode_tmgrammar_test_test(
+    name = "grammar_test",
+    size = "small",
+    args = [
+        "-g",
+        "syntaxes/buffham.tmLanguage.json",
+        "test/grammar/sample.test.bh",
+    ],
+    chdir = package_name(),
+    data = [
+        "syntaxes/buffham.tmLanguage.json",
+        "test/grammar/sample.test.bh",
+    ],
 )
