@@ -220,18 +220,35 @@ class BuffhamHoverProvider {
     }
 }
 
-// Find-all-references (Shift+F12) across the workspace's buffham files
+// Skip Bazel output trees, tool caches, and other non-source directories when
+// scanning the workspace
+const FIND_FILES_EXCLUDE =
+    '{**/bazel-*/**,**/.claude/**,**/node_modules/**,**/.git/**}';
+
+// Find-all-references (Shift+F12) across the workspace's buffham files.
+// References are namespace-aware: a symbol is referenced bare within its
+// defining file and as `namespace.path.Symbol` from other files.
 class BuffhamReferenceProvider {
     async provideReferences(document, position, context) {
-        const range = document.getWordRangeAtPosition(position, /\w+/);
-        if (!range) {
+        const resolved = await resolveReference(document, position);
+        if (!resolved || !resolved.symbol) {
             return [];
         }
-        const symbol = document.getText(range);
-        const symbolRegex = new RegExp(`\\b${symbol}\\b`, 'g');
+        const symbol = resolved.symbol;
+        const definingUri = resolved.document.uri;
+
+        // The defining file's namespace, e.g. `nlb.buffham.testdata.sample`
+        const namespace = vscode.workspace
+            .asRelativePath(definingUri, false)
+            .replace(/\.bh$/, '')
+            .replaceAll('/', '.');
+        const qualified = `${namespace}.${symbol}`.replaceAll('.', '\\.');
+        const qualifiedRegex = new RegExp(`(?<![\\w.])${qualified}\\b`, 'g');
+        // Bare references are not preceded by a dot (namespaced tail) or word
+        const bareRegex = new RegExp(`(?<![\\w.])${symbol}\\b`, 'g');
 
         const locations = [];
-        const files = await vscode.workspace.findFiles('**/*.bh');
+        const files = await vscode.workspace.findFiles('**/*.bh', FIND_FILES_EXCLUDE);
         for (const file of files) {
             let target;
             try {
@@ -239,19 +256,25 @@ class BuffhamReferenceProvider {
             } catch {
                 continue;
             }
+            const isDefiningFile = file.toString() === definingUri.toString();
             for (let i = 0; i < target.lineCount; i++) {
                 const text = target.lineAt(i).text;
-                for (const match of text.matchAll(symbolRegex)) {
-                    const matchRange = new vscode.Range(
-                        i, match.index, i, match.index + symbol.length
-                    );
-                    if (!context.includeDeclaration) {
-                        const definition = findDefinition(target, symbol);
-                        if (definition && definition.line === i) {
-                            continue;
-                        }
+                const matches = [...text.matchAll(qualifiedRegex)].map(
+                    // Point at the symbol itself, not the namespace prefix
+                    (match) => match.index + match[0].length - symbol.length
+                );
+                if (isDefiningFile) {
+                    if (!context.includeDeclaration && i === resolved.position.line) {
+                        continue;
                     }
-                    locations.push(new vscode.Location(file, matchRange));
+                    matches.push(
+                        ...[...text.matchAll(bareRegex)].map((match) => match.index)
+                    );
+                }
+                for (const start of matches) {
+                    locations.push(new vscode.Location(
+                        file, new vscode.Range(i, start, i, start + symbol.length)
+                    ));
                 }
             }
         }
