@@ -3,7 +3,7 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bzl/macros:buffham.bzl", "buffham", "buffham_py_write")
 load("//bzl/macros:emb.bzl", "host_test")
 load("//bzl/macros:pico.bzl", "pico_project")
-load("//bzl/macros:python.bzl", "py_binary")
+load("//bzl/macros:python.bzl", "py_binary", "py_test")
 load("//bzl/rules:feature.bzl", "feature_cc_library")
 
 # Necessary consequency to make `bzl/macros/emb.bzl` work (simply)
@@ -103,6 +103,19 @@ py_library(
         "@pip//pyserial",
         "@pip//rich",
         "@pip//rich_click",
+    ],
+)
+
+# gazelle:python_ignore_files hil_test.py
+py_test(
+    name = "hil_test",
+    srcs = ["hil_test.py"],
+    # Requires a provisioned board connected over USB; run manually
+    tags = ["manual"],
+    deps = [
+        ":base_bh_py",
+        ":client",
+        "//emb/network/transport:usb",
     ],
 )
 

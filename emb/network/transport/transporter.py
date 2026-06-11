@@ -1,4 +1,4 @@
-from typing import Callable, Protocol
+from typing import Callable, ClassVar, Protocol
 
 
 class TransporterLike(Protocol):
@@ -6,7 +6,7 @@ class TransporterLike(Protocol):
 
     # The largest message payload a single frame can comfortably carry,
     # e.g. for chunking flash image transfers
-    MAX_PAYLOAD_SIZE: int
+    MAX_PAYLOAD_SIZE: ClassVar[int]
 
     def start(self) -> None: ...
 

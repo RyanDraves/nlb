@@ -1,6 +1,7 @@
 import logging
 import pathlib
-from typing import Type
+import time
+from typing import Self, Type
 
 from rich import progress
 
@@ -150,6 +151,26 @@ class BaseClient(client.Client):
     def reset(self) -> None:
         # Manually transmit the reset message to avoid waiting for a response
         self._node.command(base_bh.Ping(0), base_bh.RESET.request_id)
+
+    def reconnect(self, timeout_s: float = 60.0) -> Self:
+        """(Re)connect to the device, retrying until it responds to a ping.
+
+        Useful after a reset, when the device drops off the bus and
+        re-enumerates. The node may be started or stopped beforehand.
+        """
+        deadline = time.monotonic() + timeout_s
+        while True:
+            try:
+                self._node.start()
+                self.ping()
+                return self
+            except (RuntimeError, OSError):
+                # Not present, not up yet, or not done rebooting
+                # (`TimeoutError` from an unanswered ping is an `OSError`)
+                self._node.stop()
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.5)
 
     def revert_flash(self) -> None:
         # The previous image is stored in the other bank, so we can just tell

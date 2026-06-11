@@ -45,32 +45,6 @@ def _watch_bootloader_progress(timeout_s: float = 120.0) -> None:
         return
 
 
-def _reconnect(timeout_s: float = 60.0) -> client.BaseClient:
-    """Reconnect to the application after the bootloader hands off to it."""
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        port = usb.wait_for_port(
-            usb.PicoSerial.VENDOR_PRODUCT_ID, timeout_s=deadline - time.monotonic()
-        )
-        if port is None:
-            break
-
-        transporter = usb.PicoSerial(port)
-        c = client.BaseClient(
-            base_bh.BaseNode(comms_transporter=transporter, log_transporter=transporter)
-        )
-        try:
-            c.__enter__()
-            c.ping()
-            return c
-        except (TimeoutError, RuntimeError, serial.SerialException):
-            # Not up yet (or we raced the bootloader's port); try again
-            c.__exit__(None, None, None)
-            time.sleep(0.5)
-
-    raise click.ClickException('Device did not come back up after reset')
-
-
 def _verify(
     c: client.BaseClient,
     bin_filepath: pathlib.Path,
@@ -151,8 +125,13 @@ def main(
     swapped = time.monotonic()
     logging.info(f'Image swapped in {swapped - transferred:.1f}s')
 
-    with _reconnect() as c:
-        _verify(c, bin_filepath, old_page)
+    # Reconnect with the same client; the bootloader hands off to the
+    # application, which re-enumerates under a fresh port
+    try:
+        with c.reconnect():
+            _verify(c, bin_filepath, old_page)
+    except (RuntimeError, OSError) as e:
+        raise click.ClickException(f'Device did not come back up after reset: {e}')
 
     logging.info(f'New image up and verified in {time.monotonic() - swapped:.1f}s')
     logging.info('Success!')
