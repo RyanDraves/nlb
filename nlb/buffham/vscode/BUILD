@@ -15,6 +15,7 @@ js_run_binary(
     srcs = [
         ".vscodeignore",
         "LICENSE.md",
+        "extension.js",
         "README.md",
         "language-configuration.json",
         "package.json",
