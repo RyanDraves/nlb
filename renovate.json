@@ -52,10 +52,17 @@
       "schedule": ["at any time"]
     },
     {
-      "description": "Auto-merge Go patch updates",
+      "description": "Group all Go module updates into one PR; CI runs `go mod tidy` via Bazel to fix go.sum",
       "matchManagers": ["gomod"],
-      "matchUpdateTypes": ["patch"],
-      "automerge": true
+      "groupName": "go modules",
+      "automerge": false
+    },
+    {
+      "description": "Group Go security updates into one PR; run outside normal schedule",
+      "matchManagers": ["gomod"],
+      "isVulnerabilityAlert": true,
+      "groupName": "go security updates",
+      "schedule": ["at any time"]
     },
     {
       "description": "Group npm/pnpm major updates separately",
@@ -63,11 +70,6 @@
       "matchUpdateTypes": ["major"],
       "groupName": "npm major updates",
       "automerge": false
-    },
-    {
-      "description": "Digest-pin tsidp — only publishes :latest, no stable version tags",
-      "matchPackageNames": ["ghcr.io/tailscale/tsidp"],
-      "pinDigests": true
     }
   ],
 
