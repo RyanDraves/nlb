@@ -9,8 +9,8 @@
     "test": "bazel test ... --test_lang_filters=jest --build_tests_only"
   },
   "peerDependencies": {
-    "react": ">=18.3.1 <19.0.0",
-    "react-dom": ">=18.3.1 <19.0.0"
+    "react": ">=18.3.1 <20.0.0",
+    "react-dom": ">=18.3.1 <20.0.0"
   },
   "dependencies": {
     "@mdx-js/loader": "3.1.0",
@@ -18,9 +18,9 @@
     "@next/mdx": "15.0.2",
     "@nlb/lrb": "workspace:*",
     "classnames": "^2.5.1",
-    "date-fns": "^3.6.0",
-    "next": "15.5.19",
-    "satellite.js": "^5.0.0",
+    "date-fns": "^4.0.0",
+    "next": "16.0.10",
+    "satellite.js": "^6.0.0",
     "three": "^0.172.0"
   },
   "devDependencies": {
