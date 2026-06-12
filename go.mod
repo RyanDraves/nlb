@@ -30,10 +30,10 @@ exclude gvisor.dev/gvisor v0.0.0-20260213195347-813e3124c3d7
 exclude github.com/tink-crypto/tink-go/v2 v2.6.0
 
 require (
-	charm.land/bubbles/v2 v2.0.0
+	charm.land/bubbles/v2 v2.1.0
 	charm.land/bubbletea/v2 v2.0.7
-	charm.land/lipgloss/v2 v2.0.3
-	filippo.io/edwards25519 v1.1.0 // indirect
+	charm.land/lipgloss/v2 v2.0.4
+	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e // indirect
 	github.com/aws/aws-sdk-go v1.55.8 // indirect
@@ -112,8 +112,8 @@ require (
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	gvisor.dev/gvisor v0.0.0-20250205023644-9414b50a5633 // indirect
-	tailscale.com v1.94.2
+	gvisor.dev/gvisor v0.0.0-20260224225140-573d5e7127a8 // indirect
+	tailscale.com v1.96.0
 )
 
 tool github.com/tailscale/setec/cmd/setec
