@@ -1,0 +1,49 @@
+name: Regenerate Go modules
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - go.mod
+
+jobs:
+  regen:
+    if: github.actor == 'renovate[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          # Use a PAT (stored as RENOVATE_PR_TOKEN) so that the pushed commit
+          # re-triggers test.yaml. Without it this falls back to GITHUB_TOKEN,
+          # which still pushes the update but won't re-trigger CI automatically
+          # (GitHub's loop-prevention rule).
+          token: ${{ secrets.RENOVATE_PR_TOKEN || github.token }}
+
+      - name: Bazel cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-regen-${{ hashFiles('MODULE.bazel.lock') }}
+          restore-keys: ${{ runner.os }}-bazel-regen-
+
+      - name: Write BuildBuddy config
+        run: |
+          echo "build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}" > .user.bazelrc
+
+      - name: Tidy Go modules
+        run: bazel run @rules_go//go -- mod tidy
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add go.mod go.sum
+          git diff --cached --quiet && exit 0
+          git commit -m "Tidy Go modules"
+          git push
