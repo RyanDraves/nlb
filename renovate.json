@@ -19,12 +19,10 @@
       "automerge": false
     },
     {
-      "description": "Group GitHub Actions updates and auto-merge after CI",
+      "description": "Group GitHub Actions updates into one PR",
       "matchManagers": ["github-actions"],
       "groupName": "github actions",
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true
+      "automerge": false
     },
     {
       "description": "Group Docker Compose image updates into one PR",
@@ -65,11 +63,22 @@
       "schedule": ["at any time"]
     },
     {
-      "description": "Group npm/pnpm major updates separately",
+      "description": "Bump package.json ranges (not just the lockfile) on in-range updates",
       "matchManagers": ["npm"],
-      "matchUpdateTypes": ["major"],
-      "groupName": "npm major updates",
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Group all npm/pnpm dependency updates into one PR",
+      "matchManagers": ["npm"],
+      "groupName": "npm dependencies",
       "automerge": false
+    },
+    {
+      "description": "Group npm/pnpm security updates into one PR; run outside normal schedule",
+      "matchManagers": ["npm"],
+      "isVulnerabilityAlert": true,
+      "groupName": "npm security updates",
+      "schedule": ["at any time"]
     }
   ],
 
