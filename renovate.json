@@ -3,7 +3,9 @@
   "extends": ["config:recommended"],
   "schedule": ["before 6am on Saturday"],
   "timezone": "America/New_York",
-
+  "vulnerabilityAlerts": {
+    "vulnerabilityFixStrategy": "highest"
+  },
   "packageRules": [
     {
       "description": "Ignore own GHCR images (built from this repo)",
