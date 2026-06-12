@@ -13,27 +13,27 @@
     "react-dom": ">=18.3.1 <19.0.0"
   },
   "dependencies": {
-    "@mdx-js/loader": "3.x",
-    "@mdx-js/react": "3.x",
-    "@next/mdx": "15.x",
+    "@mdx-js/loader": "3.0.1",
+    "@mdx-js/react": "3.0.1",
+    "@next/mdx": "15.0.1",
     "@nlb/lrb": "workspace:*",
     "classnames": "^2.5.1",
     "date-fns": "^3.6.0",
-    "next": "15.x",
+    "next": "15.0.8",
     "satellite.js": "^5.0.0",
-    "three": "^0.170.0"
+    "three": "^0.171.0"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "0.5.15",
-    "@types/mdx": "2.x",
-    "@types/node": "^20.14.8",
+    "@tailwindcss/typography": "0.5.16",
+    "@types/mdx": "2.0.1",
+    "@types/node": "^20.14.9",
     "@types/react": "npm:types-react@19.0.0-rc.1",
-    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
-    "@types/three": "^0.170.0",
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.38",
-    "shiki": "^1.24.4",
-    "tailwindcss": "^3.4.4",
-    "typescript": "^5.5.2"
+    "@types/react-dom": "npm:types-react-dom@19.0.0",
+    "@types/three": "^0.171.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.39",
+    "shiki": "^1.25.0",
+    "tailwindcss": "^3.4.5",
+    "typescript": "^5.5.3"
   }
 }
