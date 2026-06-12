@@ -4,6 +4,8 @@
   "schedule": ["before 6am on Saturday"],
   "timezone": "America/New_York",
   "vulnerabilityAlerts": {
+    "groupName": "security updates",
+    "schedule": ["at any time"],
     "vulnerabilityFixStrategy": "highest"
   },
   "packageRules": [
@@ -45,24 +47,10 @@
       "automerge": false
     },
     {
-      "description": "Group Python security updates into one PR; run outside normal schedule",
-      "matchManagers": ["pip_requirements"],
-      "isVulnerabilityAlert": true,
-      "groupName": "python security updates",
-      "schedule": ["at any time"]
-    },
-    {
       "description": "Group all Go module updates into one PR; CI runs `go mod tidy` via Bazel to fix go.sum",
       "matchManagers": ["gomod"],
       "groupName": "go modules",
       "automerge": false
-    },
-    {
-      "description": "Group Go security updates into one PR; run outside normal schedule",
-      "matchManagers": ["gomod"],
-      "isVulnerabilityAlert": true,
-      "groupName": "go security updates",
-      "schedule": ["at any time"]
     },
     {
       "description": "Bump package.json ranges (not just the lockfile) on in-range updates",
@@ -74,13 +62,6 @@
       "matchManagers": ["npm"],
       "groupName": "npm dependencies",
       "automerge": false
-    },
-    {
-      "description": "Group npm/pnpm security updates into one PR; run outside normal schedule",
-      "matchManagers": ["npm"],
-      "isVulnerabilityAlert": true,
-      "groupName": "npm security updates",
-      "schedule": ["at any time"]
     }
   ],
 
