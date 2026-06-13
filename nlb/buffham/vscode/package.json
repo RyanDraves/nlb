@@ -10,7 +10,7 @@
         "url": "https://github.com/RyanDraves/nlb"
     },
     "engines": {
-        "vscode": "^1.76.0"
+        "vscode": "^1.124.2"
     },
     "main": "./extension.js",
     "activationEvents": [
