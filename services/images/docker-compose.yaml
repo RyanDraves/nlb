@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
 
   chibisafe_server:
-    image: chibisafe/chibisafe-server:v6.0.4
+    image: chibisafe/chibisafe-server:v6.5.5
     volumes:
       - images-database:/app/database:rw
       - images-uploads:/app/uploads:rw
@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
 
   caddy:
-    image: caddy:2.11.3-alpine
+    image: caddy:2.11.4-alpine
     network_mode: service:tailscale
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
 
   tailscale:
-    image: tailscale/tailscale:v1.94.2
+    image: tailscale/tailscale:v1.98.4
     hostname: images
     secrets:
       - images_authkey

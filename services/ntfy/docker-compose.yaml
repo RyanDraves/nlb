@@ -1,6 +1,6 @@
 services:
   ntfy:
-    image: binwiederhier/ntfy:v2.23.0
+    image: binwiederhier/ntfy:v2.24.0
     network_mode: service:tailscale
     entrypoint:
       - /bin/sh
@@ -24,7 +24,7 @@ services:
     init: true # needed, if healthcheck is used. Prevents zombie processes
 
   tailscale:
-    image: tailscale/tailscale:v1.94.2
+    image: tailscale/tailscale:v1.98.4
     hostname: ntfy
     secrets:
       - ntfy_authkey
