@@ -215,9 +215,8 @@ use_repo(rules_ts_ext, "npm_typescript")
 #
 # Rust
 #
-# Latest releases (which split out `rules_rust_wasm_bindgen` don't show up properly in
-# npm packages)
-bazel_dep(name = "rules_rust", version = "0.51.0")
+bazel_dep(name = "rules_rust", version = "0.70.0")
+bazel_dep(name = "rules_rust_wasm_bindgen", version = "0.70.0")
 
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(
@@ -228,9 +227,7 @@ use_repo(rust, "rust_toolchains")
 register_toolchains("@rust_toolchains//:all")
 
 register_toolchains(
-    "@rules_rust//wasm_bindgen:default_wasm_bindgen_toolchain",
-    # "@rules_rust_wasm_bindgen//:default_wasm_bindgen_toolchain",
-    "@rules_rust//rust/private/dummy_cc_toolchain:dummy_cc_wasm32_toolchain",
+    "@rules_rust_wasm_bindgen//:default_wasm_bindgen_toolchain",
 )
 
 crate = use_extension(
@@ -239,7 +236,8 @@ crate = use_extension(
 )
 crate.spec(
     package = "wasm-bindgen",
-    version = "=0.2.92",
+    # Must match the wasm-bindgen-cli bundled by rules_rust_wasm_bindgen.
+    version = "=0.2.105",
 )
 crate.spec(
     package = "wee_alloc",
@@ -265,6 +263,22 @@ crate.spec(
 )
 crate.from_specs()
 use_repo(crate, "crates")
+
+# Isolated crate hub for the `brm` game (apps/brm). Its dependency tree
+# (macroquad, axum, tokio, ...) is far too large to hand-list as specs, so it is
+# generated from the app's own Cargo workspace lockfile and kept separate from
+# the `@crates` hub above.
+crate.from_cargo(
+    name = "brm_crates",
+    cargo_lockfile = "//apps/brm:Cargo.lock",
+    manifests = [
+        "//apps/brm:Cargo.toml",
+        "//apps/brm/shared:Cargo.toml",
+        "//apps/brm/server:Cargo.toml",
+        "//apps/brm/client:Cargo.toml",
+    ],
+)
+use_repo(crate, "brm_crates")
 
 #
 # Go

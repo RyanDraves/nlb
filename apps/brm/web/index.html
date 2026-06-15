@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>brm</title>
+    <style>
+        html, body { margin: 0; padding: 0; overflow: hidden; background: #15151c; }
+        /* Size the canvas to the viewport directly. A height:100% parent chain
+           can collapse to 0 in some layout contexts, leaving macroquad with a
+           0x0 drawing buffer (blank canvas that only flashes on resize). */
+        canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: block; outline: none; }
+    </style>
+</head>
+<body>
+    <!-- macroquad's loader (mq_js_bundle.js) renders into the canvas with this id. -->
+    <canvas id="glcanvas" tabindex="1"></canvas>
+    <script src="mq_js_bundle.js"></script>
+    <!-- Registers the brm_ws_* WebSocket plugin the wasm client imports. -->
+    <script src="brm_net.js"></script>
+    <script>
+        // Wrapped in an IIFE: mq_js_bundle.js already declares a global `canvas`,
+        // so a top-level `const canvas` here would be a duplicate-declaration
+        // SyntaxError that aborts this whole script (and the load() below).
+        (function () {
+            const c = document.getElementById("glcanvas");
+            // Keyboard focus so arrow keys/space reach the game, not the page.
+            c.focus();
+            window.addEventListener("click", () => c.focus());
+            load("client_wasm.wasm");
+            // macroquad reads the canvas size once at startup; if that runs
+            // before layout settles it starts at 0x0 (blank). Nudge it to
+            // re-read the real size after layout / first paint.
+            window.addEventListener("load", () => window.dispatchEvent(new Event("resize")));
+            requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
+        })();
+    </script>
+</body>
+</html>
