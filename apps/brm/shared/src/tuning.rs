@@ -16,3 +16,11 @@ pub const DEFAULT_RANGE: i32 = 2;
 pub const DEFAULT_BOMBS: u32 = 1;
 /// Probability a destroyed block reveals a power-up.
 pub const POWERUP_CHANCE: f32 = 0.35;
+/// Speed (tiles/second) a kicked bomb slides across the floor.
+pub const KICK_SPEED: f32 = 6.0;
+/// Seconds of 3-2-1 countdown after everyone readies, before a round begins.
+pub const COUNTDOWN_SECS: f32 = 3.0;
+/// Seconds the winner is shown before the match auto-returns to the lobby.
+pub const ROUNDOVER_SECS: f32 = 4.0;
+/// Maximum length of a player's chosen display name.
+pub const MAX_NAME_LEN: usize = 15;

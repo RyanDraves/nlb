@@ -8,6 +8,8 @@ use crate::{GameState, PlayerId, PlayerInput};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ClientMsg {
     Join { name: String },
+    /// Update the player's display name (sent as they type in the lobby).
+    SetName { name: String },
     Input(PlayerInput),
 }
 

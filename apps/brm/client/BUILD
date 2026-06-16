@@ -8,6 +8,7 @@ exports_files(["Cargo.toml"])
 rust_binary(
     name = "client",
     srcs = glob(["src/*.rs"]),
+    compile_data = ["//apps/brm/assets:powerups.png"],
     edition = "2021",
     tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -27,6 +28,7 @@ rust_binary(
 rust_binary(
     name = "client_wasm",
     srcs = glob(["src/*.rs"]),
+    compile_data = ["//apps/brm/assets:powerups.png"],
     crate_name = "brm_client",
     edition = "2021",
     rustc_flags = [

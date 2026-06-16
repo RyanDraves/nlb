@@ -37,6 +37,18 @@ players simply holds two connections.
 Browser/phone guests are one player each (currently keyboard; touch controls are
 a fast-follow).
 
+## Match flow
+
+`Lobby → Countdown → Playing → RoundOver → Lobby`. Connecting drops you in the
+**lobby**; press your bomb key to toggle **ready** (it also un-readies). When all
+participants are ready a **3-2-1 countdown** runs over the freshly generated
+arena, then the round goes live. A 2+ player round ends when one is left standing
+(shown as the **winner**); a solo round ends when the lone player dies — either
+way everyone auto-returns to the lobby. Joining mid-round makes you a
+**spectator** until the next one. The whole flow lives in `brm_shared`'s `step()`
+so it's deterministic and the client just renders by `Phase`. During a round each
+player's collected power-ups (and name) show in the margin by their spawn corner.
+
 ## Run it
 
 The server hosts the game and serves the browser client in one process:
@@ -49,10 +61,14 @@ bazel run //apps/brm:serve
 
 Then:
 - **Couch players** on the host: `bazel run //apps/brm/client` (defaults to two
-  split-keyboard players against `ws://127.0.0.1:8080/ws`; `BRM_PLAYERS=1` for
-  one, or pass a ws URL as the first arg).
+  split-keyboard players against `ws://127.0.0.1:8080/ws`). Choose the count with
+  `bazel run //apps/brm/client -- --players 1` (or `2`), and point elsewhere with
+  `--server ws://host:port/ws` (`BRM_PLAYERS` / `BRM_SERVER` also work).
 - **LAN guests**: open `http://<host-LAN-ip>:8080` in a browser on a laptop or
   phone on the same network. The page auto-connects back to the host.
+
+Everyone names themselves in the lobby: press **E** to edit, type (15 char max),
+then press your action key to confirm and ready up.
 
 ## Build & test
 
@@ -99,8 +115,16 @@ macroquad's wasm uses its own JS loader (not wasm-bindgen). `web/` holds:
 `bazel run //apps/brm:serve`. With it up, the wasm client boots, connects over
 WebSocket, and renders the map fed by live 30 Hz snapshots.
 
+## Power-ups
+
+Destroyed blocks may reveal a power-up (`POWERUP_CHANCE`). Six kinds, drawn from
+the embedded sprite sheet `assets/powerups.png` (placeholder art — swap the PNG
+and rebuild): **ExtraBomb**, **Range**, **Speed**, **Kick** (push bombs by
+walking into them), **Pierce** (your bombs' blast punches through blocks), and
+**Shield** (absorb one otherwise-fatal blast).
+
 ## Not done yet (fast-follows)
 
-Power-up pickup is simulated but has no distinct sprite polish; sprite animation,
-controller (gamepad) support, on-screen touch controls for phones, and real art
+Player character animation, controller (gamepad) support, on-screen touch
+controls for phones, player name entry in the lobby, and real (hand-drawn) art
 assets are the next steps. Internet/NAT play is out of scope (LAN only).

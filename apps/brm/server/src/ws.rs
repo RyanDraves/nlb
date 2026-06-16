@@ -44,13 +44,19 @@ async fn handle_socket(socket: WebSocket, app: Arc<App>) {
     let mut recv_task = tokio::spawn(async move {
         while let Some(Ok(msg)) = stream.next().await {
             if let Message::Binary(b) = msg {
-                if let Ok(ClientMsg::Input(inp)) = bincode::deserialize::<ClientMsg>(&b) {
-                    let mut inputs = recv_app.inputs.lock().unwrap();
-                    let e = inputs.entry(id).or_default();
-                    e.dx = inp.dx;
-                    e.dy = inp.dy;
-                    // Latch presses so a bomb tap between ticks isn't lost.
-                    e.place_bomb |= inp.place_bomb;
+                match bincode::deserialize::<ClientMsg>(&b) {
+                    Ok(ClientMsg::Input(inp)) => {
+                        let mut inputs = recv_app.inputs.lock().unwrap();
+                        let e = inputs.entry(id).or_default();
+                        e.dx = inp.dx;
+                        e.dy = inp.dy;
+                        // Latch presses so a bomb tap between ticks isn't lost.
+                        e.place_bomb |= inp.place_bomb;
+                    }
+                    Ok(ClientMsg::Join { name }) | Ok(ClientMsg::SetName { name }) => {
+                        recv_app.game.lock().unwrap().set_name(id, &name);
+                    }
+                    Err(_) => {}
                 }
             }
         }
