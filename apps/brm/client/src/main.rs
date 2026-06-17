@@ -3,21 +3,47 @@
 //! split-keyboard player) and to wasm (one browser/phone player), differing only
 //! in how the server URL and player count are chosen.
 
+#[cfg(not(target_arch = "wasm32"))]
+mod gamepad;
 mod input;
 mod net;
 mod render;
+mod touch;
+mod web;
 
 use brm_shared::{ClientMsg, GameState, Phase, PlayerId, ServerMsg};
 use input::{read_input, Binds, BINDS};
 use macroquad::prelude::*;
 use net::WebSocket;
 
-/// One local player: its own connection to the server plus key bindings.
+/// Where a local player's input comes from. The wasm client always uses
+/// `Keyboard` here and overrides it per-frame with touch/gamepad (a browser
+/// guest is a single player), so the `Pad` variant is native-only.
+enum Source {
+    Keyboard(Binds),
+    #[cfg(not(target_arch = "wasm32"))]
+    Pad(gamepad::GamepadId),
+}
+
+impl Source {
+    /// The keyboard bindings, if this is a keyboard player (used for the lobby
+    /// name-editing flow, which only applies to keyboard players).
+    fn keyboard_binds(&self) -> Option<Binds> {
+        #[allow(irrefutable_let_patterns)]
+        if let Source::Keyboard(b) = self {
+            Some(*b)
+        } else {
+            None
+        }
+    }
+}
+
+/// One local player: its own connection to the server plus its input source.
 struct Local {
     ws: WebSocket,
     /// Player id assigned by the server (via `ServerMsg::Welcome`).
     id: Option<PlayerId>,
-    binds: Binds,
+    source: Source,
     /// Locally-typed name; empty means "use the server's default `Player N`".
     name: String,
     /// Last name sent, so we only resend `SetName` when it changes.
@@ -46,22 +72,45 @@ async fn main() {
     let assets = render::Assets::load();
 
     let mut locals: Vec<Local> = Vec::new();
+    let connect = |source: Source| match WebSocket::connect(url.as_str()) {
+        Ok(ws) => Some(Local {
+            ws,
+            id: None,
+            source,
+            name: String::new(),
+            name_sent: String::new(),
+            editing: false,
+            joined: false,
+        }),
+        Err(e) => {
+            error!("failed to connect to {url}: {e:?}");
+            None
+        }
+    };
     for i in 0..count {
-        match WebSocket::connect(url.as_str()) {
-            Ok(ws) => locals.push(Local {
-                ws,
-                id: None,
-                binds: BINDS[i.min(BINDS.len() - 1)],
-                name: String::new(),
-                name_sent: String::new(),
-                editing: false,
-                joined: false,
-            }),
-            Err(e) => error!("failed to connect to {url}: {e:?}"),
+        if let Some(lp) = connect(Source::Keyboard(BINDS[i.min(BINDS.len() - 1)])) {
+            locals.push(lp);
+        }
+    }
+
+    // Native controllers: one player per pad, hot-plugged at runtime. Seed with
+    // any pads already connected at startup.
+    #[cfg(not(target_arch = "wasm32"))]
+    let mut pads = gamepad::Pads::new();
+    #[cfg(not(target_arch = "wasm32"))]
+    for id in pads.connected_ids() {
+        if let Some(lp) = connect(Source::Pad(id)) {
+            locals.push(lp);
         }
     }
 
     let mut latest: Option<GameState> = None;
+    // On-screen joystick + bomb button. Only consulted on touch devices, where
+    // there is exactly one (wasm) local player.
+    let touch_input = web::is_touch();
+    let mut controls = touch::Touch::new();
+    // Whether the soft keyboard (hidden HTML input) is currently shown.
+    let mut name_input_shown = false;
 
     loop {
         for lp in &mut locals {
@@ -74,22 +123,123 @@ async fn main() {
             }
         }
 
-        // Lobby name entry. Editing is explicit (press E to start) so stray
-        // key-mashing — e.g. at the end of a round — never leaks into names.
-        // Typed characters go to the focused local player (the first of yours
-        // who hasn't readied up yet).
+        // Controller hot-plug: a newly connected pad becomes a new player; an
+        // unplugged one drops its connection (dropping the socket lets the
+        // server clean the player up).
+        #[cfg(not(target_arch = "wasm32"))]
+        for change in pads.poll() {
+            match change {
+                gamepad::Hotplug::Connected(id) => {
+                    let known = locals
+                        .iter()
+                        .any(|l| matches!(&l.source, Source::Pad(p) if *p == id));
+                    if !known {
+                        if let Some(lp) = connect(Source::Pad(id)) {
+                            locals.push(lp);
+                        }
+                    }
+                }
+                gamepad::Hotplug::Disconnected(id) => {
+                    if let Some(pos) = locals
+                        .iter()
+                        .position(|l| matches!(&l.source, Source::Pad(p) if *p == id))
+                    {
+                        let removed = locals.remove(pos);
+                        forget_player(&mut latest, removed.id);
+                    }
+                }
+            }
+        }
+
+        // Read the on-screen controls every frame so the joystick tracks the
+        // drag (the resulting input is only consumed by the wasm touch player,
+        // below; on native there are no touches and it's discarded).
+        #[allow(unused_variables)]
+        let touch_action = controls.update();
+
         let phase_lobby = matches!(&latest, Some(g) if g.phase == Phase::Lobby);
+
+        // Native lobby menu: 0/1/2 set the number of split-keyboard players
+        // (controllers add players on top of these). Disabled while a name is
+        // being typed so the digits don't land in the name.
+        #[cfg(not(target_arch = "wasm32"))]
+        if phase_lobby && !locals.iter().any(|l| l.editing) {
+            let target = if is_key_pressed(KeyCode::Key0) {
+                Some(0)
+            } else if is_key_pressed(KeyCode::Key1) {
+                Some(1)
+            } else if is_key_pressed(KeyCode::Key2) {
+                Some(2)
+            } else {
+                None
+            };
+            if let Some(k) = target {
+                let kb: Vec<usize> = locals
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, l)| l.source.keyboard_binds().is_some())
+                    .map(|(i, _)| i)
+                    .collect();
+                if kb.len() > k {
+                    // Drop the trailing keyboard players (leave controllers be).
+                    for &idx in kb[k..].iter().rev() {
+                        let removed = locals.remove(idx);
+                        forget_player(&mut latest, removed.id);
+                    }
+                } else {
+                    for slot in kb.len()..k {
+                        if let Some(lp) = connect(Source::Keyboard(BINDS[slot.min(BINDS.len() - 1)])) {
+                            locals.push(lp);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Name entry. Editing is explicit (press E to start) so stray key-mashing
+        // never leaks into names. The focused player — the first local who hasn't
+        // readied up — accepts typed input; the host keyboard can name controller
+        // players this way too (they can't type for themselves).
         let focus = if phase_lobby {
             focused_local(&locals, latest.as_ref())
         } else {
             None
         };
-        if let Some(i) = focus {
+        // Only the focused player may be editing.
+        for (j, lp) in locals.iter_mut().enumerate() {
+            if Some(j) != focus {
+                lp.editing = false;
+            }
+        }
+
+        // On touch, name entry is the hidden HTML input (a real soft keyboard);
+        // skip the keyboard E-to-edit flow entirely.
+        if touch_input {
+            if let Some(i) = focus {
+                if !name_input_shown {
+                    web::name_show();
+                    name_input_shown = true;
+                }
+                if let Some(v) = web::name_value() {
+                    locals[i].name = v;
+                }
+            } else if name_input_shown {
+                web::name_hide();
+                name_input_shown = false;
+            }
+        } else if let Some(i) = focus {
             if locals[i].editing {
-                input::edit_name(&mut locals[i].name);
-                // The same action-key press both finishes editing and readies up.
-                if is_key_pressed(locals[i].binds.bomb_key()) {
+                // Finish on E (any player, incl. controllers) or on a keyboard
+                // player's own bomb key (which also readies them up in one press).
+                let kb_finish = locals[i]
+                    .source
+                    .keyboard_binds()
+                    .is_some_and(|b| is_key_pressed(b.bomb_key()));
+                if is_key_pressed(KeyCode::E) || kb_finish {
                     locals[i].editing = false;
+                    while get_char_pressed().is_some() {} // swallow the finishing key
+                } else {
+                    input::edit_name(&mut locals[i].name);
                 }
             } else if is_key_pressed(KeyCode::E) {
                 locals[i].editing = true;
@@ -110,9 +260,6 @@ async fn main() {
             }
         } else {
             while get_char_pressed().is_some() {}
-            for lp in &mut locals {
-                lp.editing = false;
-            }
         }
         let editing_id = focus.and_then(|i| if locals[i].editing { locals[i].id } else { None });
 
@@ -128,12 +275,43 @@ async fn main() {
                     send(&lp.ws, &ClientMsg::SetName { name: lp.name.clone() });
                     lp.name_sent = lp.name.clone();
                 }
-                send(&lp.ws, &ClientMsg::Input(read_input(&lp.binds)));
+                // Native: each player reads its own source. Web guest is a
+                // single player whose input prefers a connected gamepad, then
+                // touch, then the keyboard.
+                #[cfg(not(target_arch = "wasm32"))]
+                let input = match &lp.source {
+                    Source::Keyboard(b) => read_input(b),
+                    Source::Pad(id) => pads.read(*id),
+                };
+                #[cfg(target_arch = "wasm32")]
+                let input = if web::gamepad_present() {
+                    web::gamepad_input()
+                } else if touch_input {
+                    touch_action
+                } else {
+                    match &lp.source {
+                        Source::Keyboard(b) => read_input(b),
+                    }
+                };
+                send(&lp.ws, &ClientMsg::Input(input));
             }
         }
 
         let my_ids: Vec<PlayerId> = locals.iter().filter_map(|l| l.id).collect();
         render::frame(&assets, &latest, &my_ids, editing_id);
+        // Native lobby menu line: controllers connected + keyboard-player count.
+        #[cfg(not(target_arch = "wasm32"))]
+        if phase_lobby {
+            let pads = locals.iter().filter(|l| l.source.keyboard_binds().is_none()).count();
+            let keyboard = locals.len() - pads;
+            render::lobby_status(pads, keyboard);
+        }
+        if touch_input {
+            // Show the joystick only during a live round; the bomb button is
+            // always up (it readies in the lobby and during the countdown).
+            let in_round = matches!(&latest, Some(g) if g.phase == Phase::Playing);
+            controls.draw(in_round);
+        }
         next_frame().await;
     }
 }
@@ -144,8 +322,20 @@ fn send(ws: &WebSocket, msg: &ClientMsg) {
     }
 }
 
-/// The local player currently accepting typed name input: the first one who
-/// isn't ready yet (so couch players name themselves in turn, then ready up).
+/// Drop a just-removed local player from our cached snapshot immediately, so the
+/// view reflects the removal even when no socket remains to deliver a fresh one
+/// (e.g. setting keyboard players to 0 with no controllers connected — the
+/// client would otherwise keep rendering the last snapshot's ghost names).
+#[cfg(not(target_arch = "wasm32"))]
+fn forget_player(latest: &mut Option<GameState>, id: Option<PlayerId>) {
+    if let (Some(id), Some(g)) = (id, latest.as_mut()) {
+        g.players.retain(|p| p.id != id);
+    }
+}
+
+/// The local player currently accepting typed name input: the first local (of
+/// any input source) who isn't ready yet, so players are named in turn. Includes
+/// controller players — they can't type, but the host keyboard names them here.
 fn focused_local(locals: &[Local], latest: Option<&GameState>) -> Option<usize> {
     for (i, lp) in locals.iter().enumerate() {
         let ready = lp
@@ -176,15 +366,16 @@ fn server_url() -> String {
         .unwrap_or_else(|| "ws://127.0.0.1:8080/ws".to_owned())
 }
 
-/// Number of split-keyboard players: `--players 1|2` (or `BRM_PLAYERS`), 2 by
-/// default.
+/// Number of split-keyboard players: `--players 0|1|2` (or `BRM_PLAYERS`), 2 by
+/// default. 0 is for controller-only sessions (each connected pad still adds its
+/// own player).
 #[cfg(not(target_arch = "wasm32"))]
 fn local_player_count() -> usize {
     arg_after("--players")
         .or_else(|| std::env::var("BRM_PLAYERS").ok())
         .and_then(|s| s.parse::<usize>().ok())
         .unwrap_or(2)
-        .clamp(1, 2)
+        .clamp(0, 2)
 }
 
 // On the web a guest is always a single player. We hand the JS layer a relative

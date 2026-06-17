@@ -16,6 +16,8 @@ bincode.workspace = true
 macroquad.workspace = true
 log.workspace = true
 
-# Native-only: the wasm client uses its own WebSocket plugin (web/brm_net.js).
+# Native-only: the wasm client uses its own WebSocket plugin (web/brm_net.js)
+# and the browser Gamepad API (web/brm_net.js) instead of ws + gilrs.
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-quad-net.workspace = true
+ws.workspace = true
+gilrs.workspace = true

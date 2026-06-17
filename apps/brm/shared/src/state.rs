@@ -119,6 +119,13 @@ impl GameState {
 
     pub fn remove_player(&mut self, id: PlayerId) {
         self.players.retain(|p| p.id != id);
+        // If that was the last participant mid-match (everyone disconnected, or
+        // only spectators remain), snap back to the lobby. Otherwise the server
+        // sits in a dead, never-ending round and the next joiner is stuck
+        // spectating it.
+        if self.phase != Phase::Lobby && !self.players.iter().any(|p| !p.spectating) {
+            self.return_to_lobby();
+        }
     }
 
     /// Update a player's display name, capped at [`MAX_NAME_LEN`]. Empty names

@@ -46,6 +46,73 @@
             const msg = queue.shift();
             bytes(ptr, msg.length).set(msg);
         };
+
+        // --- Touch device + soft-keyboard name entry -----------------------
+        // The wasm client (client/src/web.rs) asks whether this is a touch
+        // device (to switch to the on-screen joystick) and drives a hidden HTML
+        // <input> for name entry — a real input the user taps, so the mobile
+        // soft keyboard appears from a genuine gesture.
+        const touch = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+        const nameEl = function () { return document.getElementById("brm_name"); };
+
+        importObject.env.brm_is_touch = function () { return touch ? 1 : 0; };
+        importObject.env.brm_name_show = function () {
+            const el = nameEl();
+            if (el) el.style.display = "block";
+        };
+        importObject.env.brm_name_hide = function () {
+            const el = nameEl();
+            if (el) { el.blur(); el.style.display = "none"; }
+        };
+        importObject.env.brm_name_get = function (ptr, max) {
+            const el = nameEl();
+            if (!el) return -1;
+            let out = new TextEncoder().encode(el.value);
+            if (out.length > max) out = out.subarray(0, max);
+            bytes(ptr, out.length).set(out);
+            return out.length;
+        };
+
+        // --- Gamepad (browser Gamepad API) ---------------------------------
+        // Mirrors the native gilrs path (client/src/gamepad.rs): left stick or
+        // D-pad for movement, the South button (A / Cross, standard-mapping
+        // index 0) for bomb/ready, edge-triggered. We drive the single web
+        // player from the first connected pad.
+        const PAD_DEADZONE = 0.35;
+        let padBombPrev = false;
+        function firstPad() {
+            const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+            for (let i = 0; i < pads.length; i++) if (pads[i]) return pads[i];
+            return null;
+        }
+        function padPressed(p, i) { return p.buttons[i] && p.buttons[i].pressed; }
+
+        importObject.env.brm_gamepad_present = function () { return firstPad() ? 1 : 0; };
+        importObject.env.brm_gamepad_x = function () {
+            const p = firstPad();
+            if (!p) return 0;
+            let x = p.axes[0] || 0;
+            if (Math.abs(x) < PAD_DEADZONE) x = 0;
+            if (padPressed(p, 14)) x = -1; // D-pad left
+            if (padPressed(p, 15)) x = 1;  // D-pad right
+            return x;
+        };
+        importObject.env.brm_gamepad_y = function () {
+            const p = firstPad();
+            if (!p) return 0;
+            let y = p.axes[1] || 0; // browser stick is already +Y down
+            if (Math.abs(y) < PAD_DEADZONE) y = 0;
+            if (padPressed(p, 12)) y = -1; // D-pad up
+            if (padPressed(p, 13)) y = 1;  // D-pad down
+            return y;
+        };
+        importObject.env.brm_gamepad_bomb = function () {
+            const p = firstPad();
+            const now = !!(p && padPressed(p, 0));
+            const edge = now && !padBombPrev;
+            padBombPrev = now;
+            return edge ? 1 : 0;
+        };
     };
 
     miniquad_add_plugin({ register_plugin, name: "brm_net", version: 1 });

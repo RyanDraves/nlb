@@ -15,9 +15,10 @@ rust_binary(
     deps = [
         "//apps/brm/shared:brm_shared",
         "@brm_crates//:bincode",
+        "@brm_crates//:gilrs",
         "@brm_crates//:macroquad",
-        "@brm_crates//:quad-net",
         "@brm_crates//:serde",
+        "@brm_crates//:ws",
     ],
 )
 

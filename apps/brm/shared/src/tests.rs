@@ -295,6 +295,45 @@ fn mid_round_joiner_spectates_then_plays_next_round() {
 }
 
 #[test]
+fn empty_match_returns_to_lobby() {
+    let mut gs = GameState::new(1);
+    let a = gs.add_player();
+    let b = gs.add_player();
+    step(&mut gs, &ready_inputs(&[a, b]), 1.0 / 30.0);
+    idle_for(&mut gs, COUNTDOWN_SECS + 0.1);
+    assert_eq!(gs.phase, Phase::Playing);
+
+    // Everyone disconnects mid-round. Removing the last participant must snap
+    // back to the lobby rather than leaving a dead, never-ending round.
+    gs.remove_player(a);
+    gs.remove_player(b);
+    assert_eq!(gs.phase, Phase::Lobby);
+
+    // A fresh joiner lands in the lobby as a participant, not a spectator.
+    let c = gs.add_player();
+    assert!(!gs.players.iter().find(|p| p.id == c).unwrap().spectating);
+}
+
+#[test]
+fn only_spectators_left_returns_to_lobby() {
+    let mut gs = GameState::new(1);
+    let a = gs.add_player();
+    let b = gs.add_player();
+    step(&mut gs, &ready_inputs(&[a, b]), 1.0 / 30.0);
+    idle_for(&mut gs, COUNTDOWN_SECS + 0.1);
+    assert_eq!(gs.phase, Phase::Playing);
+
+    // A spectator joins, then both participants leave. With only a spectator
+    // remaining, the round resets and the spectator becomes a lobby member.
+    let c = gs.add_player();
+    assert!(gs.players.iter().find(|p| p.id == c).unwrap().spectating);
+    gs.remove_player(a);
+    gs.remove_player(b);
+    assert_eq!(gs.phase, Phase::Lobby);
+    assert!(!gs.players.iter().find(|p| p.id == c).unwrap().spectating);
+}
+
+#[test]
 fn set_name_truncates_to_limit() {
     let mut gs = GameState::new(1);
     let a = gs.add_player();
