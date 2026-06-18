@@ -148,66 +148,28 @@ manifest:
     PyQt6.Qt6.qml.QtWebSockets.libqmlwebsocketsplugin: PyQt6_Qt6
     PyQt6.sip: PyQt6_sip
     Rtree.libs.libspatialindex-567d5dd6: Rtree
-    agents: openai_agents
-    aiofile: aiofile
     alembic: alembic
-    annotated_types: annotated_types
-    anyio: anyio
     asttokens: asttokens
-    attr: attrs
-    attrs: attrs
-    authlib: authlib
-    beartype: beartype
     bleak: bleak
-    cachetools: cachetools
-    caio: caio
     certifi: certifi
-    cffi: cffi
     charset_normalizer: charset_normalizer
     click: click
     contourpy: contourpy
-    cryptography: cryptography
     cycler: cycler
-    cyclopts: cyclopts
     daltonize: daltonize
     dateutil: python_dateutil
     dbus_fast: dbus_fast
     decorator: decorator
-    distro: distro
-    dns: dnspython
-    docstring_parser: docstring_parser
-    docutils: docutils
     dotenv: python_dotenv
-    email_validator: email_validator
-    exceptiongroup: exceptiongroup
     executing: executing
-    fastmcp: fastmcp_slim
     fontTools: fonttools
     greenlet: greenlet
-    griffe: griffelib
-    h11: h11
-    httpcore: httpcore
-    httpx: httpx
-    httpx_sse: httpx_sse
     idna: idna
     imageio: imageio
     iniconfig: iniconfig
     ipython_pygments_lexers: ipython_pygments_lexers
-    jaraco.classes: jaraco.classes
-    jaraco.context: jaraco_context
-    jaraco.functools: jaraco_functools
     jedi: jedi
-    jeepney: jeepney
     jinja2: jinja2
-    jiter: jiter
-    joserfc: joserfc
-    jsonref: jsonref
-    jsonschema: jsonschema
-    jsonschema_path: jsonschema_path
-    jsonschema_specifications: jsonschema_specifications
-    jwt: pyjwt
-    key_value: py_key_value_aio
-    keyring: keyring
     kiwisolver: kiwisolver
     mako: Mako
     markdown_it: markdown_it_py
@@ -216,99 +178,60 @@ manifest:
     marshmallow_dataclass: marshmallow_dataclass
     matplotlib: matplotlib
     matplotlib_inline: matplotlib_inline
-    mcp: mcp
     mdurl: mdurl
     mergedeep: mergedeep
-    more_itertools: more_itertools
     mpl_toolkits.axes_grid1: matplotlib
     mpl_toolkits.axisartist: matplotlib
     mpl_toolkits.mplot3d: matplotlib
-    multipart: python_multipart
     mypy_extensions: mypy_extensions
     narwhals: narwhals
     numpy: numpy
-    openai: openai
-    openapi_pydantic: openapi_pydantic
-    opentelemetry.attributes: opentelemetry_api
-    opentelemetry.baggage: opentelemetry_api
-    opentelemetry.context: opentelemetry_api
-    opentelemetry.environment_variables: opentelemetry_api
-    opentelemetry.metrics: opentelemetry_api
-    opentelemetry.propagate: opentelemetry_api
-    opentelemetry.propagators.composite: opentelemetry_api
-    opentelemetry.propagators.textmap: opentelemetry_api
-    opentelemetry.trace: opentelemetry_api
-    opentelemetry.util.re: opentelemetry_api
-    opentelemetry.util.types: opentelemetry_api
-    opentelemetry.version: opentelemetry_api
     ordered_set: ordered_set
     packaging: packaging
     pandas: pandas
     parso: parso
-    pathable: pathable
     pexpect: pexpect
     pfzy: pfzy
     pip: pip
-    platformdirs: platformdirs
     plotly: plotly
     pluggy: pluggy
     portpicker: portpicker
     prompt_toolkit: prompt_toolkit
-    proxytypes: jsonref
     psutil: psutil
     psycopg2: psycopg2_binary
     ptyprocess: ptyprocess
     pure_eval: pure_eval
     py: pytest
-    pycparser: pycparser
-    pydantic: pydantic
-    pydantic_core: pydantic_core
-    pydantic_settings: pydantic_settings
     pygments: pygments
     pylab: matplotlib
     pymap3d: pymap3d
     pyparsing: pyparsing
-    pyperclip: pyperclip
     pytest: pytest
-    python_multipart: python_multipart
     rapidfuzz: rapidfuzz
-    referencing: referencing
     requests: requests
     responses: responses
     rich: rich
     rich_click: rich_click
-    rich_rst: rich_rst
-    rpds: rpds_py
     rtree: Rtree
     ruamel.yaml: ruamel.yaml
     ruff: ruff
     scipy: scipy
-    secretstorage: secretstorage
     serial: pyserial
     setuptools: setuptools
     six: six
-    sniffio: sniffio
     sqlalchemy: SQLAlchemy
-    sse_starlette: sse_starlette
     stack_data: stack_data
-    starlette: starlette
     stonesoup: stonesoup
     thefuzz: thefuzz
-    tqdm: tqdm
     traitlets: traitlets
     typeguard: typeguard
     typing_extensions: typing_extensions
     typing_inspect: typing_inspect
-    typing_inspection: typing_inspection
-    uncalled_for: uncalled_for
     urllib3: urllib3
     utm: utm
-    uvicorn: uvicorn
-    watchfiles: watchfiles
     wcwidth: wcwidth
-    websockets: websockets
     yaml: PyYAML
     zmq: pyzmq
   pip_repository:
     name: pip
-integrity: 57678a9d50ce2f1c102642556cd25acd92f7486c1980075c3574d21ff192129c
+integrity: e0ffe2e5cf6bcf9f27d4b598b19ca907639fa13dcd1d258734a8700c27a31276
