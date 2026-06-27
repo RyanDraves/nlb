@@ -16,7 +16,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
           # Use a PAT (stored as RENOVATE_PR_TOKEN) so that the pushed commit
@@ -26,7 +26,7 @@ jobs:
           token: ${{ secrets.RENOVATE_PR_TOKEN || github.token }}
 
       - name: Bazel cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/bazel
           key: ${{ runner.os }}-bazel-regen-${{ hashFiles('MODULE.bazel.lock') }}
