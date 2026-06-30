@@ -21,7 +21,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Common Setup
         run: |
@@ -33,7 +33,7 @@ jobs:
           ./tools/release/python/update_build.sh --bump-${{ github.event.inputs.bump_type }}
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: 'Prepare Python release (${{ github.event.inputs.bump_type }} bump)'
           branch: 'release/python-bump-${{ github.event.inputs.bump_type }}'
