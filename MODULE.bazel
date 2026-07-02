@@ -10,9 +10,9 @@ module(
 # "Standard" dependencies
 #
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.5")
-bazel_dep(name = "bazel_skylib", version = "1.8.2")
-bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "rules_cc", version = "0.2.20")
 bazel_dep(name = "rules_platform", version = "0.1.0")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -52,10 +52,10 @@ bazel_dep(name = "picotool", version = "2.2.0")
 #
 # Rules Python
 #
-bazel_dep(name = "aspect_rules_py", version = "1.6.6")
+bazel_dep(name = "aspect_rules_py", version = "1.11.7")
 
 # Match version with `bzl/test_module/MODULE.bazel`
-bazel_dep(name = "rules_python", version = "2.0.2")
+bazel_dep(name = "rules_python", version = "2.1.0")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
@@ -77,20 +77,20 @@ use_repo(pip, "pip")
 # venv management
 #
 
-bazel_dep(name = "rules_uv", version = "0.71.0")
+bazel_dep(name = "rules_uv", version = "0.89.2")
 
 #
 # Gazelle
 #
-bazel_dep(name = "gazelle", version = "0.47.0")
-bazel_dep(name = "rules_python_gazelle_plugin", version = "1.6.3")
+bazel_dep(name = "gazelle", version = "0.51.3")
+bazel_dep(name = "rules_python_gazelle_plugin", version = "1.9.1")
 
 #
 # Buildifier
 #
 bazel_dep(
     name = "buildifier_prebuilt",
-    version = "8.0.3",
+    version = "8.5.1.2",
     dev_dependency = True,
 )
 
@@ -99,7 +99,7 @@ bazel_dep(
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",
-    commit = "0e990032f3c5a866e72615cf67e5ce22186dcb97",
+    commit = "abb61a688167623088f8768cc9264798df6a9d10",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
     # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
     # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
@@ -108,9 +108,9 @@ git_override(
 #
 # Bazel-controlled dev tooling
 #
-bazel_dep(name = "bazel_env.bzl", version = "0.5.0", dev_dependency = True)
+bazel_dep(name = "bazel_env.bzl", version = "0.8.0", dev_dependency = True)
 
-bazel_dep(name = "rules_multitool", version = "1.9.0")
+bazel_dep(name = "rules_multitool", version = "1.11.1")
 
 multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
 multitool.hub(lockfile = "//tools:multitool.lock.json")
@@ -119,14 +119,14 @@ use_repo(multitool, "multitool")
 #
 # Pybind11
 #
-bazel_dep(name = "pybind11_bazel", version = "2.12.0")
+bazel_dep(name = "pybind11_bazel", version = "2.13.6")
 
 #
 # Zmq
 #
 # NOTE: `cppzmq` (header-only) pulls the BCR `libzmq` module for its headers,
 # but only the prebuilt archives below are ever linked.
-bazel_dep(name = "cppzmq", version = "4.10.0.bcr.1")
+bazel_dep(name = "cppzmq", version = "4.10.0.bcr.2")
 
 # Prebuilt libzmq binaries; `//bzl/deps:libzmq` selects the right platform.
 # Build new archives with the `cache-and-release` repo's libzmq workflow.
@@ -149,15 +149,15 @@ http_archive(
 #
 # Google Test
 #
-bazel_dep(name = "googletest", version = "1.15.2")
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
 
 #
 # Web development
 #
-bazel_dep(name = "aspect_rules_js", version = "3.1.2")
-bazel_dep(name = "aspect_rules_ts", version = "3.8.10")
-bazel_dep(name = "rules_nodejs", version = "6.7.3")
-bazel_dep(name = "aspect_rules_lint", version = "1.0.0-rc4")
+bazel_dep(name = "aspect_rules_js", version = "3.2.2")
+bazel_dep(name = "aspect_rules_ts", version = "3.8.11")
+bazel_dep(name = "rules_nodejs", version = "6.7.5")
+bazel_dep(name = "aspect_rules_lint", version = "1.13.0")
 
 node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node", dev_dependency = True)
 node.toolchain(node_version = "20.13.1")
@@ -217,7 +217,7 @@ use_repo(rules_ts_ext, "npm_typescript")
 #
 # Latest releases (which split out `rules_rust_wasm_bindgen` don't show up properly in
 # npm packages)
-bazel_dep(name = "rules_rust", version = "0.51.0")
+bazel_dep(name = "rules_rust", version = "0.71.3")
 
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(
@@ -239,7 +239,7 @@ crate = use_extension(
 )
 crate.spec(
     package = "wasm-bindgen",
-    version = "=0.2.92",
+    version = "=0.2.126",
 )
 crate.spec(
     package = "wee_alloc",
@@ -247,7 +247,7 @@ crate.spec(
 )
 crate.spec(
     package = "spin",
-    version = "0.9.8",
+    version = "0.12.0",
 )
 crate.spec(
     features = ["spin_no_std"],
@@ -269,7 +269,7 @@ use_repo(crate, "crates")
 #
 # Go
 #
-bazel_dep(name = "rules_go", version = "0.60.0")
+bazel_dep(name = "rules_go", version = "0.61.1")
 
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
 
@@ -288,15 +288,15 @@ use_repo(go_deps, "com_github_spf13_cobra", "com_github_tailscale_setec", "com_t
 #
 # Containerization
 #
-bazel_dep(name = "rules_oci", version = "2.2.3")
-bazel_dep(name = "tar.bzl", version = "0.10.4")
+bazel_dep(name = "rules_oci", version = "2.3.0")
+bazel_dep(name = "tar.bzl", version = "0.10.5")
 # TODO: Consider https://registry.bazel.build/modules/container_structure_test
 # https://github.com/aspect-build/rules_js/blob/08eb590169cf9c61a02f7056bb3486f8214e90b6/e2e/js_image_oci/src/BUILD.bazel#L78-L84
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
     name = "debian",
-    digest = "sha256:35286826a88dc879b4f438b645ba574a55a14187b483d09213a024dc0c0a64ed",
+    digest = "sha256:d07d1b51c39f51188e60be9b64e6bf769fa94e187f092bc32b91305cfa34ba5a",
     image = "debian",
     platforms = [
         "linux/386",
@@ -313,7 +313,7 @@ oci.pull(
 use_repo(oci, "debian", "debian_linux_386", "debian_linux_amd64", "debian_linux_arm64_v8", "debian_linux_arm_v5", "debian_linux_arm_v7", "debian_linux_mips64le", "debian_linux_ppc64le", "debian_linux_s390x")
 oci.pull(
     name = "distroless_base",
-    digest = "sha256:9e9b50d2048db3741f86a48d939b4e4cc775f5889b3496439343301ff54cdba8",
+    digest = "sha256:57c1e4c72feb5925c4763ae4f6bd2013ad3854f57eff5b60dd9acb1ce0abc66e",
     image = "gcr.io/distroless/base",
     platforms = [
         "linux/amd64",
@@ -325,7 +325,7 @@ use_repo(oci, "distroless_base", "distroless_base_linux_amd64", "distroless_base
 #
 # Repo shuffling
 #
-bazel_dep(name = "rules_java", version = "8.15.1")
+bazel_dep(name = "rules_java", version = "8.16.1")
 
 http_jar = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_jar")
 
