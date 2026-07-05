@@ -34,6 +34,7 @@ players simply holds two connections.
 - Player 1: **WASD** to move, **Space** to drop a bomb.
 - Player 2: **Arrow keys** to move, **Enter** to drop a bomb.
 - **Controllers**: left stick or D-pad to move, **A / Cross** to drop a bomb.
+- **M** mutes/unmutes all audio.
 
 **Controllers** work on both clients. On the native (couch) host, every plugged-in
 controller becomes its own player, hot-plugged in and out at runtime (via gilrs).
@@ -167,8 +168,23 @@ play a walk cycle (facing/animation state is tracked render-side in `Assets`,
 since snapshots only carry positions). Power-up icons are the one bitmap asset
 (`assets/powerups.png`).
 
+## Audio
+
+Sound effects and a looping music bed, synthesized by `assets/gen_sfx.py` (pure
+standard-library procedural synth → 16-bit mono WAVs in `assets/sfx/`) and
+embedded with `include_bytes!`. The client carries no event channel — it infers
+events by **diffing successive snapshots** (`client/src/audio.rs`): a fresh-fuse
+bomb → place, a fresh-ttl explosion → boom, a player's power-up total rising →
+pickup, an `alive` flipping false → death, a lobby `ready` toggle → ready/unready
+chime, plus countdown beeps, a round-start cue, and a win fanfare. The music is a
+~31 s through-composed loop — a continuous chord bed with an airy melody that
+fades in for a stretch and back out — that plays through a round and stops back
+in the lobby (its first start is always past a user gesture, so browser autoplay
+rules are satisfied). **M** mutes. Edit the synth functions and rerun `python3
+gen_sfx.py` to change the sounds, then rebuild.
+
 ## Not done yet (fast-follows)
 
-Audio (SFX + music) and optional hand-drawn art to replace the procedural board
-are the next steps; client-side snapshot interpolation would smooth motion
-between the 30 Hz ticks. Internet/NAT play is out of scope (LAN only).
+Optional hand-drawn art to replace the procedural board, and client-side snapshot
+interpolation to smooth motion between the 30 Hz ticks, are the remaining
+polish items. Internet/NAT play is out of scope (LAN only).

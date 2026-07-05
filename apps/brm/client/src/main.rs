@@ -3,6 +3,7 @@
 //! split-keyboard player) and to wasm (one browser/phone player), differing only
 //! in how the server URL and player count are chosen.
 
+mod audio;
 #[cfg(not(target_arch = "wasm32"))]
 mod gamepad;
 mod input;
@@ -70,6 +71,7 @@ async fn main() {
     let url = server_url();
     let count = local_player_count();
     let assets = render::Assets::load();
+    let mut audio = audio::Audio::load().await;
 
     let mut locals: Vec<Local> = Vec::new();
     let connect = |source: Source| match WebSocket::connect(url.as_str()) {
@@ -262,6 +264,13 @@ async fn main() {
             while get_char_pressed().is_some() {}
         }
         let editing_id = focus.and_then(|i| if locals[i].editing { locals[i].id } else { None });
+
+        // Mute toggle (M), ignored while typing a name so 'm' goes into the name.
+        if editing_id.is_none() && is_key_pressed(KeyCode::M) {
+            audio.toggle_mute();
+        }
+        // Sound effects + music, derived from what changed in the snapshot.
+        audio.update(&latest);
 
         for lp in &mut locals {
             // Only transmit once the socket is open (see `joined`).
