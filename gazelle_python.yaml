@@ -147,7 +147,6 @@ manifest:
     PyQt6.Qt6.qml.QtWebChannel.libwebchannelquickplugin: PyQt6_Qt6
     PyQt6.Qt6.qml.QtWebSockets.libqmlwebsocketsplugin: PyQt6_Qt6
     PyQt6.sip: PyQt6_sip
-    Rtree.libs.libspatialindex-567d5dd6: Rtree
     alembic: alembic
     asttokens: asttokens
     bleak: bleak
@@ -179,21 +178,17 @@ manifest:
     matplotlib: matplotlib
     matplotlib_inline: matplotlib_inline
     mdurl: mdurl
-    mergedeep: mergedeep
     mpl_toolkits.axes_grid1: matplotlib
     mpl_toolkits.axisartist: matplotlib
     mpl_toolkits.mplot3d: matplotlib
     mypy_extensions: mypy_extensions
-    narwhals: narwhals
     numpy: numpy
-    ordered_set: ordered_set
     packaging: packaging
     pandas: pandas
     parso: parso
     pexpect: pexpect
     pfzy: pfzy
     pip: pip
-    plotly: plotly
     pluggy: pluggy
     portpicker: portpicker
     prompt_toolkit: prompt_toolkit
@@ -204,7 +199,6 @@ manifest:
     py: pytest
     pygments: pygments
     pylab: matplotlib
-    pymap3d: pymap3d
     pyparsing: pyparsing
     pytest: pytest
     rapidfuzz: rapidfuzz
@@ -212,8 +206,6 @@ manifest:
     responses: responses
     rich: rich
     rich_click: rich_click
-    rtree: Rtree
-    ruamel.yaml: ruamel.yaml
     ruff: ruff
     scipy: scipy
     serial: pyserial
@@ -221,17 +213,15 @@ manifest:
     six: six
     sqlalchemy: SQLAlchemy
     stack_data: stack_data
-    stonesoup: stonesoup
     thefuzz: thefuzz
     traitlets: traitlets
     typeguard: typeguard
     typing_extensions: typing_extensions
     typing_inspect: typing_inspect
     urllib3: urllib3
-    utm: utm
     wcwidth: wcwidth
     yaml: PyYAML
     zmq: pyzmq
   pip_repository:
     name: pip
-integrity: e0ffe2e5cf6bcf9f27d4b598b19ca907639fa13dcd1d258734a8700c27a31276
+integrity: 4b0697329c70bbe7490fa87ea8000fe0d91e66513c2f20b26be04e40fadf936c
