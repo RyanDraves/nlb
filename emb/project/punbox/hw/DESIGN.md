@@ -150,8 +150,15 @@ traces.
 
 - Bottom layer: one GND zone over the whole board. Top: route signals; a
   small +5V zone (or a wide, ≥0.5mm trace) feeds C5 → both amps.
-- The amps' thermal pads (pin 17) need a few vias into the bottom GND zone —
-  that's both their ground connection and their heatsink.
+- Net classes: only `+5V` belongs to the Power class (0.5mm tracks). GND is
+  *not* in it — GND connects through zones and short stubs-to-vias, and a
+  netclass width would make DRC reject those stubs.
+- The amps' thermal pads (pin 17, the big center pad) each get one via, dead
+  center, into the bottom GND zone — both their ground connection and their
+  heatsink. (The EP is only 1.23×1.23mm; a standard 0.6mm via fits singly,
+  not as a grid.) Set the pad's zone connection to Solid, not thermal
+  relief. The perimeter GND pins (3, 11, 15) just need any nearby path to
+  GND; the NC pins (5, 6, 12, 13) stay unconnected.
 - Keep each OUTP/OUTN pair routed side-by-side (they're a differential-ish
   Class-D pair; ~0.4mm width for the ~1A peaks).
 
