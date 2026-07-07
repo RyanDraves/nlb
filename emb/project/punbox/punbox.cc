@@ -13,19 +13,11 @@ namespace emb {
 namespace project {
 namespace punbox {
 
-namespace {
-
-// I2S pinout for the Waveshare Pico-Audio (original revision)
-constexpr uint8_t kI2sDataPin = 26;       // DIN
-constexpr uint8_t kI2sClockPinBase = 27;  // BCK, with LRCK on 28
-constexpr uint8_t kButtonPin = 6;         // Active-low, against an internal pull-up
-
-}  // namespace
-
 struct Punbox::PunboxImpl {
+    // Pin constants come from `punbox.bh`, shared with the hardware design
     PunboxImpl()
         : button(kButtonPin),
-          audio(kI2sDataPin, kI2sClockPinBase, rimshot.sample_rate),
+          audio(kI2SDataPin, kI2SClockPinBase, rimshot.sample_rate),
           logic(button, audio, rimshot) {}
 
     void initialize() { button.set_mode(yaal::Mode::INPUT_PULLUP); }

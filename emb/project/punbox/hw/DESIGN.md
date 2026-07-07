@@ -83,8 +83,9 @@ pull-up to 5V forms a voltage divider):
 U1 gets 100kΩ (left), U2 gets 390kΩ (right). Our rimshot is mono duplicated
 into both channels so this doesn't matter *today*, but true L/R straps cost
 the same two resistors and keep real stereo clips possible later.
-**Verify these threshold bands against the MAX98357A datasheet during
-schematic capture** — the table above is from memory + the Adafruit guide.
+(Threshold bands verified against the MAX98357A datasheet: shutdown <0.16V,
+mono mix 0.16–0.77V, right 0.77–1.4V, left >1.4V. `punbox_test.py` asserts
+the divider math lands inside these bands.)
 
 **Gain strap (`GAIN_SLOT`).** Left floating = 9dB, a sensible default for
 2W/8Ω speakers on 5V (other strap options span 3–15dB if hardware testing
@@ -131,27 +132,57 @@ be "Extended").
 Hand-assembly per board: solder the Pico (8–10 castellated pads actually
 used; tack the corners first), and J3 if we keep it through-hole.
 
-## KiCad crash course (the flow we'll follow)
+## Layout placement guide
 
-KiCad separates *what's connected* from *where things go*:
+The netlist can't express *pairing* on shared nets (any way of connecting a
+net is electrically identical), so the intended clusters are recorded here.
+Place clusters first; route signals second; do GND/+5V with zones, not
+traces.
 
-1. **Schematic** (`.kicad_sch`, the Eeschema editor): place **symbols**
-   (abstract chip drawings), draw wires, name nets. This captures the
-   circuit above. Run **ERC** (electrical rule check) — catches unconnected
-   pins, missing power, etc.
-2. **Footprint assignment**: map each symbol to a **footprint** (the real
-   copper pad pattern — e.g. "TQFN-16 3x3mm"). The Pico has a ready-made
-   module footprint in KiCad's library (`RPi_Pico_SMD_TH`).
-3. **PCB layout** (`.kicad_pcb`, the Pcbnew editor): pull in the netlist,
-   place footprints, route copper traces, pour the ground plane. Run
-   **DRC** (design rule check) against JLCPCB's manufacturing limits.
-4. **Outputs**: gerbers + drill file (the fab's input), BOM + CPL/placement
-   file (the assembly input), and a **STEP** 3D model (`kicad-cli pcb
-   export step`) that imports straight into Onshape for the enclosure.
+| Cluster | Parts | Placement intent |
+| --- | --- | --- |
+| Left amp | U1 + C1 (100nF) + C3 (10µF) + R1 | Caps against U1's VDD pins (7, 8), 100nF closest; R1 anywhere nearby |
+| Right amp | U2 + C2 (100nF) + C4 (10µF) + R2 | Same, mirrored |
+| Bulk | C5 | Between the Pico's VBUS pin and the amps |
+| Speakers | J2 | Near both amps' OUTP/OUTN, at a board edge for the harness |
+| Button | J3 | Any edge convenient for the lid pigtail |
+| Pico | A1 | USB connector overhanging a board edge |
 
-Steps 1–3 are interactive in the KiCad GUI; step 4 is scriptable with
-`kicad-cli`, which is what the CI job will run (ERC + DRC as tests,
-gerber/BOM/CPL/STEP as build artifacts).
+- Bottom layer: one GND zone over the whole board. Top: route signals; a
+  small +5V zone (or a wide, ≥0.5mm trace) feeds C5 → both amps.
+- The amps' thermal pads (pin 17) need a few vias into the bottom GND zone —
+  that's both their ground connection and their heatsink.
+- Keep each OUTP/OUTN pair routed side-by-side (they're a differential-ish
+  Class-D pair; ~0.4mm width for the ~1A peaks).
+
+## The SKiDL workflow (code-first, no graphical schematic)
+
+Connectivity is code: `punbox.py` declares the parts and nets above using
+[SKiDL](https://github.com/devbisme/skidl), with footprints assigned inline
+and pin numbers imported from `punbox_bh` (generated from `punbox.bh`) so
+firmware and hardware share one source of truth. `punbox_test.py` replaces
+the graphical schematic review: ERC plus assertions on every net (I2S
+reaching both amps, strap divider voltages landing in the datasheet bands,
+decoupling on the rail, connector pinouts).
+
+The loop:
+
+1. Edit `punbox.py` → `bazel test //emb/project/punbox/hw:punbox_test`
+2. `bazel run //emb/project/punbox/hw:netlist` → writes `punbox.net`
+3. In the KiCad PCB editor: **File → Import Netlist** → pick `punbox.net`.
+   Existing placement and routing survive re-imports; new/changed nets show
+   up as fresh ratsnest lines.
+4. Place footprints, route traces, pour the ground plane, and run **DRC**
+   (design rule check) against JLCPCB's manufacturing limits — this part is
+   interactive in the GUI and stays the human's job.
+5. Outputs (manual, once the layout settles): gerbers + drill for the fab,
+   BOM + CPL for assembly, and **File → Export → STEP** for the Onshape
+   enclosure model.
+
+Vendored symbols/footprints/3D models live in `lib/` (see `lib/NOTICE.md`);
+`sym-lib-table`/`fp-lib-table` register them for the KiCad GUI, and
+`punbox.py` points SKiDL at the same files — the design has no dependency
+on the machine's installed KiCad libraries.
 
 ## Bring-up plan (per assembled board)
 

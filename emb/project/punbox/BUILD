@@ -24,6 +24,7 @@ buffham(
     src = "punbox.bh",
     cc = True,
     py = True,
+    visibility = ["//emb/project/punbox:__subpackages__"],
     deps = [
         "//emb/project/base:base_bh",
     ],
@@ -35,6 +36,7 @@ buffham_py_write(
 
 wav_cc_library(
     name = "rimshot",
+    gain_db = 15.0,
     namespace = "emb::project::punbox",
     symbol = "rimshot",
     wav = "data/rimshot.wav",

@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "punbox_parts")(type "KiCad")(uri "${KIPRJMOD}/lib/punbox_parts.pretty")(options "")(descr "Vendored footprints for the punbox carrier"))
+)
