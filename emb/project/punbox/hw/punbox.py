@@ -23,7 +23,7 @@ FP_C_100N = 'punbox_parts:C_0603_1608Metric'
 FP_C_10U = 'punbox_parts:C_0805_2012Metric'
 FP_C_BULK = 'punbox_parts:CP_Elec_6.3x5.4'
 FP_SPEAKER = 'punbox_parts:Molex_PicoBlade_53398-0471_1x04-1MP_P1.25mm_Vertical'
-FP_BUTTON = 'punbox_parts:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical'
+FP_BUTTON = 'punbox_parts:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical'
 FP_PICO = 'punbox_parts:RPi_Pico_SMD_TH'
 
 # MAX98357A SD_MODE channel-select straps: the chip has an internal 100k
@@ -32,6 +32,22 @@ FP_PICO = 'punbox_parts:RPi_Pico_SMD_TH'
 #   100k -> 5V * 100/200 = 2.5V  (left)
 #   390k -> 5V * 100/490 = 1.02V (right)
 SD_MODE_PULLUPS = {'left': '100k', 'right': '390k'}
+
+# LCSC part numbers for JLCPCB assembly (`bazel run :fab` emits the BOM).
+# Parts without a number (only the Pico) are hand-soldered.
+LCSC = {
+    'MAX98357A': 'C910544',  # verified: in stock, SMT-assembly supported
+    '100nF': 'C14663',
+    '10uF': 'C15850',  # 25V X5R 0805: keeps its capacitance under 5V DC bias
+    '100uF': 'C970684',  # DMBJ RVT1C101M0605 16V, package "SMD,D6.3xL5.4mm"
+    '100k': 'C25803',
+    '390k': 'C23150',
+    # Genuine JST B2B-XH-A: 2.5mm XH, mates with the Adafruit 1152 wire
+    # pair's plug (which quick-connects to the 1503 panel button, solderless)
+    'Button': 'C158012',
+    # Genuine Molex 53398-0471: the exact part the footprint is drawn for
+    'Speakers': 'C17617036',
+}
 
 
 def circuit() -> skidl.Circuit:
@@ -133,3 +149,9 @@ def build() -> None:
         # Bridge-tied Class-D outputs straight to the connector
         out_p += amp['OUTP']
         out_n += amp['OUTN']
+
+    # Attach LCSC sourcing to the assembled (SMT) parts
+    for part in circuit().parts:
+        key = part.name if part.name in LCSC else part.value
+        if key in LCSC:
+            part.lcsc = LCSC[key]

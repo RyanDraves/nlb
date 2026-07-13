@@ -2,7 +2,7 @@
   (version "D")
   (design
     (source "netlist.py")
-    (date "07/04/2026 10:59 PM")
+    (date "07/11/2026 09:43 PM")
     (tool "SKiDL (2.2.3)")
     (sheet
       (number 1)
@@ -55,9 +55,9 @@
         (field
           (name "Datasheet"))
         (field
-          (name "SKiDL Tag") "nvMzFC3mTB")
+          (name "SKiDL Tag") "wfPAZur6ke")
         (field
-          (name "SKiDL Line") "punbox.py:60"))
+          (name "SKiDL Line") "punbox.py:76"))
       (libsource
         (lib "MCU_RaspberryPi_and_Boards")
         (part "Pico"))
@@ -65,7 +65,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "ae92f8e3-bf46-5faf-a31e-1f2da6f74a5a"))
+      (tstamps "74157ba4-9d10-5bfa-9b45-f8d9519ddae6"))
     (comp
       (ref "C1")
       (value "100nF")
@@ -79,9 +79,9 @@
         (field
           (name "Datasheet"))
         (field
-          (name "SKiDL Tag") "ah5XrLZyVG")
+          (name "SKiDL Tag") "lxFXnaPSxm")
         (field
-          (name "SKiDL Line") "punbox.py:117"))
+          (name "SKiDL Line") "punbox.py:131"))
       (libsource
         (lib "punbox_parts")
         (part "C"))
@@ -89,7 +89,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "afa05355-0c52-5197-bd63-2b166d5a741c"))
+      (tstamps "09707976-993a-58a1-9fd2-a1e4c2a4aa62"))
     (comp
       (ref "C2")
       (value "100nF")
@@ -103,9 +103,9 @@
         (field
           (name "Datasheet"))
         (field
-          (name "SKiDL Tag") "EiO1zK0BYM")
+          (name "SKiDL Tag") "zIlVm7QETA")
         (field
-          (name "SKiDL Line") "punbox.py:117"))
+          (name "SKiDL Line") "punbox.py:131"))
       (libsource
         (lib "punbox_parts")
         (part "C"))
@@ -113,7 +113,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "67abfff4-f495-58c9-a4a5-53086b894082"))
+      (tstamps "7e5f8df2-0955-5cf4-8297-1137e839b988"))
     (comp
       (ref "C3")
       (value "10uF")
@@ -127,9 +127,9 @@
         (field
           (name "Datasheet"))
         (field
-          (name "SKiDL Tag") "3Xb9jyGHx5")
+          (name "SKiDL Tag") "Mem6ENoJHO")
         (field
-          (name "SKiDL Line") "punbox.py:117"))
+          (name "SKiDL Line") "punbox.py:131"))
       (libsource
         (lib "punbox_parts")
         (part "C"))
@@ -137,7 +137,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "95f0ea38-afde-5364-b4d2-9d509e6ea04b"))
+      (tstamps "0160a35c-8659-5dc7-83fe-c16df09d318c"))
     (comp
       (ref "C4")
       (value "10uF")
@@ -151,9 +151,9 @@
         (field
           (name "Datasheet"))
         (field
-          (name "SKiDL Tag") "uuUrbt4Fhv")
+          (name "SKiDL Tag") "1URVgWCzcU")
         (field
-          (name "SKiDL Line") "punbox.py:117"))
+          (name "SKiDL Line") "punbox.py:131"))
       (libsource
         (lib "punbox_parts")
         (part "C"))
@@ -161,7 +161,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "966a5825-a26e-58b5-b36f-58403c4a48fa"))
+      (tstamps "5f4dc3d4-213f-578e-a2e7-bcaf2d542681"))
     (comp
       (ref "C5")
       (value "100uF")
@@ -175,9 +175,9 @@
         (field
           (name "Datasheet"))
         (field
-          (name "SKiDL Tag") "3BA_XUZ0E8")
+          (name "SKiDL Tag") "rjKnpoOAMi")
         (field
-          (name "SKiDL Line") "punbox.py:67"))
+          (name "SKiDL Line") "punbox.py:81"))
       (libsource
         (lib "punbox_parts")
         (part "C_Polarized"))
@@ -185,7 +185,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "56c5641c-2202-524b-916a-0d4c05f44694"))
+      (tstamps "79e19f5e-d0d2-5cf7-a730-c9feb83c120e"))
     (comp
       (ref "J2")
       (value "Speakers")
@@ -199,9 +199,9 @@
         (field
           (name "Datasheet"))
         (field
-          (name "SKiDL Tag") "zL2fS1kZId")
+          (name "SKiDL Tag") "V0HqdOQYy_")
         (field
-          (name "SKiDL Line") "punbox.py:90"))
+          (name "SKiDL Line") "punbox.py:104"))
       (libsource
         (lib "punbox_parts")
         (part "Conn_01x04"))
@@ -209,23 +209,23 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "6aa09a4e-5c6b-51df-a89c-9785c70bfb37"))
+      (tstamps "52a77682-3121-5b2a-8f19-291e3b79d73c"))
     (comp
       (ref "J3")
       (value "Button")
       (description "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)")
-      (footprint "punbox_parts:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical")
+      (footprint "punbox_parts:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
       (fields
         (field
           (name "Description") "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)")
         (field
-          (name "Footprint") "punbox_parts:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical")
+          (name "Footprint") "punbox_parts:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
         (field
           (name "Datasheet"))
         (field
-          (name "SKiDL Tag") "wytpSbeKlo")
+          (name "SKiDL Tag") "D5NgrZFGj1")
         (field
-          (name "SKiDL Line") "punbox.py:82"))
+          (name "SKiDL Line") "punbox.py:96"))
       (libsource
         (lib "punbox_parts")
         (part "Conn_01x02"))
@@ -233,7 +233,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "efe8cc8b-3f98-5e60-acdf-5501c74d1fd9"))
+      (tstamps "bbc52d5c-fe01-5e76-b3dc-550f79501728"))
     (comp
       (ref "R1")
       (value "100k")
@@ -247,9 +247,9 @@
         (field
           (name "Datasheet"))
         (field
-          (name "SKiDL Tag") "D6GwMGgfTp")
+          (name "SKiDL Tag") "PU8HuhyAbY")
         (field
-          (name "SKiDL Line") "punbox.py:124"))
+          (name "SKiDL Line") "punbox.py:138"))
       (libsource
         (lib "punbox_parts")
         (part "R"))
@@ -257,7 +257,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "5ab206c6-b24c-5869-b7e6-3612ccd21ff6"))
+      (tstamps "d82304ab-0bad-5fb9-af29-8e96d9ffb990"))
     (comp
       (ref "R2")
       (value "390k")
@@ -271,9 +271,9 @@
         (field
           (name "Datasheet"))
         (field
-          (name "SKiDL Tag") "c0jQEz39zN")
+          (name "SKiDL Tag") "et87i2O25r")
         (field
-          (name "SKiDL Line") "punbox.py:124"))
+          (name "SKiDL Line") "punbox.py:138"))
       (libsource
         (lib "punbox_parts")
         (part "R"))
@@ -281,7 +281,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "2533bfdf-e59c-5397-9a70-971686ed9585"))
+      (tstamps "f74b28d6-9843-544c-bc1a-02c53895dede"))
     (comp
       (ref "U1")
       (value "MAX98357A")
@@ -295,9 +295,9 @@
         (field
           (name "Datasheet") "https://www.analog.com/media/en/technical-documentation/data-sheets/MAX98357A-MAX98357B.pdf")
         (field
-          (name "SKiDL Tag") "mkjoTry6Pv")
+          (name "SKiDL Tag") "BGt1seanS6")
         (field
-          (name "SKiDL Line") "punbox.py:99"))
+          (name "SKiDL Line") "punbox.py:113"))
       (libsource
         (lib "punbox_parts")
         (part "MAX98357A"))
@@ -305,7 +305,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "5a6bf495-b9c1-5e32-85ea-7563462986d5"))
+      (tstamps "c825e720-7f65-56c0-a11e-88044c60a1b8"))
     (comp
       (ref "U2")
       (value "MAX98357A")
@@ -319,9 +319,9 @@
         (field
           (name "Datasheet") "https://www.analog.com/media/en/technical-documentation/data-sheets/MAX98357A-MAX98357B.pdf")
         (field
-          (name "SKiDL Tag") "jkF4s4TMT9")
+          (name "SKiDL Tag") "rIKNlUqfZ7")
         (field
-          (name "SKiDL Line") "punbox.py:99"))
+          (name "SKiDL Line") "punbox.py:113"))
       (libsource
         (lib "punbox_parts")
         (part "MAX98357A"))
@@ -329,7 +329,7 @@
         (names "/")
         (tstamps "/"))
       (component_classes)
-      (tstamps "b5d2bd56-dcef-5cc8-a1e2-5a513da8f8f5")))
+      (tstamps "233e61bc-02b5-55f8-944d-9f2008d9471c")))
   (nets
     (net
       (code 1)

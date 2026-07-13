@@ -15,6 +15,17 @@ py_library(
 )
 
 py_binary(
+    name = "fab",
+    srcs = ["fab.py"],
+    add_completions = False,
+    deps = [
+        ":punbox_design",
+        "@pip//rich_click",
+        "@pip//skidl",
+    ],
+)
+
+py_binary(
     name = "netlist",
     srcs = ["netlist.py"],
     add_completions = False,

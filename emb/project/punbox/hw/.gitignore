@@ -8,3 +8,7 @@ fp-info-cache
 _autosave-*
 .history
 _restore_backup*
+
+# Generated fabrication outputs (`bazel run :fab`); commit-worthy only when
+# tagging the exact revision sent to the fab
+fab/

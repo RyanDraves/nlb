@@ -97,10 +97,11 @@ straight to the connector — no coupling caps, no filters needed for the
 L+, L−, R+, R− (verify wire order against the actual harness with a
 multimeter before finalizing — cheap insurance).
 
-**Button.** J3 is a 2-pin JST PH (2.0mm — bigger than the speaker connector
-on purpose: impossible to mix up, easy to buy pre-crimped pigtails). One pin
-to `GP6`, one to `GND`. The firmware's internal pull-up does the rest, same
-as the dev board.
+**Button.** J3 is a 2-pin JST XH (2.5mm — bigger than the speaker
+connector on purpose: impossible to mix up). One pin to `GP6`, one to `GND`;
+the firmware's internal pull-up does the rest. The whole button chain is
+solderless: J3 (machine-assembled) → Adafruit 1152 quick-connect wire pair →
+Adafruit 1503 16mm panel button's lugs.
 
 **The Pico itself.** Its castellated edge pads solder to matching pads on
 the carrier (the "module as a component" pattern). Place it so the USB
@@ -117,20 +118,35 @@ LCSC part numbers to be confirmed in the JLCPCB parts library at schematic
 time ("Basic" parts avoid the $3/part feeder fee; the amp and connector will
 be "Extended").
 
+**Assembled by JLCPCB** (in the fab BOM/CPL; LCSC numbers live in
+`punbox.py`'s `LCSC` table):
+
 | Ref | Part | Package | Qty | Note |
 | --- | --- | --- | --- | --- |
-| U1, U2 | MAX98357AETE+T | TQFN-16 | 2 | I2S Class-D amp (Extended) |
-| C1, C2 | 100nF ceramic | 0603 | 2 | per-amp decoupling (Basic) |
-| C3, C4 | 10µF ceramic | 0805 | 2 | per-amp decoupling (Basic) |
-| C5 | 100µF | electrolytic/polymer | 1 | 5V bulk |
-| R1 | 100kΩ | 0603 | 1 | U1 SD_MODE strap → LEFT |
-| R2 | 390kΩ | 0603 | 1 | U2 SD_MODE strap → RIGHT |
-| J2 | 4-pin 1.25mm wafer, vertical | SMT | 1 | speaker harness |
-| J3 | JST PH 2-pin, vertical | THT | 1 | button pigtail |
-| A1 | Raspberry Pi Pico | castellated module | 1 | hand-soldered after assembly |
+| U1, U2 | MAX98357AETE+T | TQFN-16 | 2 | C910544 (Extended) |
+| C1, C2 | 100nF ceramic X7R ≥16V | 0603 | 2 | C14663 (Basic) |
+| C3, C4 | 10µF ceramic X5R 25V | 0805 | 2 | C15850 (Basic) |
+| C5 | 100µF 16V | SMD electrolytic 6.3×5.4 | 1 | C970684 |
+| R1 | 100kΩ | 0603 | 1 | C25803 (Basic); U1 strap → LEFT |
+| R2 | 390kΩ | 0603 | 1 | C23150 (Basic); U2 strap → RIGHT |
+| J2 | Molex 53398-0471 (genuine) | 1.25mm 4P vertical SMT | 1 | C17617036; speaker harness |
+| J3 | JST B2B-XH-A (genuine) | XH 2.5mm 2P vertical THT | 1 | C158012; button pigtail socket (THT: JLC hand-solders it) |
 
-Hand-assembly per board: solder the Pico (8–10 castellated pads actually
-used; tack the corners first), and J3 if we keep it through-hole.
+**Hand-soldered** (excluded from the fab BOM/CPL — no `lcsc` attribute):
+
+| Ref | Part | Note |
+| --- | --- | --- |
+| A1 | Raspberry Pi Pico | tack the corner castellations first |
+
+**Off-board shopping list** (not on the PCB; order from LCSC in the same
+checkout, or elsewhere):
+
+| Part | Qty/box | Source | Note |
+| --- | --- | --- | --- |
+| Panel button: Adafruit 1503 (16mm momentary, burgundy) | 1 | adafruit.com/product/1503 | mounts in the lid; $0.95 |
+| Wire pair: Adafruit 1152 (10-pack) | 1 pack total | adafruit.com/product/1152 | JST 2.5mm plug mates with J3; quick-connects slide onto the 1503's lugs — no soldering anywhere in the button chain |
+| Waveshare 2030 speaker pair (4-pin 1.25mm harness) | 1 | Waveshare/Amazon | already owned for dev; buy per box |
+| M2.5 screws + standoffs for the mounting holes | 4 | Amazon | length depends on enclosure |
 
 ## Layout placement guide
 
@@ -182,9 +198,14 @@ The loop:
 4. Place footprints, route traces, pour the ground plane, and run **DRC**
    (design rule check) against JLCPCB's manufacturing limits — this part is
    interactive in the GUI and stays the human's job.
-5. Outputs (manual, once the layout settles): gerbers + drill for the fab,
-   BOM + CPL for assembly, and **File → Export → STEP** for the Onshape
-   enclosure model.
+5. Outputs (manual, once the layout settles):
+   `bazel run //emb/project/punbox/hw:fab` generates `fab/punbox_bom.csv` +
+   `fab/punbox_cpl.csv` (JLCPCB assembly), `fab/punbox_gerbers.zip` (the
+   fab), and `punbox.step` (the Onshape enclosure model). The BOM comes from
+   the SKiDL design's `LCSC` table; parts without an LCSC number (the Pico,
+   J3) are hand-soldered and excluded from both the BOM and CPL. Off-board
+   parts (speakers, panel button, screws) are a shopping list, not a fab
+   BOM — see the bill of materials section above.
 
 Vendored symbols/footprints/3D models live in `lib/` (see `lib/NOTICE.md`);
 `sym-lib-table`/`fp-lib-table` register them for the KiCad GUI, and
