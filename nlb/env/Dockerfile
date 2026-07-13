@@ -1,4 +1,4 @@
-FROM ubuntu:noble-20260410
+FROM ubuntu:noble-20260509.1
 
 # Install dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
