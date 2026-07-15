@@ -97,11 +97,13 @@ straight to the connector — no coupling caps, no filters needed for the
 L+, L−, R+, R− (verify wire order against the actual harness with a
 multimeter before finalizing — cheap insurance).
 
-**Button.** J3 is a 2-pin JST XH (2.5mm — bigger than the speaker
-connector on purpose: impossible to mix up). One pin to `GP6`, one to `GND`;
-the firmware's internal pull-up does the rest. The whole button chain is
-solderless: J3 (machine-assembled) → Adafruit 1152 quick-connect wire pair →
-Adafruit 1503 16mm panel button's lugs.
+**Button.** J3 is a 2-pin through-hole position, deliberately
+**unpopulated**: the button doesn't need to be detachable (J2 only has a
+connector because the speakers ship with one), so the Adafruit 1152 wire
+pair's leads solder directly into the holes — cut off its plug, thread from
+the top, solder on the back. One hole to `GP6`, one to `GND`; the firmware's
+internal pull-up does the rest. The other end quick-connects onto the
+Adafruit 1503 panel button's lugs, no soldering.
 
 **The Pico itself.** Its castellated edge pads solder to matching pads on
 the carrier (the "module as a component" pattern). Place it so the USB
@@ -130,13 +132,13 @@ be "Extended").
 | R1 | 100kΩ | 0603 | 1 | C25803 (Basic); U1 strap → LEFT |
 | R2 | 390kΩ | 0603 | 1 | C23150 (Basic); U2 strap → RIGHT |
 | J2 | Molex 53398-0471 (genuine) | 1.25mm 4P vertical SMT | 1 | C17617036; speaker harness |
-| J3 | JST B2B-XH-A (genuine) | XH 2.5mm 2P vertical THT | 1 | C158012; button pigtail socket (THT: JLC hand-solders it) |
 
 **Hand-soldered** (excluded from the fab BOM/CPL — no `lcsc` attribute):
 
 | Ref | Part | Note |
 | --- | --- | --- |
 | A1 | Raspberry Pi Pico | tack the corner castellations first |
+| J3 | (unpopulated) | the button wire pair solders directly into the through-holes |
 
 **Off-board shopping list** (not on the PCB; order from LCSC in the same
 checkout, or elsewhere):
@@ -144,7 +146,7 @@ checkout, or elsewhere):
 | Part | Qty/box | Source | Note |
 | --- | --- | --- | --- |
 | Panel button: Adafruit 1503 (16mm momentary, burgundy) | 1 | adafruit.com/product/1503 | mounts in the lid; $0.95 |
-| Wire pair: Adafruit 1152 (10-pack) | 1 pack total | adafruit.com/product/1152 | JST 2.5mm plug mates with J3; quick-connects slide onto the 1503's lugs — no soldering anywhere in the button chain |
+| Wire pair: Adafruit 1152 (10-pack) | 1 pack total | adafruit.com/product/1152 | cut off the plug, solder the leads into J3's holes; quick-connects slide onto the 1503's lugs |
 | Waveshare 2030 speaker pair (4-pin 1.25mm harness) | 1 | Waveshare/Amazon | already owned for dev; buy per box |
 | M2.5 screws + standoffs for the mounting holes | 4 | Amazon | length depends on enclosure |
 

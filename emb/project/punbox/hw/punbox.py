@@ -34,7 +34,7 @@ FP_PICO = 'punbox_parts:RPi_Pico_SMD_TH'
 SD_MODE_PULLUPS = {'left': '100k', 'right': '390k'}
 
 # LCSC part numbers for JLCPCB assembly (`bazel run :fab` emits the BOM).
-# Parts without a number (only the Pico) are hand-soldered.
+# Parts without a number are not machine-populated.
 LCSC = {
     'MAX98357A': 'C910544',  # verified: in stock, SMT-assembly supported
     '100nF': 'C14663',
@@ -42,11 +42,12 @@ LCSC = {
     '100uF': 'C970684',  # DMBJ RVT1C101M0605 16V, package "SMD,D6.3xL5.4mm"
     '100k': 'C25803',
     '390k': 'C23150',
-    # Genuine JST B2B-XH-A: 2.5mm XH, mates with the Adafruit 1152 wire
-    # pair's plug (which quick-connects to the 1503 panel button, solderless)
-    'Button': 'C158012',
     # Genuine Molex 53398-0471: the exact part the footprint is drawn for
     'Speakers': 'C17617036',
+    # J3 ('Button') is deliberately unpopulated: the Adafruit 1152 wire
+    # pair's leads solder directly into its through-holes (v1 order review,
+    # 2026-08: JLC's CPL preview misplaced the THT connector because KiCad
+    # anchors THT footprints at pin 1, not the centroid JLC expects)
 }
 
 

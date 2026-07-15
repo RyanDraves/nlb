@@ -116,8 +116,12 @@ def main(kicad_cli: str | None, bom_only: bool) -> None:
     kicad_cli = kicad_cli or shutil.which('kicad-cli') or MACOS_KICAD_CLI
 
     # Placement file; `reformat_cpl` filters to the BOM designators, which
-    # drops the hand-soldered Pico (through-hole J3 IS assembled: JLC
-    # hand-solders THT parts for a small per-joint fee)
+    # drops the parts that aren't machine-populated (the Pico, J3).
+    #
+    # NOTE: KiCad reports a footprint's anchor position, which for THT
+    # connector footprints is pin 1 rather than the package centroid JLCPCB
+    # expects — verify any THT part's position in JLC's placement preview
+    # before ordering (this bit the v1 order's J3)
     kicad_pos = fab_dir / 'kicad_pos.csv'
     subprocess.run(
         [
