@@ -221,6 +221,15 @@ bazel_dep(name = "rules_rust_wasm_bindgen", version = "0.70.0")
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(
     edition = "2021",
+    # Note: this REPLACES the default extra triples, so the wasm targets (used by
+    # the brm web client) must be listed explicitly alongside the Linux triples
+    # we add for cross-compiling the server into its container image.
+    extra_target_triples = [
+        "wasm32-unknown-unknown",
+        "wasm32-wasip1",
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu",
+    ],
 )
 use_repo(rust, "rust_toolchains")
 
@@ -229,6 +238,16 @@ register_toolchains("@rust_toolchains//:all")
 register_toolchains(
     "@rules_rust_wasm_bindgen//:default_wasm_bindgen_toolchain",
 )
+
+# Hermetic Zig-based C toolchains for cross-compiling the Rust server to Linux
+# (tokio links libc, so unlike Go it needs a cross cc toolchain). NOT registered
+# globally — that would override the default/RBE cc toolchains for every Linux
+# build. Instead `--config=image` in .bazelrc adds them via --extra_toolchains,
+# so only image builds (which compile no other Linux C/C++) use Zig.
+bazel_dep(name = "hermetic_cc_toolchain", version = "3.1.1")
+
+zig_toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
+use_repo(zig_toolchains, "zig_sdk")
 
 crate = use_extension(
     "@rules_rust//crate_universe:extension.bzl",

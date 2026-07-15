@@ -100,6 +100,29 @@ bazel build //apps/brm/...                            # shared, server, native c
 bazel build //apps/brm:client_wasm_for_web            # the wasm client
 ```
 
+## Hosting (container)
+
+The server + embedded web client package into a single multi-arch OCI image
+(`//apps/brm:brm`, via the `rust_image` macro — the Rust analogue of `go_image`).
+The image bakes the server at `/opt/app` and the web bundle at `/opt/web`
+(`BRM_WEB_DIR`), exposes `8080`, and runs on `gcr.io/distroless/base`.
+
+Because the server links libc, it's cross-compiled to Linux with the hermetic
+Zig toolchains — so **image builds must pass `--config=image`**:
+
+```sh
+# Build + load locally into Docker (pick your arch), then run:
+bazel run --config=image //apps/brm:brm_amd64_load     # or brm_arm64_load
+docker run --rm -p 8080:8080 ghcr.io/ryandraves/brm:latest
+
+# Push the multi-arch image (log in to ghcr.io first):
+bazel run --config=image //apps/brm:brm_push
+```
+
+`services/brm/docker-compose.yaml` runs the published image with the port
+mapped. Open `http://<host-ip>:8080` on the LAN to play; set `BRM_SEED` to pin
+the arena, `BRM_PORT` to change the port.
+
 ## Dependency & toolchain notes
 
 The repo is on `rules_rust` / `rules_rust_wasm_bindgen` 0.70.0 (Rust 1.95), so

@@ -5,6 +5,9 @@
 # declared in //:MODULE.bazel.
 load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
+load("@tar.bzl//tar:mtree.bzl", "mutate")
+load("@tar.bzl//tar:tar.bzl", "tar")
+load("//bzl/macros:rust_image.bzl", "rust_image")
 
 exports_files([
     "Cargo.toml",
@@ -44,5 +47,42 @@ sh_binary(
         ":web_bundle",
         "//apps/brm/server",
     ],
+    tags = ["manual"],
+)
+
+# The web bundle as an image layer under /opt/web (BRM_WEB_DIR points here).
+tar(
+    name = "web_layer",
+    srcs = [":web_bundle"],
+    mutate = mutate(
+        package_dir = "opt/web",
+        strip_prefix = "apps/brm/web_bundle",
+    ),
+    tags = ["manual"],
+)
+
+# Container image for the server + embedded web client. Cross-compiled to Linux
+# via the hermetic Zig toolchains, so BUILD/RUN these with `--config=image`:
+#   bazel run --config=image //apps/brm:brm_amd64_load   # build & load locally
+#   bazel run --config=image //apps/brm:brm_push         # push multi-arch (login first)
+rust_image(
+    name = "brm",
+    additional_tars = [":web_layer"],
+    binary = "//apps/brm/server",
+    env = {
+        # Serve the web client from the layer above; bind all interfaces.
+        "BRM_WEB_DIR": "/opt/web",
+        "BRM_PORT": "8080",
+    },
+    exposed_ports = ["8080/tcp"],
+    labels = ":labels.txt",
+    local_tags = ["ghcr.io/ryandraves/brm:latest"],
+    platform_names = [
+        ("arm64", "//bzl/platforms:linux_arm64"),
+        ("amd64", "//bzl/platforms:linux_amd64"),
+    ],
+    remote_repo = "ghcr.io/ryandraves",
+    remote_tags = ["latest"],
+    # Too big for CI; built and pushed manually.
     tags = ["manual"],
 )
