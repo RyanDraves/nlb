@@ -1,10 +1,8 @@
 """Macro for Rust OCI images.
 
-Mirrors `go_image.bzl`, adding `env` and `exposed_ports` so a service can be
-configured at the image level (the Rust services here read their config from the
-environment). Unlike Go, a Rust binary that links libc must be cross-compiled
-with a real cc toolchain — build these targets with `--config=image`, which adds
-the hermetic Zig toolchains (see //:MODULE.bazel and .bazelrc).
+Mirrors `go_image.bzl`. Unlike Go, a Rust binary that links libc must be cross-compiled
+with a real cc toolchain; the `//bzl/platforms:linux_{amd64,arm64}` targets this
+transitions to carry platform-based `flags` that select the hermetic Zig cc toolchain.
 """
 
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")

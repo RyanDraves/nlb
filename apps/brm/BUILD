@@ -5,6 +5,7 @@
 # declared in //:MODULE.bazel.
 load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@tar.bzl//tar:mtree.bzl", "mutate")
 load("@tar.bzl//tar:tar.bzl", "tar")
 load("//bzl/macros:rust_image.bzl", "rust_image")
@@ -62,9 +63,9 @@ tar(
 )
 
 # Container image for the server + embedded web client. Cross-compiled to Linux
-# via the hermetic Zig toolchains, so BUILD/RUN these with `--config=image`:
-#   bazel run --config=image //apps/brm:brm_amd64_load   # build & load locally
-#   bazel run --config=image //apps/brm:brm_push         # push multi-arch (login first)
+# via the hermetic Zig toolchains, selected by the linux platform transition:
+#   bazel run //apps/brm:brm_amd64_load   # build & load locally
+#   bazel run //apps/brm:brm_push         # push multi-arch (login first)
 rust_image(
     name = "brm",
     additional_tars = [":web_layer"],

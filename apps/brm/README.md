@@ -107,21 +107,25 @@ The server + embedded web client package into a single multi-arch OCI image
 The image bakes the server at `/opt/app` and the web bundle at `/opt/web`
 (`BRM_WEB_DIR`), exposes `8080`, and runs on `gcr.io/distroless/base`.
 
-Because the server links libc, it's cross-compiled to Linux with the hermetic
-Zig toolchains — so **image builds must pass `--config=image`**:
+Because the server links libc, it's cross-compiled to Linux with hermetic Zig cc
+toolchains. That's wired into the `//bzl/platforms:linux_{amd64,arm64}` platform
+transition (via platform-based `flags`), so it Just Works from Linux **or** macOS
+with no special build config:
 
 ```sh
 # Build + load locally into Docker (pick your arch), then run:
-bazel run --config=image //apps/brm:brm_amd64_load     # or brm_arm64_load
+bazel run //apps/brm:brm_amd64_load     # or brm_arm64_load
 docker run --rm -p 8080:8080 ghcr.io/ryandraves/brm:latest
 
 # Push the multi-arch image (log in to ghcr.io first):
-bazel run --config=image //apps/brm:brm_push
+bazel run //apps/brm:brm_push
 ```
 
-`services/brm/docker-compose.yaml` runs the published image with the port
-mapped. Open `http://<host-ip>:8080` on the LAN to play; set `BRM_SEED` to pin
-the arena, `BRM_PORT` to change the port.
+`services/brm/docker-compose.yaml` runs the published image behind a `tailscale`
+sidecar (`tailscale serve` fronts it with HTTPS on the tailnet; see
+`services/brm/ts-serve/ts-serve.json`), and also maps `8080` for direct LAN play.
+Open the tailnet URL or `http://<host-ip>:8080`; set `BRM_SEED` to pin the arena,
+`BRM_PORT` to change the port.
 
 ## Dependency & toolchain notes
 

@@ -1,0 +1,47 @@
+services:
+  brm:
+    # bazel run //apps/brm:brm_amd64_load  # build & load the image locally
+    # bazel run //apps/brm:brm_push        # push the multi-arch image (login to ghcr first)
+    image: ghcr.io/ryandraves/brm:latest
+    restart: always
+    # Share the tailscale sidecar's network namespace so `tailscale serve` reaches
+    # the server on 127.0.0.1:8080 (BRM_PORT, baked into the image).
+    network_mode: service:tailscale
+    # Optional: pin the map seed for reproducible arenas (random each boot otherwise).
+    # environment:
+    #   BRM_SEED: "42"
+    depends_on:
+      tailscale:
+        condition: service_started
+
+  tailscale:
+    image: tailscale/tailscale:v1.98.4
+    hostname: brm
+    secrets:
+      - brm_authkey
+    environment:
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/ts-serve.json
+      TS_AUTHKEY: file:/run/secrets/brm_authkey
+    volumes:
+      - brm-ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the config file for changes
+      - ${PWD}/ts-serve:/config
+    # brm also shines on the LAN (phones/laptops on the same wifi). The brm
+    # container shares this netns, so exposing 8080 here serves them directly.
+    # Remove this block for tailnet-only access.
+    # ports:
+    #   - "8080:8080"
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+
+volumes:
+  brm-ts-authkey:
+
+secrets:
+  brm_authkey:
+    file: ${PWD}/../secrets/brm.authkey
