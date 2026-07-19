@@ -1,0 +1,13 @@
+[package]
+name = "lrb_rng"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[lib]
+path = "lib.rs"
+
+# Standalone package (not a member of any app workspace) so both the brm and
+# euc Cargo workspaces can path-depend on it.
+[workspace]

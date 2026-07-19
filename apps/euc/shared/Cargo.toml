@@ -1,0 +1,17 @@
+[package]
+name = "euc_shared"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+# First-party dep //lrb/rng is linked via Bazel (see BUILD); crate_universe
+# splicing cannot resolve out-of-workspace path deps.
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

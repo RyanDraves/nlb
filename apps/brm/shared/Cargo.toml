@@ -8,5 +8,8 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
+# First-party dep //lrb/rng is linked via Bazel (see BUILD); it cannot appear
+# here because crate_universe splices this workspace into a temp dir where
+# out-of-workspace path deps don't resolve.
 [dependencies]
 serde.workspace = true
