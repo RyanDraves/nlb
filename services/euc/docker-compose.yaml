@@ -24,6 +24,8 @@ services:
       EUC_SITE_PASSWORD_FILE: /secrets/euc_password
       EUC_TOKEN_SECRET_FILE: /secrets/euc_token_secret
     depends_on:
+      spirit-tracks:
+        condition: service_completed_successfully
       tailscale:
         condition: service_started
 
