@@ -49,6 +49,7 @@ services:
 
 volumes:
   euc-ts-authkey:
+  euc-secrets:
 
 secrets:
   euc_authkey:
