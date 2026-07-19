@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 pub struct RuleConfig {
     /// If everyone passes twice, the dealer must call trump (no redeal).
+    /// On by default — the house rule of choice.
     pub stick_the_dealer: bool,
     /// First team to reach this score wins. Standard is 10.
     pub win_score: u8,
@@ -16,7 +17,7 @@ pub struct RuleConfig {
 impl Default for RuleConfig {
     fn default() -> Self {
         Self {
-            stick_the_dealer: false,
+            stick_the_dealer: true,
             win_score: 10,
         }
     }

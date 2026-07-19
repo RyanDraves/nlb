@@ -678,10 +678,12 @@ fn full_view(view: &TableView, state: AppState) -> impl IntoView {
             }
         });
         view! {
-            {felt(view, &game, anchor, true)}
-            <div class="actions">{actions}{play_again}</div>
-            {hand}
-            {bid_dialog}
+            <div class="full-game">
+                {felt(view, &game, anchor, true)}
+                <div class="actions">{actions}{play_again}</div>
+                {hand}
+                {bid_dialog}
+            </div>
         }
         .into_any()
     } else {
@@ -883,17 +885,20 @@ fn seat_cell(
 fn seating_area(view: &TableView) -> impl IntoView {
     let full = view.seats.iter().all(|s| s.name.is_some());
     let stick = view.rules.stick_the_dealer;
+    let rules = view.rules;
     let toggle = move |_| {
         net::send(&ClientMsg::SetRules {
-            rules: euc_shared::RuleConfig { stick_the_dealer: !stick, win_score: 10 },
+            rules: euc_shared::RuleConfig { stick_the_dealer: !stick, ..rules },
         })
     };
     view! {
         <div class="panel">
-            <label class="rule-row">
-                <input type="checkbox" prop:checked=stick on:change=toggle />
+            <button type="button" class="toggle-row" on:click=toggle>
+                <span class="toggle" class:on=stick>
+                    <span class="knob"></span>
+                </span>
                 "Stick the dealer"
-            </label>
+            </button>
             <button class="primary" disabled=!full on:click=|_| net::send(&ClientMsg::StartGame)>
                 {if full { "Deal 'em up" } else { "Waiting for four players…" }}
             </button>

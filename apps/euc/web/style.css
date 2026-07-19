@@ -22,8 +22,29 @@ body {
   color: var(--ink);
   font-family: system-ui, -apple-system, sans-serif;
 }
-.app { max-width: 900px; margin: 0 auto; padding: 12px 14px 40px; }
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 12px 14px 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
 .app.wide { max-width: none; padding: 6px 10px; }
+
+/* In-game full view fills the screen: the felt stretches, the hand stays at
+   the bottom (clear of the centered bid dialog), and the cards scale with
+   the viewport. */
+.full-game {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  --card-w: clamp(44px, min(8vw, 9vh), 84px);
+  --card-h: calc(var(--card-w) * 1.42);
+}
+.full-game .felt { flex: 1; }
+.full-game .felt-grid { flex: 1; grid-template-rows: auto 1fr auto; }
+.full-game .actions { margin-top: auto; }
 
 header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 header h1 { font-size: 1.4rem; margin: 8px 0; }

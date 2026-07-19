@@ -143,7 +143,9 @@ fn round2_cannot_call_turned_down_suit() {
 
 #[test]
 fn round2_all_pass_redeals_with_next_dealer() {
-    let mut game = EuchreGame::new(RuleConfig::default(), 7);
+    // Redeals only happen with stick-the-dealer (the default) off.
+    let rules = RuleConfig { stick_the_dealer: false, ..RuleConfig::default() };
+    let mut game = EuchreGame::new(rules, 7);
     let old_dealer = game.dealer;
     pass_around_once(&mut game);
     pass_around_once(&mut game);
@@ -461,7 +463,7 @@ fn protocol_golden_strings() {
     let create = ClientMsg::CreateTable { name: "kitchen".to_string(), rules: RuleConfig::default() };
     assert_eq!(
         serde_json::to_string(&create).unwrap(),
-        r#"{"type":"create_table","name":"kitchen","rules":{"stick_the_dealer":false,"win_score":10}}"#
+        r#"{"type":"create_table","name":"kitchen","rules":{"stick_the_dealer":true,"win_score":10}}"#
     );
 }
 

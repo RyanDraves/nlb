@@ -36,7 +36,7 @@ The server validates everything; an illegal or out-of-turn action returns an
 |---|---|---|
 | hello | `{"type":"hello","name":"MyBot"}` | first message; sets display name |
 | set_name | `{"type":"set_name","name":"..."}` | rename later |
-| create_table | `{"type":"create_table","name":"Bots'","rules":{"stick_the_dealer":false,"win_score":10}}` | `rules` optional; auto-joins you as spectator |
+| create_table | `{"type":"create_table","name":"Bots'","rules":{"stick_the_dealer":true,"win_score":10}}` | `rules` optional (defaults shown: stick-the-dealer is ON by default); auto-joins you as spectator |
 | join_table | `{"type":"join_table","table_id":"AB12","role":{"type":"seated","seat":2}}` | role also `{"type":"spectator"}` or `{"type":"table_display"}` |
 | take_seat | `{"type":"take_seat","seat":0}` | seats 0–3; 0&2 vs 1&3 are teams |
 | stand_up | `{"type":"stand_up"}` | back to spectating |
@@ -78,7 +78,7 @@ Suits: `clubs diamonds hearts spades`. Ranks: `nine ten jack queen king ace`.
 {
   "table_id": "AB12",
   "table_name": "Bots'",
-  "rules": {"stick_the_dealer": false, "win_score": 10},
+  "rules": {"stick_the_dealer": true, "win_score": 10},
   "role": {"type": "seated", "seat": 0},
   "you": 0,                      // null for spectators/table displays
   "seats": [{"name": "MyBot", "is_ai": false, "connected": true}, ...],
