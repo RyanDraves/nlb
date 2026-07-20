@@ -22,8 +22,18 @@ use crate::AppCtx;
 type HmacSha256 = Hmac<Sha256>;
 
 const TOKEN_TTL_SECS: u64 = 30 * 24 * 3600;
-/// Paths reachable without a token: the login page and its dependencies.
-const OPEN_PATHS: [&str; 4] = ["/login.html", "/api/login", "/api/session", "/style.css"];
+/// Paths reachable without a token: the login page and its dependencies, plus
+/// the PWA metadata (Safari fetches icons/manifest without cookies).
+const OPEN_PATHS: [&str; 8] = [
+    "/login.html",
+    "/api/login",
+    "/api/session",
+    "/style.css",
+    "/manifest.webmanifest",
+    "/icon-180.png",
+    "/icon-192.png",
+    "/icon-512.png",
+];
 
 pub struct AuthConfig {
     password: Option<String>,

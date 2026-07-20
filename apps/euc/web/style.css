@@ -15,22 +15,40 @@
 }
 
 * { box-sizing: border-box; }
+html { height: 100%; }
 body {
   margin: 0;
   background: radial-gradient(circle at 50% 30%, var(--felt) 0%, var(--felt-dark) 100%);
-  min-height: 100vh;
+  height: 100%;
   color: var(--ink);
   font-family: system-ui, -apple-system, sans-serif;
+  overscroll-behavior: none;
 }
+/* The app is pinned to exactly the visible viewport: the page itself never
+   scrolls (or jumps when content height changes between rounds); anything
+   that overflows scrolls INSIDE this container. Safe-area insets keep content
+   clear of the iPhone island/home bar in standalone (PWA) mode. */
 .app {
   max-width: 900px;
   margin: 0 auto;
-  padding: 12px 14px 24px;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  padding: calc(10px + env(safe-area-inset-top, 0px))
+    calc(14px + env(safe-area-inset-right, 0px))
+    calc(10px + env(safe-area-inset-bottom, 0px))
+    calc(14px + env(safe-area-inset-left, 0px));
 }
-.app.wide { max-width: none; padding: 6px 10px; }
+.app.wide {
+  max-width: none;
+  padding: calc(6px + env(safe-area-inset-top, 0px))
+    calc(10px + env(safe-area-inset-right, 0px))
+    calc(6px + env(safe-area-inset-bottom, 0px))
+    calc(10px + env(safe-area-inset-left, 0px));
+}
 
 /* In-game full view fills the screen: the felt stretches, the hand stays at
    the bottom (clear of the centered bid dialog), and the cards scale with
@@ -501,7 +519,7 @@ button.tiny { font-size: 0.75rem; padding: 3px 8px; }
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-height: 86vh;
+  flex: 1;
   justify-content: center;
 }
 /* The bid dialog stays centered; the hand sits at the bottom under a light
@@ -532,7 +550,7 @@ button.tiny { font-size: 0.75rem; padding: 3px 8px; }
 /* ------------------------------------------------------------- table display */
 
 .table-display {
-  min-height: 96vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -553,6 +571,36 @@ button.tiny { font-size: 0.75rem; padding: 3px 8px; }
   width: calc(var(--card-w) * 0.3);
   height: calc(var(--card-w) * 0.43);
   border-radius: calc(var(--card-w) * 0.05);
+}
+
+/* Narrow portrait phones: shrink the felt so nothing scrolls sideways. */
+@media (max-width: 480px) {
+  .full-game { --card-w: 40px; }
+  .plate { min-width: 0; padding: 5px 8px; font-size: 0.85rem; }
+  .felt-grid { grid-template-columns: minmax(52px, 1fr) auto minmax(52px, 1fr); gap: 4px; }
+  .pool { width: calc(var(--card-w) * 4); }
+  .badge { font-size: 0.65rem; padding: 1px 4px; }
+  .card.back.mini { width: 13px; height: 18px; }
+}
+
+/* Short landscape phones: compact vertical chrome so the felt + hand fit
+   without scrolling. */
+@media (max-height: 520px) {
+  header { display: none; }
+  .full-game { --card-w: clamp(40px, min(8vw, 8.2vh), 84px); }
+  button { padding: 4px 10px; font-size: 0.85rem; }
+  .table-header h2 { font-size: 1rem; margin: 2px 0; }
+  .felt-top { padding: 0 2px; }
+  .felt-status { font-size: 0.95rem; }
+  .plate { padding: 3px 10px; gap: 2px; font-size: 0.85rem; }
+  .plate-cards { min-height: 14px; }
+  .card.back.mini { width: 12px; height: 17px; }
+  .felt-grid { gap: 3px; }
+  .pool { height: calc(var(--card-h) * 1.9); }
+  .actions { margin: 3px 0; }
+  .hand-wrap { margin-top: 2px; }
+  .hand-hint { margin-bottom: 4px; }
+  .hand { padding-top: 4px; }
 }
 .exit-display { position: absolute; bottom: 4px; right: 4px; opacity: 0.5; z-index: 5; }
 .td-waiting { margin: auto; text-align: center; display: flex; flex-direction: column; gap: 8px; }
