@@ -24,7 +24,7 @@ services:
         condition: service_completed_successfully
 
   tailscale:
-    image: tailscale/tailscale:v1.98.4
+    image: tailscale/tailscale:v1.98.9
     hostname: chat
     secrets:
       - chat_authkey
