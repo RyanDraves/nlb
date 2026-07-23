@@ -31,7 +31,7 @@ The directory should look like this (from running `tree .`):
     └── ts-serve.json
 ```
 2. Provision password & token secret: open `euc.password` and think of a passphrase that you'll share with others. For `euc.token_secret`, run `openssl rand -base64 32` and paste in the result.
-3. Setup Tailscale Funnel: We'll first setup access controls so [Tailscale Funnel] can be turned on. From the [Tags section of the access controls](https://console.tailscale.com/admin/acls/visual/tags), create a new tag named `euc` owned by `autogroup:admin`. From the [Node attributes page](https://console.tailscale.com/admin/acls/visual/node-attributes), add a new node attribute that targets `tag:euc` with attribute `funnel`. The JSON preview should look like:
+3. Setup Tailscale Funnel: We'll first setup access controls so [Tailscale Funnel](https://tailscale.com/docs/features/tailscale-funnel) can be turned on. From the [Tags section of the access controls](https://console.tailscale.com/admin/acls/visual/tags), create a new tag named `euc` owned by `autogroup:admin`. From the [Node attributes page](https://console.tailscale.com/admin/acls/visual/node-attributes), add a new node attribute that targets `tag:euc` with attribute `funnel`. The JSON preview should look like:
 ```json
 {
 	"target": ["tag:euc"],
@@ -40,6 +40,19 @@ The directory should look like this (from running `tree .`):
 ```
 4. Provision auth key: In the [key settings](https://console.tailscale.com/admin/settings/keys), create a new auth key. Enable tags for the key and select `tag:euc` for the key. Generate the key and copy it into `euc.authkey`.
 5. The server can now be started with `docker compose up`.
+
+## Where's the site?
+The site gets served out of `https://euc.[your-tailscale-domain]`. To find `[your-tailscale-domain]`, visit the [DNS](https://console.tailscale.com/admin/dns) tab for Tailscale. You can try to re-roll the DNS name to something fun (it's always thing-with-a-tail and thing-with-a-scale), it should be something like `random123.ts.net` or `barn-arturus.ts.net`. Full example: `https://euc.barn-arcturus.ts.net`.
+
+## Tailnet-only Hosting
+The `ts-serve/ts-serve.json` file contains the following by default:
+```json
+"AllowFunnel": {
+    "${TS_CERT_DOMAIN}:443": true
+}
+```
+
+To [serve](https://tailscale.com/docs/features/tailscale-serve) the site internally on your Tailnet, simply set this boolean to `false`. You can even do this while the server is running. Public access will be blocked, which is less useful for sharing with others.
 
 # API Instructions
 In the parent folder, [PROTOCOL.md](../PROTOCOL.md) describes the server's API. A minimal example of making a bot to play Euchre is in [bot.py](bot.py).
