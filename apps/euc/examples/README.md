@@ -41,6 +41,9 @@ The directory should look like this (from running `tree .`):
 4. Provision auth key: In the [key settings](https://console.tailscale.com/admin/settings/keys), create a new auth key. Enable tags for the key and select `tag:euc` for the key. Generate the key and copy it into `euc.authkey`.
 5. The server can now be started with `docker compose up`.
 
+## Where's the site?
+The site gets served out of `https://euc.[your-tailscale-domain]`. To find `[your-tailscale-domain]`, visit the [DNS](https://console.tailscale.com/admin/dns) tab for Tailscale. You can try to re-roll the DNS name to something fun (it's always thing-with-a-tail and thing-with-a-scale), it should be something like `random123.ts.net` or `barn-arturus.ts.net`. Full example: `https://euc.barn-arcturus.ts.net`.
+
 ## Tailnet-only Hosting
 The `ts-serve/ts-serve.json` file contains the following by default:
 ```json
