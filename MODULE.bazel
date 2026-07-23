@@ -10,7 +10,7 @@ module(
 # "Standard" dependencies
 #
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.5")
-bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_cc", version = "0.2.17")
 bazel_dep(name = "rules_platform", version = "0.1.0")
@@ -83,7 +83,7 @@ bazel_dep(name = "rules_uv", version = "0.71.0")
 # Gazelle
 #
 bazel_dep(name = "gazelle", version = "0.47.0")
-bazel_dep(name = "rules_python_gazelle_plugin", version = "1.6.3")
+bazel_dep(name = "rules_python_gazelle_plugin", version = "2.2.0")
 
 #
 # Buildifier
@@ -119,7 +119,7 @@ use_repo(multitool, "multitool")
 #
 # Pybind11
 #
-bazel_dep(name = "pybind11_bazel", version = "2.12.0")
+bazel_dep(name = "pybind11_bazel", version = "3.0.1")
 
 #
 # Zmq
@@ -149,7 +149,7 @@ http_archive(
 #
 # Google Test
 #
-bazel_dep(name = "googletest", version = "1.15.2")
+bazel_dep(name = "googletest", version = "1.17.0")
 
 #
 # Web development
@@ -157,7 +157,7 @@ bazel_dep(name = "googletest", version = "1.15.2")
 bazel_dep(name = "aspect_rules_js", version = "3.1.2")
 bazel_dep(name = "aspect_rules_ts", version = "3.8.10")
 bazel_dep(name = "rules_nodejs", version = "6.7.3")
-bazel_dep(name = "aspect_rules_lint", version = "1.0.0-rc4")
+bazel_dep(name = "aspect_rules_lint", version = "2.7.2")
 
 node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node", dev_dependency = True)
 node.toolchain(node_version = "20.13.1")
@@ -358,7 +358,7 @@ use_repo(oci, "distroless_base", "distroless_base_linux_amd64", "distroless_base
 #
 # Repo shuffling
 #
-bazel_dep(name = "rules_java", version = "8.15.1")
+bazel_dep(name = "rules_java", version = "9.6.1")
 
 http_jar = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_jar")
 
