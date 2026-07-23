@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <!-- viewport-fit=cover lets the canvas extend under the notch/home indicator
+         (we handle insets ourselves); the safe-area is exposed via env(). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <!-- "Add to Home Screen" launches standalone (no Safari chrome) — the only
+         way to get true fullscreen on iPhone, where requestFullscreen() is a
+         no-op for non-video elements. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="brm" />
+    <meta name="theme-color" content="#15151c" />
+    <title>brm</title>
+    <style>
+        html, body { margin: 0; padding: 0; overflow: hidden; background: #15151c;
+            width: 100vw; height: 100vh; height: 100dvh; }
+        /* Size the canvas to the viewport directly. A height:100% parent chain
+           can collapse to 0 in some layout contexts, leaving macroquad with a
+           0x0 drawing buffer (blank canvas that only flashes on resize). Use dvh
+           so the canvas tracks the *visible* area on iOS Safari (100vh there is
+           taller than the screen — it counts the space behind the toolbars, which
+           was hiding the bottom-right bomb button). The 100vh line is a fallback
+           for browsers without dvh support. */
+        canvas { position: fixed; top: 0; left: 0; width: 100vw;
+            height: 100vh; height: 100dvh; display: block; outline: none; }
+        /* Shown only when a touch device is held in portrait. We can't lock
+           orientation on iOS, so we ask the player to rotate (the game is built
+           for landscape). It sits above everything and blocks stray input. */
+        #rotate { display: none; }
+        @media (orientation: portrait) and (pointer: coarse) {
+            #rotate {
+                display: flex; position: fixed; inset: 0; z-index: 20;
+                align-items: center; justify-content: center; text-align: center;
+                padding: 24px; background: #15151c; color: #cfd2e0;
+                font: 600 19px/1.6 system-ui, -apple-system, sans-serif;
+            }
+        }
+        /* Soft-keyboard name entry on touch devices. Hidden until the wasm
+           client (via brm_net.js) shows it in the lobby; the user taps it,
+           which is the real gesture that raises the mobile keyboard. */
+        #brm_name {
+            position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+            z-index: 10; display: none;
+            width: 220px; max-width: 70vw; box-sizing: border-box;
+            padding: 10px 12px; border-radius: 8px;
+            border: 2px solid #6cf; background: #1f1f2a; color: #fff;
+            font: 16px/1.2 system-ui, sans-serif; text-align: center; outline: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- macroquad's loader (mq_js_bundle.js) renders into the canvas with this id. -->
+    <canvas id="glcanvas" tabindex="1"></canvas>
+    <!-- Portrait-only "please rotate" prompt for phones (see CSS above). -->
+    <div id="rotate">Rotate your device to landscape to play&nbsp;🎮</div>
+    <!-- Touch name entry (see brm_net.js / client/src/web.rs). 15 = MAX_NAME_LEN. -->
+    <input id="brm_name" type="text" maxlength="15" autocomplete="off"
+           autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="your name" />
+    <script src="mq_js_bundle.js"></script>
+    <!-- Registers the brm_ws_* WebSocket plugin the wasm client imports. -->
+    <script src="brm_net.js"></script>
+    <script>
+        // Wrapped in an IIFE: mq_js_bundle.js already declares a global `canvas`,
+        // so a top-level `const canvas` here would be a duplicate-declaration
+        // SyntaxError that aborts this whole script (and the load() below).
+        (function () {
+            const c = document.getElementById("glcanvas");
+            // Keyboard focus so arrow keys/space reach the game, not the page.
+            c.focus();
+            // Refocus the canvas on click so keys reach the game — but not when
+            // the tap lands on the name input, or we'd steal focus and dismiss
+            // the soft keyboard the instant it opens.
+            window.addEventListener("click", (e) => {
+                if (e.target && e.target.id === "brm_name") return;
+                c.focus();
+            });
+            load("client_wasm.wasm");
+            // macroquad reads the canvas size once at startup; if that runs
+            // before layout settles it starts at 0x0 (blank). Nudge it to
+            // re-read the real size after layout / first paint.
+            const nudge = () => window.dispatchEvent(new Event("resize"));
+            window.addEventListener("load", nudge);
+            requestAnimationFrame(nudge);
+            // Keep the drawing buffer matched to the *visible* viewport as the
+            // iOS toolbars show/hide, the soft keyboard opens, or the device
+            // rotates (dimensions update a beat after orientationchange).
+            if (window.visualViewport) window.visualViewport.addEventListener("resize", nudge);
+            window.addEventListener("orientationchange", () => setTimeout(nudge, 200));
+
+            // On first tap, try real fullscreen + landscape lock. Both work on
+            // Android Chrome; both are no-ops on iOS Safari (guarded), where the
+            // path to fullscreen is "Add to Home Screen" instead.
+            window.addEventListener("touchend", function goFs() {
+                const el = document.documentElement;
+                if (el.requestFullscreen) {
+                    el.requestFullscreen().then(() => {
+                        if (screen.orientation && screen.orientation.lock) {
+                            screen.orientation.lock("landscape").catch(() => {});
+                        }
+                    }).catch(() => {});
+                }
+            }, { once: true });
+        })();
+    </script>
+</body>
+</html>

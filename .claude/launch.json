@@ -9,6 +9,12 @@
         "//blog:next_dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "brm",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "BRM_PORT=8088 exec bazel run //apps/brm:serve"],
+      "port": 8088
     }
   ]
 }

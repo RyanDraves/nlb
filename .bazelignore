@@ -1,3 +1,5 @@
+# Agent git worktrees live here
+.claude
 node_modules
 blog/node_modules
 blog/out

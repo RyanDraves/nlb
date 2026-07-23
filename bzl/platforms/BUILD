@@ -39,11 +39,20 @@ platform(
     parents = ["@platforms//host"],
 )
 
+# The Linux platforms select the hermetic Zig cc toolchain via platform-based
+# `flags`, so anything transitioned to them (e.g. the brm container image, which
+# cross-compiles the Rust server) links with Zig — without a global toolchain
+# registration that would shadow the host/RBE cc for normal builds.
+# Applies through platform transitions the same way rp2040's
+# flags do. Inert for Go images (CGO off), which don't invoke a cc toolchain.
 platform(
     name = "linux_amd64",
     constraint_values = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
+    ],
+    flags = [
+        "--extra_toolchains=@zig_sdk//toolchain:linux_amd64_gnu.2.28",
     ],
 )
 
@@ -52,6 +61,9 @@ platform(
     constraint_values = [
         "@platforms//os:linux",
         "@platforms//cpu:arm64",
+    ],
+    flags = [
+        "--extra_toolchains=@zig_sdk//toolchain:linux_arm64_gnu.2.28",
     ],
 )
 

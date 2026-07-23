@@ -1,7 +1,9 @@
 "use client";
 
-import * as wasm from "@nlb/lrb/game_of_life/game_of_life";
-import { memory } from "@nlb/lrb/game_of_life/game_of_life_bg.wasm";
+// rules_rust_wasm_bindgen 0.70 nests its output under a directory named after
+// the target (`game_of_life/`), where 0.51 emitted the files flat.
+import * as wasm from "@nlb/lrb/game_of_life/game_of_life/game_of_life";
+import { memory } from "@nlb/lrb/game_of_life/game_of_life/game_of_life_bg.wasm";
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
