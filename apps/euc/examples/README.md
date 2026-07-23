@@ -49,7 +49,7 @@ The `ts-serve/ts-serve.json` file contains the following by default:
 }
 ```
 
-To serve the site internally on your Tailnet, simple set this boolean to `false`. You can even do this while the server is running. Public access will be blocked, which is less useful for sharing with others.
+To [serve](https://tailscale.com/docs/features/tailscale-serve) the site internally on your Tailnet, simply set this boolean to `false`. You can even do this while the server is running. Public access will be blocked, which is less useful for sharing with others.
 
 # API Instructions
 In the parent folder, [PROTOCOL.md](../PROTOCOL.md) describes the server's API. A minimal example of making a bot to play Euchre is in [bot.py](bot.py).
