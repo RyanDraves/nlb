@@ -20,5 +20,4 @@ rust_test(
     name = "brm_shared_test",
     crate = ":brm_shared",
     edition = "2021",
-    tags = ["manual"],
 )
