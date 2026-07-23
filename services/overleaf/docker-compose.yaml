@@ -61,7 +61,7 @@ services:
 
   mongo:
     restart: always
-    image: mongo:5.0
+    image: mongo:8.3
     command: '--replSet overleaf'
     volumes:
       - overleaf-mongo-data:/data/db
@@ -80,7 +80,7 @@ services:
 
   redis:
     restart: always
-    image: redis:6.2
+    image: redis:8.8
     volumes:
       - overleaf-redis-data:/data
 
