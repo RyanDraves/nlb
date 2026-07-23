@@ -20,7 +20,6 @@ rust_test(
     name = "euc_shared_test",
     crate = ":euc_shared",
     edition = "2021",
-    tags = ["manual"],
     deps = [
         "@euc_crates//:serde_json",
     ],
