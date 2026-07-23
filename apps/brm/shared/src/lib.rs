@@ -24,12 +24,7 @@ pub use tuning::*;
 /// Stable identifier the server assigns to each connected player.
 pub type PlayerId = u32;
 
-/// Cheap deterministic xorshift returning a value in `[0, 1)`. Lives at the
-/// crate root because both map generation ([`state`]) and power-up drops
-/// ([`sim`]) advance the same RNG.
-pub(crate) fn rng_f32(state: &mut u64) -> f32 {
-    *state ^= *state << 13;
-    *state ^= *state >> 7;
-    *state ^= *state << 17;
-    ((*state >> 40) as f32) / (1u64 << 24) as f32
-}
+/// Cheap deterministic xorshift returning a value in `[0, 1)`. Shared with the
+/// other games via `lrb_rng` (bit-identical sequence); both map generation
+/// ([`state`]) and power-up drops ([`sim`]) advance the same RNG.
+pub(crate) use lrb_rng::next_f32 as rng_f32;

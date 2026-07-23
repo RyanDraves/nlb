@@ -11,6 +11,7 @@ rust_library(
     tags = ["manual"],
     visibility = ["//apps/brm:__subpackages__"],
     deps = [
+        "//lrb/rng",
         "@brm_crates//:serde",
     ],
 )

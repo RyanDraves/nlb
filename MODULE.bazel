@@ -300,6 +300,28 @@ crate.from_cargo(
 )
 use_repo(crate, "brm_crates")
 
+# Isolated crate hub for the `euc` Euchre game (apps/euc), mirroring the brm
+# hub above (leptos/axum/tokio trees are too large to hand-list as specs).
+# wasm_split_helpers (leptos transitive) expands a proc-macro that reads
+# CARGO_MANIFEST_PATH, which cargo sets but Bazel does not; any stable string
+# works (it's only a symbol-name stamp).
+crate.annotation(
+    crate = "wasm_split_helpers",
+    repositories = ["euc_crates"],
+    rustc_env = {"CARGO_MANIFEST_PATH": "wasm_split_helpers"},
+)
+crate.from_cargo(
+    name = "euc_crates",
+    cargo_lockfile = "//apps/euc:Cargo.lock",
+    manifests = [
+        "//apps/euc:Cargo.toml",
+        "//apps/euc/shared:Cargo.toml",
+        "//apps/euc/server:Cargo.toml",
+        "//apps/euc/client:Cargo.toml",
+    ],
+)
+use_repo(crate, "euc_crates")
+
 #
 # Go
 #

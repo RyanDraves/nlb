@@ -12,6 +12,8 @@
 | `chat/openai_key` | OpenAI API key | Provisioned at https://platform.openai.com/settings/organization/api-keys |
 | `chat/password` | Used to unlock Lobe Chat service | Arbitrary password; sync with password manager to use in web UI |
 | `dash/mealie_token` | Mealie API token | |
+| `euc/password` | Euchre shared site password | Arbitrary; what players type at the login page |
+| `euc/token_secret` | HMAC secret signing Euchre session tokens | Arbitrary `openssl rand -base64 32` string; rotate to invalidate all sessions |
 | `dash/octoprint_token` | Access token for Octoprint's API | |
 | `dash/portainer_token` | Access token for Portainer's API | |
 | `hyd/postgres_password` | DB password | |
