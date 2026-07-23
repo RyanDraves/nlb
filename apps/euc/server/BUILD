@@ -31,10 +31,6 @@ rust_test(
     name = "euc_server_test",
     crate = ":server",
     edition = "2021",
-<<<<<<< HEAD
-    tags = ["manual"],
-=======
->>>>>>> main
     deps = [
         "@euc_crates//:tokio-tungstenite",
         "@euc_crates//:tower",

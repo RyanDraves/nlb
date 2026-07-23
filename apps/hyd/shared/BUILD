@@ -19,7 +19,6 @@ rust_test(
     name = "hyd_shared_test",
     crate = ":hyd_shared",
     edition = "2021",
-    tags = ["manual"],
     deps = [
         "@hyd_crates//:serde_json",
     ],

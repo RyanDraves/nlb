@@ -19,7 +19,6 @@ rust_test(
     name = "iir_shared_test",
     crate = ":iir_shared",
     edition = "2021",
-    tags = ["manual"],
     deps = [
         "@iir_crates//:serde_json",
     ],
