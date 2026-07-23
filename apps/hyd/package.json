@@ -19,7 +19,7 @@
     "@tailwindcss/typography": "^0.5.20",
     "@types/pg": "^8.20.0",
     "autoprefixer": "^10.5.2",
-    "next": "15.5.20",
+    "next": "15.5.21",
     "pg": "^8.22.0"
   },
   "devDependencies": {

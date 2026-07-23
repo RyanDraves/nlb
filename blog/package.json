@@ -19,7 +19,7 @@
     "@nlb/lrb": "workspace:*",
     "classnames": "^2.5.1",
     "date-fns": "^3.6.0",
-    "next": "15.5.20",
+    "next": "15.5.21",
     "satellite.js": "^5.0.0",
     "three": "^0.185.1"
   },
