@@ -1,4 +1,4 @@
-# hyd ("how ya doing") — Postgres-backed progress dashboard: axum server +
+# hyd — Postgres-backed progress dashboard: axum server +
 # Leptos wasm client. See README.md. The Python management CLI lives in
 # management/ and talks to Postgres directly. Cargo manifests/lockfile are
 # consumed by the `hyd_crates` crate_universe hub declared in //:MODULE.bazel.
