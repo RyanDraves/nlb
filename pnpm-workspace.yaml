@@ -1,5 +1,4 @@
 packages:
   - blog
   - lrb
-  - apps/*
   - nlb/buffham/vscode
