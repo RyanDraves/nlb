@@ -304,9 +304,6 @@ crate.from_cargo(
     cargo_lockfile = "//apps/euc:Cargo.lock",
     manifests = [
         "//apps/euc:Cargo.toml",
-        "//apps/euc/shared:Cargo.toml",
-        "//apps/euc/server:Cargo.toml",
-        "//apps/euc/client:Cargo.toml",
     ],
 )
 use_repo(crate, "euc_crates")
@@ -337,9 +334,6 @@ crate.from_cargo(
     cargo_lockfile = "//apps/iir:Cargo.lock",
     manifests = [
         "//apps/iir:Cargo.toml",
-        "//apps/iir/shared:Cargo.toml",
-        "//apps/iir/server:Cargo.toml",
-        "//apps/iir/client:Cargo.toml",
     ],
 )
 use_repo(crate, "iir_crates")
@@ -356,9 +350,6 @@ crate.from_cargo(
     cargo_lockfile = "//apps/hyd:Cargo.lock",
     manifests = [
         "//apps/hyd:Cargo.toml",
-        "//apps/hyd/shared:Cargo.toml",
-        "//apps/hyd/server:Cargo.toml",
-        "//apps/hyd/client:Cargo.toml",
     ],
 )
 use_repo(crate, "hyd_crates")
