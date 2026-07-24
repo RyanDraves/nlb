@@ -9,31 +9,31 @@
     "test": "bazel test ... --test_lang_filters=jest --build_tests_only"
   },
   "peerDependencies": {
-    "react": ">=18.3.1 <19.0.0",
-    "react-dom": ">=18.3.1 <19.0.0"
+    "react": ">=18.3.1 <20.0.0",
+    "react-dom": ">=18.3.1 <20.0.0"
   },
   "dependencies": {
     "@mdx-js/loader": "3.1.1",
     "@mdx-js/react": "3.1.1",
-    "@next/mdx": "15.5.21",
+    "@next/mdx": "16.2.11",
     "@nlb/lrb": "workspace:*",
     "classnames": "^2.5.1",
-    "date-fns": "^3.6.0",
-    "next": "15.5.21",
-    "satellite.js": "^5.0.0",
+    "date-fns": "^4.4.0",
+    "next": "16.2.11",
+    "satellite.js": "^7.1.0",
     "three": "^0.185.1"
   },
   "devDependencies": {
     "@tailwindcss/typography": "0.5.20",
     "@types/mdx": "2.0.14",
-    "@types/node": "^20.19.43",
+    "@types/node": "^24.13.3",
     "@types/react": "npm:types-react@19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0",
     "@types/three": "^0.185.1",
     "autoprefixer": "^10.5.4",
     "postcss": "^8.5.22",
-    "shiki": "^1.29.2",
-    "tailwindcss": "^3.4.19",
-    "typescript": "^5.9.3"
+    "shiki": "^4.3.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2"
   }
 }
