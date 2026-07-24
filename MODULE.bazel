@@ -24,6 +24,11 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 # Pico SDK & Picotool
 #
 bazel_dep(name = "pico-sdk", version = "2.3.0")
+git_override(
+    module_name = "pico-sdk",
+    commit = "ef9ddf906bdee7de0ffe62bdab7d74cc67ae9c5d",
+    remote = "https://github.com/RyanDraves/pico-sdk.git",
+)
 
 register_toolchains(
     "@pico-sdk//bazel/toolchain:linux-x86_64-rp2040",
@@ -42,6 +47,11 @@ register_toolchains(
 # https://github.com/raspberrypi/pico-sdk/tree/master/bazel#known-issues-and-limitations
 # but the binary is distributed in another repo and configured in `tools/multitool.lock.json`.
 bazel_dep(name = "picotool", version = "2.3.0")
+git_override(
+    module_name = "picotool",
+    commit = "ab847d796ecaaacd13b2d82a18a764a8904b9aed",
+    remote = "https://github.com/RyanDraves/picotool.git",
+)
 
 #
 # Rules Python
@@ -237,10 +247,10 @@ register_toolchains(
 # globally — that would override the default/RBE cc toolchains for every Linux
 # build. Instead `--config=image` in .bazelrc adds them via --extra_toolchains,
 # so only image builds (which compile no other Linux C/C++) use Zig.
-bazel_dep(name = "hermetic_cc_toolchain", version = "3.2.0")
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.2.0")
 
 zig_toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
-use_repo(zig_toolchains, "zig_sdk", "zig_sdk-linux-amd64", "zig_sdk-linux-arm64", "zig_sdk-macos-amd64", "zig_sdk-macos-arm64", "zig_sdk-windows-amd64")
+use_repo(zig_toolchains, "zig_sdk")
 
 crate = use_extension(
     "@rules_rust//crate_universe:extensions.bzl",
@@ -399,6 +409,7 @@ oci.pull(
     tag = "latest",
 )
 use_repo(oci, "debian", "debian_linux_386", "debian_linux_amd64", "debian_linux_arm64_v8", "debian_linux_arm_v5", "debian_linux_arm_v7", "debian_linux_mips64le", "debian_linux_ppc64le", "debian_linux_s390x")
+
 oci.pull(
     name = "distroless_base",
     digest = "sha256:f4a335ca209e1d2ee873102c17c389ad0142e3d5b21aee2817e9cc9c01d87d20",

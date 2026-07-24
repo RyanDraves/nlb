@@ -36,6 +36,7 @@ py_binary(
 
 pico_project(
     srcs = ["main.cc"],
+    is_bootloader = True,
     linker_script = ":bootloader_linker_script",
     names = ["bootloader_pico"],
     # The bootloader image is not stamped; it doesn't link the image stamp
