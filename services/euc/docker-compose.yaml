@@ -1,0 +1,58 @@
+services:
+  spirit-tracks:
+    image: ghcr.io/ryandraves/spirit_tracks:latest
+    network_mode: service:tailscale
+    environment:
+      SPIRIT_TRACKS_CONFIG: /config/secrets.json
+      SPIRIT_TRACKS_SETEC_ADDR: https://setec.barn-arcturus.ts.net
+    volumes:
+      - euc-secrets:/secrets/euc
+      - ${PWD}/secrets.json:/config/secrets.json:ro
+    restart: "no"
+
+  euc:
+    # bazel run //apps/euc:euc_amd64_load  # build & load the image locally
+    # bazel run //apps/euc:euc_push        # push the multi-arch image (login to ghcr first)
+    image: ghcr.io/ryandraves/euc:latest
+    restart: always
+    # Share the tailscale sidecar's network namespace so `tailscale serve` reaches
+    # the server on 127.0.0.1:8080 (EUC_PORT, baked into the image).
+    network_mode: service:tailscale
+    volumes:
+      - euc-secrets:/secrets:ro
+    environment:
+      EUC_SITE_PASSWORD_FILE: /secrets/euc_password
+      EUC_TOKEN_SECRET_FILE: /secrets/euc_token_secret
+    depends_on:
+      spirit-tracks:
+        condition: service_completed_successfully
+      tailscale:
+        condition: service_started
+
+  tailscale:
+    image: tailscale/tailscale:v1.98.4
+    hostname: euc
+    secrets:
+      - euc_authkey
+    environment:
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/ts-serve.json
+      TS_AUTHKEY: file:/run/secrets/euc_authkey
+    volumes:
+      - euc-ts-authkey:/var/lib/tailscale
+      # Use a directory so `fsnotify` can watch the config file for changes
+      - ${PWD}/ts-serve:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+
+volumes:
+  euc-ts-authkey:
+  euc-secrets:
+
+secrets:
+  euc_authkey:
+    file: ${PWD}/../secrets/euc.authkey

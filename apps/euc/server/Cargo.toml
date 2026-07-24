@@ -1,0 +1,30 @@
+[package]
+name = "euc_server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "euc_server"
+path = "src/main.rs"
+
+# First-party deps (euc_shared, //lrb/rng) are linked via Bazel (see BUILD);
+# crate_universe splicing cannot resolve out-of-workspace path deps.
+[dependencies]
+axum.workspace = true
+base64.workspace = true
+env_logger.workspace = true
+futures-util.workspace = true
+getrandom.workspace = true
+hmac.workspace = true
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tokio.workspace = true
+tower-http.workspace = true
+
+[dev-dependencies]
+tokio-tungstenite.workspace = true
+tower.workspace = true

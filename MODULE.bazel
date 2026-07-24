@@ -174,8 +174,6 @@ npm.npm_translate_lock(
     data = [
         "//:package.json",
         "//:pnpm-workspace.yaml",
-        "//apps/hyd:package.json",
-        "//apps/iir:package.json",
         "//blog:package.json",
         "//lrb:package.json",
         "//nlb/buffham/vscode:package.json",
@@ -290,6 +288,80 @@ crate.from_cargo(
     ],
 )
 use_repo(crate, "brm_crates")
+
+# Isolated crate hub for the `euc` Euchre game (apps/euc), mirroring the brm
+# hub above (leptos/axum/tokio trees are too large to hand-list as specs).
+# wasm_split_helpers (leptos transitive) expands a proc-macro that reads
+# CARGO_MANIFEST_PATH, which cargo sets but Bazel does not; any stable string
+# works (it's only a symbol-name stamp).
+crate.annotation(
+    crate = "wasm_split_helpers",
+    repositories = ["euc_crates"],
+    rustc_env = {"CARGO_MANIFEST_PATH": "wasm_split_helpers"},
+)
+crate.from_cargo(
+    name = "euc_crates",
+    cargo_lockfile = "//apps/euc:Cargo.lock",
+    manifests = [
+        "//apps/euc:Cargo.toml",
+        "//apps/euc/shared:Cargo.toml",
+        "//apps/euc/server:Cargo.toml",
+        "//apps/euc/client:Cargo.toml",
+    ],
+)
+use_repo(crate, "euc_crates")
+
+# Isolated crate hub for the iir web app (apps/iir), mirroring the euc hub:
+# leptos + axum + reqwest trees are too large to hand-list as specs. The
+# wasm_split_helpers annotation is required by leptos (see the euc hub above).
+crate.annotation(
+    crate = "wasm_split_helpers",
+    repositories = ["iir_crates"],
+    rustc_env = {"CARGO_MANIFEST_PATH": "wasm_split_helpers"},
+)
+
+# ring (via reqwest's rustls-tls) compiles C crypto through cc-rs, which passes
+# the Rust triple `x86_64-unknown-linux-gnu` as clang `--target`. The hermetic
+# Zig cc rejects that vendor form ("UnknownOperatingSystem"); appending a
+# Zig-native `-target` in CFLAGS wins (last flag) and lets ring cross-compile.
+crate.annotation(
+    build_script_env = {
+        "CFLAGS_x86_64_unknown_linux_gnu": "-target x86_64-linux-gnu",
+        "CFLAGS_aarch64_unknown_linux_gnu": "-target aarch64-linux-gnu",
+    },
+    crate = "ring",
+    repositories = ["iir_crates"],
+)
+crate.from_cargo(
+    name = "iir_crates",
+    cargo_lockfile = "//apps/iir:Cargo.lock",
+    manifests = [
+        "//apps/iir:Cargo.toml",
+        "//apps/iir/shared:Cargo.toml",
+        "//apps/iir/server:Cargo.toml",
+        "//apps/iir/client:Cargo.toml",
+    ],
+)
+use_repo(crate, "iir_crates")
+
+# Isolated crate hub for the hyd web app (apps/hyd), mirroring the iir hub:
+# leptos + axum + tokio-postgres trees are too large to hand-list as specs.
+crate.annotation(
+    crate = "wasm_split_helpers",
+    repositories = ["hyd_crates"],
+    rustc_env = {"CARGO_MANIFEST_PATH": "wasm_split_helpers"},
+)
+crate.from_cargo(
+    name = "hyd_crates",
+    cargo_lockfile = "//apps/hyd:Cargo.lock",
+    manifests = [
+        "//apps/hyd:Cargo.toml",
+        "//apps/hyd/shared:Cargo.toml",
+        "//apps/hyd/server:Cargo.toml",
+        "//apps/hyd/client:Cargo.toml",
+    ],
+)
+use_repo(crate, "hyd_crates")
 
 #
 # Go

@@ -15,6 +15,12 @@
       "runtimeExecutable": "/bin/sh",
       "runtimeArgs": ["-c", "BRM_PORT=8088 exec bazel run //apps/brm:serve"],
       "port": 8088
+    },
+    {
+      "name": "euc",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "EUC_PORT=8090 exec bazel run //apps/euc:serve"],
+      "port": 8090
     }
   ]
 }

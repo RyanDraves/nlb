@@ -1,0 +1,37 @@
+[package]
+name = "euc_client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+# First-party dep euc_shared is linked via Bazel (see BUILD); crate_universe
+# splicing cannot resolve out-of-workspace path deps.
+[dependencies]
+console_error_panic_hook.workspace = true
+js-sys.workspace = true
+leptos.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true
+
+[dependencies.web-sys]
+workspace = true
+features = [
+    "BinaryType",
+    "CloseEvent",
+    "Document",
+    "History",
+    "Location",
+    "MessageEvent",
+    "Response",
+    "Storage",
+    "UrlSearchParams",
+    "WebSocket",
+    "Window",
+]

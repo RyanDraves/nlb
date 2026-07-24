@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Euchre — sign in</title>
+  <meta name="theme-color" content="#14432a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Euchre">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .login-box {
+      max-width: 340px;
+      margin: 22vh auto 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+    }
+    .login-box input { font-size: 1.1rem; text-align: center; }
+    .login-error { color: #ff9a9a; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <form class="login-box" id="form">
+    <h1>Euchre</h1>
+    <p class="muted">Enter the table password</p>
+    <input type="password" id="password" autocomplete="current-password" autofocus>
+    <button class="primary" type="submit">Come on in</button>
+    <div class="login-error" id="error"></div>
+  </form>
+  <script>
+    // Already signed in (or auth is off)? Straight to the game.
+    fetch("/api/session").then((r) => { if (r.ok) window.location.assign("/"); });
+    document.getElementById("form").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const password = document.getElementById("password").value;
+      const resp = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (resp.ok) {
+        window.location.assign("/");
+      } else {
+        document.getElementById("error").textContent =
+          resp.status === 401 ? "That's not it — try again." : "Something went wrong.";
+      }
+    });
+  </script>
+</body>
+</html>

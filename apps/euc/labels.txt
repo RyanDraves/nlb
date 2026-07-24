@@ -1,0 +1,3 @@
+org.opencontainers.image.source=https://github.com/ryandraves/nlb
+org.opencontainers.image.description="euc — Euchre game server + web client"
+org.opencontainers.image.licenses=MIT

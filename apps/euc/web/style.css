@@ -1,0 +1,608 @@
+/* Euchre client. Table-felt theme; phone-first sizing.
+   Teams are color-coded: blue = seats 1&3, red = seats 2&4. */
+:root {
+  --felt: #1c5c39;
+  --felt-dark: #14432a;
+  --ink: #f4f1e8;
+  --accent: #f2b632;
+  --card-bg: #fdfcf7;
+  --card-ink: #1c1c22;
+  --card-red: #c0272d;
+  --team-blue: #3a6fc9;
+  --team-red: #c94a3a;
+  --card-w: 52px;
+  --card-h: 74px;
+}
+
+* { box-sizing: border-box; }
+html { height: 100%; }
+body {
+  margin: 0;
+  background: radial-gradient(circle at 50% 30%, var(--felt) 0%, var(--felt-dark) 100%);
+  height: 100%;
+  color: var(--ink);
+  font-family: system-ui, -apple-system, sans-serif;
+  overscroll-behavior: none;
+}
+/* The app is pinned to exactly the visible viewport: the page itself never
+   scrolls (or jumps when content height changes between rounds); anything
+   that overflows scrolls INSIDE this container. Safe-area insets keep content
+   clear of the iPhone island/home bar in standalone (PWA) mode. */
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: clip;
+  display: flex;
+  flex-direction: column;
+  padding: calc(10px + env(safe-area-inset-top, 0px))
+    calc(14px + env(safe-area-inset-right, 0px))
+    calc(10px + env(safe-area-inset-bottom, 0px))
+    calc(14px + env(safe-area-inset-left, 0px));
+}
+.app.wide {
+  max-width: none;
+  padding: calc(6px + env(safe-area-inset-top, 0px))
+    calc(10px + env(safe-area-inset-right, 0px))
+    calc(6px + env(safe-area-inset-bottom, 0px))
+    calc(10px + env(safe-area-inset-left, 0px));
+}
+
+/* In-game full view fills the screen: the felt stretches, the hand stays at
+   the bottom (clear of the centered bid dialog), and the cards scale with
+   the viewport. */
+.full-game {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  --card-w: clamp(44px, min(8vw, 9vh), 84px);
+  --card-h: calc(var(--card-w) * 1.42);
+}
+.full-game .felt { flex: 1; }
+.full-game .felt-grid { flex: 1; grid-template-rows: auto 1fr auto; }
+.full-game .actions { margin-top: auto; }
+
+header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+header h1 { font-size: 1.4rem; margin: 8px 0; }
+.conn { color: #f88; }
+.conn.ok { color: #9f9; }
+.name-input { margin-left: auto; }
+
+input {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 1rem;
+}
+input::placeholder { color: rgba(244, 241, 232, 0.5); }
+
+button {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 8px;
+  color: var(--ink);
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.24); }
+button:disabled { opacity: 0.45; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #222; font-weight: 600; }
+button.primary:hover:not(:disabled) { background: #ffc84d; }
+button.ghost { background: transparent; }
+button.big { font-size: 1.15rem; padding: 12px 20px; }
+button.tiny { font-size: 0.75rem; padding: 3px 8px; }
+
+.error-bar {
+  background: #a33;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+}
+.muted { opacity: 0.65; }
+.small { font-size: 0.8rem; }
+
+/* ------------------------------------------------------------- cards */
+
+.card {
+  position: relative;
+  display: inline-block;
+  width: var(--card-w);
+  height: var(--card-h);
+  border-radius: calc(var(--card-w) * 0.12);
+  flex-shrink: 0;
+}
+.card.face {
+  background: var(--card-bg);
+  color: var(--card-ink);
+  border: 1px solid #b9b4a6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.card.face.red { color: var(--card-red); }
+/* Corner indices: rank over suit top-left, repeated rotated bottom-right,
+   so the card reads correctly from both sides of the table. */
+.ci {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.95;
+  font-size: calc(var(--card-w) * 0.26);
+  font-weight: 700;
+}
+.ci-tl { top: calc(var(--card-w) * 0.07); left: calc(var(--card-w) * 0.08); }
+.ci-br { bottom: calc(var(--card-w) * 0.07); right: calc(var(--card-w) * 0.08); transform: rotate(180deg); }
+.ci-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--card-w) * 0.56);
+}
+.card.small { --card-w: 38px; --card-h: 54px; width: 38px; height: 54px; }
+
+.card.back {
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.16) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.16) 0 2px, transparent 2px 7px),
+    #35528e;
+  border: 2px solid #ece7da;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.card.back.mini { width: 17px; height: 24px; border-width: 1px; border-radius: 3px; }
+
+/* ------------------------------------------------------------- lobby */
+
+.lobby h2 { margin: 16px 0 8px; }
+.table-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 6px 0;
+}
+.table-name { font-weight: 600; }
+.table-id {
+  font-family: ui-monospace, monospace;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.85rem;
+}
+.create-row { display: flex; gap: 8px; margin-top: 14px; }
+
+/* ------------------------------------------------------- seating phase */
+
+.table-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.table-header h2 { margin: 10px 0; }
+.seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+.seat {
+  background: rgba(0, 0, 0, 0.18);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.seat.team-blue { box-shadow: inset 4px 0 0 var(--team-blue); }
+.seat.team-red { box-shadow: inset 4px 0 0 var(--team-red); }
+.seat.you { border-color: rgba(255, 255, 255, 0.35); }
+.seat.turn { border-color: var(--accent); }
+.seat-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.seat-name { font-weight: 600; }
+
+.panel {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 10px 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.rule-row { display: flex; gap: 8px; align-items: center; }
+
+/* ------------------------------------------------------------- the felt */
+
+.felt { display: flex; flex-direction: column; }
+.felt-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 2px;
+}
+.felt-status { font-size: 1.05rem; min-height: 1.3em; }
+.score-corner { margin-left: auto; display: inline-flex; gap: 6px; }
+.score-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.9em;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #fff;
+}
+.score-chip.team-blue { background: var(--team-blue); }
+.score-chip.team-red { background: var(--team-red); }
+.trump-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--card-ink);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.trump-chip.red-suit { color: var(--card-red); }
+
+.felt-grid {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) auto minmax(90px, 1fr);
+  grid-template-rows: auto minmax(calc(var(--card-h) * 2.6), auto) auto;
+  gap: 6px;
+  align-items: center;
+  justify-items: center;
+}
+.pool {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  width: calc(var(--card-w) * 4.6);
+  height: calc(var(--card-h) * 2.6);
+}
+.pool-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+/* Cards land offset toward the player who threw them, upright from that
+   player's perspective — like a real trick forming in the middle. */
+.pc-0 { transform: translate(-50%, -50%) translateY(calc(var(--card-h) * 0.42)); }
+.pc-1 { transform: translate(-50%, -50%) translateX(calc(var(--card-w) * -0.85)) rotate(90deg); }
+.pc-2 { transform: translate(-50%, -50%) translateY(calc(var(--card-h) * -0.42)) rotate(180deg); }
+.pc-3 { transform: translate(-50%, -50%) translateX(calc(var(--card-w) * 0.85)) rotate(-90deg); }
+/* A played card snaps in from its thrower's side. The keyframe animates the
+   INNER card in its local frame (+Y is always "toward the thrower" thanks to
+   the outer rotation), so one keyframe serves all four directions. Only the
+   newest card carries .entered — re-renders must not replay old entrances. */
+@keyframes pool-enter {
+  from { translate: 0 calc(var(--card-h) * 0.7); opacity: 0; }
+}
+.pool-card.entered > .card { animation: pool-enter 0.16s ease-out; }
+
+/* The winner takes the finished trick: after a beat, the cards slide off in
+   their direction. The `translate` property composes with each card's own
+   transform, so one keyframe set serves every thrower/winner combination. */
+@keyframes exit-0 { to { translate: 0 calc(var(--card-h) * 2.6); opacity: 0; } }
+@keyframes exit-1 { to { translate: calc(var(--card-w) * -3.4) 0; opacity: 0; } }
+@keyframes exit-2 { to { translate: 0 calc(var(--card-h) * -2.6); opacity: 0; } }
+@keyframes exit-3 { to { translate: calc(var(--card-w) * 3.4) 0; opacity: 0; } }
+.pool-card.exit-0 { animation: exit-0 0.35s ease-in 0.45s forwards; }
+.pool-card.exit-1 { animation: exit-1 0.35s ease-in 0.45s forwards; }
+.pool-card.exit-2 { animation: exit-2 0.35s ease-in 0.45s forwards; }
+.pool-card.exit-3 { animation: exit-3 0.35s ease-in 0.45s forwards; }
+.pool-note { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; }
+.pool-label { font-size: 1.3rem; font-weight: 600; }
+
+.plate {
+  /* Anchors the absolutely-positioned .bid-toast flash. */
+  position: relative;
+  background: rgba(0, 0, 0, 0.2);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 8px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 110px;
+}
+.plate.team-blue { background: color-mix(in srgb, var(--team-blue) 26%, rgba(0, 0, 0, 0.25)); }
+.plate.team-red { background: color-mix(in srgb, var(--team-red) 26%, rgba(0, 0, 0, 0.25)); }
+.plate.turn { border-color: var(--accent); box-shadow: 0 0 14px rgba(242, 182, 50, 0.45); }
+.plate.away { opacity: 0.55; }
+.plate.you { outline: 1px dashed rgba(255, 255, 255, 0.4); }
+.f-bottom { grid-column: 2; grid-row: 3; }
+.f-top { grid-column: 2; grid-row: 1; }
+.f-left { grid-column: 1; grid-row: 2; }
+.f-right { grid-column: 3; grid-row: 2; }
+.plate-name { display: flex; gap: 5px; align-items: center; justify-content: center; font-weight: 600; }
+.badge {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-size: 0.72rem;
+}
+.badge.red-suit { color: #ffb0a8; }
+.plate-cards { display: flex; gap: 2px; min-height: 24px; }
+/* Tricks taken, as a plain counter beside the player's name. */
+.trick-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--card-ink);
+  font-weight: 700;
+  font-size: 0.85em;
+}
+
+/* The kitty lies on the felt in front of the dealer, rotated toward them; the
+   upcard rides on top during round-one bidding. Once resolved it sweeps off
+   the table in the dealer's direction (same exit keyframes as tricks). */
+.kitty { position: absolute; left: 50%; top: 50%; }
+.kitty .card { position: absolute; left: 0; top: 0; }
+.kitty .k0 { transform: translate(-50%, -50%) rotate(-6deg); }
+.kitty .k1 { transform: translate(-50%, -50%) rotate(4deg) translateX(2px); }
+.kitty .card.face { transform: translate(-50%, -50%); z-index: 2; }
+.kp-0 { transform: translate(calc(var(--card-w) * 1.7), calc(var(--card-h) * 0.75)); }
+.kp-1 { transform: translate(calc(var(--card-w) * -1.9), calc(var(--card-h) * 0.55)) rotate(90deg); }
+.kp-2 { transform: translate(calc(var(--card-w) * -1.7), calc(var(--card-h) * -0.75)) rotate(180deg); }
+.kp-3 { transform: translate(calc(var(--card-w) * 1.9), calc(var(--card-h) * -0.55)) rotate(-90deg); }
+.kitty.exit.kp-0 { animation: exit-0 0.4s ease-in 0.2s forwards; }
+.kitty.exit.kp-1 { animation: exit-1 0.4s ease-in 0.2s forwards; }
+.kitty.exit.kp-2 { animation: exit-2 0.4s ease-in 0.2s forwards; }
+.kitty.exit.kp-3 { animation: exit-3 0.4s ease-in 0.2s forwards; }
+
+/* Fresh deal: card backs snap onto plates, the kitty lands last, and the
+   player's own hand fans in — quick, then the round-one bidding starts. */
+@keyframes deal-pop {
+  from { opacity: 0; translate: 0 -8px; }
+}
+.plate-cards.dealing .card { animation: deal-pop 0.2s ease-out backwards; }
+.plate-cards.dealing .card:nth-child(2) { animation-delay: 0.04s; }
+.plate-cards.dealing .card:nth-child(3) { animation-delay: 0.08s; }
+.plate-cards.dealing .card:nth-child(4) { animation-delay: 0.12s; }
+.plate-cards.dealing .card:nth-child(5) { animation-delay: 0.16s; }
+@keyframes kitty-in {
+  from { opacity: 0; scale: 0.6; }
+}
+.kitty.enter { animation: kitty-in 0.25s ease-out 0.2s backwards; }
+@keyframes hand-deal {
+  from { opacity: 0; translate: 0 24px; }
+}
+.hand.dealing .hand-card { animation: hand-deal 0.22s ease-out backwards; }
+.hand.dealing .hand-card:nth-child(2) { animation-delay: 0.05s; }
+.hand.dealing .hand-card:nth-child(3) { animation-delay: 0.1s; }
+.hand.dealing .hand-card:nth-child(4) { animation-delay: 0.15s; }
+.hand.dealing .hand-card:nth-child(5) { animation-delay: 0.2s; }
+
+/* Flash beside whoever just bid, fading out over 0.75 s. */
+.bid-toast {
+  position: absolute;
+  left: 50%;
+  top: -1.1em;
+  transform: translateX(-50%);
+  background: var(--card-bg);
+  color: var(--card-ink);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  animation: bid-fade 0.75s ease-out 0.2s forwards;
+  pointer-events: none;
+  z-index: 8;
+}
+@keyframes bid-fade { to { opacity: 0; translate: 0 -10px; } }
+.bid-toast.hand-toast { position: static; transform: none; align-self: center; }
+
+/* ------------------------------------------------------------- bid dialog */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+.dialog {
+  background: var(--felt-dark);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  min-width: 240px;
+}
+.dialog-title { font-size: 1.2rem; font-weight: 600; }
+.dialog-card { display: flex; justify-content: center; }
+.suit-row { display: flex; gap: 10px; }
+.suit-btn {
+  width: 54px;
+  height: 54px;
+  font-size: 1.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg);
+  color: var(--card-ink);
+  border: 1px solid #b9b4a6;
+  border-radius: 10px;
+  padding: 0;
+}
+.suit-btn.red-suit { color: var(--card-red); }
+.suit-btn:hover:not(:disabled) { background: #fff; transform: translateY(-2px); }
+.suit-btn:disabled { opacity: 0.3; }
+.dialog-actions { display: flex; gap: 10px; }
+
+/* "Go alone" switch. */
+.toggle-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  padding: 4px 8px;
+}
+.toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.22);
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+.toggle .knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.15s ease;
+}
+.toggle.on { background: var(--accent); }
+.toggle.on .knob { left: 21px; }
+
+/* ------------------------------------------------------------- actions/hand */
+
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; justify-content: center; }
+
+.hand-wrap { margin-top: 8px; text-align: center; }
+.hand-hint { margin-bottom: 12px; }
+.hand { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding-top: 10px; }
+/* The button is a stationary hit area; only the card VISUAL inside it lifts.
+   Because the hitbox never moves, edge-hover flicker is impossible. */
+.hand-card {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: default;
+  width: var(--card-w);
+  height: var(--card-h);
+  position: relative;
+}
+.hand-card .card { transition: transform 0.12s ease; }
+.hand-card.playable { cursor: pointer; }
+.hand-card.playable .card {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+.hand-card.playable:hover .card { transform: translateY(-9px); }
+.hand-card:disabled { opacity: 0.5; }
+
+/* Hand mode: phone in hand, tablet on the table. Big targets, minimal chrome. */
+.hand-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  justify-content: center;
+}
+/* The bid dialog stays centered; the hand sits at the bottom under a light
+   backdrop so the player can study their cards while deciding. */
+.hand-mode .dialog-backdrop { background: rgba(0, 0, 0, 0.25); }
+.hand-mode .hand-big { margin-top: auto; }
+.hand-mode.my-turn { animation: pulse-edge 1.6s ease-in-out infinite; border-radius: 14px; }
+@keyframes pulse-edge {
+  0%, 100% { box-shadow: inset 0 0 0 0 rgba(242, 182, 50, 0); }
+  50% { box-shadow: inset 0 0 0 4px rgba(242, 182, 50, 0.55); }
+}
+.hand-mode-top { display: flex; gap: 14px; align-items: center; justify-content: center; }
+.hand-trump { font-size: 1.6rem; }
+.hand-trump.red { color: #ff9a9a; }
+.hand-mode-status { text-align: center; font-size: 1.3rem; }
+.hand-mode .actions { justify-content: center; }
+/* Hand-mode cards fill the width: five cards plus gaps span most of a phone
+   or tablet screen. */
+.hand-big {
+  /* The vh term keeps the hand clear of the centered bid dialog on short
+     viewports. */
+  --card-w: clamp(64px, min(17vw, 17vh), 140px);
+  --card-h: calc(var(--card-w) * 1.42);
+  gap: 2vw;
+}
+.hand-big .card { width: var(--card-w); height: var(--card-h); }
+
+/* ------------------------------------------------------------- table display */
+
+.table-display {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  /* Fill whatever surface the tablet offers: cards and text scale with the
+     viewport, capped so a huge monitor stays sane. */
+  --card-w: clamp(48px, min(9vw, 15vh), 130px);
+  --card-h: calc(var(--card-w) * 1.42);
+  font-size: clamp(0.95rem, min(2.1vw, 3.4vh), 2rem);
+}
+.table-display .felt { flex: 1; }
+.table-display .felt-grid { flex: 1; grid-template-rows: auto 1fr auto; }
+.table-display .felt-status { font-size: 1.25em; }
+.table-display .score-chip { font-size: 1.15em; }
+.table-display .trump-chip { font-size: 1.15em; }
+.table-display .plate { min-width: 8.5em; padding: 0.6em 1em; font-size: 1em; }
+.table-display .plate-cards { min-height: calc(var(--card-w) * 0.45); }
+.table-display .card.back.mini {
+  width: calc(var(--card-w) * 0.3);
+  height: calc(var(--card-w) * 0.43);
+  border-radius: calc(var(--card-w) * 0.05);
+}
+
+/* Narrow portrait phones: shrink the felt so nothing scrolls sideways. */
+@media (max-width: 480px) {
+  .full-game { --card-w: 40px; }
+  .plate { min-width: 0; padding: 5px 8px; font-size: 0.85rem; }
+  .felt-grid { grid-template-columns: minmax(52px, 1fr) auto minmax(52px, 1fr); gap: 4px; }
+  .pool { width: calc(var(--card-w) * 4); }
+  .badge { font-size: 0.65rem; padding: 1px 4px; }
+  .card.back.mini { width: 13px; height: 18px; }
+}
+
+/* Short landscape phones: compact vertical chrome so the felt + hand fit
+   without scrolling. */
+@media (max-height: 520px) {
+  header { display: none; }
+  .full-game { --card-w: clamp(40px, min(8vw, 8.2vh), 84px); }
+  button { padding: 4px 10px; font-size: 0.85rem; }
+  .table-header h2 { font-size: 1rem; margin: 2px 0; }
+  .felt-top { padding: 0 2px; }
+  .felt-status { font-size: 0.95rem; }
+  .plate { padding: 3px 10px; gap: 2px; font-size: 0.85rem; }
+  .plate-cards { min-height: 14px; }
+  .card.back.mini { width: 12px; height: 17px; }
+  .felt-grid { gap: 3px; }
+  .pool { height: calc(var(--card-h) * 1.9); }
+  .actions { margin: 3px 0; }
+  .hand-wrap { margin-top: 2px; }
+  .hand-hint { margin-bottom: 4px; }
+  .hand { padding-top: 4px; }
+}
+.exit-display { position: absolute; bottom: 4px; right: 4px; opacity: 0.5; z-index: 5; }
+.td-waiting { margin: auto; text-align: center; display: flex; flex-direction: column; gap: 8px; }
+.td-waiting .team-blue { color: color-mix(in srgb, var(--team-blue) 60%, #fff); }
+.td-waiting .team-red { color: color-mix(in srgb, var(--team-red) 60%, #fff); }
