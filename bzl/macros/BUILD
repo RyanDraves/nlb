@@ -33,19 +33,19 @@ bzl_library(
     srcs = ["emb.bzl"],
     deps = [
         ":python",
+        "@rules_cc//cc:defs_bzl",
     ],
 )
 
-# //bzl/rules:platform_transition needs a fix in rules_cc
-# bzl_library(
-#     name = "js_image",
-#     srcs = ["js_image.bzl"],
-#     deps = [
-#         "//bzl/rules:platform_transition",
-#         "@aspect_rules_js//js:defs",
-#         "@rules_oci//oci:defs",
-#     ],
-# )
+bzl_library(
+    name = "js_image",
+    srcs = ["js_image.bzl"],
+    deps = [
+        "//bzl/rules:platform_transition",
+        "@aspect_rules_js//js:defs",
+        "@rules_oci//oci:defs",
+    ],
+)
 
 bzl_library(
     name = "next",
@@ -62,7 +62,7 @@ bzl_library(
 )
 
 # Waiting for rules_pico to support bzl_library
-# https://github.com/raspberrypi/pico-sdk/pull/2674
+# https://github.com/raspberrypi/pico-sdk/pull/2709
 # bzl_library(
 #     name = "pico",
 #     srcs = ["pico.bzl"],

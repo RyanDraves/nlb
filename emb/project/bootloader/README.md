@@ -53,3 +53,7 @@ Changes to the `SystemFlashPage` layout require a full re-provision, as neither 
   - On the application side, consider skipping the flash if the CRC matches the running image
   - DMA CRC32 https://github.com/usedbytes/rp2040-serial-bootloader/blob/main/main.c#L266
   - Another DMA CRC32 https://github.com/rhulme/pico-flashloader/blob/urloader/flashloader.c#L125
+- Point back to the [latest memmap](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/pico_platform/memmap_default.ld) for linking
+
+# Attribution
+- `memmap_default.ld` vendored from [pico-sdk 2.2.0](https://github.com/raspberrypi/pico-sdk/blob/a1438dff1d38bd9c65dbd693f0e5db4b9ae91779/src/rp2_common/pico_crt0/rp2040/memmap_default.ld)

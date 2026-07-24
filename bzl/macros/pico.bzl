@@ -86,7 +86,7 @@ def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], link
             name + "_no_bootloader",
             name,
             platform,
-            "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
+            "@pico-sdk//src/rp2_common/pico_standard_link:default_linker_script",
             stamp = stamp,
             tags = ["manual"],
             **kwargs

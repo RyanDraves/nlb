@@ -3,7 +3,6 @@
 module(
     name = "ryandraves_nlb",
     version = "0.1.2",
-    compatibility_level = 0,
 )
 
 #
@@ -25,12 +24,6 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 # Pico SDK & Picotool
 #
 bazel_dep(name = "pico-sdk", version = "2.3.0")
-single_version_override(
-    module_name = "pico-sdk",
-    patches = [
-        "//bzl/deps:pico-sdk.patch",
-    ],
-)
 
 register_toolchains(
     "@pico-sdk//bazel/toolchain:linux-x86_64-rp2040",
@@ -60,6 +53,7 @@ bazel_dep(name = "rules_python", version = "2.2.0")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
+    configure_coverage_tool = False,  # Spammy debug; not set up yet
     is_default = True,
     python_version = "3.12",
 )
@@ -100,10 +94,10 @@ bazel_dep(
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",
-    commit = "abb61a688167623088f8768cc9264798df6a9d10",
-    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-    # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
-    # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
+    commit = "1f9360db1834d115c48279d38a97f30d64d3fd4a",
+    remote = "https://github.com/helly25/bazel-compile-commands-extractor.git",
+    # Replace the commit hash with the latest from
+    # https://github.com/helly25/bazel-compile-commands-extractor/commits/main
 )
 
 #
@@ -257,7 +251,7 @@ crate = use_extension(
 crate.spec(
     package = "wasm-bindgen",
     # Must match the wasm-bindgen-cli bundled by rules_rust_wasm_bindgen.
-    version = "=0.2.126",
+    version = "=0.2.121",
 )
 crate.spec(
     package = "wee_alloc",
@@ -345,6 +339,7 @@ oci.pull(
     tag = "latest",
 )
 use_repo(oci, "debian", "debian_linux_386", "debian_linux_amd64", "debian_linux_arm64_v8", "debian_linux_arm_v5", "debian_linux_arm_v7", "debian_linux_mips64le", "debian_linux_ppc64le", "debian_linux_s390x")
+
 oci.pull(
     name = "distroless_base",
     digest = "sha256:f4a335ca209e1d2ee873102c17c389ad0142e3d5b21aee2817e9cc9c01d87d20",
