@@ -50,7 +50,7 @@ def _pico_elf_and_bin(name, binary, platform, linker_script, stamp = True, **kwa
         **kwargs
     )
 
-def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], linker_script = "//emb/project/bootloader:application_linker_script", stamp = True, **kwargs):
+def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], linker_script = "//emb/project/bootloader:application_linker_script", stamp = True, is_bootloader = False, **kwargs):
     """Compile a Pico project
 
     Produces a host binary, an ELF file, a UF2 file, and a bin file.
@@ -67,6 +67,7 @@ def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], link
         platforms: The Pico platform to build for
         linker_script: The linker script to use
         stamp: Whether to stamp the bin with its image hash
+        is_bootloader: Whether this is a bootloader project
         **kwargs: Additional arguments to pass to binary targets
     """
     for name, platform in zip(names, platforms):
@@ -81,16 +82,17 @@ def pico_project(names, srcs, deps, platforms = ["//bzl/platforms:rp2040"], link
 
         _pico_elf_and_bin(name, name, platform, linker_script, stamp = stamp, **kwargs)
 
-        # Create an additional binary without the bootloader in the linker script
-        _pico_elf_and_bin(
-            name + "_no_bootloader",
-            name,
-            platform,
-            "@pico-sdk//src/rp2_common/pico_crt0:default_linker_script",
-            stamp = stamp,
-            tags = ["manual"],
-            **kwargs
-        )
+        if not is_bootloader:
+            # Create an additional binary without the bootloader in the linker script
+            _pico_elf_and_bin(
+                name + "_no_bootloader",
+                name,
+                platform,
+                "@pico-sdk//src/rp2_common/pico_standard_link:default_linker_script",
+                stamp = stamp,
+                tags = ["manual"],
+                **kwargs
+            )
 
         # Generate a UF2 file from the ELF file
         # Adapted from https://github.com/raspberrypi/pico-sdk/blob/efe2103f9b28458a1615ff096054479743ade236/tools/uf2_aspect.bzl

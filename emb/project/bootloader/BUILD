@@ -36,6 +36,7 @@ py_binary(
 
 pico_project(
     srcs = ["main.cc"],
+    is_bootloader = True,
     linker_script = ":bootloader_linker_script",
     names = ["bootloader_pico"],
     # The bootloader image is not stamped; it doesn't link the image stamp
@@ -55,7 +56,7 @@ pico_project(
 
 patch(
     name = "memmap_application_patch",
-    src = "@pico-sdk//src/rp2_common/pico_crt0/rp2040:memmap_default.ld",
+    src = ":memmap_default.ld",
     out_file = "memmap_application_patch.ld",
     patch = "memmap_application.patch",
 )
@@ -88,7 +89,7 @@ platform_transition(
 
 patch(
     name = "memmap_bootloader_patch",
-    src = "@pico-sdk//src/rp2_common/pico_crt0/rp2040:memmap_default.ld",
+    src = ":memmap_default.ld",
     out_file = "memmap_bootloader_patch.ld",
     patch = "memmap_bootloader.patch",
 )
