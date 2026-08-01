@@ -56,8 +56,7 @@ main:
               value: "j2_flat"
             - label: "All passives present (C1-C5, R1, R2)"
               value: "all_passives_present"
-          value:
-            bind: measurements.visual_ok
+          bind: measurements.visual_ok
     measurements:
       - name: Visual checks passed
         key: visual_ok
