@@ -118,10 +118,6 @@ gazelle_python_manifest(
 # gazelle:python_generation_mode file
 # gazelle:python_default_visibility //visibility:public
 #
-# gazelle:python_ignore_files apps/brm/assets/gen_powerups.py
-# gazelle:python_ignore_files apps/brm/assets/gen_sfx.py
-# gazelle:python_ignore_files apps/euc/assets/gen_icons.py
-# gazelle:python_ignore_files apps/euc/examples/bot.py
 # gazelle:python_ignore_files services/authentik/invitation_group_add.py
 #
 # Generated libraries
