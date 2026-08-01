@@ -55,4 +55,3 @@ rust_binary(
         "@brm_crates//:serde",
     ],
 )
-
