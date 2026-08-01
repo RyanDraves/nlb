@@ -21,11 +21,6 @@ def _press_count(phase, logs, bazel) -> int:
     return json.loads(output.strip().splitlines()[-1])['press_count']
 
 
-def confirm_step(phase, ui):
-    if not ui.done:
-        phase.fail('Operator did not confirm the step')
-
-
 def bootsel_check(measurements):
     deadline = time.monotonic() + BOOTSEL_TIMEOUT_S
     while time.monotonic() < deadline:

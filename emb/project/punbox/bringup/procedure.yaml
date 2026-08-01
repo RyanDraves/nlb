@@ -91,7 +91,6 @@ main:
   - name: Solder the Pico
     key: solder_pico
     description: Hand-solder the Pico onto the castellated pads
-    python: phases:confirm_step
     depends_on:
       - short_check
     ui:
@@ -102,9 +101,16 @@ main:
           label: >
             Pico soldered: USB overhangs the board edge, corners tacked
             first, all castellations wetted
+          bind: measurements.solder_ok
         - key: notes
           type: textarea
           label: "Notes (optional)"
+    measurements:
+      - name: Pico soldered
+        key: solder_ok
+        validators:
+          - operator: "=="
+            expected_value: true
 
   - name: BOOTSEL check
     key: bootsel_check
