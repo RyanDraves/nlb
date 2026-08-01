@@ -29,9 +29,9 @@ GH_ARM64_MACOS_SHA256_SUM=ba3e0396ebbc8da17256144ddda503e4e79c8b502166335569f839
 
 # Go is exported by multitool, but we need it for the Go extension to be happy
 GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')
-GO_X86_SHA256_SUM=aac1b08a0fb0c4e0a7c1555beb7b59180b05dfc5a3d62e40e9de90cd42f88235
-GO_ARM64_SHA256_SUM=bd03b743eb6eb4193ea3c3fd3956546bf0e3ca5b7076c8226334afe6b75704cd
-GO_MACOS_ARM64_SHA256_SUM=b1640525dfe68f066d56f200bef7bf4dce955a1a893bd061de6754c211431023
+GO_X86_SHA256_SUM=5c2c3b16caefa1d968a94c1daca04a7ca301a496d9b086e17ad77bb81393f053
+GO_ARM64_SHA256_SUM=fe4789e92b1f33358680864bbe8704289e7bb5fc207d80623c308935bd696d49
+GO_MACOS_ARM64_SHA256_SUM=efb87ff28af9a188d0536ef5d42e63dd52ba8263cd7344a993cc48dd11dedb6a
 
 REPO_ROOT=$(dirname $(readlink -f $0))
 
@@ -54,6 +54,7 @@ APT_PACKAGES=(
     python3-pip
     python3-ipython
     python3-numpy
+    python3-venv  # For direnv to not fail
     # For local Pico tooling
     pkg-config
     cmake
@@ -543,10 +544,13 @@ function dev_env_setup() {
     echo "Done exporting venv"
 
     # Setup direnv with the appropriate shell hook
+    # Run it locally so the current shell can use it immediately
     if [[ "$shell_rc" == *"zshrc"* ]]; then
         maybe_add_to_file "$shell_rc" 'eval "$(direnv hook zsh)"'
+        eval "$(direnv hook zsh)"
     else
         maybe_add_to_file "$shell_rc" 'eval "$(direnv hook bash)"'
+        eval "$(direnv hook bash)"
     fi
 
     echo "Allowing direnv in repo root"
