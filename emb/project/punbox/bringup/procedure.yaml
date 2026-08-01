@@ -18,23 +18,27 @@ plugs:
     name: Bazel runner
     python: plugs:Bazel
 
+unit:
+  serial_number:
+    placeholder: "Enter serial number"
+  part_number:
+    default_value: "PUNBOX-1"
+
 main:
   - name: Unit info
     key: unit_info
     description: Identify the board under test
-    python: phases.unit_info
     ui:
       requires_input: true
       components:
         - key: serial
           type: text_input
-          label: "Board serial (sharpie on the back, e.g. PB-001)"
+          label: "Board serial (sharpie on the back, e.g. 001)"
           bind: unit.serial_number
 
   - name: Visual inspection
     key: visual_inspection
     description: Inspect the assembled board before applying power
-    python: phases.visual_inspection
     ui:
       requires_input: true
       components:
@@ -42,22 +46,30 @@ main:
           type: checklist
           label: "Confirm each item"
           options:
-            - "U1/U2 pin-1 dots face the same way as the silkscreen dot"
-            - "No solder bridges on U1/U2 pins (loupe/phone macro)"
-            - "C5 stripe matches the silkscreen minus marking"
-            - "J2 connector sits flat, pins wetted"
-            - "All passives present (C1-C5, R1, R2)"
+            - label: "U1/U2 pin-1 dots face the same way as the silkscreen dot"
+              value: "u1_u2_pin1_dot"
+            - label: "No solder bridges on U1/U2 pins (loupe/phone macro)"
+              value: "no_solder_bridges"
+            - label: "C5 stripe matches the silkscreen minus marking"
+              value: "c5_stripe_correct"
+            - label: "J2 connector sits flat, pins wetted"
+              value: "j2_flat"
+            - label: "All passives present (C1-C5, R1, R2)"
+              value: "all_passives_present"
+          value:
+            bind: measurements.visual_ok
     measurements:
       - name: Visual checks passed
         key: visual_ok
-        validators:
-          - operator: "=="
-            expected_value: true
+        aggregations:
+          - type: count
+            validators:
+              - operator: "=="
+                expected_value: 5
 
   - name: Short check
     key: short_check
     description: Multimeter resistance across the 5V rail, unpowered
-    python: phases.short_check
     depends_on:
       - visual_inspection
     ui:
@@ -80,7 +92,7 @@ main:
   - name: Solder the Pico
     key: solder_pico
     description: Hand-solder the Pico onto the castellated pads
-    python: phases.confirm_step
+    python: phases:confirm_step
     depends_on:
       - short_check
     ui:
@@ -98,14 +110,14 @@ main:
   - name: BOOTSEL check
     key: bootsel_check
     description: Hold BOOTSEL, plug in USB; the RPI-RP2 drive should mount
-    python: phases.bootsel_check
+    python: phases:bootsel_check
     depends_on:
       - solder_pico
     ui:
       components:
         - key: instructions
           type: text
-          value: >
+          description: >
             Hold the Pico's BOOTSEL button and plug the USB cable into this
             computer. Waiting up to 60s for the RPI-RP2 drive...
     measurements:
@@ -118,7 +130,7 @@ main:
   - name: Provision bootloader
     key: provision
     description: Flash the bootloader and base image over BOOTSEL
-    python: phases.provision
+    python: phases:provision
     depends_on:
       - bootsel_check
     measurements:
@@ -131,7 +143,7 @@ main:
   - name: Flash punbox
     key: flash_punbox
     description: OTA-flash the punbox image over USB serial
-    python: phases.flash_punbox
+    python: phases:flash_punbox
     depends_on:
       - provision
     measurements:
@@ -144,7 +156,7 @@ main:
   - name: Connect speakers
     key: connect_speakers
     description: Plug the speaker harness into J2 before the audio test
-    python: phases.confirm_step
+    python: phases:confirm_step
     depends_on:
       - flash_punbox
     ui:
@@ -157,7 +169,7 @@ main:
   - name: HIL test
     key: hil_test
     description: Runs the firmware HIL test; the rimshot plays through J2
-    python: phases.hil_test
+    python: phases:hil_test
     depends_on:
       - connect_speakers
     measurements:
@@ -170,7 +182,6 @@ main:
   - name: Audio confirm
     key: audio_confirm
     description: Operator confirms what the HIL test played
-    python: phases.audio_confirm
     depends_on:
       - hil_test
     ui:
@@ -182,7 +193,7 @@ main:
           bind: measurements.rimshot_heard
         - key: replay
           type: text
-          value: >
+          description: >
             Need to hear it again? Run
             `bazel run //emb/project/punbox:shell` -> `client.play_sound()`
     measurements:
@@ -195,7 +206,7 @@ main:
   - name: Button baseline
     key: button_baseline
     description: Read the press count before the operator touches the board
-    python: phases.button_baseline
+    python: phases:button_baseline
     depends_on:
       - hil_test
     measurements:
@@ -205,7 +216,7 @@ main:
   - name: Press the button
     key: button_press
     description: Simulate a button press at the J3 holes
-    python: phases.confirm_step
+    python: phases:confirm_step
     depends_on:
       - button_baseline
     ui:
@@ -213,7 +224,7 @@ main:
       components:
         - key: instructions
           type: text
-          value: >
+          description: >
             Short the two J3 through-holes together with tweezers, firmly,
             for about one second. The rimshot will play.
         - key: done
@@ -223,7 +234,7 @@ main:
   - name: Button verify
     key: button_verify
     description: The press count must have advanced
-    python: phases.button_verify
+    python: phases:button_verify
     depends_on:
       - button_press
     measurements:
