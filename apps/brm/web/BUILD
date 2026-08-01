@@ -3,9 +3,9 @@
 filegroup(
     name = "assets",
     srcs = [
+        "brm_net.js",
         "index.html",
         "mq_js_bundle.js",
-        "brm_net.js",
     ],
     tags = ["manual"],
     visibility = ["//apps/brm:__subpackages__"],

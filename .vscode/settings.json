@@ -7,6 +7,7 @@
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file",
     "python.defaultInterpreterPath": "venv/bin/python",
+    "python.terminal.activateEnvironment": false,
     "files.associations": {
         "*.ejs": "html",
         "cstddef": "cpp",

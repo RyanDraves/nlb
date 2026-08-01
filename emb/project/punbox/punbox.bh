@@ -1,5 +1,14 @@
 import emb.project.base.base;
 
+# Pin assignments: the single source of truth shared by the firmware and the
+# hardware design (`hw/punbox.py`).
+# I2S DIN (Waveshare Pico-Audio original revision / carrier board)
+constant uint8_t i2s_data_pin = 26;
+# I2S BCK, with LRCK on the next consecutive pin
+constant uint8_t i2s_clock_pin_base = 27;
+# Active-low pushbutton, against an internal pull-up
+constant uint8_t button_pin = 6;
+
 message PunboxState {
     # Number of debounced button presses (and remote triggers) since boot
     uint32_t press_count;
