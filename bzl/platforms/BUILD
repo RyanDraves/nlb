@@ -39,11 +39,29 @@ platform(
     parents = ["@platforms//host"],
 )
 
+# The Linux platforms select the hermetic Zig cc toolchain via platform-based
+# `flags`, so anything transitioned to them (e.g. the brm container image, which
+# cross-compiles the Rust server) links with Zig — without a global toolchain
+# registration that would shadow the host/RBE cc for normal builds.
+# Applies through platform transitions the same way rp2040's flags do.
+#
+# We also force Go to pure (CGO off) here. Because a cc toolchain (Zig) is now
+# available for these platforms, rules_go would otherwise auto-enable cgo and
+# compile net/runtime/cgo with Zig cc — whose default UBSan emits
+# __ubsan_handle_* calls that Go's internal linker can't resolve ("relocation
+# target __ubsan_handle_* not defined"). Our Go container binaries don't need
+# cgo (e.g. tailscale/certstore falls back to a pure stub on Linux), so pure is
+# both correct and avoids the Zig/UBSan link break. The host/RBE darwin+linux
+# builds keep cgo on via their normal cc toolchains, unaffected by this.
 platform(
     name = "linux_amd64",
     constraint_values = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
+    ],
+    flags = [
+        "--extra_toolchains=@zig_sdk//toolchain:linux_amd64_gnu.2.28",
+        "--@rules_go//go/config:pure",
     ],
 )
 
@@ -52,6 +70,10 @@ platform(
     constraint_values = [
         "@platforms//os:linux",
         "@platforms//cpu:arm64",
+    ],
+    flags = [
+        "--extra_toolchains=@zig_sdk//toolchain:linux_arm64_gnu.2.28",
+        "--@rules_go//go/config:pure",
     ],
 )
 

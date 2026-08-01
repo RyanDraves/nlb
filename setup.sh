@@ -94,6 +94,8 @@ BREW_PACKAGES=(
     sanesidebuttons
     # Audio/video editing
     ffmpeg
+    # PDF tools
+    xpdf
 )
 
 function check_if_on_wsl() {

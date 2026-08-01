@@ -19,6 +19,8 @@ exclude = [
     "services/authentik/invitation_group_add.py",
     "**/*_bh.pyi",
     "nlb/buffham/schema_bh.py",
+    # Preview mode spams VsCode
+    "**/*.md"
 ]
 
 [tool.ruff.lint.isort]

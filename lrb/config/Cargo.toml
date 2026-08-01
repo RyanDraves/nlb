@@ -1,0 +1,14 @@
+[package]
+name = "lrb_config"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[lib]
+path = "lib.rs"
+
+# Standalone package (not a member of any app workspace) so the hyd and iir
+# Cargo workspaces can path-depend on it via Bazel without crate_universe
+# trying to splice it.
+[workspace]

@@ -18,15 +18,13 @@ bzl_library(
     ],
 )
 
-# Waiting on a fix in rules_cc
-# https://github.com/bazelbuild/rules_cc/pull/507
-# bzl_library(
-#     name = "platform_transition",
-#     srcs = ["platform_transition.bzl"],
-#     deps = [
-#         "@rules_cc//cc/common",
-#     ],
-# )
+bzl_library(
+    name = "platform_transition",
+    srcs = ["platform_transition.bzl"],
+    deps = [
+        "@rules_cc//cc/common",
+    ],
+)
 
 # Starlark Gazelle extension is too primitive to accept other directives
 # gazelle:ignore

@@ -30,6 +30,7 @@ js_run_binary(
         "//:node_modules/@secretlint/secretlint-rule-no-dotenv",
         "//:node_modules/@secretlint/secretlint-rule-preset-recommend",
     ],
+    outs = ["buffham.vsix"],
     args = [
         "package",
         # The extension is declarative (no runtime deps); skip vsce's `npm` invocation
@@ -38,7 +39,6 @@ js_run_binary(
         "buffham.vsix",
     ],
     chdir = package_name(),
-    outs = ["buffham.vsix"],
     tool = ":vsce",
     visibility = ["//visibility:public"],
 )

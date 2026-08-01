@@ -27,19 +27,19 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           lfs: true
       - uses: bazelbuild/setup-bazelisk@v3
       - name: Bazel Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           # Path must match `build --disk_cache=` in the .bazelrc
           path: "~/.cache/bazel"
           key: ${{ runner.os }}-bazel-${{ github.workflow }}
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
       - name: Build Site
         id: build_site
         run: |
@@ -47,7 +47,7 @@ jobs:
           # Set the output path as an output variable
           echo "out_path=bazel-bin/blog/out" >> $GITHUB_OUTPUT
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ${{ steps.build_site.outputs.out_path }}
 
@@ -61,4 +61,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

@@ -12,7 +12,7 @@ This is a personal monorepo combining Python libraries, embedded systems, web ap
 
 ### Core Structure
 - `nlb/` - Python library packages (sharetrace, authentik, hyd, etc.)
-- `apps/` - Next.js web applications (hyd, iir)
+- `apps/` - Rust web applications (hyd, iir) and games (brm, euc): axum servers + wasm clients
 - `emb/` - Embedded C/C++ projects for Raspberry Pi Pico
 - `services/` - Docker Compose self-hosted services with Tailscale sidecars
 - `bzl/` - Bazel build system extensions and custom rules
@@ -32,8 +32,8 @@ source venv/bin/activate  # Activate venv
 # Run Python scripts
 venv/bin/python script.py  # or bazel run //:script
 
-# Web app development
-bazel run //apps/hyd:next_dev  # or pnpm dev from app directory
+# Web app development (Rust axum server + wasm client)
+bazel run //apps/hyd:serve  # builds wasm bundle + server, then serves
 
 # Embedded builds
 bazel build //emb/project/robo24:robo24_pico.bin
@@ -55,7 +55,8 @@ install_exception_hook()  # Call early in main()
 
 ### Bazel Custom Macros
 - `cc_unittest()` in `bzl/macros/cc.bzl` - C++ tests with platform transitions
-- `js_image()` - Next.js containerization with proper layer caching
+- `rust_image()` in `bzl/macros/rust_image.bzl` - Rust binary OCI images, cross-compiled via hermetic Zig toolchains
+- `next()` in `bzl/macros/next.bzl` - Next.js build (blog only)
 - Custom embedded firmware rules for Pico projects
 
 ### Service Architecture
@@ -63,7 +64,7 @@ Services use Tailscale sidecars for TLS and networking. Each service gets a `*.b
 
 ### Multi-Language Integration
 - Python packages importable as `from nlb.package import module`
-- TypeScript/Next.js apps in `apps/` with shared dependencies in workspace
+- Rust apps in `apps/` (axum + Leptos/macroquad wasm); shared dep-free code in `lrb/`
 - C++ embedded code with Bazel transitions between host and embedded platforms
 - Rust WASM modules built with `rules_rust`
 

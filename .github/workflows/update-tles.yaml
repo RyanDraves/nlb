@@ -15,12 +15,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - uses: bazelbuild/setup-bazelisk@v3
 
       - name: Bazel cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/bazel
           key: ${{ runner.os }}-bazel-tles-${{ hashFiles('MODULE.bazel.lock') }}
@@ -40,7 +40,7 @@ jobs:
             --out "$(pwd)/blog/app/satellites/data/tles.json"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           # TODO: Rename this secret or make a new token
           token: ${{ secrets.RENOVATE_PR_TOKEN || github.token }}

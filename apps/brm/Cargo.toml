@@ -1,0 +1,25 @@
+[workspace]
+resolver = "2"
+members = ["shared", "server", "client"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[workspace.dependencies]
+brm_shared = { path = "shared" }
+serde = { version = "1", features = ["derive"] }
+bincode = "1.3"
+# macroquad's `audio` feature is NOT on by default; without it `macroquad::audio`
+# calls are silent no-ops ("audio feature disabled").
+macroquad = { version = "0.4", features = ["audio"] }
+ws = "0.9"
+gilrs = "0.11"
+axum = { version = "0.7", features = ["ws"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net"] }
+tower-http = { version = "0.5", features = ["fs"] }
+futures-util = "0.3"
+log = "0.4"
+env_logger = "0.11"
