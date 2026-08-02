@@ -19,7 +19,12 @@ def _press_count(phase, log, bazel) -> int:
         log.info(output)
         phase.fail('state query failed')
     # The JSON state is the last line of the bazel run output
-    return json.loads(output.strip().splitlines()[-1])['press_count']
+    try:
+        return json.loads(output.strip().splitlines()[-1])['press_count']
+    except json.JSONDecodeError as e:
+        log.info(output)
+        phase.fail(f'state query returned invalid JSON: {e}')
+        return -1
 
 
 def bootsel_check(measurements):

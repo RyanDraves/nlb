@@ -242,7 +242,7 @@ main:
     description: Read the press count before the operator touches the board
     python: phases:button_baseline
     depends_on:
-      - hil_test
+      - audio_confirm
     measurements:
       - name: press count before
         key: baseline_count
