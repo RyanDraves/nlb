@@ -14,7 +14,7 @@ BOOTSEL_TIMEOUT_S = 60
 
 
 def _press_count(phase, log, bazel) -> int:
-    rc, output = bazel.run('//emb/project/punbox:state')
+    rc, output, _ = bazel.run('//emb/project/punbox:state')
     if rc != 0:
         log.info(output)
         phase.fail('state query failed')
@@ -38,20 +38,23 @@ def bootsel_check(measurements):
 
 
 def provision(measurements, log, bazel):
-    rc, output = bazel.run('//emb/project/bootloader:provision_pico')
+    rc, output, stderr = bazel.run('//emb/project/bootloader:provision_pico')
     log.info(output)
+    log.info(stderr)
     measurements.provision_rc = rc
 
 
 def flash_punbox(measurements, log, bazel):
-    rc, output = bazel.run('//emb/project/punbox:punbox_flash')
+    rc, output, stderr = bazel.run('//emb/project/punbox:punbox_flash')
     log.info(output)
+    log.info(stderr)
     measurements.flash_rc = rc
 
 
 def hil_test(measurements, log, bazel):
-    rc, output = bazel.test('//emb/project/punbox:hil_test')
+    rc, output, stderr = bazel.test('//emb/project/punbox:hil_test')
     log.info(output)
+    log.info(stderr)
     measurements.hil_rc = rc
 
 
