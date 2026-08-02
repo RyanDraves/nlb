@@ -39,6 +39,8 @@ main:
   - name: Visual inspection
     key: visual_inspection
     description: Inspect the assembled board before applying power
+    depends_on:
+      - unit_info
     ui:
       requires_input: true
       components:
@@ -138,6 +140,7 @@ main:
     python: phases:provision
     depends_on:
       - bootsel_check
+    timeout: 5m
     measurements:
       - name: provision exit code
         key: provision_rc
@@ -151,6 +154,7 @@ main:
     python: phases:flash_punbox
     depends_on:
       - provision
+    timeout: 5m
     measurements:
       - name: flash exit code
         key: flash_rc
@@ -161,7 +165,6 @@ main:
   - name: Connect speakers
     key: connect_speakers
     description: Plug the speaker harness into J2 before the audio test
-    python: phases:confirm_step
     depends_on:
       - flash_punbox
     ui:
@@ -170,6 +173,13 @@ main:
         - key: done
           type: switch
           label: "Speaker harness plugged into J2, speakers face up"
+          bind: measurements.harness_connected
+    measurements:
+      - name: Speaker harness connected
+        key: harness_connected
+        validators:
+          - operator: "=="
+            expected_value: true
 
   - name: HIL test
     key: hil_test
@@ -221,7 +231,6 @@ main:
   - name: Press the button
     key: button_press
     description: Simulate a button press at the J3 holes
-    python: phases:confirm_step
     depends_on:
       - button_baseline
     ui:
@@ -235,6 +244,13 @@ main:
         - key: done
           type: switch
           label: "J3 holes shorted once"
+          bind: measurements.button_pressed
+    measurements:
+      - name: Button pressed
+        key: button_pressed
+        validators:
+          - operator: "=="
+            expected_value: true
 
   - name: Button verify
     key: button_verify
