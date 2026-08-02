@@ -172,7 +172,7 @@ main:
     description: OTA-flash the punbox image over USB serial
     python: phases:flash_punbox
     depends_on:
-      - provision
+      - powercycle
     timeout: 5m
     measurements:
       - name: flash exit code
