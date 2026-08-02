@@ -148,6 +148,25 @@ main:
           - operator: "=="
             expected_value: 0
 
+  - name: Powercycle the board
+    key: powercycle
+    description: Unplug and replug the USB cable to exit BOOTSEL mode
+    depends_on:
+      - provision
+    ui:
+      requires_input: true
+      components:
+        - key: done
+          type: switch
+          label: "USB cable unplugged and replugged"
+          bind: measurements.powercycled
+    measurements:
+      - name: Board powercycled
+        key: powercycled
+        validators:
+          - operator: "=="
+            expected_value: true
+
   - name: Flash punbox
     key: flash_punbox
     description: OTA-flash the punbox image over USB serial
