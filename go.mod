@@ -111,7 +111,7 @@ require (
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gvisor.dev/gvisor v0.0.0-20260224225140-573d5e7127a8 // indirect
-	tailscale.com v1.102.0
+	tailscale.com v1.102.1
 )
 
 tool github.com/tailscale/setec/cmd/setec
