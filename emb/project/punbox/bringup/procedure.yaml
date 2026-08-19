@@ -1,0 +1,286 @@
+# Punbox carrier board bringup
+#
+# Per-board procedure for the v1 JLCPCB-assembled carriers: visual + electrical
+# checks, Pico soldering, provisioning, and functional test.
+#
+# Run with `tofupilot run emb/project/punbox/bringup` from the repo root
+# (see README.md for installing the CLI).
+#
+# NOTE: a phase's python runs concurrently with its operator UI, so every
+# "instruct, then act on the result" pair is split into two phases: an
+# operator-confirm phase, then an automated phase that `depends_on` it.
+
+name: Punbox carrier bringup
+version: "1.0"
+
+plugs:
+  - key: bazel
+    name: Bazel runner
+    python: plugs:Bazel
+
+unit:
+  serial_number:
+    placeholder: "Enter serial number"
+  part_number:
+    default_value: "PUNBOX-1"
+
+main:
+  - name: Unit info
+    key: unit_info
+    description: Identify the board under test
+    ui:
+      requires_input: true
+      components:
+        - key: serial
+          type: text_input
+          label: "Board serial (sharpie on the back, e.g. 001)"
+          bind: unit.serial_number
+
+  - name: Visual inspection
+    key: visual_inspection
+    description: Inspect the assembled board before applying power
+    depends_on:
+      - unit_info
+    ui:
+      requires_input: true
+      components:
+        - key: checks
+          type: checklist
+          label: "Confirm each item"
+          options:
+            - label: "U1/U2 pin-1 dots face the same way as the silkscreen dot"
+              value: "u1_u2_pin1_dot"
+            - label: "No solder bridges on U1/U2 pins (loupe/phone macro)"
+              value: "no_solder_bridges"
+            - label: "C5 stripe matches the silkscreen minus marking"
+              value: "c5_stripe_correct"
+            - label: "J2 connector sits flat, pins wetted"
+              value: "j2_flat"
+            - label: "All passives present (C1-C5, R1, R2)"
+              value: "all_passives_present"
+          bind: measurements.visual_ok
+    measurements:
+      - name: Visual checks passed
+        key: visual_ok
+        aggregations:
+          - type: count
+            validators:
+              - operator: "=="
+                expected_value: 5
+
+  - name: Short check
+    key: short_check
+    description: Multimeter resistance across the 5V rail, unpowered
+    depends_on:
+      - visual_inspection
+    ui:
+      requires_input: true
+      components:
+        - key: rail_ohms
+          type: number_input
+          label: "Resistance across C5's pads in ohms (+ probe on +5V)"
+          bind: measurements.rail_resistance
+    measurements:
+      - name: 5V rail resistance
+        key: rail_resistance
+        description: >
+          Anything above ~1k means no hard short; Class-D amps read high
+          when unpowered
+        validators:
+          - operator: ">="
+            expected_value: 1000
+
+  - name: Solder the Pico
+    key: solder_pico
+    description: Hand-solder the Pico onto the castellated pads
+    depends_on:
+      - short_check
+    ui:
+      requires_input: true
+      components:
+        - key: done
+          type: switch
+          label: >
+            Pico soldered: USB overhangs the board edge, corners tacked
+            first, all castellations wetted
+          bind: measurements.solder_ok
+        - key: notes
+          type: textarea
+          label: "Notes (optional)"
+    measurements:
+      - name: Pico soldered
+        key: solder_ok
+        validators:
+          - operator: "=="
+            expected_value: true
+
+  - name: BOOTSEL check
+    key: bootsel_check
+    description: Hold BOOTSEL, plug in USB; the RPI-RP2 drive should mount
+    python: phases:bootsel_check
+    depends_on:
+      - solder_pico
+    ui:
+      components:
+        - key: instructions
+          type: text
+          description: >
+            Hold the Pico's BOOTSEL button and plug the USB cable into this
+            computer. Waiting up to 60s for the RPI-RP2 drive...
+    measurements:
+      - name: RPI-RP2 drive mounted
+        key: drive_mounted
+        validators:
+          - operator: "=="
+            expected_value: true
+
+  - name: Provision bootloader
+    key: provision
+    description: Flash the bootloader and base image over BOOTSEL
+    python: phases:provision
+    depends_on:
+      - bootsel_check
+    timeout: 5m
+    measurements:
+      - name: provision exit code
+        key: provision_rc
+        validators:
+          - operator: "=="
+            expected_value: 0
+
+  - name: Powercycle the board
+    key: powercycle
+    description: Unplug and replug the USB cable to exit BOOTSEL mode
+    depends_on:
+      - provision
+    ui:
+      requires_input: true
+      components:
+        - key: done
+          type: switch
+          label: "USB cable unplugged and replugged"
+          bind: measurements.powercycled
+    measurements:
+      - name: Board powercycled
+        key: powercycled
+        validators:
+          - operator: "=="
+            expected_value: true
+
+  - name: Flash punbox
+    key: flash_punbox
+    description: OTA-flash the punbox image over USB serial
+    python: phases:flash_punbox
+    depends_on:
+      - powercycle
+    timeout: 5m
+    measurements:
+      - name: flash exit code
+        key: flash_rc
+        validators:
+          - operator: "=="
+            expected_value: 0
+
+  - name: Connect speakers
+    key: connect_speakers
+    description: Plug the speaker harness into J2 before the audio test
+    depends_on:
+      - flash_punbox
+    ui:
+      requires_input: true
+      components:
+        - key: done
+          type: switch
+          label: "Speaker harness plugged into J2, speakers face up"
+          bind: measurements.harness_connected
+    measurements:
+      - name: Speaker harness connected
+        key: harness_connected
+        validators:
+          - operator: "=="
+            expected_value: true
+
+  - name: HIL test
+    key: hil_test
+    description: Runs the firmware HIL test; the rimshot plays through J2
+    python: phases:hil_test
+    depends_on:
+      - connect_speakers
+    measurements:
+      - name: HIL test exit code
+        key: hil_rc
+        validators:
+          - operator: "=="
+            expected_value: 0
+
+  - name: Audio confirm
+    key: audio_confirm
+    description: Operator confirms what the HIL test played
+    depends_on:
+      - hil_test
+    ui:
+      requires_input: true
+      components:
+        - key: heard
+          type: switch
+          label: "Rimshot heard clearly from BOTH speakers, no distortion"
+          bind: measurements.rimshot_heard
+        - key: replay
+          type: text
+          description: >
+            Need to hear it again? Run
+            `bazel run //emb/project/punbox:shell` -> `client.play_sound()`
+    measurements:
+      - name: Rimshot heard
+        key: rimshot_heard
+        validators:
+          - operator: "=="
+            expected_value: true
+
+  - name: Button baseline
+    key: button_baseline
+    description: Read the press count before the operator touches the board
+    python: phases:button_baseline
+    depends_on:
+      - audio_confirm
+    measurements:
+      - name: press count before
+        key: baseline_count
+
+  - name: Press the button
+    key: button_press
+    description: Simulate a button press at the J3 holes
+    depends_on:
+      - button_baseline
+    ui:
+      requires_input: true
+      components:
+        - key: instructions
+          type: text
+          description: >
+            Short the two J3 through-holes together with tweezers, firmly,
+            for about one second. The rimshot will play.
+        - key: done
+          type: switch
+          label: "J3 holes shorted once"
+          bind: measurements.button_pressed
+    measurements:
+      - name: Button pressed
+        key: button_pressed
+        validators:
+          - operator: "=="
+            expected_value: true
+
+  - name: Button verify
+    key: button_verify
+    description: The press count must have advanced
+    python: phases:button_verify
+    depends_on:
+      - button_press
+    measurements:
+      - name: press count delta
+        key: press_delta
+        description: Debounced presses registered while the holes were shorted
+        validators:
+          - operator: ">="
+            expected_value: 1
