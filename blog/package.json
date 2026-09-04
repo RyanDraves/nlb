@@ -15,11 +15,11 @@
   "dependencies": {
     "@mdx-js/loader": "3.1.1",
     "@mdx-js/react": "3.1.1",
-    "@next/mdx": "15.5.21",
+    "@next/mdx": "15.5.25",
     "@nlb/lrb": "workspace:*",
     "classnames": "^2.5.1",
     "date-fns": "^3.6.0",
-    "next": "15.5.21",
+    "next": "15.5.25",
     "satellite.js": "^5.0.0",
     "three": "^0.185.1"
   },
@@ -29,9 +29,9 @@
     "@types/node": "^20.19.43",
     "@types/react": "npm:types-react@19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0",
-    "@types/three": "^0.185.1",
-    "autoprefixer": "^10.5.4",
-    "postcss": "^8.5.22",
+    "@types/three": "^0.185.4",
+    "autoprefixer": "^10.5.5",
+    "postcss": "^8.5.28",
     "shiki": "^1.29.2",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.9.3"
