@@ -6,7 +6,7 @@
 mod imp {
     use brm_shared::PlayerInput;
 
-    extern "C" {
+    unsafe extern "C" {
         fn brm_is_touch() -> i32;
         fn brm_name_show();
         fn brm_name_hide();

@@ -60,11 +60,11 @@ mod tests {
 
     #[test]
     fn web_dir_prefers_env_then_default() {
-        std::env::remove_var("LRB_SERVE_TEST_DIR");
+        unsafe { std::env::remove_var("LRB_SERVE_TEST_DIR"); }
         assert_eq!(web_dir("LRB_SERVE_TEST_DIR", "apps/x/web"), "apps/x/web");
-        std::env::set_var("LRB_SERVE_TEST_DIR", "/opt/web");
+        unsafe { std::env::set_var("LRB_SERVE_TEST_DIR", "/opt/web"); }
         assert_eq!(web_dir("LRB_SERVE_TEST_DIR", "apps/x/web"), "/opt/web");
-        std::env::remove_var("LRB_SERVE_TEST_DIR");
+        unsafe { std::env::remove_var("LRB_SERVE_TEST_DIR"); }
     }
 
     #[tokio::test]

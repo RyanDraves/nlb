@@ -7,6 +7,7 @@ rust_shared_library(
         "lib.rs",
         "utils.rs",
     ],
+    edition = "2024",
     rustc_flags = [
         "--crate-type=cdylib",
         # Small code size

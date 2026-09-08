@@ -4,8 +4,12 @@ load("@rules_rust//rust:defs.bzl", "rust_binary")
 # WebSocket + the 30Hz sim loop. Run: `bazel run //apps/brm/server`.
 rust_binary(
     name = "server",
-    srcs = glob(["*.rs"]),
-    edition = "2021",
+    srcs = [
+        "game.rs",
+        "main.rs",
+        "ws.rs",
+    ],
+    edition = "2024",
     tags = ["manual"],
     visibility = ["//visibility:public"],
     deps = [
@@ -16,7 +20,6 @@ rust_binary(
         "@crates//:bincode",
         "@crates//:env_logger",
         "@crates//:futures-util",
-        "@crates//:serde",
         "@crates//:tokio",
         "@crates//:tower-http",
     ],

@@ -6,7 +6,7 @@ rust_library(
     name = "serve",
     srcs = ["lib.rs"],
     crate_name = "lrb_serve",
-    edition = "2021",
+    edition = "2024",
     visibility = ["//visibility:public"],
     deps = [
         "@crates//:axum",
@@ -17,8 +17,6 @@ rust_library(
 rust_test(
     name = "serve_test",
     crate = ":serve",
-    edition = "2021",
-    deps = [
-        "@crates//:tower",
-    ],
+    edition = "2024",
+    deps = ["@crates//:tower"],
 )

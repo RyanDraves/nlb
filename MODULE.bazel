@@ -90,6 +90,46 @@ bazel_dep(name = "rules_uv", version = "0.89.2")
 bazel_dep(name = "gazelle", version = "0.52.2")
 bazel_dep(name = "rules_python_gazelle_plugin", version = "2.2.0")
 
+# Rust BUILD generation. The `//:gazelle` binary above is aspect-gazelle, a
+# prebuilt binary (see //tools:multitool.lock.json) covering go/python/starlark
+# but NOT rust, and being prebuilt it can't take a language plugin. So rust gets
+# its own binary and its own `//:gazelle_rust` target.
+bazel_dep(name = "gazelle_rust", version = "0.1.0", dev_dependency = True)
+
+# Lets `//:gazelle` fan out to both gazelle binaries in one invocation.
+bazel_dep(name = "rules_multirun", version = "0.14.0", dev_dependency = True)
+
+git_override(
+    module_name = "gazelle_rust",
+    # BCR 0.1.0 predates the rules_rust 0.71.0 fix (upstream commit 49a15fdc),
+    # so track main. The patch works around gazelle_rust shipping no
+    # crate_universe lockfile, which rules_rust >=0.71.1 requires of non-root
+    # modules ("Transitive crate_universe repositories must ship a
+    # `lockfile = ...`"). See the patch header for the full rationale.
+    #
+    # REGENERATING THE PATCH (needed whenever `commit` is bumped, or when
+    # gazelle_rust changes its own Cargo.toml/Cargo.lock):
+    #
+    #   git clone https://github.com/Calsign/gazelle_rust.git /tmp/gazelle_rust
+    #   cd /tmp/gazelle_rust && git checkout <commit>
+    #   # add `lockfile = "//:Cargo.Bazel.lock"` to the crate.from_cargo call
+    #   # for `gazelle_rust_crates` in its MODULE.bazel, then:
+    #   touch Cargo.Bazel.lock
+    #   CARGO_BAZEL_REPIN=1 bazel query '@gazelle_rust_crates//:all' \
+    #       --lockfile_mode=update
+    #   git add -f Cargo.Bazel.lock MODULE.bazel
+    #   git diff --cached > <this repo>/bzl/deps/patches/gazelle_rust_lockfile.patch
+    #
+    # The empty `touch` is required first: rules_rust reads the lockfile as JSON
+    # (its "can be empty" docstring is wrong for this path), and the repin is
+    # what fills it in. `--lockfile_mode=update` is needed because editing their
+    # MODULE.bazel invalidates their checked-in MODULE.bazel.lock.
+    commit = "747482bf",
+    patch_strip = 1,
+    patches = ["//bzl/deps/patches:gazelle_rust_lockfile.patch"],
+    remote = "https://github.com/Calsign/gazelle_rust.git",
+)
+
 #
 # Buildifier
 #
@@ -223,7 +263,12 @@ bazel_dep(name = "rules_rust_wasm_bindgen", version = "0.71.3")
 
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(
-    edition = "2021",
+    # Every first-party rust target sets `edition` explicitly (all on 2024);
+    # this default also covers targets in dependency modules that don't set one,
+    # notably gazelle_rust's parser, which uses let chains (2024-only). A
+    # non-root module's `rust.toolchain(edition = ...)` is ignored — the root's
+    # wins — so this must stay >= 2024 for gazelle_rust to compile.
+    edition = "2024",
     # Note: this REPLACES the default extra triples, so the wasm targets (used by
     # the brm web client) must be listed explicitly alongside the Linux triples
     # we add for cross-compiling the server into its container image.

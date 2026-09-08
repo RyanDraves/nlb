@@ -5,12 +5,12 @@ rust_library(
     name = "rng",
     srcs = ["lib.rs"],
     crate_name = "lrb_rng",
-    edition = "2021",
+    edition = "2024",
     visibility = ["//visibility:public"],
 )
 
 rust_test(
     name = "rng_test",
     crate = ":rng",
-    edition = "2021",
+    edition = "2024",
 )

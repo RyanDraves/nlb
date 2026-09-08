@@ -89,7 +89,7 @@ async fn auth_gates_http_and_login_mints_tokens() {
 /// and that no view ever contains more cards than one player may hold.
 #[tokio::test]
 async fn full_hand_over_a_real_websocket() {
-    std::env::set_var("EUC_AI_DELAY_MS", "5");
+    unsafe { std::env::set_var("EUC_AI_DELAY_MS", "5"); }
     let ctx = test_ctx();
     let token = ctx.auth.mint("cafebabe12345678");
     let router = build_router(ctx, "apps/euc/web");

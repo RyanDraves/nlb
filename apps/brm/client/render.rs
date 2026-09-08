@@ -346,7 +346,7 @@ fn draw_stats(assets: &Assets, gs: &GameState, ts: f32, ox: f32, oy: f32) {
         let owned: Vec<(usize, u8)> = counts
             .iter()
             .enumerate()
-            .filter(|(_, &c)| c > 0)
+            .filter(|&(_, &c)| c > 0)
             .map(|(i, &c)| (i, c))
             .collect();
         let total = owned.len() as f32 * cell;
