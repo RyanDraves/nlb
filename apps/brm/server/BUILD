@@ -10,6 +10,8 @@ rust_binary(
     visibility = ["//visibility:public"],
     deps = [
         "//apps/brm/shared:brm_shared",
+        "//lrb/config",
+        "//lrb/serve",
         "@crates//:axum",
         "@crates//:bincode",
         "@crates//:env_logger",

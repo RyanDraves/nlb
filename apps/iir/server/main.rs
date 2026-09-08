@@ -3,12 +3,11 @@
 //! key server-side). Run with `bazel run //apps/iir:serve`; tune with
 //! `IIR_PORT`, `IIR_WEB_DIR`, and `OPENWEATHER_API_KEY[_FILE]`.
 
-use std::net::SocketAddr;
 use std::sync::Arc;
 
-use axum::extract::{Request, State};
-use axum::http::{header, HeaderValue, StatusCode};
-use axum::middleware::{self, Next};
+use axum::extract::State;
+use axum::http::StatusCode;
+use axum::middleware;
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
@@ -29,9 +28,7 @@ fn build_router(ctx: Arc<AppCtx>, web_dir: &str) -> Router {
     Router::new()
         .route("/api/weather", get(weather))
         .fallback_service(ServeDir::new(web_dir))
-        // Never let browsers cache the client assets — stale wasm/JS causes
-        // confusing "it didn't update" bugs.
-        .layer(middleware::from_fn(no_cache))
+        .layer(middleware::from_fn(lrb_serve::no_cache))
         .with_state(ctx)
 }
 
@@ -48,14 +45,10 @@ async fn main() {
         http: reqwest::Client::new(),
     });
 
-    let web_dir = std::env::var("IIR_WEB_DIR").unwrap_or_else(|_| "apps/iir/web".to_owned());
+    let web_dir = lrb_serve::web_dir("IIR_WEB_DIR", "apps/iir/web");
     let router = build_router(ctx, &web_dir);
 
-    let port = lrb_config::env_port("IIR_PORT", 3000);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    println!("iir server listening on 0.0.0.0:{port}");
-    axum::serve(listener, router).await.unwrap();
+    lrb_serve::serve(router, lrb_config::env_port("IIR_PORT", 3000), "iir", "").await;
 }
 
 fn error(status: StatusCode, message: impl Into<String>) -> Response {
@@ -104,13 +97,4 @@ async fn weather(State(ctx): State<Arc<AppCtx>>) -> Response {
         .into_response(),
         Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     }
-}
-
-async fn no_cache(req: Request, next: Next) -> Response {
-    let mut res = next.run(req).await;
-    res.headers_mut().insert(
-        header::CACHE_CONTROL,
-        HeaderValue::from_static("no-store, max-age=0"),
-    );
-    res
 }

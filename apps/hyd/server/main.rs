@@ -6,13 +6,12 @@
 //! The Python `management/` CLI writes to the same `progress` table directly;
 //! it is unaffected by this server.
 
-use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use axum::extract::{Path, Request, State};
-use axum::http::{header, HeaderValue, StatusCode};
-use axum::middleware::{self, Next};
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
+use axum::middleware;
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
@@ -30,7 +29,7 @@ fn build_router(ctx: Arc<AppCtx>, web_dir: &str) -> Router {
         .route("/api/progress", get(list_progress).post(upsert_progress))
         .route("/api/progress/:id", axum::routing::delete(delete_progress))
         .fallback_service(ServeDir::new(web_dir))
-        .layer(middleware::from_fn(no_cache))
+        .layer(middleware::from_fn(lrb_serve::no_cache))
         .with_state(ctx)
 }
 
@@ -75,14 +74,10 @@ async fn main() {
         .expect("failed to build Postgres pool");
     let ctx = Arc::new(AppCtx { pool });
 
-    let web_dir = std::env::var("HYD_WEB_DIR").unwrap_or_else(|_| "apps/hyd/web".to_owned());
+    let web_dir = lrb_serve::web_dir("HYD_WEB_DIR", "apps/hyd/web");
     let router = build_router(ctx, &web_dir);
 
-    let port = lrb_config::env_port("HYD_PORT", 3000);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    println!("hyd server listening on 0.0.0.0:{port}");
-    axum::serve(listener, router).await.unwrap();
+    lrb_serve::serve(router, lrb_config::env_port("HYD_PORT", 3000), "hyd", "").await;
 }
 
 fn row_to_bar(row: &Row) -> ProgressBar {
@@ -187,13 +182,4 @@ async fn delete_progress(State(ctx): State<Arc<AppCtx>>, Path(id): Path<i32>) ->
         Ok(_) => (StatusCode::OK, "OK").into_response(),
         Err(e) => db_error(e),
     }
-}
-
-async fn no_cache(req: Request, next: Next) -> Response {
-    let mut res = next.run(req).await;
-    res.headers_mut().insert(
-        header::CACHE_CONTROL,
-        HeaderValue::from_static("no-store, max-age=0"),
-    );
-    res
 }

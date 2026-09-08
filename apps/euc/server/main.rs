@@ -12,13 +12,9 @@ mod ws;
 #[cfg(test)]
 mod tests;
 
-use std::net::SocketAddr;
 use std::sync::Arc;
 
-use axum::extract::Request;
-use axum::http::{header, HeaderValue};
-use axum::middleware::{self, Next};
-use axum::response::Response;
+use axum::middleware;
 use axum::routing::{get, post};
 use axum::Router;
 use euc_shared::RuleConfig;
@@ -38,9 +34,7 @@ fn build_router(ctx: Arc<AppCtx>, web_dir: &str) -> Router {
         .route("/api/session", get(auth::session))
         .fallback_service(ServeDir::new(web_dir))
         .layer(middleware::from_fn_with_state(ctx.clone(), auth::middleware))
-        // Never let browsers cache the client assets — stale wasm/JS causes
-        // confusing "it didn't update" bugs.
-        .layer(middleware::from_fn(no_cache))
+        .layer(middleware::from_fn(lrb_serve::no_cache))
         .with_state(ctx)
 }
 
@@ -58,24 +52,9 @@ async fn main() {
     }
     let ctx = Arc::new(AppCtx { lobby, auth });
 
-    let web_dir = std::env::var("EUC_WEB_DIR").unwrap_or_else(|_| "apps/euc/web".to_owned());
+    let web_dir = lrb_serve::web_dir("EUC_WEB_DIR", "apps/euc/web");
     let router = build_router(ctx, &web_dir);
 
-    let port: u16 = std::env::var("EUC_PORT")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(8080);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    println!("euc server listening on 0.0.0.0:{port} — ws at /ws");
-    axum::serve(listener, router).await.unwrap();
-}
-
-async fn no_cache(req: Request, next: Next) -> Response {
-    let mut res = next.run(req).await;
-    res.headers_mut().insert(
-        header::CACHE_CONTROL,
-        HeaderValue::from_static("no-store, max-age=0"),
-    );
-    res
+    let port = lrb_config::env_port("EUC_PORT", 8080);
+    lrb_serve::serve(router, port, "euc", " — ws at /ws").await;
 }
