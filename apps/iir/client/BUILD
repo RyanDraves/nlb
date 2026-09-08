@@ -1,13 +1,11 @@
 load("@rules_rust//rust:defs.bzl", "rust_shared_library")
 load("@rules_rust_wasm_bindgen//:defs.bzl", "rust_wasm_bindgen")
 
-exports_files(["Cargo.toml"])
-
 # Leptos CSR client compiled to wasm. Built only through the wasm platform
 # transition in //apps/iir:client_wasm_for_web.
 rust_shared_library(
     name = "client_so",
-    srcs = glob(["src/*.rs"]),
+    srcs = glob(["*.rs"]),
     edition = "2021",
     rustc_flags = [
         "--crate-type=cdylib",
@@ -18,13 +16,13 @@ rust_shared_library(
     target_compatible_with = ["@platforms//cpu:wasm32"],
     deps = [
         "//apps/iir/shared:iir_shared",
-        "@iir_crates//:console_error_panic_hook",
-        "@iir_crates//:gloo-net",
-        "@iir_crates//:leptos",
-        "@iir_crates//:serde",
-        "@iir_crates//:serde_json",
-        "@iir_crates//:wasm-bindgen",
-        "@iir_crates//:wasm-bindgen-futures",
+        "@crates//:console_error_panic_hook",
+        "@crates//:gloo-net",
+        "@crates//:leptos",
+        "@crates//:serde",
+        "@crates//:serde_json",
+        "@crates//:wasm-bindgen",
+        "@crates//:wasm-bindgen-futures",
     ],
 )
 

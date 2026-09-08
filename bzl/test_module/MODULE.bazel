@@ -13,11 +13,9 @@ local_path_override(
 bazel_dep(name = "rules_python", version = "2.2.0")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
-
 python.toolchain(
-    python_version = "3.12",
     is_default = True,
+    python_version = "3.12",
 )
-
 use_repo(python, "python_versions")
 use_repo(python, "python_3_12")

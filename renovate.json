@@ -62,21 +62,23 @@
       "matchManagers": ["npm"],
       "groupName": "npm dependencies",
       "automerge": false
-    }
-  ],
-
-  "customManagers": [
+    },
     {
-      "description": "Rust crates declared in MODULE.bazel via crate_universe",
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^MODULE\\.bazel$/"
-      ],
-      "matchStrings": [
-        "\"(?<depName>[a-z_][a-z0-9_-]*)\"\\s*=\\s*crate\\.spec\\(\\s*version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
-      ],
-      "datasourceTemplate": "crate",
-      "versioningTemplate": "cargo"
+      "description": "Bump Cargo.toml ranges (not just the lockfile) on in-range updates",
+      "matchManagers": ["cargo"],
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Group all Rust crate updates into one PR; CI regenerates Cargo.lock via Bazel",
+      "matchManagers": ["cargo"],
+      "groupName": "rust crates",
+      "automerge": false
+    },
+    {
+      "description": "wasm-bindgen is pinned to the CLI bundled by rules_rust_wasm_bindgen; bumping it alone breaks the wasm builds",
+      "matchManagers": ["cargo"],
+      "matchPackageNames": ["wasm-bindgen"],
+      "enabled": false
     }
   ]
 }

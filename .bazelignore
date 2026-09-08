@@ -1,5 +1,7 @@
 # Agent git worktrees live here
 .claude
+# Local dev virtualenv (`bazel run //:venv`); not part of any build
+venv
 node_modules
 blog/node_modules
 blog/out

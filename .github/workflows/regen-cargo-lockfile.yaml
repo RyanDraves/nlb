@@ -1,0 +1,52 @@
+name: Regenerate Cargo lockfile
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - Cargo.toml
+
+jobs:
+  regen:
+    if: github.actor == 'renovate[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          # Use a PAT (stored as RENOVATE_PR_TOKEN) so that the pushed commit
+          # re-triggers test.yaml. Without it this falls back to GITHUB_TOKEN,
+          # which still pushes the update but won't re-trigger CI automatically
+          # (GitHub's loop-prevention rule).
+          token: ${{ secrets.RENOVATE_PR_TOKEN || github.token }}
+
+      - name: Bazel cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-regen-${{ hashFiles('MODULE.bazel.lock') }}
+          restore-keys: ${{ runner.os }}-bazel-regen-
+
+      - name: Write BuildBuddy config
+        run: |
+          echo "build --remote_header=x-buildbuddy-api-key=${{ secrets.BUILDBUDDY_API_KEY }}" > .user.bazelrc
+
+      # Renovate edits //:Cargo.toml (the single manifest for every third-party
+      # Rust crate); repinning resolves it and rewrites //:Cargo.lock, which the
+      # `@crates` crate_universe hub builds from.
+      - name: Repin crate universe
+        run: CARGO_BAZEL_REPIN=1 bazel query '@crates//:all'
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Cargo.lock
+          git diff --cached --quiet && exit 0
+          git commit -m "Regenerate Cargo lockfile"
+          git push

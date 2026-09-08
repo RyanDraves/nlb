@@ -263,74 +263,13 @@ crate = use_extension(
     "@rules_rust//crate_universe:extensions.bzl",
     "crate",
 )
-crate.spec(
-    package = "wasm-bindgen",
-    # Must match the wasm-bindgen-cli bundled by rules_rust_wasm_bindgen.
-    version = "=0.2.121",
-)
-crate.spec(
-    package = "wee_alloc",
-    version = "0.4.5",
-)
-crate.spec(
-    package = "spin",
-    version = "0.12.0",
-)
-crate.spec(
-    features = ["spin_no_std"],
-    package = "lazy_static",
-    version = "1.4",
-)
-crate.spec(
-    package = "console_error_panic_hook",
-    version = "0.1.7",
-)
-crate.spec(
-    features = ["console"],
-    package = "web-sys",
-    version = "0.3",
-)
-crate.from_specs()
-use_repo(crate, "crates")
 
-# Isolated crate hub for the `brm` game (apps/brm). Its dependency tree
-# (macroquad, axum, tokio, ...) is far too large to hand-list as specs, so it is
-# generated from the app's own Cargo workspace lockfile and kept separate from
-# the `@crates` hub above.
-crate.from_cargo(
-    name = "brm_crates",
-    cargo_lockfile = "//apps/brm:Cargo.lock",
-    manifests = [
-        "//apps/brm:Cargo.toml",
-    ],
-)
-use_repo(crate, "brm_crates")
-
-# Isolated crate hub for the `euc` Euchre game (apps/euc), mirroring the brm
-# hub above (leptos/axum/tokio trees are too large to hand-list as specs).
-# wasm_split_helpers (leptos transitive) expands a proc-macro that reads
+# wasm_split_helpers (a leptos transitive) expands a proc-macro that reads
 # CARGO_MANIFEST_PATH, which cargo sets but Bazel does not; any stable string
 # works (it's only a symbol-name stamp).
 crate.annotation(
     crate = "wasm_split_helpers",
-    repositories = ["euc_crates"],
-    rustc_env = {"CARGO_MANIFEST_PATH": "wasm_split_helpers"},
-)
-crate.from_cargo(
-    name = "euc_crates",
-    cargo_lockfile = "//apps/euc:Cargo.lock",
-    manifests = [
-        "//apps/euc:Cargo.toml",
-    ],
-)
-use_repo(crate, "euc_crates")
-
-# Isolated crate hub for the iir web app (apps/iir), mirroring the euc hub:
-# leptos + axum + reqwest trees are too large to hand-list as specs. The
-# wasm_split_helpers annotation is required by leptos (see the euc hub above).
-crate.annotation(
-    crate = "wasm_split_helpers",
-    repositories = ["iir_crates"],
+    repositories = ["crates"],
     rustc_env = {"CARGO_MANIFEST_PATH": "wasm_split_helpers"},
 )
 
@@ -344,32 +283,21 @@ crate.annotation(
         "CFLAGS_aarch64_unknown_linux_gnu": "-target aarch64-linux-gnu",
     },
     crate = "ring",
-    repositories = ["iir_crates"],
+    repositories = ["crates"],
 )
-crate.from_cargo(
-    name = "iir_crates",
-    cargo_lockfile = "//apps/iir:Cargo.lock",
-    manifests = [
-        "//apps/iir:Cargo.toml",
-    ],
-)
-use_repo(crate, "iir_crates")
 
-# Isolated crate hub for the hyd web app (apps/hyd), mirroring the iir hub:
-# leptos + axum + tokio-postgres trees are too large to hand-list as specs.
-crate.annotation(
-    crate = "wasm_split_helpers",
-    repositories = ["hyd_crates"],
-    rustc_env = {"CARGO_MANIFEST_PATH": "wasm_split_helpers"},
-)
+# One hub for every third-party Rust crate in the repo, resolved from the single
+# //:Cargo.toml. Keeping it to ONE hub is what lets //lrb libraries take
+# third-party deps at all: crates from separate hubs are distinct Bazel targets
+# whose types never unify, so shared code could otherwise only ever be linked
+# into a single app. Repin with:
+#   CARGO_BAZEL_REPIN=1 bazel query '@crates//:all'
 crate.from_cargo(
-    name = "hyd_crates",
-    cargo_lockfile = "//apps/hyd:Cargo.lock",
-    manifests = [
-        "//apps/hyd:Cargo.toml",
-    ],
+    name = "crates",
+    cargo_lockfile = "//:Cargo.lock",
+    manifests = ["//:Cargo.toml"],
 )
-use_repo(crate, "hyd_crates")
+use_repo(crate, "crates")
 
 #
 # Go
@@ -416,7 +344,6 @@ oci.pull(
     tag = "latest",
 )
 use_repo(oci, "debian", "debian_linux_386", "debian_linux_amd64", "debian_linux_arm64_v8", "debian_linux_arm_v5", "debian_linux_arm_v7", "debian_linux_mips64le", "debian_linux_ppc64le", "debian_linux_s390x")
-
 oci.pull(
     name = "distroless_base",
     digest = "sha256:f4a335ca209e1d2ee873102c17c389ad0142e3d5b21aee2817e9cc9c01d87d20",

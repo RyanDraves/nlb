@@ -132,15 +132,11 @@ Open the tailnet URL or `http://<host-ip>:8080`; set `BRM_SEED` to pin the arena
 The repo is on `rules_rust` / `rules_rust_wasm_bindgen` 0.70.0 (Rust 1.95), so
 the dependency tree is plain — no version gymnastics:
 
-- **`@brm_crates` is generated from this app's own `Cargo.toml`/`Cargo.lock`**
-  (a `from_cargo` hub in `//:MODULE.bazel`), kept separate from the repo's
-  hand-specced `@crates` hub because the game's tree (macroquad/axum/tokio/…) is
-  far too large to hand-list.
-- To change dependencies: edit the manifests, regenerate the lock with
-  `bazel run @rules_rust//tools/upstream_wrapper:cargo -- generate-lockfile
-  --manifest-path apps/brm/Cargo.toml`, then **delete `//:MODULE.bazel.lock`** so
-  the `@brm_crates` hub regenerates from the new lock on the next build (Bazel
-  otherwise reuses the cached hub).
+- **Third-party crates come from the repo-wide `@crates` hub**, resolved from
+  the single `//:Cargo.toml` (one manifest and one `Cargo.lock` for the whole
+  repo). First-party deps like `//lrb/rng` are wired in BUILD files only.
+- To change dependencies: edit `//:Cargo.toml`, then repin with
+  `CARGO_BAZEL_REPIN=1 bazel query '@crates//:all'` to refresh `//:Cargo.lock`.
 - The wasm client links with `-Clink-arg=--allow-undefined` so macroquad/miniquad's
   JS-provided functions become wasm imports resolved by the loader at runtime.
 - The native client depends on **gilrs** for controllers (a `cfg(not(wasm))`
@@ -158,12 +154,12 @@ macroquad's wasm uses its own JS loader (not wasm-bindgen). `web/` holds:
   miniquad 0.4.10); the only change is `preserveDrawingBuffer:true` so the canvas
   can be screenshotted.
 - `brm_net.js`: a small first-party WebSocket plugin implementing the `brm_ws_*`
-  imports from `client/src/net.rs` (plus touch/name/gamepad bridges). It talks to
+  imports from `client/net.rs` (plus touch/name/gamepad bridges). It talks to
   the browser WebSocket via raw `wasm_memory` and resolves the relative `/ws` path
   against the page origin (so LAN guests connect back to the host).
 
 The native client runs the `ws` crate's event loop on a background thread per
-connection (see `client/src/net.rs`). We replaced the abandoned `quad-net`:
+connection (see `client/net.rs`). We replaced the abandoned `quad-net`:
 its wasm side needed a sapp_jsutils API current macroquad dropped, and its native
 handler `unwrap()`s a channel send in `on_message`, so dropping a socket (e.g. a
 controller unplugging) panicked its still-running thread. Our handler ignores a
@@ -188,7 +184,7 @@ gen_powerups.py` (add `--preview` for an 8× zoom) to redraw, then rebuild.
 
 ## Visuals
 
-The board is drawn procedurally in `client/src/render.rs` for a pixel-art 2.5D
+The board is drawn procedurally in `client/render.rs` for a pixel-art 2.5D
 look — beveled walls and plank crates with front faces, a tiled floor, lit-fuse
 bombs, flickering flames, and characters that face their movement direction and
 play a walk cycle (facing/animation state is tracked render-side in `Assets`,
@@ -200,7 +196,7 @@ since snapshots only carry positions). Power-up icons are the one bitmap asset
 Sound effects and a looping music bed, synthesized by `assets/gen_sfx.py` (pure
 standard-library procedural synth → 16-bit mono WAVs in `assets/sfx/`) and
 embedded with `include_bytes!`. The client carries no event channel — it infers
-events by **diffing successive snapshots** (`client/src/audio.rs`): a fresh-fuse
+events by **diffing successive snapshots** (`client/audio.rs`): a fresh-fuse
 bomb → place, a fresh-ttl explosion → boom, a player's power-up total rising →
 pickup, an `alive` flipping false → death, a lobby `ready` toggle → ready/unready
 chime, plus countdown beeps, a round-start cue, and a win fanfare. The music is a

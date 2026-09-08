@@ -38,7 +38,7 @@ pub struct Assets {
 impl Assets {
     pub fn load() -> Assets {
         let powerups = Texture2D::from_file_with_format(
-            include_bytes!("../../assets/powerups.png"),
+            include_bytes!("../assets/powerups.png"),
             None,
         );
         powerups.set_filter(FilterMode::Nearest); // crisp pixel-art scaling

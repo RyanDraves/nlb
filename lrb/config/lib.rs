@@ -1,9 +1,4 @@
 //! Tiny config helpers shared by the Rust web apps under `apps/` (hyd, iir).
-//!
-//! Dependency-free on purpose: each app resolves third-party crates from its
-//! own crate_universe hub (`@hyd_crates`, `@iir_crates`), so a crate linked by
-//! more than one app must not pull external crates or the hubs would supply
-//! conflicting types. See `lrb/rng` for the same constraint.
 
 use std::env;
 use std::fs;
