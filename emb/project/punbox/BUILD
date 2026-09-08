@@ -128,3 +128,16 @@ py_binary(
         "@pip//rich_click",
     ],
 )
+
+py_binary(
+    name = "state",
+    srcs = ["state.py"],
+    add_completions = False,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":client",
+        ":punbox_bh_py",
+        "//emb/network/transport:usb",
+        "@pip//rich_click",
+    ],
+)

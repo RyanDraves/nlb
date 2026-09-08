@@ -1,0 +1,5 @@
+[project]
+name = "punbox_procedure"
+version = "1.0.0"
+requires-python = ">=3.10"
+dependencies = []
