@@ -4,20 +4,18 @@ load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 # server and the wasm browser client alike.
 rust_library(
     name = "hyd_shared",
-    srcs = glob(["*.rs"]),
-    edition = "2021",
+    srcs = [
+        "lib.rs",
+    ],
+    edition = "2024",
     tags = ["manual"],
     visibility = ["//apps/hyd:__subpackages__"],
-    deps = [
-        "@crates//:serde",
-    ],
+    deps = ["@crates//:serde"],
 )
 
 rust_test(
     name = "hyd_shared_test",
     crate = ":hyd_shared",
-    edition = "2021",
-    deps = [
-        "@crates//:serde_json",
-    ],
+    edition = "2024",
+    deps = ["@crates//:serde_json"],
 )

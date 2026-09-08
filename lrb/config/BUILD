@@ -5,12 +5,12 @@ rust_library(
     name = "config",
     srcs = ["lib.rs"],
     crate_name = "lrb_config",
-    edition = "2021",
+    edition = "2024",
     visibility = ["//visibility:public"],
 )
 
 rust_test(
     name = "config_test",
     crate = ":config",
-    edition = "2021",
+    edition = "2024",
 )

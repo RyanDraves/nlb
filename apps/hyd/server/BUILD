@@ -4,8 +4,10 @@ load("@rules_rust//rust:defs.bzl", "rust_binary")
 # client bundle.
 rust_binary(
     name = "server",
-    srcs = glob(["*.rs"]),
-    edition = "2021",
+    srcs = [
+        "main.rs",
+    ],
+    edition = "2024",
     tags = ["manual"],
     visibility = ["//apps/hyd:__pkg__"],
     deps = [
@@ -16,8 +18,6 @@ rust_binary(
         "@crates//:deadpool-postgres",
         "@crates//:env_logger",
         "@crates//:log",
-        "@crates//:serde",
-        "@crates//:serde_json",
         "@crates//:tokio",
         "@crates//:tokio-postgres",
         "@crates//:tower-http",

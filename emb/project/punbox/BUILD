@@ -136,8 +136,8 @@ py_binary(
     visibility = ["//visibility:public"],
     deps = [
         ":client",
-        ":punbox_bh_py",
         "//emb/network/transport:usb",
+        "//emb/project/punbox:punbox_bh_py",
         "@pip//rich_click",
     ],
 )

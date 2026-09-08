@@ -5,8 +5,13 @@ load("@rules_rust_wasm_bindgen//:defs.bzl", "rust_wasm_bindgen")
 # transition in //apps/euc:client_wasm_for_web.
 rust_shared_library(
     name = "client_so",
-    srcs = glob(["*.rs"]),
-    edition = "2021",
+    srcs = [
+        "lib.rs",
+        "net.rs",
+        "state.rs",
+        "ui.rs",
+    ],
+    edition = "2024",
     rustc_flags = [
         "--crate-type=cdylib",
         # Small code size for the web download.
@@ -17,9 +22,7 @@ rust_shared_library(
     deps = [
         "//apps/euc/shared:euc_shared",
         "@crates//:console_error_panic_hook",
-        "@crates//:js-sys",
         "@crates//:leptos",
-        "@crates//:serde",
         "@crates//:serde_json",
         "@crates//:wasm-bindgen",
         "@crates//:wasm-bindgen-futures",

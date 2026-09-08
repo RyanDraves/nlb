@@ -24,11 +24,11 @@ const TRICK_SETTLE_MS: u64 = 900;
 
 /// AI think time: a little jitter so bots feel less mechanical. Overridable
 /// via EUC_AI_DELAY_MS (integration tests set it to ~0).
-fn ai_delay_ms(gen: u64) -> u64 {
+fn ai_delay_ms(generation: u64) -> u64 {
     static OVERRIDE: std::sync::OnceLock<Option<u64>> = std::sync::OnceLock::new();
     OVERRIDE
         .get_or_init(|| std::env::var("EUC_AI_DELAY_MS").ok().and_then(|s| s.parse().ok()))
-        .unwrap_or(400 + gen % 350)
+        .unwrap_or(400 + generation % 350)
 }
 
 pub enum TableCmd {
@@ -46,13 +46,13 @@ pub enum TableCmd {
         conn: ConnId,
         msg: ClientMsg,
     },
-    /// AI move / auto-continue timer; stale if `gen` no longer matches.
+    /// AI move / auto-continue timer; stale if `generation` no longer matches.
     Tick {
-        gen: u64,
+        generation: u64,
     },
-    /// Shut the table down if nobody has come back since `gen`.
+    /// Shut the table down if nobody has come back since `generation`.
     ReapCheck {
-        gen: u64,
+        generation: u64,
     },
 }
 
@@ -75,7 +75,7 @@ struct Table {
     seat_players: [Option<PlayerId>; 4],
     conns: HashMap<ConnId, Conn>,
     /// Bumped on every state change; stale Ticks are dropped against it.
-    gen: u64,
+    generation: u64,
     cmd_tx: mpsc::Sender<TableCmd>,
     lobby: Arc<Lobby>,
     /// Persistent tables (the default one) are never reaped.
@@ -102,7 +102,7 @@ pub fn spawn(
         game: None,
         seat_players: Default::default(),
         conns: HashMap::new(),
-        gen: 0,
+        generation: 0,
         cmd_tx: tx.clone(),
         lobby,
         persistent,
@@ -120,9 +120,9 @@ impl Table {
                 }
                 TableCmd::Detach { conn } => self.on_detach(conn),
                 TableCmd::Msg { conn, msg } => self.on_msg(conn, msg),
-                TableCmd::Tick { gen } => self.on_tick(gen),
-                TableCmd::ReapCheck { gen } => {
-                    if gen == self.gen && self.conns.is_empty() && !self.persistent {
+                TableCmd::Tick { generation } => self.on_tick(generation),
+                TableCmd::ReapCheck { generation } => {
+                    if generation == self.generation && self.conns.is_empty() && !self.persistent {
                         self.lobby.remove_table(&self.id);
                         return;
                     }
@@ -170,11 +170,11 @@ impl Table {
         self.conns.remove(&conn);
         self.broadcast();
         if self.conns.is_empty() && !self.persistent {
-            let gen = self.gen;
+            let generation = self.generation;
             let tx = self.cmd_tx.clone();
             tokio::spawn(async move {
                 tokio::time::sleep(REAP_AFTER).await;
-                let _ = tx.send(TableCmd::ReapCheck { gen }).await;
+                let _ = tx.send(TableCmd::ReapCheck { generation }).await;
             });
         }
     }
@@ -290,7 +290,7 @@ impl Table {
                     .duration_since(std::time::UNIX_EPOCH)
                     .map(|d| d.as_nanos() as u64)
                     .unwrap_or(1)
-                    ^ self.gen.rotate_left(32);
+                    ^ self.generation.rotate_left(32);
                 self.game = Some(EuchreGame::new(self.meta.rules, seed));
                 self.broadcast();
             }
@@ -327,8 +327,8 @@ impl Table {
         matches!(&self.game, Some(g) if !matches!(g.phase, Phase::GameOver { .. }))
     }
 
-    fn on_tick(&mut self, gen: u64) {
-        if gen != self.gen {
+    fn on_tick(&mut self, generation: u64) {
+        if generation != self.generation {
             return; // stale timer: state moved on
         }
         let Some(game) = &mut self.game else { return };
@@ -349,7 +349,7 @@ impl Table {
 
     /// Arm the timer that advances AI turns and hand summaries. Called from
     /// `broadcast()` only: every state change invalidates all earlier timers
-    /// (their `gen` goes stale), so the one scheduled here is always the
+    /// (their `generation` goes stale), so the one scheduled here is always the
     /// single live timer. Scheduling anywhere else risks a dropped turn —
     /// an unrelated broadcast (someone joining mid-think) would cancel it.
     fn schedule(&mut self) {
@@ -363,21 +363,21 @@ impl Table {
                 if !self.meta.seats[turn.index()].is_ai {
                     return;
                 }
-                ai_delay_ms(self.gen)
+                ai_delay_ms(self.generation)
             }
         };
-        let gen = self.gen;
+        let generation = self.generation;
         let tx = self.cmd_tx.clone();
         tokio::spawn(async move {
             tokio::time::sleep(Duration::from_millis(delay_ms)).await;
-            let _ = tx.send(TableCmd::Tick { gen }).await;
+            let _ = tx.send(TableCmd::Tick { generation }).await;
         });
     }
 
     /// Fan the new state out: one redacted view per connection, plus the
     /// lobby summary. Every caller that mutated state must end with this.
     fn broadcast(&mut self) {
-        self.gen += 1;
+        self.generation += 1;
         for i in 0..4 {
             self.meta.seats[i].connected = match &self.seat_players[i] {
                 Some(pid) => self.conns.values().any(|c| &c.player == pid),

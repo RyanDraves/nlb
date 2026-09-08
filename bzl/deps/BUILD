@@ -7,3 +7,6 @@ alias(
     }),
     visibility = ["//visibility:public"],
 )
+
+# The lone .rs here is the stub lib target for //:Cargo.toml, not a real crate.
+# gazelle:ignore

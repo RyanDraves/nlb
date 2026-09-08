@@ -4,8 +4,19 @@ load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 # builds for the native server, the wasm browser client, and bots alike.
 rust_library(
     name = "euc_shared",
-    srcs = glob(["*.rs"]),
-    edition = "2021",
+    srcs = [
+        "ai.rs",
+        "cards.rs",
+        "game.rs",
+        "legal.rs",
+        "lib.rs",
+        "protocol.rs",
+        "rules.rs",
+        "score.rs",
+        "tests.rs",
+        "view.rs",
+    ],
+    edition = "2024",
     tags = ["manual"],
     visibility = ["//apps/euc:__subpackages__"],
     deps = [
@@ -17,8 +28,6 @@ rust_library(
 rust_test(
     name = "euc_shared_test",
     crate = ":euc_shared",
-    edition = "2021",
-    deps = [
-        "@crates//:serde_json",
-    ],
+    edition = "2024",
+    deps = ["@crates//:serde_json"],
 )

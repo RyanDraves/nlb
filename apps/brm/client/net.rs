@@ -102,7 +102,7 @@ mod native {
 
 #[cfg(target_arch = "wasm32")]
 mod wasm {
-    extern "C" {
+    unsafe extern "C" {
         fn brm_ws_connect(ptr: *const u8, len: usize);
         fn brm_ws_connected() -> i32;
         fn brm_ws_send(ptr: *const u8, len: usize);

@@ -5,8 +5,10 @@ load("@rules_rust_wasm_bindgen//:defs.bzl", "rust_wasm_bindgen")
 # transition in //apps/hyd:client_wasm_for_web.
 rust_shared_library(
     name = "client_so",
-    srcs = glob(["*.rs"]),
-    edition = "2021",
+    srcs = [
+        "lib.rs",
+    ],
+    edition = "2024",
     rustc_flags = [
         "--crate-type=cdylib",
         # Small code size for the web download.
@@ -20,8 +22,6 @@ rust_shared_library(
         "@crates//:gloo-net",
         "@crates//:gloo-timers",
         "@crates//:leptos",
-        "@crates//:serde",
-        "@crates//:serde_json",
         "@crates//:wasm-bindgen",
         "@crates//:wasm-bindgen-futures",
     ],

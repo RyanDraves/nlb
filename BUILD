@@ -4,6 +4,7 @@ load("@gazelle//:def.bzl", "gazelle")
 load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@pip//:requirements.bzl", "all_whl_requirements")
+load("@rules_multirun//:defs.bzl", "multirun")
 load("@rules_python_gazelle_plugin//manifest:defs.bzl", "gazelle_python_manifest")
 load("@rules_python_gazelle_plugin//modules_mapping:def.bzl", "modules_mapping")
 load("@rules_uv//uv:pip.bzl", "pip_compile")
@@ -73,7 +74,7 @@ write_source_files(
 )
 
 gazelle(
-    name = "gazelle",
+    name = "gazelle_aspect",
     env = {
         "ENABLE_LANGUAGES": ",".join([
             "starlark",
@@ -83,6 +84,32 @@ gazelle(
     },
     gazelle = "@multitool//tools/gazelle",
 )
+
+# Rust BUILD generation, a separate binary from `:gazelle_aspect` above because
+# aspect-gazelle ships prebuilt with no rust language and no way to add one.
+# Preview before writing with: bazel run //:gazelle_rust -- -mode=diff
+gazelle(
+    name = "gazelle_rust",
+    gazelle = "@gazelle_rust//:gazelle_bin",
+)
+
+# `bazel run //:gazelle` runs both, sequentially — they both rewrite BUILD files,
+# so parallelism (jobs = 0) would race. Each binary warns about the other's
+# directives ("unknown directive: gazelle:rust_*" / "gazelle:python_*"); that is
+# expected and harmless.
+multirun(
+    name = "gazelle",
+    commands = [
+        ":gazelle_aspect",
+        ":gazelle_rust",
+    ],
+)
+
+# Where gazelle_rust resolves third-party crates: every one of them lives in the
+# single `@crates` hub generated from //:Cargo.toml (see //:MODULE.bazel).
+# gazelle:rust_cargo_lockfile Cargo.lock
+# gazelle:rust_crates_prefix @crates//:
+# gazelle:rust_default_edition 2024
 
 # gazelle:build_file_name BUILD
 
