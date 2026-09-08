@@ -21,6 +21,26 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 # git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 #
+# Protoc toolchains
+#
+
+# Prebuilt protoc instead of compiling protobuf + abseil from source (~2100 C++
+# compile actions). This repo has no protos of its own; the only consumer is
+# gazelle_rust's binary, which uses proto for its Go<->Rust parser IPC. Must be
+# declared before protobuf (pulled in transitively) for toolchain resolution.
+bazel_dep(name = "toolchains_protoc", version = "0.6.1")
+
+protoc = use_extension("@toolchains_protoc//protoc:extensions.bzl", "protoc")
+
+# Must track the resolved `protobuf` module (see `bazel mod graph`), whose proto
+# rules pass flags like `--option_dependencies` that older protoc rejects.
+# toolchains_protoc's own default is far older (v27.3).
+protoc.toolchain(version = "v32.1")
+use_repo(protoc, "toolchains_protoc_hub")
+
+register_toolchains("@toolchains_protoc_hub//:all")
+
+#
 # Pico SDK & Picotool
 #
 bazel_dep(name = "pico-sdk", version = "2.3.0")

@@ -31,6 +31,10 @@ build:stamp --stamp --workspace_status_command=./tools/release/bazel_stamp_vars.
 # https://github.com/bazelbuild/bazel/issues/4867#issuecomment-830402410
 common:quiet --ui_event_filters=-info,-stdout,-stderr --noshow_progress
 
+# Required by toolchains_protoc so the prebuilt protoc is selected via toolchain
+# resolution rather than protobuf being built from source. See //:MODULE.bazel.
+common --incompatible_enable_proto_toolchain_resolution
+
 #
 # Begin JS stuff
 # Source: https://github.com/bazelbuild/examples/blob/b51e3bdd468ce8c4a516d7dca993909dcc84af32/frontend/.bazelrc
