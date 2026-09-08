@@ -1,10 +1,6 @@
 load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
-exports_files(["Cargo.toml"])
-
-# Dependency-free deterministic RNG shared by the Rust games (brm, euc). Must
-# stay free of external deps: consumers pull third-party crates from separate
-# crate_universe hubs whose types are incompatible with each other.
+# Deterministic RNG shared by the Rust games (brm, euc)
 rust_library(
     name = "rng",
     srcs = ["lib.rs"],

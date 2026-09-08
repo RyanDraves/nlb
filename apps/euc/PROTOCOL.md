@@ -2,7 +2,7 @@
 
 JSON text frames over a WebSocket. Every message is an object tagged with
 `"type"` in `snake_case`. The wire format is frozen by golden-string tests in
-`shared/src/tests.rs` (`protocol_golden_strings`) — a change there is a
+`shared/tests.rs` (`protocol_golden_strings`) — a change there is a
 breaking change for you.
 
 ## Connecting

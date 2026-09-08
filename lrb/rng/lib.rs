@@ -1,9 +1,4 @@
 //! Tiny deterministic xorshift64 RNG shared by the games under `apps/`.
-//!
-//! Dependency-free on purpose: brm and euc resolve third-party crates from
-//! separate crate_universe hubs (`@brm_crates`, `@euc_crates`), so a crate
-//! linked by both must not pull external crates — even serde — or the two
-//! hubs would supply conflicting types.
 
 /// Advance a raw xorshift64 state and return the new value.
 ///

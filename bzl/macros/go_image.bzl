@@ -62,6 +62,7 @@ def go_image(name, binary, args, platform_names, labels, local_tags, remote_repo
             name = "{0}_{1}".format(name, platform_name),
             srcs = [name + "_image"],
             target_platform = platform,
+            **kwargs
         )
 
         oci_load(

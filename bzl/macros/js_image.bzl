@@ -58,6 +58,7 @@ def js_image(name, js_binary, args, platform_names, labels, local_tags, remote_r
             name = "{0}_{1}".format(name, platform_name),
             dep = ":{}_image".format(name),
             target_platform = platform,
+            **kwargs
         )
 
         # Export the image to local Docker daemon

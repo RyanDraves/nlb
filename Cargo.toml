@@ -1,0 +1,82 @@
+# This manifest is NOT used to build anything. It exists to feed the single
+# `@crates` crate_universe hub declared in //:MODULE.bazel
+#
+# Bazel BUILD files own the real dependency graph. First-party deps
+# (//lrb/rng, //apps/euc/shared, ...) are Bazel-only and never appear here.
+#
+# To add a crate: add it below, run
+#   CARGO_BAZEL_REPIN=1 bazel query '@crates//:all'
+# to refresh //:Cargo.lock
+#
+# Features are unioned across the whole repo, since every crate resolves from
+# this one manifest. If two consumers ever need incompatible majors of the same
+# crate, use Cargo's rename syntax: `foo_v1 = { package = "foo", version = "1" }`.
+
+[package]
+name = "nlb_rust_deps"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[lib]
+name = "nlb_rust_deps"
+path = "bzl/deps/rust_deps_stub.rs"
+
+[dependencies]
+axum = { version = "0.7", features = ["ws"] }
+base64 = "0.22"
+bincode = "1.3"
+console_error_panic_hook = "0.1"
+deadpool-postgres = "0.14"
+env_logger = "0.11"
+futures-util = "0.3"
+getrandom = "0.3"
+gloo-net = "0.6"
+gloo-timers = "0.3"
+hmac = "0.12"
+js-sys = "0.3"
+lazy_static = { version = "1.4", features = ["spin_no_std"] }
+leptos = { version = "0.8", features = ["csr"] }
+log = "0.4"
+# macroquad's `audio` feature is NOT on by default; without it `macroquad::audio`
+# calls are silent no-ops ("audio feature disabled").
+macroquad = { version = "0.4", features = ["audio"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+spin = "0.12.0"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net"] }
+tokio-postgres = "0.7"
+tokio-tungstenite = "0.24"
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.5", features = ["fs"] }
+# Must match the wasm-bindgen-cli bundled by rules_rust_wasm_bindgen.
+wasm-bindgen = "=0.2.121"
+wasm-bindgen-futures = "0.4"
+wee_alloc = "0.4.5"
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+    "BinaryType",
+    "CloseEvent",
+    "Document",
+    "History",
+    "Location",
+    "MessageEvent",
+    "Response",
+    "Storage",
+    "UrlSearchParams",
+    "WebSocket",
+    "Window",
+    "console",
+]
+
+# Native-only for the brm client: the wasm client uses its own WebSocket plugin
+# (web/brm_net.js) and the browser Gamepad API instead of ws + gilrs. Scoped so
+# these never resolve for wasm32 (gilrs pulls libudev-sys, which is Linux-only).
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+gilrs = "0.11"
+ws = "0.9"

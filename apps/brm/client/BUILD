@@ -1,13 +1,11 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 
-exports_files(["Cargo.toml"])
-
 # Native client for couch players (split-keyboard, controllers). macroquad/
 # miniquad declare the platform GL/windowing frameworks they link via in-crate
 # `#[link]` attributes, so no extra linkopts are needed here.
 rust_binary(
     name = "client",
-    srcs = glob(["src/*.rs"]),
+    srcs = glob(["*.rs"]),
     compile_data = [
         "//apps/brm/assets:powerups.png",
         "//apps/brm/assets:sfx",
@@ -17,11 +15,11 @@ rust_binary(
     visibility = ["//visibility:public"],
     deps = [
         "//apps/brm/shared:brm_shared",
-        "@brm_crates//:bincode",
-        "@brm_crates//:gilrs",
-        "@brm_crates//:macroquad",
-        "@brm_crates//:serde",
-        "@brm_crates//:ws",
+        "@crates//:bincode",
+        "@crates//:gilrs",
+        "@crates//:macroquad",
+        "@crates//:serde",
+        "@crates//:ws",
     ],
 )
 
@@ -31,7 +29,7 @@ rust_binary(
 # wouldn't export it). Build with `--platforms=@rules_rust//rust/platform:wasm`.
 rust_binary(
     name = "client_wasm",
-    srcs = glob(["src/*.rs"]),
+    srcs = glob(["*.rs"]),
     compile_data = [
         "//apps/brm/assets:powerups.png",
         "//apps/brm/assets:sfx",
@@ -50,8 +48,8 @@ rust_binary(
     visibility = ["//visibility:public"],
     deps = [
         "//apps/brm/shared:brm_shared",
-        "@brm_crates//:bincode",
-        "@brm_crates//:macroquad",
-        "@brm_crates//:serde",
+        "@crates//:bincode",
+        "@crates//:macroquad",
+        "@crates//:serde",
     ],
 )

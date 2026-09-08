@@ -1,18 +1,12 @@
 # hyd — Postgres-backed progress dashboard: axum server +
 # Leptos wasm client. See README.md. The Python management CLI lives in
-# management/ and talks to Postgres directly. Cargo manifests/lockfile are
-# consumed by the `hyd_crates` crate_universe hub declared in //:MODULE.bazel.
+# management/ and talks to Postgres directly
 load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@tar.bzl//tar:mtree.bzl", "mutate")
 load("@tar.bzl//tar:tar.bzl", "tar")
 load("//bzl/macros:rust_image.bzl", "rust_image")
-
-exports_files([
-    "Cargo.toml",
-    "Cargo.lock",
-])
 
 # Build the wasm-bindgen'd client for wasm32 (the rest builds for the host).
 platform_transition_filegroup(
@@ -57,6 +51,10 @@ tar(
     mutate = mutate(
         package_dir = "opt/web",
         strip_prefix = "apps/hyd/web_bundle",
+        # tar.bzl's `mutate` partial does not inherit the `tags` below, so the
+        # generated `web_layer__mutated` target (which pulls the whole wasm
+        # bundle) would otherwise be picked up by wildcard builds like `//...`.
+        tags = ["manual"],
     ),
     tags = ["manual"],
 )

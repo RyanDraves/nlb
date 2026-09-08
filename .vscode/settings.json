@@ -104,6 +104,8 @@
         "external/**",
         ".aspect/**",
         "**/node_modules/**",
+        "**/__pycache__/**",
+        "**/.*",
     ],
     "python.analysis.typeCheckingMode": "standard",
     "[python]": {

@@ -11,6 +11,12 @@ load("@rules_uv//uv:venv.bzl", "create_venv")
 
 package(default_visibility = ["//:__subpackages__"])
 
+# Consumed by the `@crates` crate_universe hub in //:MODULE.bazel
+exports_files([
+    "Cargo.toml",
+    "Cargo.lock",
+])
+
 # Create the root of the "virtual store" of npm dependencies under bazel-out
 npm_link_all_packages(name = "node_modules")
 
