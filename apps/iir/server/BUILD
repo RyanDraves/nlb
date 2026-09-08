@@ -10,6 +10,7 @@ rust_binary(
     deps = [
         "//apps/iir/shared:iir_shared",
         "//lrb/config",
+        "//lrb/serve",
         "@crates//:axum",
         "@crates//:env_logger",
         "@crates//:log",

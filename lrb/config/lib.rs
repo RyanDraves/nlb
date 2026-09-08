@@ -4,18 +4,18 @@ use std::env;
 use std::fs;
 
 /// Read a secret/config value from `name`, falling back to the contents of the
-/// file named by `{name}_FILE` (trimmed). Mirrors the `VAR` / `VAR_FILE`
-/// pattern used by the old Next.js apps (Postgres password, OpenWeather key)
-/// and by the Docker-secret mounts in `services/`.
+/// file named by `{name}_FILE`. Mirrors the `VAR` / `VAR_FILE` pattern used by
+/// the Docker-secret mounts in `services/`.
 ///
-/// Precedence matches the historical TS behaviour: for the Postgres password
-/// the file wins when set; here the direct env var wins if present, otherwise
-/// the file is consulted. Both apps only ever set one or the other, so the
-/// distinction is moot in practice.
+/// Both sources are trimmed: a secret mounted from a file almost always ends
+/// in a newline, and an env var set from a compose file can pick up stray
+/// whitespace just as easily. A value that is empty after trimming is treated
+/// as unset, so `VAR=""` with `VAR_FILE` set falls through to the file.
 pub fn env_or_file(name: &str) -> Option<String> {
     if let Ok(val) = env::var(name) {
+        let val = val.trim();
         if !val.is_empty() {
-            return Some(val);
+            return Some(val.to_owned());
         }
     }
     let path = env::var(format!("{name}_FILE")).ok()?;
@@ -57,6 +57,25 @@ mod tests {
         env::set_var("LRB_CFG_TEST_B_FILE", &path);
         assert_eq!(env_or_file("LRB_CFG_TEST_B"), Some("s3cret".to_owned()));
         env::remove_var("LRB_CFG_TEST_B_FILE");
+        fs::remove_file(&path).ok();
+    }
+
+    #[test]
+    fn direct_env_is_trimmed() {
+        env::set_var("LRB_CFG_TEST_TRIM", "  spaced  \n");
+        assert_eq!(env_or_file("LRB_CFG_TEST_TRIM"), Some("spaced".to_owned()));
+        env::remove_var("LRB_CFG_TEST_TRIM");
+    }
+
+    #[test]
+    fn blank_env_falls_through_to_file() {
+        let path = env::temp_dir().join("lrb_cfg_test_blank");
+        fs::write(&path, "from-file\n").unwrap();
+        env::set_var("LRB_CFG_TEST_D", "   ");
+        env::set_var("LRB_CFG_TEST_D_FILE", &path);
+        assert_eq!(env_or_file("LRB_CFG_TEST_D"), Some("from-file".to_owned()));
+        env::remove_var("LRB_CFG_TEST_D");
+        env::remove_var("LRB_CFG_TEST_D_FILE");
         fs::remove_file(&path).ok();
     }
 

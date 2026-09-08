@@ -11,6 +11,7 @@ rust_binary(
     deps = [
         "//apps/hyd/shared:hyd_shared",
         "//lrb/config",
+        "//lrb/serve",
         "@crates//:axum",
         "@crates//:deadpool-postgres",
         "@crates//:env_logger",

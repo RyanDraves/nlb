@@ -10,6 +10,8 @@ rust_binary(
     visibility = ["//apps/euc:__pkg__"],
     deps = [
         "//apps/euc/shared:euc_shared",
+        "//lrb/config",
+        "//lrb/serve",
         "@crates//:axum",
         "@crates//:env_logger",
         "@crates//:futures-util",

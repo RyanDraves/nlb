@@ -40,16 +40,6 @@ pub struct AuthConfig {
     secret: Vec<u8>,
 }
 
-/// Reads `EUC_<name>` or, failing that, the file named by `EUC_<name>_FILE`
-/// (the docker-secrets pattern).
-fn env_or_file(name: &str) -> Option<String> {
-    if let Ok(v) = std::env::var(format!("EUC_{name}")) {
-        return Some(v.trim().to_string());
-    }
-    let path = std::env::var(format!("EUC_{name}_FILE")).ok()?;
-    Some(std::fs::read_to_string(path).ok()?.trim().to_string())
-}
-
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
@@ -69,8 +59,8 @@ pub fn random_player_id() -> String {
 
 impl AuthConfig {
     pub fn from_env() -> Self {
-        let password = env_or_file("SITE_PASSWORD").filter(|p| !p.is_empty());
-        let secret = match env_or_file("TOKEN_SECRET").filter(|s| !s.is_empty()) {
+        let password = lrb_config::env_or_file("EUC_SITE_PASSWORD");
+        let secret = match lrb_config::env_or_file("EUC_TOKEN_SECRET") {
             Some(s) => s.into_bytes(),
             None => {
                 // Ephemeral secret: sessions won't survive a restart. Fine for
