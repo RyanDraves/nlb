@@ -1,4 +1,5 @@
 load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+load("//bzl/macros:python.bzl", "py_test")
 
 exports_files([
     "boot.js",
@@ -43,4 +44,14 @@ rust_test(
     name = "monofile_test",
     crate = ":monofile",
     edition = "2024",
+)
+
+# Browser coverage for the `window.__monofile` shim, which no rust_test can
+# reach. Drives real Chrome because the bug class it guards against (IndexedDB
+# schema versioning) needs a real IndexedDB. Skips when Chrome is absent.
+py_test(
+    name = "shim_test",
+    srcs = ["shim_test.py"],
+    data = ["shell.html"],
+    env = {"MONOFILE_SHELL": "lrb/monofile/shell.html"},
 )

@@ -91,8 +91,40 @@ have to survive reopening it. Only an in-place write clears it, because only
 then does the file actually match.
 
 Apps call `web::set_dirty(true)` on edit; the shell warns on tab close while
-dirty. Drafts and handles are keyed by `origin + pathname` and the core asks for
-`navigator.storage.persist()` so they are not evicted.
+dirty. The core asks for `navigator.storage.persist()` so drafts are not evicted.
+
+Every app must call `web::configure("<app-id>")` once at boot, before any save
+or draft call. It names the app's **own** IndexedDB database. Apps must not
+share one: every monofile ever written is frozen code still asking for the
+schema version it shipped with, so the day one app adds a store and bumps a
+shared version, every *other* app's files in the world throw `VersionError` and
+lose their drafts — unreachable and unfixable.
+
+Drafts are keyed by the document's `doc_id`, a uuid minted at first open and
+carried in the payload frame thereafter, so renaming or moving a file keeps its
+work. `web::save` stamps the id onto any payload that lacks one, because apps
+naturally rebuild a `Payload` from editor state on every save and would
+otherwise drop it silently. Two copies of one document share an id, and so share
+drafts — the trade against path keying, which instead loses them on rename.
+Save handles stay keyed by path, since they refer to a location, not a document.
+
+## Testing
+
+`bazel test //lrb/monofile/...` covers three layers:
+
+- `monofile_test` — the pure `payload` and `shell` logic on the host, including
+  the fixed point, the real shipped `shell.html`, and version-1 frame reading.
+- `bundler_test` — the build-time tool, including that `verify` rejects a file
+  that does not round-trip.
+- `shim_test` — the `window.__monofile` JavaScript, in real headless Chrome
+  against a real IndexedDB. It extracts the shim from `shell.html` itself, so it
+  cannot drift from what ships, and skips when no Chrome is on `PATH`.
+
+`rust_wasm_bindgen_test` would be the idiomatic way to do the last one, but it
+is broken here: it points Chrome's `--user-data-dir` at Bazel's `test.outputs`
+and the `SingletonLock` symlink Chrome leaves fails Bazel's output-tree
+validation. The rules' own `hello_world_web_wasm_bindgen_test` fails identically
+with no first-party code involved, so this is upstream, not us.
 
 ## Size
 

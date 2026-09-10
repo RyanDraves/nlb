@@ -14,6 +14,8 @@
 
 use wasm_bindgen::prelude::*;
 
+use std::cell::RefCell;
+
 use crate::payload::{looks_precompressed, Payload};
 use crate::shell::{self, Parts, GLUE_ID, PAYLOAD_ID, WASM_ID};
 
@@ -41,6 +43,12 @@ extern "C" {
 
     #[wasm_bindgen(js_namespace = __monofile, js_name = setDirty)]
     fn set_dirty_js(dirty: bool);
+
+    #[wasm_bindgen(js_namespace = __monofile, js_name = configure)]
+    fn configure_js(opts: JsValue);
+
+    #[wasm_bindgen(js_namespace = __monofile, js_name = newDocId)]
+    fn new_doc_id() -> String;
 
     #[wasm_bindgen(js_namespace = __monofile, js_name = saveDraft, catch)]
     async fn save_draft_js(payload: &str) -> Result<JsValue, JsValue>;
@@ -131,6 +139,25 @@ pub fn current_payload() -> Result<Payload, WebError> {
     Payload::decode(&text).map_err(WebError::Payload)
 }
 
+thread_local! {
+    /// This document's id for the life of the page, so `save` can stamp it onto
+    /// a payload the app rebuilt from scratch.
+    static DOC_ID: RefCell<String> = const { RefCell::new(String::new()) };
+}
+
+/// Name this app, once, at boot — before any save or draft call.
+///
+/// It scopes the IndexedDB database. Every monofile ever written is frozen code
+/// still asking for the schema version it shipped with, so apps must not share
+/// a database: the day one app adds a store and bumps the version, every other
+/// app's files in the world would throw `VersionError` and lose their drafts,
+/// unreachable and unfixable.
+pub fn configure(app_id: &str) {
+    let opts = js_sys::Object::new();
+    let _ = js_sys::Reflect::set(&opts, &"appId".into(), &app_id.into());
+    configure_js(opts.into());
+}
+
 pub fn can_save_in_place() -> bool {
     can_save_in_place_js()
 }
@@ -147,7 +174,19 @@ pub fn set_dirty(dirty: bool) {
 /// The bool is true when the draft won, so the app can say so — silently
 /// resurrecting different content than the file contains would be alarming.
 pub async fn current_document() -> Result<(Payload, bool), WebError> {
-    let embedded = current_payload()?;
+    let mut embedded = current_payload()?;
+
+    // Adopt the file's id, or mint one for a file written before ids existed.
+    // This must happen before any draft lookup: until the shim knows the id it
+    // keys drafts by path, and we would miss the ones stored under the id.
+    if embedded.doc_id.is_empty() {
+        embedded.doc_id = new_doc_id();
+    }
+    DOC_ID.with(|d| *d.borrow_mut() = embedded.doc_id.clone());
+    let opts = js_sys::Object::new();
+    let _ = js_sys::Reflect::set(&opts, &"docId".into(), &embedded.doc_id.as_str().into());
+    configure_js(opts.into());
+
     let draft = load_draft_js().await.unwrap_or(JsValue::NULL);
     if draft.is_falsy() {
         return Ok((embedded, false));
@@ -157,9 +196,23 @@ pub async fn current_document() -> Result<(Payload, bool), WebError> {
         .and_then(|v| v.as_string());
     match text.as_deref().map(Payload::decode) {
         // A draft that will not decode is not worth failing the whole boot over.
-        Some(Ok(p)) => Ok((p, true)),
+        Some(Ok(p)) => Ok((p.with_doc_id(embedded.doc_id), true)),
         _ => Ok((embedded, false)),
     }
+}
+
+/// Stamp this page's document id onto a payload that has none.
+///
+/// Apps naturally rebuild a `Payload` from their editor state on every save,
+/// which would drop the id and orphan the document's drafts on the next open.
+/// Losing identity that way is silent, so the core does not rely on callers
+/// remembering.
+fn with_session_doc_id(document: &Payload) -> Payload {
+    if !document.doc_id.is_empty() {
+        return document.clone();
+    }
+    let id = DOC_ID.with(|d| d.borrow().clone());
+    document.clone().with_doc_id(id)
 }
 
 /// Flash a short message. Transient on purpose — a permanent bar explaining the
@@ -180,6 +233,7 @@ pub async fn save(
     document: &Payload,
     force_picker: bool,
 ) -> Result<Saved, WebError> {
+    let document = &with_session_doc_id(document);
     let compress = !looks_precompressed(&document.data);
     let encoded = document.encode(compress);
 
@@ -197,6 +251,8 @@ pub async fn save(
     let opts = js_sys::Object::new();
     js_sys::Reflect::set(&opts, &"forcePicker".into(), &force_picker.into())
         .map_err(js_err)?;
+    let purpose = if force_picker { "copy" } else { "in-place" };
+    js_sys::Reflect::set(&opts, &"purpose".into(), &purpose.into()).map_err(js_err)?;
     if !acquire(opts.into()).await.map_err(js_err)?.is_truthy() {
         return Ok(Saved::Cancelled);
     }
@@ -232,6 +288,7 @@ pub async fn export(template: &str, document: &Payload) -> Result<Saved, WebErro
     if can_save_in_place() {
         return save(template, document, true).await;
     }
+    let document = with_session_doc_id(document);
     let compress = !looks_precompressed(&document.data);
     let parts = Parts { payload: document.encode(compress), ..current_parts()? };
     let html = shell::render(template, &parts).map_err(WebError::Shell)?;

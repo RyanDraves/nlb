@@ -40,7 +40,7 @@
   under snippets/ which the glue then imports, and an external import would
   break single-file bundling outright.
 -->
-<script>
+<script id="monofile-shim">
 window.__monofile = (() => {
   const canSaveInPlace =
     typeof window.showSaveFilePicker === "function" &&
@@ -54,9 +54,25 @@ window.__monofile = (() => {
   let handle = null;
 
   // Every file:// page shares ONE storage origin (Chrome buckets them all as
-  // `file__0`), so the handle must be keyed by path or two monofiles sitting in
-  // the same Downloads folder would overwrite each other's saved target.
-  const KEY = location.origin + location.pathname;
+  // `file__0`), so nothing may be stored under a bare global key: two monofiles
+  // sitting in the same Downloads folder would overwrite each other.
+  //
+  // The key is the document id once the app supplies one, so renaming or moving
+  // a file keeps its draft. Until then it falls back to the path, which is all
+  // we have before the payload has been decoded.
+  const pathKey = () => location.origin + location.pathname;
+  let docKey = null;
+  const KEY = () => docKey || pathKey();
+
+  // One database PER APP, each with its own version line.
+  //
+  // A single shared database is a trap: every monofile already written is
+  // frozen code, still asking for the version it shipped with. The day one app
+  // adds a store and bumps the shared version, every OTHER app's files in the
+  // world throw VersionError on open and lose their drafts, with no way to ever
+  // reach them and fix it. Bento hit exactly this.
+  let appId = "monofile";
+  const dbName = () => `${appId}-monofile`;
 
   // Bump DB_VERSION whenever a store is added, or an existing database created
   // by an older monofile will never fire onupgradeneeded, the transaction below
@@ -64,7 +80,7 @@ window.__monofile = (() => {
   const DB_VERSION = 2;
   const idb = (store, mode, fn) => new Promise((res, rej) => {
     let r;
-    try { r = indexedDB.open("monofile", DB_VERSION); } catch (e) { return rej(e); }
+    try { r = indexedDB.open(dbName(), DB_VERSION); } catch (e) { return rej(e); }
     r.onupgradeneeded = () => {
       const db = r.result;
       for (const name of ["handles", "drafts"]) {
@@ -86,12 +102,25 @@ window.__monofile = (() => {
     };
   });
 
-  // Kicked off at load; `acquire` awaits it so a fast Ctrl+S cannot race it.
-  // Failure is never fatal — we just fall back to the picker.
-  const restored = (async () => {
-    if (!canSaveInPlace) return null;
-    try { return (await idb("handles", "readonly", (s) => s.get(KEY))) || null; } catch { return null; }
-  })();
+  // Resolved on FIRST USE, not at load. Kicking it off eagerly would open the
+  // database before `configure` had supplied the app id, so the lookup would
+  // read from the default-named database, never find the handle, and silently
+  // fall back to the file picker on every visit — while also leaving a stray
+  // `monofile-monofile` database behind. Found in a browser, not in review.
+  //
+  // Failure is never fatal: we just fall back to the picker.
+  let restoredPromise = null;
+  const restoredHandle = () => {
+    if (!restoredPromise) {
+      restoredPromise = (async () => {
+        if (!canSaveInPlace) return null;
+        try {
+          return (await idb("handles", "readonly", (s) => s.get(pathKey()))) || null;
+        } catch { return null; }
+      })();
+    }
+    return restoredPromise;
+  };
 
   // Returns true if `h` is usable for writing now. A restored handle comes back
   // in the "prompt" state, and requestPermission needs the user activation that
@@ -141,18 +170,32 @@ window.__monofile = (() => {
 
     setDirty(v) { dirty = !!v; },
 
+    /// Called once at boot. `appId` scopes the database; `docId` keys drafts so
+    /// they follow the document rather than the file path.
+    configure(opts) {
+      if (opts && opts.appId) appId = String(opts.appId);
+      if (opts && opts.docId) docKey = "doc:" + String(opts.docId);
+    },
+
+    newDocId() {
+      try { return crypto.randomUUID(); } catch {}
+      // Older engines, and any context where crypto is unavailable.
+      return "d-" + Date.now().toString(36) + "-" +
+             Math.random().toString(36).slice(2, 10);
+    },
+
     // Drafts are keyed by path like handles are, for the same reason: one
     // file:// origin is shared by every local page.
     async saveDraft(payloadText) {
       await idb("drafts", "readwrite",
-                (s) => s.put({ payload: payloadText, at: Date.now() }, KEY));
+                (s) => s.put({ payload: payloadText, at: Date.now() }, KEY()));
     },
     async loadDraft() {
-      try { return (await idb("drafts", "readonly", (s) => s.get(KEY))) || null; }
+      try { return (await idb("drafts", "readonly", (s) => s.get(KEY()))) || null; }
       catch { return null; }
     },
     async clearDraft() {
-      try { await idb("drafts", "readwrite", (s) => s.delete(KEY)); } catch {}
+      try { await idb("drafts", "readwrite", (s) => s.delete(KEY())); } catch {}
     },
 
     // Saving is deliberately two calls. showSaveFilePicker() requires transient
@@ -163,15 +206,19 @@ window.__monofile = (() => {
     //
     // Returns true when there is somewhere to write, false if the user
     // cancelled the picker.
-    async acquire({ forcePicker = false, name = null } = {}) {
+    async acquire({ forcePicker = false, name = null, purpose = "in-place" } = {}) {
       if (!canSaveInPlace) return true; // download path needs no handle
-      if (!handle && !forcePicker) handle = await restored;
+      if (!handle && !forcePicker) handle = await restoredHandle();
       if (handle && !forcePicker) {
         if (await ensurePermission(handle)) return true;
         handle = null; // denied or stale — fall through to the picker
       }
       try {
         handle = await window.showSaveFilePicker({
+          // Browsers remember the last directory per picker id, and a working
+          // file and an exported copy usually live in different places. One
+          // shared id made the export picker open wherever the last save went.
+          id: purpose === "copy" ? "monofile-copy" : "monofile-doc",
           suggestedName: name || suggestedName(),
           types: [{ description: "HTML", accept: { "text/html": [".html"] } }],
         });
@@ -181,7 +228,7 @@ window.__monofile = (() => {
         throw e;
       }
       // Best effort: remembering the target is a convenience, not correctness.
-      try { await idb("handles", "readwrite", (s) => s.put(handle, KEY)); } catch {}
+      try { await idb("handles", "readwrite", (s) => s.put(handle, pathKey())); } catch {}
       return true;
     },
 

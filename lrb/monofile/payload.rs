@@ -13,19 +13,27 @@ use std::io::{Read as _, Write as _};
 ///
 /// ```text
 /// magic   b"MONO"   4 bytes
-/// version u8        1 byte   currently 1
+/// version u8        1 byte   currently 2
 /// flags   u8        1 byte   bit 0 = body is gzipped
 /// ct_len  u16 LE    2 bytes
+/// id_len  u16 LE    2 bytes  (version 2 and later)
 /// ct      utf-8     ct_len bytes
+/// id      utf-8     id_len bytes
 /// body    bytes     to end
 /// ```
+///
+/// Version 1 is still read: it has no `id_len` and no `id`, and decodes to an
+/// empty [`Payload::doc_id`], which the web layer then mints. Files already
+/// written are frozen code — a format that cannot read its own past is a way to
+/// lose documents.
 ///
 /// The whole frame is then base64'd. Base64's alphabet is `A-Za-z0-9+/=`, which
 /// cannot produce `<`, so an encoded payload can never terminate the script tag
 /// that holds it — that safety property is why the framing is binary-then-base64
 /// rather than, say, JSON with an embedded string.
 const MAGIC: &[u8; 4] = b"MONO";
-const VERSION: u8 = 1;
+const VERSION: u8 = 2;
+const VERSION_WITHOUT_DOC_ID: u8 = 1;
 const FLAG_GZIP: u8 = 1 << 0;
 
 /// A document plus the MIME type that says how to interpret it.
@@ -35,6 +43,15 @@ const FLAG_GZIP: u8 = 1 << 0;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Payload {
     pub content_type: String,
+    /// Stable identity for this document, carried across saves and copies.
+    ///
+    /// Local drafts are keyed by it rather than by file path, so renaming or
+    /// moving a monofile does not orphan the work stored for it. Never derived
+    /// from content and never regenerated on save — a content-derived id would
+    /// change on every edit, which is the opposite of what it is for.
+    ///
+    /// Empty means "not yet assigned"; [`crate::web`] mints one at boot.
+    pub doc_id: String,
     pub data: Vec<u8>,
 }
 
@@ -65,7 +82,12 @@ impl std::error::Error for PayloadError {}
 
 impl Payload {
     pub fn new(content_type: impl Into<String>, data: Vec<u8>) -> Self {
-        Self { content_type: content_type.into(), data }
+        Self { content_type: content_type.into(), doc_id: String::new(), data }
+    }
+
+    pub fn with_doc_id(mut self, doc_id: impl Into<String>) -> Self {
+        self.doc_id = doc_id.into();
+        self
     }
 
     /// An empty payload, which is what a freshly built monofile ships with.
@@ -89,12 +111,15 @@ impl Payload {
         let body = if compress { gzip(&self.data) } else { self.data.clone() };
 
         let ct = self.content_type.as_bytes();
-        let mut frame = Vec::with_capacity(8 + ct.len() + body.len());
+        let id = self.doc_id.as_bytes();
+        let mut frame = Vec::with_capacity(10 + ct.len() + id.len() + body.len());
         frame.extend_from_slice(MAGIC);
         frame.push(VERSION);
         frame.push(if compress { FLAG_GZIP } else { 0 });
         frame.extend_from_slice(&(ct.len() as u16).to_le_bytes());
+        frame.extend_from_slice(&(id.len() as u16).to_le_bytes());
         frame.extend_from_slice(ct);
+        frame.extend_from_slice(id);
         frame.extend_from_slice(&body);
 
         STANDARD.encode(&frame)
@@ -118,24 +143,38 @@ impl Payload {
             return Err(PayloadError::BadMagic);
         }
         let version = frame[4];
-        if version != VERSION {
+        if version != VERSION && version != VERSION_WITHOUT_DOC_ID {
             return Err(PayloadError::UnsupportedVersion(version));
         }
         let flags = frame[5];
         let ct_len = u16::from_le_bytes([frame[6], frame[7]]) as usize;
 
-        let ct_end = 8usize.checked_add(ct_len).ok_or(PayloadError::Truncated)?;
-        if frame.len() < ct_end {
+        // Version 1 has no id_len field, so the strings start two bytes earlier.
+        let (id_len, header) = if version == VERSION_WITHOUT_DOC_ID {
+            (0usize, 8usize)
+        } else {
+            if frame.len() < 10 {
+                return Err(PayloadError::Truncated);
+            }
+            (u16::from_le_bytes([frame[8], frame[9]]) as usize, 10usize)
+        };
+
+        let ct_end = header.checked_add(ct_len).ok_or(PayloadError::Truncated)?;
+        let id_end = ct_end.checked_add(id_len).ok_or(PayloadError::Truncated)?;
+        if frame.len() < id_end {
             return Err(PayloadError::Truncated);
         }
-        let content_type = std::str::from_utf8(&frame[8..ct_end])
+        let content_type = std::str::from_utf8(&frame[header..ct_end])
+            .map_err(|_| PayloadError::BadContentType)?
+            .to_owned();
+        let doc_id = std::str::from_utf8(&frame[ct_end..id_end])
             .map_err(|_| PayloadError::BadContentType)?
             .to_owned();
 
-        let body = &frame[ct_end..];
+        let body = &frame[id_end..];
         let data = if flags & FLAG_GZIP != 0 { gunzip(body)? } else { body.to_vec() };
 
-        Ok(Self { content_type, data })
+        Ok(Self { content_type, doc_id, data })
     }
 }
 
@@ -288,8 +327,48 @@ mod tests {
     #[test]
     fn rejects_gzip_flag_over_garbage_body() {
         let mut bad = b"MONO".to_vec();
-        bad.extend_from_slice(&[VERSION, FLAG_GZIP, 0, 0]);
+        bad.extend_from_slice(&[VERSION, FLAG_GZIP, 0, 0, 0, 0]); // ct_len=0, id_len=0
         bad.extend_from_slice(b"not actually gzip");
         assert!(matches!(Payload::decode(&STANDARD.encode(&bad)), Err(PayloadError::Gunzip(_))));
+    }
+
+    #[test]
+    fn carries_the_doc_id_through_a_round_trip() {
+        let p = Payload::new("text/plain", b"body".to_vec())
+            .with_doc_id("0f9c2b1e-4a77-4c3e-9f11-5b6d8e2a1c40");
+        roundtrip(&p, false);
+        roundtrip(&p, true);
+        assert_eq!(Payload::decode(&p.encode(true)).unwrap().doc_id, p.doc_id);
+    }
+
+    /// A file written before doc ids existed must still open. Files already
+    /// saved cannot be migrated — nothing can reach them — so the decoder has
+    /// to keep reading the old shape for as long as any such file might exist.
+    #[test]
+    fn reads_version_1_frames_without_a_doc_id() {
+        let ct = b"text/plain";
+        let body = b"written by an older monofile";
+        let mut v1 = b"MONO".to_vec();
+        v1.push(VERSION_WITHOUT_DOC_ID);
+        v1.push(0); // not gzipped
+        v1.extend_from_slice(&(ct.len() as u16).to_le_bytes());
+        v1.extend_from_slice(ct); // no id_len, no id
+        v1.extend_from_slice(body);
+
+        let got = Payload::decode(&STANDARD.encode(&v1)).unwrap();
+        assert_eq!(got.content_type, "text/plain");
+        assert_eq!(got.data, body);
+        assert_eq!(got.doc_id, "", "v1 carries no id; the web layer mints one");
+    }
+
+    /// The id is length-prefixed and sits between two other variable fields, so
+    /// an empty one must not be confused with a missing one.
+    #[test]
+    fn distinguishes_an_empty_doc_id_from_a_missing_field() {
+        let with = Payload::new("a/b", b"x".to_vec()).with_doc_id("id");
+        let without = Payload::new("a/b", b"x".to_vec());
+        assert_ne!(with.encode(false), without.encode(false));
+        assert_eq!(Payload::decode(&without.encode(false)).unwrap().doc_id, "");
+        assert_eq!(Payload::decode(&with.encode(false)).unwrap().doc_id, "id");
     }
 }

@@ -12,6 +12,9 @@ const CONTENT_TYPE: &str = "text/plain";
 #[wasm_bindgen(start)]
 pub fn start() {
     console_error_panic_hook::set_once();
+    // Scopes this app's IndexedDB database. Must precede any save or
+    // draft call; see lrb_monofile::web::configure.
+    web::configure("notes-leptos");
     let mount_point = web_sys::window()
         .and_then(|w| w.document())
         .and_then(|d| d.get_element_by_id("app"))
