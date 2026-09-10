@@ -13,28 +13,29 @@ use std::io::{Read as _, Write as _};
 ///
 /// ```text
 /// magic   b"MONO"   4 bytes
-/// version u8        1 byte   currently 2
+/// version u8        1 byte   currently 1
 /// flags   u8        1 byte   bit 0 = body is gzipped
 /// ct_len  u16 LE    2 bytes
-/// id_len  u16 LE    2 bytes  (version 2 and later)
+/// id_len  u16 LE    2 bytes
 /// ct      utf-8     ct_len bytes
 /// id      utf-8     id_len bytes
 /// body    bytes     to end
 /// ```
 ///
-/// Version 1 is still read: it has no `id_len` and no `id`, and decodes to an
-/// empty [`Payload::doc_id`], which the web layer then mints. Files already
-/// written are frozen code — a format that cannot read its own past is a way to
-/// lose documents.
+/// `version` exists so a future change can be made without guessing at the
+/// shape of what it is reading. There is only one version today and nothing has
+/// been released, so `decode` accepts exactly it.
 ///
 /// The whole frame is then base64'd. Base64's alphabet is `A-Za-z0-9+/=`, which
 /// cannot produce `<`, so an encoded payload can never terminate the script tag
 /// that holds it — that safety property is why the framing is binary-then-base64
 /// rather than, say, JSON with an embedded string.
 const MAGIC: &[u8; 4] = b"MONO";
-const VERSION: u8 = 2;
-const VERSION_WITHOUT_DOC_ID: u8 = 1;
+const VERSION: u8 = 1;
 const FLAG_GZIP: u8 = 1 << 0;
+
+/// Bytes before the variable-length fields: magic, version, flags, ct_len, id_len.
+const HEADER_LEN: usize = 10;
 
 /// A document plus the MIME type that says how to interpret it.
 ///
@@ -112,7 +113,7 @@ impl Payload {
 
         let ct = self.content_type.as_bytes();
         let id = self.doc_id.as_bytes();
-        let mut frame = Vec::with_capacity(10 + ct.len() + id.len() + body.len());
+        let mut frame = Vec::with_capacity(HEADER_LEN + ct.len() + id.len() + body.len());
         frame.extend_from_slice(MAGIC);
         frame.push(VERSION);
         frame.push(if compress { FLAG_GZIP } else { 0 });
@@ -136,35 +137,26 @@ impl Payload {
             .decode(trimmed.as_bytes())
             .map_err(|e| PayloadError::BadBase64(e.to_string()))?;
 
-        if frame.len() < 8 {
+        if frame.len() < HEADER_LEN {
             return Err(PayloadError::Truncated);
         }
         if &frame[0..4] != MAGIC {
             return Err(PayloadError::BadMagic);
         }
         let version = frame[4];
-        if version != VERSION && version != VERSION_WITHOUT_DOC_ID {
+        if version != VERSION {
             return Err(PayloadError::UnsupportedVersion(version));
         }
         let flags = frame[5];
         let ct_len = u16::from_le_bytes([frame[6], frame[7]]) as usize;
+        let id_len = u16::from_le_bytes([frame[8], frame[9]]) as usize;
 
-        // Version 1 has no id_len field, so the strings start two bytes earlier.
-        let (id_len, header) = if version == VERSION_WITHOUT_DOC_ID {
-            (0usize, 8usize)
-        } else {
-            if frame.len() < 10 {
-                return Err(PayloadError::Truncated);
-            }
-            (u16::from_le_bytes([frame[8], frame[9]]) as usize, 10usize)
-        };
-
-        let ct_end = header.checked_add(ct_len).ok_or(PayloadError::Truncated)?;
+        let ct_end = HEADER_LEN.checked_add(ct_len).ok_or(PayloadError::Truncated)?;
         let id_end = ct_end.checked_add(id_len).ok_or(PayloadError::Truncated)?;
         if frame.len() < id_end {
             return Err(PayloadError::Truncated);
         }
-        let content_type = std::str::from_utf8(&frame[header..ct_end])
+        let content_type = std::str::from_utf8(&frame[HEADER_LEN..ct_end])
             .map_err(|_| PayloadError::BadContentType)?
             .to_owned();
         let doc_id = std::str::from_utf8(&frame[ct_end..id_end])
@@ -284,22 +276,42 @@ mod tests {
         assert!(p.encode(true).len() * 4 < p.encode(false).len());
     }
 
+    /// Frames here are padded to a full header, so each one reaches the check
+    /// it is meant to exercise rather than tripping the length check first.
     #[test]
     fn rejects_corrupt_frames() {
+        // Empty, whitespace, and non-base64 never get as far as a frame.
         assert_eq!(Payload::decode(""), Err(PayloadError::Truncated));
         assert_eq!(Payload::decode("   \n  "), Err(PayloadError::Truncated));
         assert!(matches!(Payload::decode("not base64!!"), Err(PayloadError::BadBase64(_))));
-        assert_eq!(Payload::decode(&STANDARD.encode(b"XXXX\x01\x00\x00\x00")), Err(PayloadError::BadMagic));
+
+        // Shorter than a header.
         assert_eq!(Payload::decode(&STANDARD.encode(b"MONO")), Err(PayloadError::Truncated));
 
-        let mut future = b"MONO".to_vec();
-        future.extend_from_slice(&[99, 0, 0, 0]);
-        assert_eq!(Payload::decode(&STANDARD.encode(&future)), Err(PayloadError::UnsupportedVersion(99)));
+        let frame = |magic: &[u8], rest: [u8; 6]| {
+            let mut f = magic.to_vec();
+            f.extend_from_slice(&rest);
+            STANDARD.encode(&f)
+        };
 
+        assert_eq!(
+            Payload::decode(&frame(b"XXXX", [VERSION, 0, 0, 0, 0, 0])),
+            Err(PayloadError::BadMagic)
+        );
+        assert_eq!(
+            Payload::decode(&frame(b"MONO", [99, 0, 0, 0, 0, 0])),
+            Err(PayloadError::UnsupportedVersion(99))
+        );
         // ct_len claims 64 bytes of content type that are not present.
-        let mut lying = b"MONO".to_vec();
-        lying.extend_from_slice(&[VERSION, 0, 64, 0]);
-        assert_eq!(Payload::decode(&STANDARD.encode(&lying)), Err(PayloadError::Truncated));
+        assert_eq!(
+            Payload::decode(&frame(b"MONO", [VERSION, 0, 64, 0, 0, 0])),
+            Err(PayloadError::Truncated)
+        );
+        // Same for id_len, which is the field that follows it.
+        assert_eq!(
+            Payload::decode(&frame(b"MONO", [VERSION, 0, 0, 0, 64, 0])),
+            Err(PayloadError::Truncated)
+        );
     }
 
     #[test]
@@ -341,25 +353,6 @@ mod tests {
         assert_eq!(Payload::decode(&p.encode(true)).unwrap().doc_id, p.doc_id);
     }
 
-    /// A file written before doc ids existed must still open. Files already
-    /// saved cannot be migrated — nothing can reach them — so the decoder has
-    /// to keep reading the old shape for as long as any such file might exist.
-    #[test]
-    fn reads_version_1_frames_without_a_doc_id() {
-        let ct = b"text/plain";
-        let body = b"written by an older monofile";
-        let mut v1 = b"MONO".to_vec();
-        v1.push(VERSION_WITHOUT_DOC_ID);
-        v1.push(0); // not gzipped
-        v1.extend_from_slice(&(ct.len() as u16).to_le_bytes());
-        v1.extend_from_slice(ct); // no id_len, no id
-        v1.extend_from_slice(body);
-
-        let got = Payload::decode(&STANDARD.encode(&v1)).unwrap();
-        assert_eq!(got.content_type, "text/plain");
-        assert_eq!(got.data, body);
-        assert_eq!(got.doc_id, "", "v1 carries no id; the web layer mints one");
-    }
 
     /// The id is length-prefixed and sits between two other variable fields, so
     /// an empty one must not be confused with a missing one.

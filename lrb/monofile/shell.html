@@ -169,12 +169,18 @@ window.__monofile = (() => {
     canSaveInPlace: () => canSaveInPlace,
 
     setDirty(v) { dirty = !!v; },
+    isDirty: () => dirty,
 
-    /// Called once at boot. `appId` scopes the database; `docId` keys drafts so
-    /// they follow the document rather than the file path.
+    // Called at boot. `appId` scopes the database; `docId` keys drafts so they
+    // follow the document rather than the file path.
+    //
+    // Each field is only touched when the caller mentions it, so appId and
+    // docId can be set independently — but an explicit null DOES clear, rather
+    // than being ignored. State that can only ever accumulate is a trap.
     configure(opts) {
-      if (opts && opts.appId) appId = String(opts.appId);
-      if (opts && opts.docId) docKey = "doc:" + String(opts.docId);
+      if (!opts) return;
+      if ("appId" in opts) appId = opts.appId ? String(opts.appId) : "monofile";
+      if ("docId" in opts) docKey = opts.docId ? "doc:" + String(opts.docId) : null;
     },
 
     newDocId() {

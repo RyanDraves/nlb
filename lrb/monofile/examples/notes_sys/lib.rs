@@ -63,7 +63,10 @@ fn mount() -> Result<(), String> {
                     web::set_dirty(true);
                 }
             }
-            Err(e) => web_sys::console::error_1(&format!("load failed: {e}").into()),
+            Err(e) => {
+                web::show_toast("Couldn't read this file's contents — starting empty.");
+                web_sys::console::error_1(&format!("load failed: {e}").into());
+            }
         }
     });
 

@@ -51,7 +51,7 @@ async function run() {
   // 1. The shim exposes the contract web.rs binds to. A rename here is
   //    otherwise only discovered at runtime, in a browser, on save.
   for (const fn of ["canSaveInPlace", "acquire", "commit", "open", "toast",
-                    "setDirty", "configure", "newDocId",
+                    "setDirty", "isDirty", "configure", "newDocId",
                     "saveDraft", "loadDraft", "clearDraft"]) {
     check("exports " + fn, typeof M[fn] === "function");
   }
@@ -122,7 +122,34 @@ async function run() {
   check("no storage is opened before configure() names the app",
         !names.includes("monofile-monofile"), names.join(", "));
 
-  // 8. A missing draft is null, not a throw — boot must survive a fresh file.
+  // 8. Before any document id is known — a freshly built file carries none,
+  //    because the bundler cannot mint one without making its output differ on
+  //    every build — drafts fall back to the path. This has to round-trip, or
+  //    work saved on a file's first visit is orphaned the moment it reloads.
+  await idbDelete("nokey-monofile");
+  M.configure({ appId: "nokey", docId: null });   // deliberately no document id
+  await M.saveDraft("BEFORE-ANY-DOC-ID");
+  const byPath = await M.loadDraft();
+  check("drafts round-trip before a document id exists",
+        byPath && byPath.payload === "BEFORE-ANY-DOC-ID");
+  const nokeyKeys = await new Promise((res) => {
+    const r = indexedDB.open("nokey-monofile");
+    r.onsuccess = () => {
+      const q = r.result.transaction("drafts").objectStore("drafts").getAllKeys();
+      q.onsuccess = () => res(q.result);
+    };
+  });
+  check("that fallback key is the path, not a one-shot id",
+        nokeyKeys.length === 1 && nokeyKeys[0] === location.origin + location.pathname,
+        nokeyKeys.join(", "));
+
+  // 9. The close warning reads this, so it has to be readable and honest.
+  M.setDirty(true);
+  check("isDirty reflects setDirty(true)", M.isDirty() === true);
+  M.setDirty(false);
+  check("isDirty reflects setDirty(false)", M.isDirty() === false);
+
+  // 10. A missing draft is null, not a throw — boot must survive a fresh file.
   M.configure({ appId: "keys", docId: "never-saved" });
   check("an absent draft reads back as null", (await M.loadDraft()) === null);
 }

@@ -39,7 +39,10 @@ fn App() -> impl IntoView {
                     web::set_dirty(true);
                 }
             }
-            Err(e) => leptos::logging::error!("load failed: {e}"),
+            Err(e) => {
+                web::show_toast("Couldn't read this file's contents — starting empty.");
+                leptos::logging::error!("load failed: {e}");
+            }
         }
     });
 

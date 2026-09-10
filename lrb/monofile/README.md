@@ -83,12 +83,18 @@ browser — and then:
 | Chromium | writes your actual file, clears the draft | Save As... |
 | Firefox / Safari | keeps the draft only, no file created | downloads a copy |
 
-On load, `web::current_document` returns the draft if one survived, with a flag
-so the app can say "Restored unsaved changes" rather than silently showing
-different content than the file holds. A download deliberately does *not* clear
-the draft: the file the user has open is still the stale one, so their edits
-have to survive reopening it. Only an in-place write clears it, because only
-then does the file actually match.
+On load, `web::current_document` returns the draft if one survived *and differs
+from what the file holds*, with a flag so the app can say "Restored unsaved
+changes" rather than silently showing different content than the file. A draft
+equal to the file is not a restore — it is the ordinary state after downloading
+a copy — so it is dropped quietly. A download does not otherwise clear the
+draft: the file the user has open is still the stale one, so their edits have to
+survive reopening it. Only an in-place write clears it, because only then does
+the file actually match.
+
+`dirty` means "edits that exist only in this tab". Saving a draft clears it and
+so does writing a file — warning someone on close right after they exported
+their work just teaches them the prompt is noise. `web::is_dirty` reads it.
 
 Apps call `web::set_dirty(true)` on edit; the shell warns on tab close while
 dirty. The core asks for `navigator.storage.persist()` so drafts are not evicted.
@@ -100,9 +106,10 @@ schema version it shipped with, so the day one app adds a store and bumps a
 shared version, every *other* app's files in the world throw `VersionError` and
 lose their drafts — unreachable and unfixable.
 
-Drafts are keyed by the document's `doc_id`, a uuid minted at first open and
-carried in the payload frame thereafter, so renaming or moving a file keeps its
-work. `web::save` stamps the id onto any payload that lacks one, because apps
+Drafts are keyed by the document's `doc_id` — a uuid carried in the payload
+frame — so renaming or moving a file keeps its work. A freshly built monofile
+has no id, because the bundler cannot mint one without making its output differ
+on every build; until a save stamps one in, drafts fall back to the file path. `web::save` stamps the id onto any payload that lacks one, because apps
 naturally rebuild a `Payload` from editor state on every save and would
 otherwise drop it silently. Two copies of one document share an id, and so share
 drafts — the trade against path keying, which instead loses them on rename.
@@ -113,7 +120,7 @@ Save handles stay keyed by path, since they refer to a location, not a document.
 `bazel test //lrb/monofile/...` covers three layers:
 
 - `monofile_test` — the pure `payload` and `shell` logic on the host, including
-  the fixed point, the real shipped `shell.html`, and version-1 frame reading.
+  the fixed point, the real shipped `shell.html`, and frame corruption.
 - `bundler_test` — the build-time tool, including that `verify` rejects a file
   that does not round-trip.
 - `shim_test` — the `window.__monofile` JavaScript, in real headless Chrome

@@ -44,6 +44,9 @@ extern "C" {
     #[wasm_bindgen(js_namespace = __monofile, js_name = setDirty)]
     fn set_dirty_js(dirty: bool);
 
+    #[wasm_bindgen(js_namespace = __monofile, js_name = isDirty)]
+    fn is_dirty_js() -> bool;
+
     #[wasm_bindgen(js_namespace = __monofile, js_name = configure)]
     fn configure_js(opts: JsValue);
 
@@ -168,6 +171,12 @@ pub fn set_dirty(dirty: bool) {
     set_dirty_js(dirty);
 }
 
+/// Whether edits exist that are not yet written anywhere — a draft or a file.
+/// Apps use it for a modified indicator; it is what the close warning reads.
+pub fn is_dirty() -> bool {
+    is_dirty_js()
+}
+
 /// The document to open with: a stored draft if one survived, else whatever was
 /// baked into the file.
 ///
@@ -176,16 +185,26 @@ pub fn set_dirty(dirty: bool) {
 pub async fn current_document() -> Result<(Payload, bool), WebError> {
     let mut embedded = current_payload()?;
 
-    // Adopt the file's id, or mint one for a file written before ids existed.
-    // This must happen before any draft lookup: until the shim knows the id it
-    // keys drafts by path, and we would miss the ones stored under the id.
-    if embedded.doc_id.is_empty() {
+    // Adopt the file's id, or mint one to stamp into the next save.
+    //
+    // A freshly built monofile has no id: the bundler cannot assign one without
+    // making its output differ on every build. So an id only reaches a file
+    // once that file has been saved, and until then drafts must stay keyed by
+    // path — configuring a freshly minted id here would key every draft under a
+    // value that never occurs again, orphaning it on the very next load.
+    //
+    // Either way this must precede the draft lookup, because it decides which
+    // key that lookup uses.
+    let has_id = !embedded.doc_id.is_empty();
+    if !has_id {
         embedded.doc_id = new_doc_id();
     }
     DOC_ID.with(|d| *d.borrow_mut() = embedded.doc_id.clone());
-    let opts = js_sys::Object::new();
-    let _ = js_sys::Reflect::set(&opts, &"docId".into(), &embedded.doc_id.as_str().into());
-    configure_js(opts.into());
+    if has_id {
+        let opts = js_sys::Object::new();
+        let _ = js_sys::Reflect::set(&opts, &"docId".into(), &embedded.doc_id.as_str().into());
+        configure_js(opts.into());
+    }
 
     let draft = load_draft_js().await.unwrap_or(JsValue::NULL);
     if draft.is_falsy() {
@@ -195,8 +214,20 @@ pub async fn current_document() -> Result<(Payload, bool), WebError> {
         .ok()
         .and_then(|v| v.as_string());
     match text.as_deref().map(Payload::decode) {
+        Some(Ok(p)) => {
+            // A draft equal to what the file already holds is not a restore.
+            // This happens routinely: on a browser that cannot write in place,
+            // Ctrl+S leaves a draft and Ctrl+Shift+S then writes a file with
+            // the same content, so opening that copy would otherwise announce
+            // "Restored unsaved changes" over a document that is perfectly
+            // current. Drop the redundant draft while we are here.
+            if p.data == embedded.data && p.content_type == embedded.content_type {
+                let _ = clear_draft_js().await;
+                return Ok((embedded, false));
+            }
+            Ok((p.with_doc_id(embedded.doc_id), true))
+        }
         // A draft that will not decode is not worth failing the whole boot over.
-        Some(Ok(p)) => Ok((p.with_doc_id(embedded.doc_id), true)),
         _ => Ok((embedded, false)),
     }
 }
@@ -290,11 +321,23 @@ pub async fn export(template: &str, document: &Payload) -> Result<Saved, WebErro
     }
     let document = with_session_doc_id(document);
     let compress = !looks_precompressed(&document.data);
-    let parts = Parts { payload: document.encode(compress), ..current_parts()? };
+    let encoded = document.encode(compress);
+
+    // Also keep a draft. The file the user is looking at stays stale after a
+    // download, so without this their edits would live only in the new copy —
+    // reopening the original would silently show old content.
+    let _ = save_draft_js(&encoded).await;
+
+    let parts = Parts { payload: encoded, ..current_parts()? };
     let html = shell::render(template, &parts).map_err(WebError::Shell)?;
 
     match commit(&html, JsValue::UNDEFINED).await {
         Ok(_) => {
+            // The edits are on disk now, so there is nothing left that exists
+            // only in this tab. Warning on close after the user has just
+            // written a file is worse than not warning at all: it teaches them
+            // the prompt is noise.
+            set_dirty_js(false);
             toast("Downloaded a copy", 2200);
             Ok(Saved::Downloaded)
         }
