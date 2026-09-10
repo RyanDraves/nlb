@@ -48,6 +48,15 @@ bzl_library(
 )
 
 bzl_library(
+    name = "monofile",
+    srcs = ["monofile.bzl"],
+    deps = [
+        "//bzl/rules:monofile",
+        "@rules_rust_wasm_bindgen//:bzl_lib",
+    ],
+)
+
+bzl_library(
     name = "next",
     srcs = ["next.bzl"],
     deps = [

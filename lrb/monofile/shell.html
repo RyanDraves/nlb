@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>monofile</title>
+<style>
+  :root { color-scheme: light dark; }
+  html, body { margin: 0; height: 100%; }
+  body { font: 14px/1.5 system-ui, -apple-system, sans-serif; }
+  #monofile-banner {
+    display: none; padding: .5rem .9rem; font-size: 13px;
+    background: #fde68a; color: #422006;
+  }
+  #monofile-banner.show { display: block; }
+</style>
+</head>
+<body>
+
+<!--
+  Save/open shim. Lives in the shell template as a *classic* script (so it runs
+  before the deferred module below) rather than being reached through
+  #[wasm_bindgen(inline_js)] — wasm-bindgen emits inline_js as separate files
+  under snippets/ which the glue then imports, and an external import would
+  break single-file bundling outright.
+-->
+<script>
+window.__monofile = (() => {
+  const canSaveInPlace =
+    typeof window.showSaveFilePicker === "function" &&
+    typeof window.FileSystemFileHandle === "function" &&
+    typeof FileSystemFileHandle.prototype.createWritable === "function";
+
+  // Reused across saves so only the first Ctrl+S of a session opens a picker.
+  // A page cannot derive a handle to its own file from `location`, so that
+  // first prompt is unavoidable; see the note in the plan.
+  let handle = null;
+
+  const suggestedName = () =>
+    decodeURIComponent(location.pathname.split("/").pop() || "") || "monofile.html";
+
+  const download = (html, name) => {
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: name });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const write = async (h, html) => {
+    const w = await h.createWritable();
+    await w.write(new Blob([html], { type: "text/html" }));
+    await w.close();
+  };
+
+  return {
+    canSaveInPlace: () => canSaveInPlace,
+
+    // Saving is deliberately two calls. showSaveFilePicker() requires transient
+    // user activation, and serializing a multi-megabyte monofile takes long
+    // enough to consume it — so `acquire` must be the FIRST thing the Ctrl+S
+    // handler does, before any rendering work, and `commit` follows once the
+    // HTML is ready.
+    //
+    // Returns true when there is somewhere to write, false if the user
+    // cancelled the picker.
+    async acquire({ forcePicker = false, name = null } = {}) {
+      if (!canSaveInPlace) return true; // download path needs no handle
+      if (handle && !forcePicker) return true;
+      try {
+        handle = await window.showSaveFilePicker({
+          suggestedName: name || suggestedName(),
+          types: [{ description: "HTML", accept: { "text/html": [".html"] } }],
+        });
+        return true;
+      } catch (e) {
+        if (e && e.name === "AbortError") return false;
+        handle = null;
+        throw e;
+      }
+    },
+
+    // Returns "saved" | "downloaded"; throws on real failures so Rust can
+    // surface them rather than silently losing the user's work.
+    async commit(html, { name = null } = {}) {
+      if (!canSaveInPlace || !handle) {
+        download(html, name || suggestedName());
+        return "downloaded";
+      }
+      try {
+        await write(handle, html);
+        return "saved";
+      } catch (e) {
+        handle = null;
+        throw e;
+      }
+    },
+
+    // Read a file the user picks. Returns {name, bytes} or null if cancelled.
+    async open(accept) {
+      return new Promise((resolve) => {
+        const input = Object.assign(document.createElement("input"), {
+          type: "file",
+          accept: accept || "",
+        });
+        input.onchange = async () => {
+          const f = input.files && input.files[0];
+          if (!f) return resolve(null);
+          resolve({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
+        };
+        input.oncancel = () => resolve(null);
+        input.click();
+      });
+    },
+
+    banner(text) {
+      const el = document.getElementById("monofile-banner");
+      el.textContent = text;
+      el.classList.add("show");
+    },
+  };
+})();
+</script>
+
+<div id="monofile-banner"></div>
+<div id="app"></div>
+
+<!-- Inert parts. The app never mutates these; it reads them back to rebuild
+     itself on save. Base64 cannot contain '<', so neither can terminate its
+     own tag. -->
+<script type="application/octet-stream" id="monofile-wasm">{{MONOFILE_WASM}}</script>
+<script type="application/octet-stream" id="monofile-payload">{{MONOFILE_PAYLOAD}}</script>
+
+<!-- wasm-bindgen glue + boot tail, concatenated by the bundler into one blob so
+     this node round-trips unchanged. -->
+<script type="module" id="monofile-glue">{{MONOFILE_GLUE}}</script>
+
+</body>
+</html>
