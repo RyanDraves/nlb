@@ -58,15 +58,31 @@ window.__monofile = (() => {
   // the same Downloads folder would overwrite each other's saved target.
   const KEY = location.origin + location.pathname;
 
-  const idb = (mode, fn) => new Promise((res, rej) => {
-    const r = indexedDB.open("monofile", 1);
-    r.onupgradeneeded = () => r.result.createObjectStore("handles");
+  // Bump DB_VERSION whenever a store is added, or an existing database created
+  // by an older monofile will never fire onupgradeneeded, the transaction below
+  // will throw NotFoundError, and every call will hang instead of failing.
+  const DB_VERSION = 2;
+  const idb = (store, mode, fn) => new Promise((res, rej) => {
+    let r;
+    try { r = indexedDB.open("monofile", DB_VERSION); } catch (e) { return rej(e); }
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      for (const name of ["handles", "drafts"]) {
+        if (!db.objectStoreNames.contains(name)) db.createObjectStore(name);
+      }
+    };
     r.onerror = () => rej(r.error);
+    r.onblocked = () => rej(new Error("indexedDB upgrade blocked by another tab"));
     r.onsuccess = () => {
-      const tx = r.result.transaction("handles", mode);
-      const req = fn(tx.objectStore("handles"));
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
+      // Anything here can throw synchronously (a missing store, a closing
+      // connection); without this the promise would never settle.
+      try {
+        const tx = r.result.transaction(store, mode);
+        const req = fn(tx.objectStore(store));
+        req.onsuccess = () => res(req.result);
+        req.onerror = () => rej(req.error);
+        tx.onabort = () => rej(tx.error || new Error("transaction aborted"));
+      } catch (e) { rej(e); }
     };
   });
 
@@ -74,7 +90,7 @@ window.__monofile = (() => {
   // Failure is never fatal — we just fall back to the picker.
   const restored = (async () => {
     if (!canSaveInPlace) return null;
-    try { return (await idb("readonly", (s) => s.get(KEY))) || null; } catch { return null; }
+    try { return (await idb("handles", "readonly", (s) => s.get(KEY))) || null; } catch { return null; }
   })();
 
   // Returns true if `h` is usable for writing now. A restored handle comes back
@@ -105,8 +121,39 @@ window.__monofile = (() => {
     await w.close();
   };
 
+  // Firefox and Safari cannot write to the user's file at all (no
+  // showSaveFilePicker, and no getAsFileSystemHandle either), so there Ctrl+S
+  // persists a draft here instead of manufacturing notes(1).html, notes(2).html
+  // in Downloads. Ask for persistent storage so the draft is not evicted under
+  // pressure; failure is harmless.
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {}
+
+  // Set by the app; guards against closing the tab over unwritten edits.
+  let dirty = false;
+  addEventListener("beforeunload", (e) => {
+    if (!dirty) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
+
   return {
     canSaveInPlace: () => canSaveInPlace,
+
+    setDirty(v) { dirty = !!v; },
+
+    // Drafts are keyed by path like handles are, for the same reason: one
+    // file:// origin is shared by every local page.
+    async saveDraft(payloadText) {
+      await idb("drafts", "readwrite",
+                (s) => s.put({ payload: payloadText, at: Date.now() }, KEY));
+    },
+    async loadDraft() {
+      try { return (await idb("drafts", "readonly", (s) => s.get(KEY))) || null; }
+      catch { return null; }
+    },
+    async clearDraft() {
+      try { await idb("drafts", "readwrite", (s) => s.delete(KEY)); } catch {}
+    },
 
     // Saving is deliberately two calls. showSaveFilePicker() requires transient
     // user activation, and serializing a multi-megabyte monofile takes long
@@ -134,7 +181,7 @@ window.__monofile = (() => {
         throw e;
       }
       // Best effort: remembering the target is a convenience, not correctness.
-      try { await idb("readwrite", (s) => s.put(handle, KEY)); } catch {}
+      try { await idb("handles", "readwrite", (s) => s.put(handle, KEY)); } catch {}
       return true;
     },
 

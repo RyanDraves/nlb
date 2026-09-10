@@ -73,6 +73,27 @@ Two rules make this safe, and both are enforced rather than assumed:
 Base64's alphabet cannot produce `<`, so no payload can terminate its own script
 tag; `render` rejects any part that would.
 
+## Saving
+
+`web::save` always writes a draft to IndexedDB first — cheap insurance on every
+browser — and then:
+
+| | Ctrl+S (`save`) | Ctrl+Shift+S (`export`) |
+|---|---|---|
+| Chromium | writes your actual file, clears the draft | Save As... |
+| Firefox / Safari | keeps the draft only, no file created | downloads a copy |
+
+On load, `web::current_document` returns the draft if one survived, with a flag
+so the app can say "Restored unsaved changes" rather than silently showing
+different content than the file holds. A download deliberately does *not* clear
+the draft: the file the user has open is still the stale one, so their edits
+have to survive reopening it. Only an in-place write clears it, because only
+then does the file actually match.
+
+Apps call `web::set_dirty(true)` on edit; the shell warns on tab close while
+dirty. Drafts and handles are keyed by `origin + pathname` and the core asks for
+`navigator.storage.persist()` so they are not evicted.
+
 ## Size
 
 `monofile_html` runs `wasm-opt` (from `@multitool//tools/wasm-opt`, pinned in
@@ -97,9 +118,21 @@ base64'd inside a file people pass around:
   emits those as separate files under `snippets/` which the glue then `import`s,
   and an external import cannot be inlined. Shared JS goes in the shell template
   and is bound as a global. The bundler fails the build on any external import.
-- **Save-in-place is Chromium-only.** Firefox and Safari have no
-  `showSaveFilePicker`, so every save downloads a new copy; the app should say so
-  via `web::show_toast`; `web::save` already does this for you.
+- **Save-in-place is Chromium-only, and will stay that way.** Firefox and Safari
+  implement `FileSystemFileHandle.createWritable` (FF 111, Safari 26) but ship
+  *no* route to a handle for a user-visible file: no `showSaveFilePicker`, no
+  `showOpenFilePicker`, no `showDirectoryPicker`, and no
+  `DataTransferItem.getAsFileSystemHandle`. Their handles only address the
+  sandboxed Origin Private File System. Mozilla's standards position on the File
+  System Access API is *negative*
+  ([#154](https://github.com/mozilla/standards-positions/issues/154)), with a
+  separate *defer* on the OPFS subset they did ship
+  ([#738](https://github.com/mozilla/standards-positions/issues/738)); the
+  picker half is still WICG-experimental. Design around it rather than waiting.
+
+  So `web::save` does not manufacture a file there. It persists a draft and says
+  so; `web::export` is the deliberate act that produces a `.html`. That turns
+  "a new file per save" into "a new file per share".
 - **The first Ctrl+S for a given file always prompts.** A page cannot derive a
   `FileSystemFileHandle` for its own file, so the user must pick it once and
   confirm the overwrite. After that the handle is cached in memory *and* in
