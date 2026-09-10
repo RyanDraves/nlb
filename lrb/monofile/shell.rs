@@ -162,12 +162,29 @@ fn contains_script_close(s: &str) -> bool {
 /// runtime reads these nodes through the DOM instead, because scanning your own
 /// source text for a marker is exactly the fragile pattern this module avoids.
 pub fn extract<'a>(html: &'a str, id: &str) -> Result<&'a str, ShellError> {
-    let missing = || ShellError::MissingNode { id: id.to_owned() };
     let anchor = format!("id=\"{id}\"");
-    let at = html.find(&anchor).ok_or_else(missing)?;
-    let open_end = html[at..].find('>').ok_or_else(missing)? + at + 1;
-    let close = html[open_end..].find("</script").ok_or_else(missing)? + open_end;
-    Ok(html[open_end..close].trim())
+    let mut rest = html;
+
+    // Walk actual <script> elements and match the id in the OPEN TAG, rather
+    // than searching the whole document for the anchor. A plain search would
+    // happily match an `id="monofile-wasm"` occurring inside some earlier
+    // node's text — and the glue node is arbitrary JavaScript, so that is a
+    // real possibility. It would also make extraction depend on the order of
+    // nodes in the shell, which nothing else does.
+    while let Some(open) = rest.find("<script") {
+        let after_name = open + "<script".len();
+        let Some(gt) = rest[after_name..].find('>') else { break };
+        let tag_end = after_name + gt;
+        let content_start = tag_end + 1;
+        let Some(rel_close) = rest[content_start..].find("</script") else { break };
+        let close = content_start + rel_close;
+
+        if rest[open..tag_end].contains(&anchor) {
+            return Ok(rest[content_start..close].trim());
+        }
+        rest = &rest[close..];
+    }
+    Err(ShellError::MissingNode { id: id.to_owned() })
 }
 
 /// Recover all three parts from a rendered file.
@@ -299,6 +316,82 @@ mod tests {
             extract(&html, "nope"),
             Err(ShellError::MissingNode { id: "nope".to_owned() })
         );
+    }
+
+    /// The shipped shell must actually be usable by the bundler. Without this,
+    /// a typo in a placeholder is only caught when some example happens to be
+    /// built, and a shell with no consumer yet is never checked at all.
+    #[test]
+    fn default_shell_is_a_valid_template() {
+        validate_template(crate::DEFAULT_SHELL).unwrap();
+    }
+
+    /// `web.rs` finds its parts at runtime by these ids. Renaming one in the
+    /// HTML without updating the constant here still renders and still passes
+    /// the fixed-point test — it breaks only in a browser, on save, which is
+    /// the worst possible place to find out.
+    #[test]
+    fn default_shell_carries_the_ids_the_runtime_reads() {
+        for id in [GLUE_ID, WASM_ID, PAYLOAD_ID] {
+            let anchor = format!("id=\"{id}\"");
+            assert_eq!(
+                crate::DEFAULT_SHELL.matches(&anchor).count(),
+                1,
+                "shell.html must contain exactly one {anchor}"
+            );
+        }
+    }
+
+    /// The whole pipeline against the real shell, not a toy template.
+    #[test]
+    fn default_shell_round_trips_and_is_a_fixed_point() {
+        let gen1 = render(crate::DEFAULT_SHELL, &parts()).unwrap();
+        assert_eq!(parse(&gen1).unwrap(), parts());
+        let gen2 = render(crate::DEFAULT_SHELL, &parse(&gen1).unwrap()).unwrap();
+        assert_eq!(gen1, gen2);
+    }
+
+    /// The glue node is arbitrary JavaScript. If it happens to contain the text
+    /// `id="monofile-wasm"`, extraction must still find the real wasm node —
+    /// otherwise correctness would silently depend on which node the shell
+    /// happens to list first.
+    #[test]
+    fn a_part_containing_an_id_anchor_does_not_hijack_extraction() {
+        let hostile = Parts {
+            glue: format!(
+                "const a = 'id=\"{WASM_ID}\"'; const b = 'id=\"{PAYLOAD_ID}\"';"
+            ),
+            ..parts()
+        };
+        let html = render(crate::DEFAULT_SHELL, &hostile).unwrap();
+        let got = parse(&html).unwrap();
+        assert_eq!(got.wasm, hostile.wasm);
+        assert_eq!(got.payload, hostile.payload);
+        assert_eq!(got.glue, hostile.glue);
+    }
+
+    /// The version of the above that actually bites. In the stock shell the glue
+    /// node happens to come last, so even a naive whole-document search finds
+    /// the right node — the bug is latent, not visible. Put the glue node FIRST
+    /// and a search-anywhere `extract` returns the contents of a string literal
+    /// instead of the wasm. Shells are app-supplied, so node order is not ours
+    /// to assume.
+    #[test]
+    fn extraction_does_not_depend_on_node_order_in_the_shell() {
+        let glue_first = concat!(
+            "<!DOCTYPE html><html><body>\n",
+            "<script type=\"module\" id=\"monofile-glue\">{{MONOFILE_GLUE}}</script>\n",
+            "<script type=\"application/octet-stream\" id=\"monofile-wasm\">{{MONOFILE_WASM}}</script>\n",
+            "<script type=\"application/octet-stream\" id=\"monofile-payload\">{{MONOFILE_PAYLOAD}}</script>\n",
+            "</body></html>\n",
+        );
+        let hostile = Parts {
+            glue: format!("const decoy = 'id=\"{WASM_ID}\">NOT-THE-WASM';"),
+            ..parts()
+        };
+        let html = render(glue_first, &hostile).unwrap();
+        assert_eq!(parse(&html).unwrap(), hostile);
+        assert_eq!(extract(&html, WASM_ID).unwrap(), hostile.wasm);
     }
 
     /// End to end with real framing, which is how the bundler will use this.

@@ -166,10 +166,15 @@ fn verify(template: &str, html: &str, parts: &Parts) -> Result<(), String> {
 fn reject_external_imports(glue: &str) -> Result<(), String> {
     for (n, line) in glue.lines().enumerate() {
         let t = line.trim_start();
-        let is_import = t.starts_with("import ")
-            || t.starts_with("import{")
-            || t.starts_with("import(")
-            || (t.starts_with("export ") && t.contains(" from "));
+        // Match a module *specifier* (`from "..."`), not the bare word "from".
+        // `export function f() { /* pulled from the cache */ }` is ordinary
+        // code, and refusing to build on it would be a maddening false alarm.
+        let has_specifier = t.contains(" from \"") || t.contains(" from '");
+        let is_import = t.starts_with("import \"")
+            || t.starts_with("import '")
+            || ((t.starts_with("import ") || t.starts_with("import{") || t.starts_with("import("))
+                && has_specifier)
+            || (t.starts_with("export ") && has_specifier);
         if is_import {
             return Err(format!(
                 "glue line {} imports an external module, which cannot be inlined:\n  {}\n\
@@ -198,6 +203,47 @@ mod tests {
         assert!(reject_external_imports("import * as x from './snippets/a.js';").is_err());
         assert!(reject_external_imports("  import {a} from 'b';").is_err());
         assert!(reject_external_imports("export { x } from './snippets/a.js';").is_err());
+        assert!(reject_external_imports("import './snippets/a.js';").is_err());
+    }
+
+    /// Blocking a legitimate build is worse than the thing being guarded
+    /// against, because the guard is unconditional and the failure is baffling.
+    #[test]
+    fn does_not_flag_the_word_from_inside_ordinary_code() {
+        for ok in [
+            "export function decode(b) { /* copied from the spec */ }",
+            "export const msg = 'read from disk';",
+            "export function pick(a) { return a.from | 0; }",
+            "// import from somewhere",
+        ] {
+            assert!(
+                reject_external_imports(ok).is_ok(),
+                "false positive on: {ok}"
+            );
+        }
+    }
+
+    /// `verify` is what makes the fixed point structural rather than hoped for,
+    /// so it needs to actually reject a file that does not round-trip.
+    #[test]
+    fn verify_accepts_a_good_render_and_rejects_a_tampered_one() {
+        let template = concat!(
+            "<html><body>",
+            "<script id=\"monofile-wasm\">{{MONOFILE_WASM}}</script>",
+            "<script id=\"monofile-payload\">{{MONOFILE_PAYLOAD}}</script>",
+            "<script id=\"monofile-glue\">{{MONOFILE_GLUE}}</script>",
+            "</body></html>",
+        );
+        let parts = Parts {
+            glue: "const a = 1;".to_owned(),
+            wasm: "H4sIAAAA".to_owned(),
+            payload: "TU9OTwEA".to_owned(),
+        };
+        let html = shell::render(template, &parts).unwrap();
+        verify(template, &html, &parts).unwrap();
+
+        let tampered = html.replace("H4sIAAAA", "H4sIAAAB");
+        assert!(verify(template, &tampered, &parts).is_err());
     }
 
     #[test]
