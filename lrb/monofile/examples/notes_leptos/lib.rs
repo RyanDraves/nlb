@@ -3,7 +3,7 @@
 //! bundled `.html` size is attributable to the framework.
 
 use leptos::prelude::*;
-use lrb_monofile::web::{self, Saved};
+use lrb_monofile::web;
 use lrb_monofile::{Payload, DEFAULT_SHELL};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast as _;
@@ -31,7 +31,7 @@ fn App() -> impl IntoView {
     let text = RwSignal::new(initial);
 
     if !web::can_save_in_place() {
-        web::show_banner("This browser can't save in place, so Ctrl+S downloads a new copy instead.");
+        web::show_toast("Ctrl+S will download a copy \u{2014} this browser can\u{2019}t save in place.");
     }
 
     let on_keydown = Closure::<dyn FnMut(web_sys::KeyboardEvent)>::new(
@@ -45,8 +45,8 @@ fn App() -> impl IntoView {
                 // `save` acquires the write target before rendering, so the
                 // picker still has the user activation from this keypress.
                 match web::save(DEFAULT_SHELL, &doc, false).await {
-                    Ok(Saved::Cancelled) => {}
-                    Ok(_) => leptos::logging::log!("saved"),
+                    // `save` toasts its own outcome; nothing to add.
+                    Ok(_) => {}
                     Err(e) => leptos::logging::error!("save failed: {e}"),
                 }
             });

@@ -6,7 +6,7 @@
 //! Deliberately minimal — a textarea and Ctrl+S — so the measurement reflects
 //! framework overhead rather than app code.
 
-use lrb_monofile::web::{self, Saved};
+use lrb_monofile::web;
 use lrb_monofile::{Payload, DEFAULT_SHELL};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast as _;
@@ -48,8 +48,8 @@ fn mount() -> Result<(), String> {
     textarea().set_value(&text);
 
     if !web::can_save_in_place() {
-        web::show_banner(
-            "This browser can't save in place, so Ctrl+S downloads a new copy instead.",
+        web::show_toast(
+            "Ctrl+S will download a copy \u{2014} this browser can\u{2019}t save in place.",
         );
     }
 
@@ -64,8 +64,8 @@ fn mount() -> Result<(), String> {
                 // `save` acquires the write target before rendering, so the
                 // picker still has the user activation from this keypress.
                 match web::save(DEFAULT_SHELL, &doc, false).await {
-                    Ok(Saved::Cancelled) => {}
-                    Ok(_) => web_sys::console::log_1(&"saved".into()),
+                    // `save` toasts its own outcome; nothing to add.
+                    Ok(_) => {}
                     Err(e) => web_sys::console::error_1(&format!("save failed: {e}").into()),
                 }
             });

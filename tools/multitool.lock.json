@@ -105,5 +105,33 @@
                 "cpu": "arm64"
             }
         ]
+    },
+    "wasm-opt": {
+        "binaries": [
+            {
+                "kind": "archive",
+                "url": "https://github.com/WebAssembly/binaryen/releases/download/version_132/binaryen-version_132-x86_64-linux.tar.gz",
+                "sha256": "195ddc94f9bc89f45abdabb0b9eea86023d727ba90eac8b35b80f2544fc30572",
+                "file": "binaryen-version_132/bin/wasm-opt",
+                "os": "linux",
+                "cpu": "x86_64"
+            },
+            {
+                "kind": "archive",
+                "url": "https://github.com/WebAssembly/binaryen/releases/download/version_132/binaryen-version_132-aarch64-linux.tar.gz",
+                "sha256": "c58562417836c5d0493d89bdefc434933bdc097db641b483df86bcfa557a107f",
+                "file": "binaryen-version_132/bin/wasm-opt",
+                "os": "linux",
+                "cpu": "arm64"
+            },
+            {
+                "kind": "archive",
+                "url": "https://github.com/WebAssembly/binaryen/releases/download/version_132/binaryen-version_132-arm64-macos.tar.gz",
+                "sha256": "98aad827847af7ef990ed7098d885725c8e5b5aae75073403635617ae4e259aa",
+                "file": "binaryen-version_132/bin/wasm-opt",
+                "os": "macos",
+                "cpu": "arm64"
+            }
+        ]
     }
 }

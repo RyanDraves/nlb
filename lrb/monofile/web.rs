@@ -37,7 +37,7 @@ extern "C" {
     async fn open(accept: &str) -> Result<JsValue, JsValue>;
 
     #[wasm_bindgen(js_namespace = __monofile)]
-    fn banner(text: &str);
+    fn toast(text: &str, ms: u32);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -118,10 +118,10 @@ pub fn can_save_in_place() -> bool {
     can_save_in_place_js()
 }
 
-/// Show a persistent notice. Used to explain the download fallback on browsers
-/// without the File System Access API.
-pub fn show_banner(text: &str) {
-    banner(text);
+/// Flash a short message. Transient on purpose — a permanent bar explaining the
+/// download fallback is noise once you have read it once.
+pub fn show_toast(text: &str) {
+    toast(text, 2200);
 }
 
 /// Rebuild the entire file around `document` and write it out.
@@ -150,10 +150,28 @@ pub async fn save(
     let parts = Parts { payload: document.encode(compress), ..current_parts()? };
     let html = shell::render(template, &parts).map_err(WebError::Shell)?;
 
-    let result = commit(&html, JsValue::UNDEFINED).await.map_err(js_err)?;
+    let result = match commit(&html, JsValue::UNDEFINED).await {
+        Ok(v) => v,
+        Err(e) => {
+            let e = js_err(e);
+            toast(&format!("Save failed: {e}"), 6000);
+            return Err(e);
+        }
+    };
+
     Ok(match result.as_string().as_deref() {
-        Some("downloaded") => Saved::Downloaded,
-        _ => Saved::InPlace,
+        Some("downloaded") => {
+            toast(
+                "Saved a copy to your downloads \u{2014} this browser can\u{2019}t \
+                 overwrite files in place.",
+                3600,
+            );
+            Saved::Downloaded
+        }
+        _ => {
+            toast("Saved", 1600);
+            Saved::InPlace
+        }
     })
 }
 

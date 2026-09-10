@@ -3,7 +3,7 @@
 load("@rules_rust_wasm_bindgen//:defs.bzl", "rust_wasm_bindgen")
 load("//bzl/rules:monofile.bzl", "monofile_bundle")
 
-def _monofile_html_impl(name, visibility, wasm_lib, shell, boot, payload, content_type, **kwargs):
+def _monofile_html_impl(name, visibility, wasm_lib, shell, boot, payload, content_type, opt_level, **kwargs):
     # No `platform_transition_filegroup` here, unlike the apps under `apps/`:
     # `rust_wasm_bindgen` applies its own `wasm_bindgen_transition` to
     # `wasm_file` (see its private/transitions.bzl), so wrapping it in an outer
@@ -24,6 +24,7 @@ def _monofile_html_impl(name, visibility, wasm_lib, shell, boot, payload, conten
         bindgen = name + "_bindgen",
         boot = boot,
         content_type = content_type,
+        opt_level = opt_level,
         payload = payload,
         shell = shell,
         visibility = visibility,
@@ -59,6 +60,11 @@ monofile_html = macro(
         "content_type": attr.string(
             default = "application/octet-stream",
             doc = "MIME type recorded in the payload frame.",
+            configurable = False,
+        ),
+        "opt_level": attr.string(
+            default = "-Oz",
+            doc = "wasm-opt optimization level. Empty string skips wasm-opt.",
             configurable = False,
         ),
         "payload": attr.label(

@@ -7,12 +7,28 @@
 <style>
   :root { color-scheme: light dark; }
   html, body { margin: 0; height: 100%; }
-  body { font: 14px/1.5 system-ui, -apple-system, sans-serif; }
-  #monofile-banner {
-    display: none; padding: .5rem .9rem; font-size: 13px;
-    background: #fde68a; color: #422006;
+  /* Monofile apps are full-page apps, so #app fills the viewport by default:
+     otherwise it collapses to content height and any `height: 100%` the app
+     sets inside it resolves against `auto` and does nothing. */
+  body {
+    font: 14px/1.5 system-ui, -apple-system, sans-serif;
+    display: flex; flex-direction: column;
   }
-  #monofile-banner.show { display: block; }
+  #app { flex: 1 1 auto; min-height: 0; }
+  /* Transient toast rather than a persistent banner: the save-fallback notice
+     is only interesting for a moment, and a permanent bar reading "this browser
+     can't save in place" is just noise once you have read it once. Fixed
+     position so showing one never reflows the app. */
+  #monofile-toast {
+    position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%);
+    max-width: min(40rem, calc(100vw - 2rem));
+    padding: .5rem .9rem; border-radius: 6px; font-size: 13px;
+    background: #262626; color: #fafafa; box-shadow: 0 2px 12px rgba(0,0,0,.3);
+    opacity: 0; pointer-events: none; transition: opacity .18s ease;
+    z-index: 2147483647;
+  }
+  #monofile-toast.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { #monofile-toast { transition: none; } }
 </style>
 </head>
 <body>
@@ -32,9 +48,46 @@ window.__monofile = (() => {
     typeof FileSystemFileHandle.prototype.createWritable === "function";
 
   // Reused across saves so only the first Ctrl+S of a session opens a picker.
-  // A page cannot derive a handle to its own file from `location`, so that
-  // first prompt is unavoidable; see the note in the plan.
+  // A page cannot derive a handle to its own file from `location`, so the very
+  // first prompt is unavoidable — but the handle survives in IndexedDB, so on
+  // later visits Ctrl+S costs one permission click instead of a file picker.
   let handle = null;
+
+  // Every file:// page shares ONE storage origin (Chrome buckets them all as
+  // `file__0`), so the handle must be keyed by path or two monofiles sitting in
+  // the same Downloads folder would overwrite each other's saved target.
+  const KEY = location.origin + location.pathname;
+
+  const idb = (mode, fn) => new Promise((res, rej) => {
+    const r = indexedDB.open("monofile", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("handles");
+    r.onerror = () => rej(r.error);
+    r.onsuccess = () => {
+      const tx = r.result.transaction("handles", mode);
+      const req = fn(tx.objectStore("handles"));
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    };
+  });
+
+  // Kicked off at load; `acquire` awaits it so a fast Ctrl+S cannot race it.
+  // Failure is never fatal — we just fall back to the picker.
+  const restored = (async () => {
+    if (!canSaveInPlace) return null;
+    try { return (await idb("readonly", (s) => s.get(KEY))) || null; } catch { return null; }
+  })();
+
+  // Returns true if `h` is usable for writing now. A restored handle comes back
+  // in the "prompt" state, and requestPermission needs the user activation that
+  // `acquire` is called with.
+  const ensurePermission = async (h) => {
+    if (!h || typeof h.queryPermission !== "function") return !!h;
+    const opts = { mode: "readwrite" };
+    try {
+      if ((await h.queryPermission(opts)) === "granted") return true;
+      return (await h.requestPermission(opts)) === "granted";
+    } catch { return false; }
+  };
 
   const suggestedName = () =>
     decodeURIComponent(location.pathname.split("/").pop() || "") || "monofile.html";
@@ -65,18 +118,24 @@ window.__monofile = (() => {
     // cancelled the picker.
     async acquire({ forcePicker = false, name = null } = {}) {
       if (!canSaveInPlace) return true; // download path needs no handle
-      if (handle && !forcePicker) return true;
+      if (!handle && !forcePicker) handle = await restored;
+      if (handle && !forcePicker) {
+        if (await ensurePermission(handle)) return true;
+        handle = null; // denied or stale — fall through to the picker
+      }
       try {
         handle = await window.showSaveFilePicker({
           suggestedName: name || suggestedName(),
           types: [{ description: "HTML", accept: { "text/html": [".html"] } }],
         });
-        return true;
       } catch (e) {
         if (e && e.name === "AbortError") return false;
         handle = null;
         throw e;
       }
+      // Best effort: remembering the target is a convenience, not correctness.
+      try { await idb("readwrite", (s) => s.put(handle, KEY)); } catch {}
+      return true;
     },
 
     // Returns "saved" | "downloaded"; throws on real failures so Rust can
@@ -112,16 +171,20 @@ window.__monofile = (() => {
       });
     },
 
-    banner(text) {
-      const el = document.getElementById("monofile-banner");
+    // Show `text` briefly. Re-showing while one is up restarts the timer
+    // rather than stacking, so a burst of saves reads as one message.
+    toast(text, ms) {
+      const el = document.getElementById("monofile-toast");
       el.textContent = text;
       el.classList.add("show");
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove("show"), ms || 2200);
     },
   };
 })();
 </script>
 
-<div id="monofile-banner"></div>
+<div id="monofile-toast" role="status" aria-live="polite"></div>
 <div id="app"></div>
 
 <!-- Inert parts. The app never mutates these; it reads them back to rebuild
