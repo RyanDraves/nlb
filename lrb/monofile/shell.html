@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>monofile</title>
+<style>
+  :root { color-scheme: light dark; }
+  html, body { margin: 0; height: 100%; }
+  /* Monofile apps are full-page apps, so #app fills the viewport by default:
+     otherwise it collapses to content height and any `height: 100%` the app
+     sets inside it resolves against `auto` and does nothing. */
+  body {
+    font: 14px/1.5 system-ui, -apple-system, sans-serif;
+    display: flex; flex-direction: column;
+  }
+  #app { flex: 1 1 auto; min-height: 0; }
+  /* Transient toast rather than a persistent banner: the save-fallback notice
+     is only interesting for a moment, and a permanent bar reading "this browser
+     can't save in place" is just noise once you have read it once. Fixed
+     position so showing one never reflows the app. */
+  #monofile-toast {
+    position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%);
+    max-width: min(40rem, calc(100vw - 2rem));
+    padding: .5rem .9rem; border-radius: 6px; font-size: 13px;
+    background: #262626; color: #fafafa; box-shadow: 0 2px 12px rgba(0,0,0,.3);
+    opacity: 0; pointer-events: none; transition: opacity .18s ease;
+    z-index: 2147483647;
+  }
+  #monofile-toast.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { #monofile-toast { transition: none; } }
+</style>
+</head>
+<body>
+
+<!--
+  Save/open shim. Lives in the shell template as a *classic* script (so it runs
+  before the deferred module below) rather than being reached through
+  #[wasm_bindgen(inline_js)] — wasm-bindgen emits inline_js as separate files
+  under snippets/ which the glue then imports, and an external import would
+  break single-file bundling outright.
+-->
+<script id="monofile-shim">
+window.__monofile = (() => {
+  const canSaveInPlace =
+    typeof window.showSaveFilePicker === "function" &&
+    typeof window.FileSystemFileHandle === "function" &&
+    typeof FileSystemFileHandle.prototype.createWritable === "function";
+
+  // Reused across saves so only the first Ctrl+S of a session opens a picker.
+  // A page cannot derive a handle to its own file from `location`, so the very
+  // first prompt is unavoidable — but the handle survives in IndexedDB, so on
+  // later visits Ctrl+S costs one permission click instead of a file picker.
+  let handle = null;
+
+  // Every file:// page shares ONE storage origin (Chrome buckets them all as
+  // `file__0`), so nothing may be stored under a bare global key: two monofiles
+  // sitting in the same Downloads folder would overwrite each other.
+  //
+  // The key is the document id once the app supplies one, so renaming or moving
+  // a file keeps its draft. Until then it falls back to the path, which is all
+  // we have before the payload has been decoded.
+  const pathKey = () => location.origin + location.pathname;
+  let docKey = null;
+  const KEY = () => docKey || pathKey();
+
+  // One database PER APP, each with its own version line.
+  //
+  // A single shared database is a trap: every monofile already written is
+  // frozen code, still asking for the version it shipped with. The day one app
+  // adds a store and bumps the shared version, every OTHER app's files in the
+  // world throw VersionError on open and lose their drafts, with no way to ever
+  // reach them and fix it. Bento hit exactly this.
+  let appId = "monofile";
+  const dbName = () => `${appId}-monofile`;
+
+  // Bump DB_VERSION whenever a store is added, or an existing database created
+  // by an older monofile will never fire onupgradeneeded, the transaction below
+  // will throw NotFoundError, and every call will hang instead of failing.
+  const DB_VERSION = 2;
+  const idb = (store, mode, fn) => new Promise((res, rej) => {
+    let r;
+    try { r = indexedDB.open(dbName(), DB_VERSION); } catch (e) { return rej(e); }
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      for (const name of ["handles", "drafts"]) {
+        if (!db.objectStoreNames.contains(name)) db.createObjectStore(name);
+      }
+    };
+    r.onerror = () => rej(r.error);
+    r.onblocked = () => rej(new Error("indexedDB upgrade blocked by another tab"));
+    r.onsuccess = () => {
+      // Anything here can throw synchronously (a missing store, a closing
+      // connection); without this the promise would never settle.
+      try {
+        const tx = r.result.transaction(store, mode);
+        const req = fn(tx.objectStore(store));
+        req.onsuccess = () => res(req.result);
+        req.onerror = () => rej(req.error);
+        tx.onabort = () => rej(tx.error || new Error("transaction aborted"));
+      } catch (e) { rej(e); }
+    };
+  });
+
+  // Resolved on FIRST USE, not at load. Kicking it off eagerly would open the
+  // database before `configure` had supplied the app id, so the lookup would
+  // read from the default-named database, never find the handle, and silently
+  // fall back to the file picker on every visit — while also leaving a stray
+  // `monofile-monofile` database behind. Found in a browser, not in review.
+  //
+  // Failure is never fatal: we just fall back to the picker.
+  let restoredPromise = null;
+  const restoredHandle = () => {
+    if (!restoredPromise) {
+      restoredPromise = (async () => {
+        if (!canSaveInPlace) return null;
+        try {
+          return (await idb("handles", "readonly", (s) => s.get(pathKey()))) || null;
+        } catch { return null; }
+      })();
+    }
+    return restoredPromise;
+  };
+
+  // Returns true if `h` is usable for writing now. A restored handle comes back
+  // in the "prompt" state, and requestPermission needs the user activation that
+  // `acquire` is called with.
+  const ensurePermission = async (h) => {
+    if (!h || typeof h.queryPermission !== "function") return !!h;
+    const opts = { mode: "readwrite" };
+    try {
+      if ((await h.queryPermission(opts)) === "granted") return true;
+      return (await h.requestPermission(opts)) === "granted";
+    } catch { return false; }
+  };
+
+  const suggestedName = () =>
+    decodeURIComponent(location.pathname.split("/").pop() || "") || "monofile.html";
+
+  const download = (html, name) => {
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: name });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const write = async (h, html) => {
+    const w = await h.createWritable();
+    await w.write(new Blob([html], { type: "text/html" }));
+    await w.close();
+  };
+
+  // Firefox and Safari cannot write to the user's file at all (no
+  // showSaveFilePicker, and no getAsFileSystemHandle either), so there Ctrl+S
+  // persists a draft here instead of manufacturing notes(1).html, notes(2).html
+  // in Downloads. Ask for persistent storage so the draft is not evicted under
+  // pressure; failure is harmless.
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {}
+
+  // Set by the app; guards against closing the tab over unwritten edits.
+  let dirty = false;
+  addEventListener("beforeunload", (e) => {
+    if (!dirty) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
+
+  return {
+    canSaveInPlace: () => canSaveInPlace,
+
+    setDirty(v) { dirty = !!v; },
+    isDirty: () => dirty,
+
+    // Called at boot. `appId` scopes the database; `docId` keys drafts so they
+    // follow the document rather than the file path.
+    //
+    // Each field is only touched when the caller mentions it, so appId and
+    // docId can be set independently — but an explicit null DOES clear, rather
+    // than being ignored. State that can only ever accumulate is a trap.
+    configure(opts) {
+      if (!opts) return;
+      if ("appId" in opts) appId = opts.appId ? String(opts.appId) : "monofile";
+      if ("docId" in opts) docKey = opts.docId ? "doc:" + String(opts.docId) : null;
+    },
+
+    newDocId() {
+      try { return crypto.randomUUID(); } catch {}
+      // Older engines, and any context where crypto is unavailable.
+      return "d-" + Date.now().toString(36) + "-" +
+             Math.random().toString(36).slice(2, 10);
+    },
+
+    // Drafts are keyed by path like handles are, for the same reason: one
+    // file:// origin is shared by every local page.
+    async saveDraft(payloadText) {
+      await idb("drafts", "readwrite",
+                (s) => s.put({ payload: payloadText, at: Date.now() }, KEY()));
+    },
+    async loadDraft() {
+      try { return (await idb("drafts", "readonly", (s) => s.get(KEY()))) || null; }
+      catch { return null; }
+    },
+    async clearDraft() {
+      try { await idb("drafts", "readwrite", (s) => s.delete(KEY())); } catch {}
+    },
+
+    // Saving is deliberately two calls. showSaveFilePicker() requires transient
+    // user activation, and serializing a multi-megabyte monofile takes long
+    // enough to consume it — so `acquire` must be the FIRST thing the Ctrl+S
+    // handler does, before any rendering work, and `commit` follows once the
+    // HTML is ready.
+    //
+    // Returns true when there is somewhere to write, false if the user
+    // cancelled the picker.
+    async acquire({ forcePicker = false, name = null, purpose = "in-place" } = {}) {
+      if (!canSaveInPlace) return true; // download path needs no handle
+      if (!handle && !forcePicker) handle = await restoredHandle();
+      if (handle && !forcePicker) {
+        if (await ensurePermission(handle)) return true;
+        handle = null; // denied or stale — fall through to the picker
+      }
+      try {
+        handle = await window.showSaveFilePicker({
+          // Browsers remember the last directory per picker id, and a working
+          // file and an exported copy usually live in different places. One
+          // shared id made the export picker open wherever the last save went.
+          id: purpose === "copy" ? "monofile-copy" : "monofile-doc",
+          suggestedName: name || suggestedName(),
+          types: [{ description: "HTML", accept: { "text/html": [".html"] } }],
+        });
+      } catch (e) {
+        if (e && e.name === "AbortError") return false;
+        handle = null;
+        throw e;
+      }
+      // Best effort: remembering the target is a convenience, not correctness.
+      try { await idb("handles", "readwrite", (s) => s.put(handle, pathKey())); } catch {}
+      return true;
+    },
+
+    // Returns "saved" | "downloaded"; throws on real failures so Rust can
+    // surface them rather than silently losing the user's work.
+    async commit(html, { name = null } = {}) {
+      if (!canSaveInPlace || !handle) {
+        download(html, name || suggestedName());
+        return "downloaded";
+      }
+      try {
+        await write(handle, html);
+        return "saved";
+      } catch (e) {
+        handle = null;
+        throw e;
+      }
+    },
+
+    // Read a file the user picks. Returns {name, bytes} or null if cancelled.
+    async open(accept) {
+      return new Promise((resolve) => {
+        const input = Object.assign(document.createElement("input"), {
+          type: "file",
+          accept: accept || "",
+        });
+        input.onchange = async () => {
+          const f = input.files && input.files[0];
+          if (!f) return resolve(null);
+          resolve({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
+        };
+        input.oncancel = () => resolve(null);
+        input.click();
+      });
+    },
+
+    // Show `text` briefly. Re-showing while one is up restarts the timer
+    // rather than stacking, so a burst of saves reads as one message.
+    toast(text, ms) {
+      const el = document.getElementById("monofile-toast");
+      el.textContent = text;
+      el.classList.add("show");
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove("show"), ms || 2200);
+    },
+  };
+})();
+</script>
+
+<div id="monofile-toast" role="status" aria-live="polite"></div>
+<div id="app"></div>
+
+<!-- Inert parts. The app never mutates these; it reads them back to rebuild
+     itself on save. Base64 cannot contain '<', so neither can terminate its
+     own tag. -->
+<script type="application/octet-stream" id="monofile-wasm">{{MONOFILE_WASM}}</script>
+<script type="application/octet-stream" id="monofile-payload">{{MONOFILE_PAYLOAD}}</script>
+
+<!-- wasm-bindgen glue + boot tail, concatenated by the bundler into one blob so
+     this node round-trips unchanged. -->
+<script type="module" id="monofile-glue">{{MONOFILE_GLUE}}</script>
+
+</body>
+</html>

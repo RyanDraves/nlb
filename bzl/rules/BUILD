@@ -12,6 +12,14 @@ bzl_library(
 )
 
 bzl_library(
+    name = "monofile",
+    srcs = ["monofile.bzl"],
+    deps = [
+        "@rules_rust_wasm_bindgen//:bzl_lib",
+    ],
+)
+
+bzl_library(
     name = "pico",
     srcs = ["pico.bzl"],
     deps = [

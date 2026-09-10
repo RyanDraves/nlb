@@ -30,6 +30,10 @@ bincode = "1.3"
 console_error_panic_hook = "0.1"
 deadpool-postgres = "0.14"
 env_logger = "0.11"
+# `rust_backend` (miniz_oxide) rather than the default zlib C shim, so this
+# builds for wasm32-unknown-unknown with no cc toolchain. //lrb/monofile gzips
+# its wasm payload; //lrb/pptx needs it for the OPC zip container.
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 futures-util = "0.3"
 getrandom = "0.3"
 gloo-net = "0.6"
@@ -63,6 +67,13 @@ features = [
     "BinaryType",
     "CloseEvent",
     "Document",
+    # //lrb/monofile reads its own inert payload nodes and wires up Ctrl+S.
+    "Element",
+    "Event",
+    "EventTarget",
+    "HtmlElement",
+    "HtmlTextAreaElement",
+    "KeyboardEvent",
     "History",
     "Location",
     "MessageEvent",
