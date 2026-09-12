@@ -1,6 +1,6 @@
 services:
   tsidp:
-    image: ghcr.io/tailscale/tsidp:v0.0.14
+    image: ghcr.io/tailscale/tsidp:v0.0.15
     volumes:
       - tsidp-data:/data
     restart: always
