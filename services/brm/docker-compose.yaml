@@ -15,7 +15,7 @@ services:
         condition: service_started
 
   tailscale:
-    image: tailscale/tailscale:v1.98.4
+    image: tailscale/tailscale:v1.102.3
     hostname: brm
     secrets:
       - brm_authkey
