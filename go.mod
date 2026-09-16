@@ -1,15 +1,15 @@
 module nlb
 
-go 1.26.5
+go 1.26.6
 
 // bazel run @rules_go//go -- mod tidy
 // `Gruntfuggly.triggertaskonsave` will run this automatically
 
-require github.com/tailscale/setec v0.0.0-20260722150643-dd66b9ef6732
+require github.com/tailscale/setec v0.0.0-20260824224040-f8d7a936837c
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20260703014108-f5a850f9c2b7 // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20260811164956-006e29f97886 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
@@ -31,9 +31,9 @@ exclude gvisor.dev/gvisor v0.0.0-20260213195347-813e3124c3d7
 exclude github.com/tink-crypto/tink-go/v2 v2.6.0
 
 require (
-	charm.land/bubbles/v2 v2.1.1
-	charm.land/bubbletea/v2 v2.0.8
-	charm.land/lipgloss/v2 v2.0.5
+	charm.land/bubbles/v2 v2.2.1
+	charm.land/bubbletea/v2 v2.0.9
+	charm.land/lipgloss/v2 v2.0.6
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.44.0 // indirect
 	github.com/aws/smithy-go v1.27.3 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
-	github.com/charmbracelet/x/ansi v0.11.7 // indirect
+	github.com/charmbracelet/x/ansi v0.11.8 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/coder/websocket v1.8.14 // indirect
 	github.com/creachadair/command v0.2.0 // indirect
@@ -77,8 +77,8 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jsimonetti/rtnetlink v1.4.2 // indirect
 	github.com/klauspost/compress v1.19.1 // indirect
-	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
-	github.com/mattn/go-runewidth v0.0.23 // indirect
+	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
+	github.com/mattn/go-runewidth v0.0.24 // indirect
 	github.com/mdlayher/netlink v1.8.0 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
@@ -111,7 +111,7 @@ require (
 	golang.zx2c4.com/wireguard/windows v0.5.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gvisor.dev/gvisor v0.0.0-20260224225140-573d5e7127a8 // indirect
-	tailscale.com v1.102.1
+	tailscale.com v1.102.4
 )
 
 tool github.com/tailscale/setec/cmd/setec
