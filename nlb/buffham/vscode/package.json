@@ -49,8 +49,8 @@
         ]
     },
     "devDependencies": {
-        "@vscode/vsce": "^3.9.2",
-        "vitest": "^4.1.11",
+        "@vscode/vsce": "^4.0.0",
+        "vitest": "^5.0.1",
         "vscode-tmgrammar-test": "^0.1.3"
     }
 }
