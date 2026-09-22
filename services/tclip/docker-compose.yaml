@@ -1,0 +1,33 @@
+services:
+  tclip:
+    # Our fork of tailscale-dev/tclip, patched to resolve `file:` in TS_AUTHKEY
+    # so the authkey can arrive as a Docker secret. The image is distroless, so
+    # there is no shell to read the secret in an entrypoint the way the sidecar
+    # services do. Built by the fork's CI on push to main; the tag is the
+    # commit it was built from. See ../README.md.
+    image: ghcr.io/ryandraves/tclip:4a69aec70350b7c29b5a4681aaed8e0b29c59ec4
+    # tclip is tailscale-native (tsnet), so it joins the tailnet itself and
+    # needs no sidecar. It serves HTTPS at https://paste.barn-arcturus.ts.net.
+    volumes:
+      - tclip-data:/data
+    environment:
+      TSNET_HOSTNAME: paste
+      DATA_DIR: /data
+      TS_AUTHKEY: file:/run/secrets/tclip_authkey
+      # NOTE: tclip toggles on *presence* of these vars, not their value --
+      # `ENABLE_WORD_WRAP: "0"` would still turn word wrap on. Comment a line
+      # out to disable it; don't set it to a falsey value.
+      ENABLE_LINE_NUMBERS: "1"
+      # ENABLE_WORD_WRAP: "1"
+      # USE_FUNNEL: "1"          # expose individual pastes to the public internet
+      # HIDE_FUNNEL_USERS: "1"   # ...without attributing them to a tailnet user
+    secrets:
+      - tclip_authkey
+    restart: unless-stopped
+
+volumes:
+  tclip-data:
+
+secrets:
+  tclip_authkey:
+    file: ${PWD}/../secrets/tclip.authkey
