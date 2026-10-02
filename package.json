@@ -1,9 +1,9 @@
 {
     "// To install dependencies with Bazel-managed pnpm, run": "bazel run @pnpm//:pnpm -- --dir $PWD install",
-    "packageManager": "pnpm@10.34.5",
+    "packageManager": "pnpm@10.34.6",
     "private": true,
     "devDependencies": {
-        "eslint": "^10.10.0",
+        "eslint": "^10.12.0",
         "jsdom": "^29.1.1",
         "typescript": "5.9.3",
         "vitest": "^4.1.11"
