@@ -3,6 +3,7 @@
 # This script sets up the environment with the following:
 # - apt packages
 # - bazelisk
+# - pueue (Linux; macOS gets it from brew)
 # - udev rules
 # - Ryan's custom settings (optional)
 #     - gh
@@ -32,6 +33,13 @@ GO_VERSION=$(grep '^go ' go.mod | awk '{print $2}')
 GO_X86_SHA256_SUM=5c2c3b16caefa1d968a94c1daca04a7ca301a496d9b086e17ad77bb81393f053
 GO_ARM64_SHA256_SUM=fe4789e92b1f33358680864bbe8704289e7bb5fc207d80623c308935bd696d49
 GO_MACOS_ARM64_SHA256_SUM=efb87ff28af9a188d0536ef5d42e63dd52ba8263cd7344a993cc48dd11dedb6a
+
+# No checksum file is published; sums are the per-asset "digest" from the GitHub releases API
+PUEUE_VERSION="4.0.4"
+PUEUE_X86_SHA256_SUM=c1b10d7e4e62211075ddd0e1dc3e8cbfc5a43d662cb3be7402a28504e23fcb51
+PUEUED_X86_SHA256_SUM=5afeff6adbafb909e8d54e2caff158e6966c2adffa2c09e60fd631cc51b60390
+PUEUE_ARM64_SHA256_SUM=759bf5100a51024997111c6913aaf3330a0cdfd893ff552dcf429ae9b5e01e09
+PUEUED_ARM64_SHA256_SUM=332c5ef74270b64aeaf04894c8c04826f3422eb7d50dbd1a8e0706d74a42f653
 
 REPO_ROOT=$(dirname $(readlink -f $0))
 
@@ -97,6 +105,8 @@ BREW_PACKAGES=(
     ffmpeg
     # PDF tools
     xpdf
+    # Process queueing
+    pueue
 )
 
 function check_if_on_wsl() {
@@ -416,6 +426,98 @@ function install_go() {
     fi
 
     echo "Go $GO_VERSION installed successfully"
+}
+
+function install_pueue() {
+    # Check if pueue and pueued are already installed and have the correct version
+    if [[ "$(pueue --version 2>/dev/null)" == "pueue $PUEUE_VERSION" ]] \
+        && [[ "$(pueued --version 2>/dev/null)" == "pueued $PUEUE_VERSION" ]]; then
+        echo "pueue $PUEUE_VERSION is already installed"
+    else
+        echo "Installing pueue v$PUEUE_VERSION"
+
+        local arch="x86_64"
+        local pueue_sum=$PUEUE_X86_SHA256_SUM
+        local pueued_sum=$PUEUED_X86_SHA256_SUM
+
+        if [[ "$(uname -m)" == "aarch64" ]] || [[ "$(uname -m)" == "arm64" ]]; then
+            arch="aarch64"
+            pueue_sum=$PUEUE_ARM64_SHA256_SUM
+            pueued_sum=$PUEUED_ARM64_SHA256_SUM
+        fi
+
+        local base_url="https://github.com/Nukesor/pueue/releases/download/v$PUEUE_VERSION"
+        local bin
+        for bin in pueue pueued; do
+            local url="$base_url/${bin}-${arch}-unknown-linux-musl"
+            if check_command wget; then
+                wget --no-verbose "$url" -O "/tmp/$bin"
+            else
+                curl -fsSL "$url" -o "/tmp/$bin"
+            fi
+        done
+
+        verify_sha256sum /tmp/pueue $pueue_sum
+        verify_sha256sum /tmp/pueued $pueued_sum
+
+        # install unlinks the destination first, so this is safe while the daemon is running
+        install -m 755 /tmp/pueue /tmp/pueued ~/.local/bin/
+        rm -f /tmp/pueue /tmp/pueued
+
+        # Verify pueue is installed with the correct version
+        version=$(pueue --version)
+        if [[ "$version" != "pueue $PUEUE_VERSION" ]]; then
+            echo -e "\e[31mpueue is not installed correctly"
+            echo "Expected version: pueue $PUEUE_VERSION"
+            echo -e "Actual version: $version\e[0m"
+            exit 1
+        fi
+
+        # Don't restart an existing daemon for the user; that would kill running tasks
+        if systemctl --user is-active --quiet pueued.service; then
+            echo -e "${CYAN}${BOLD}"
+            echo "----------------------------------------"
+            echo "pueued is still running the old version"
+            echo "Run 'systemctl --user restart pueued' once no tasks are running"
+            echo "----------------------------------------"
+            echo -e "${RESET}"
+        fi
+    fi
+
+    # Run the daemon as a systemd user service
+    local service_file="$HOME/.config/systemd/user/pueued.service"
+    local service_contents="[Unit]
+Description=Pueue Daemon - CLI process scheduler and manager
+
+[Service]
+Restart=on-failure
+OOMPolicy=continue
+ExecStart=%h/.local/bin/pueued -vv
+
+[Install]
+WantedBy=default.target"
+    if [[ "$(cat "$service_file" 2>/dev/null)" != "$service_contents" ]]; then
+        echo "Writing $service_file"
+        mkdir -p "$(dirname "$service_file")"
+        echo "$service_contents" > "$service_file"
+        systemctl --user daemon-reload
+    fi
+
+    if systemctl --user is-enabled --quiet pueued.service \
+        && systemctl --user is-active --quiet pueued.service; then
+        echo "pueued service is already enabled and running"
+    else
+        echo "Enabling pueued service"
+        systemctl --user enable --now pueued.service
+    fi
+
+    # Keep the daemon (and its tasks) alive after logout / SSH disconnect
+    if [[ "$(loginctl show-user "$USER" --property=Linger --value 2>/dev/null)" == "yes" ]]; then
+        echo "Lingering is already enabled for $USER"
+    else
+        echo "Enabling lingering for $USER"
+        sudo loginctl enable-linger "$USER"
+    fi
 }
 
 function setup_texlive_for_latex_workshop() {
@@ -909,6 +1011,7 @@ if is_linux; then
 fi
 if is_linux; then
     run_section "Install docker" install_docker
+    run_section "Install pueue" install_pueue
 fi
 run_section "Setup dev environment" dev_env_setup
 # Check if user is `dravesr` before setting up Ryan's environment
