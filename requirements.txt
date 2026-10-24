@@ -17,7 +17,7 @@ marshmallow-dataclass>=8.7.1,<9
 numpy>=2.2.2,<3
 pandas>=3,<4
 portpicker>=1.6.0,<2
-pillow>=12,<13
+pillow>=13,<14
 pip>=26,<27
 psycopg2-binary>=2.9.10,<3
 # Matplotlib backend
@@ -34,6 +34,6 @@ rich-click>=1.8.3,<2
 ruff>=0.11.9,<1
 scipy>=1.15.1,<2
 skidl>=2.2.3,<3
-setuptools>=83,<84
+setuptools>=84,<85
 SQLAlchemy>=2.0.38,<3
 thefuzz>=0.22.1,<1
